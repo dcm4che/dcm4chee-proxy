@@ -1,0 +1,46 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.dcm4che.dcm4chee-proxy2</groupId>
+  <artifactId>dcm4chee-proxy-parent</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>dcm4chee-proxy-parent</name>
+  <description>DICOM proxy J2EE application</description>
+  <issueManagement>
+    <system>JIRA</system>
+    <url>http://dcm4che.org/jira</url>
+  </issueManagement>
+  <scm>
+    <connection>scm:git:https://gunterze@github.com/gunterze/dcm4chee-proxy2.git</connection>
+    <developerConnection>scm:git:https://gunterze@github.com/gunterze/dcm4chee-proxy2.git</developerConnection>
+    <url>https://github.com/gunterze/dcm4chee-proxy2</url>
+  </scm>
+  <organization>
+    <name>dcm4che.org</name>
+    <url>http://dcm4che.org</url>
+  </organization>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <modules>
+    <module>dcm4chee-proxy-mc</module>
+  </modules>
+</project>

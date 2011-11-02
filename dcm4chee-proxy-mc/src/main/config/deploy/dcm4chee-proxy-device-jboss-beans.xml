@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="urn:jboss:bean-deployer bean-deployer_2_0.xsd"
+  xmlns="urn:jboss:bean-deployer:2.0">
+
+  <bean name="Executer" class="java.util.concurrent.Executor">
+    <constructor factoryClass="java.util.concurrent.Executors"
+      factoryMethod="newCachedThreadPool" />
+  </bean>
+
+  <bean name="ScheduledExecutorService" class="java.util.concurrent.ScheduledExecutorService">
+    <constructor factoryClass="java.util.concurrent.Executors"
+      factoryMethod="newSingleThreadScheduledExecutor" />
+  </bean>
+
+ 
+  <!-- The DICOM Device -->
+  <bean name="Device" class="org.dcm4che.net.Device">
+    <constructor>
+      <parameter>dcm4chee-proxy</parameter>
+    </constructor>
+    <property name="executor">
+      <inject bean="Executer" />
+    </property>
+    <property name="scheduledExecutor">
+      <inject bean="ScheduledExecutorService" />
+    </property>
+    <property name="dimseRQHandler">
+      <inject bean="DicomServiceRegistry" />
+    </property>
+    <install method="addConnection">
+      <parameter>
+        <inject bean="ProxyConnection1" />
+      </parameter>
+    </install>
+    <install method="addApplicationEntity">
+      <parameter>
+        <inject bean="ProxyApplicationEntity1" />
+      </parameter>
+    </install>
+    <uninstall method="removeApplicationEntity">
+      <parameter>
+        <inject bean="ProxyApplicationEntity1" />
+      </parameter>
+    </uninstall>
+    <uninstall method="removeConnection">
+      <parameter>
+        <inject bean="ProxyConnection1" />
+      </parameter>
+    </uninstall>
+    <start method="activate" />
+    <stop method="deactivate" />
+  </bean>
+
+  <!-- Proxy Connection -->
+  <bean name="ProxyConnection1" class="org.dcm4che.net.Connection">
+    <property name="port">11112</property>
+  </bean>
+
+  <!-- Proxy DICOM Application Entity -->
+  <bean name="ProxyApplicationEntity1" class="org.dcm4chee.proxy.mc.net.ProxyApplicationEntity">
+    <constructor>
+      <parameter>*</parameter>
+    </constructor>
+    <property name="associationAcceptor">true</property>
+    <property name="associationInitiator">true</property>
+    <property name="maxOpsPerformed">0</property>
+    <property name="maxOpsInvoked">0</property>
+    <property name="forwardApplicationEntity">
+      <inject bean="ForwardApplicationEntity1" />
+    </property>
+    <property name="useCallingAETitle">
+      <null/>
+    </property>
+    <install method="addConnection">
+      <parameter>
+        <inject bean="ProxyConnection1" />
+      </parameter>
+    </install>
+    <uninstall method="removeConnection">
+      <parameter>
+        <inject bean="ProxyConnection1" />
+      </parameter>
+    </uninstall>
+  </bean>
+
+  <!-- Forward Connection -->
+  <bean name="ForwardConnection1" class="org.dcm4che.net.Connection">
+    <property name="hostname">localhost</property>
+    <property name="port">11113</property>
+  </bean>
+
+  <!-- Forward DICOM Application Entity -->
+  <bean name="ForwardApplicationEntity1" class="org.dcm4che.net.ApplicationEntity">
+    <constructor>
+      <parameter>*</parameter>
+    </constructor>
+    <property name="associationAcceptor">true</property>
+    <property name="maxOpsPerformed">0</property>
+    <property name="maxOpsInvoked">0</property>
+    <install method="addConnection">
+      <parameter>
+        <inject bean="ForwardConnection1" />
+      </parameter>
+    </install>
+    <uninstall method="removeConnection">
+      <parameter>
+        <inject bean="ForwardConnection1" />
+      </parameter>
+    </uninstall>
+  </bean>
+
+</deployment>
