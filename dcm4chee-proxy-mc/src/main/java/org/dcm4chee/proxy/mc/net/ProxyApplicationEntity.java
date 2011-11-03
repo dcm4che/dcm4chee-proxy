@@ -38,8 +38,19 @@
 
 package org.dcm4chee.proxy.mc.net;
 
+import java.io.File;
 import java.io.IOException;
 
+import javax.xml.transform.Templates;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamSource;
+
+import org.dcm4che.data.Attributes;
+import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.io.SAXTransformer;
+import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.IncompatibleConnectionException;
@@ -50,6 +61,7 @@ import org.dcm4che.net.pdu.CommonExtendedNegotiation;
 import org.dcm4che.net.pdu.ExtendedNegotiation;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
+import org.dcm4che.util.SafeClose;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -57,13 +69,30 @@ import org.dcm4che.net.pdu.RoleSelection;
  */
 public class ProxyApplicationEntity extends ApplicationEntity {
 
-    public static final String FORWARD_ASSOCIATION = "forward";
+    public static final String FORWARD_ASSOCIATION = "forward.assoc";
+    public static final String FORWARD_TASK = "forward.task";
+
+    private static SAXTransformerFactory saxTransformerFactory =
+            (SAXTransformerFactory) TransformerFactory.newInstance();
 
     private String useCallingAETitle;
-    private ApplicationEntity forward;
+    private ApplicationEntity destination;
+    private Templates attributeCoercion;
+    private Schedule schedule;
+    private File spoolDirectory;
+    private String attributeCoercionURI;
 
     public ProxyApplicationEntity(String aeTitle) {
         super(aeTitle);
+    }
+
+    public final void setSpoolDirectory(File spoolDirectory) {
+        spoolDirectory.mkdirs();
+        this.spoolDirectory = spoolDirectory;
+    }
+
+    public final File getSpoolDirectory() {
+        return spoolDirectory;
     }
 
     public void setUseCallingAETitle(String useCallingAETitle) {
@@ -74,26 +103,62 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return useCallingAETitle;
     }
 
-    public final void setForwardApplicationEntity(ApplicationEntity forward) {
-        this.forward = forward;
+    public final void setForwardDestination(ApplicationEntity destination) {
+        this.destination = destination;
     }
 
-    public final ApplicationEntity getForwardApplicationEntity() {
-        return forward;
+    public final ApplicationEntity getForwardDestination() {
+        return destination;
+    }
+
+    public void setAttributeCoercionURI(String uri) throws TransformerConfigurationException {
+        this.attributeCoercion = uri != null
+                ? saxTransformerFactory.newTemplates(new StreamSource(uri))
+                : null;
+        this.attributeCoercionURI = uri;
+    }
+
+    public final String getAttributeCoercionURI() {
+        return attributeCoercionURI;
+    }
+
+    public final Templates getAttributeCoercion() {
+        return attributeCoercion;
+    }
+
+    public final boolean isCoerceAttributes() {
+        return attributeCoercion != null;
+    }
+
+    public final void setForwardSchedule(Schedule schedule) {
+        this.schedule = schedule;
+    }
+
+    public final Schedule getForwardSchedule() {
+        return schedule;
     }
 
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
-        if (forward == null)
-            return super.negotiate(as, rq, ac);
+        if (schedule != null) {
+            long forwardTime = schedule.getForwardTime();
+            if (forwardTime > 0) {
+                as.setProperty(FORWARD_TASK, new ForwardTask(this, rq, forwardTime));
+                return super.negotiate(as, rq, ac);
+            }
+        }
+        return forwardAAssociateRQ(as, rq, ac);
+    }
 
+    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq,
+            AAssociateAC ac) throws IOException {
         try {
             if (useCallingAETitle != null)
                 rq.setCallingAET(useCallingAETitle);
-            if (!getAETitle().equals("*"))
-                rq.setCalledAET(getAETitle());
-            Association as2 = connect(forward, rq);
+            if (!destination.getAETitle().equals("*"))
+                rq.setCalledAET(destination.getAETitle());
+            Association as2 = connect(destination, rq);
             as.setProperty(FORWARD_ASSOCIATION, as2);
             AAssociateAC ac2 = as2.getAAssociateAC();
             for (PresentationContext pc : ac2.getPresentationContexts())
@@ -118,7 +183,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected void onClose(Association as) {
         super.onClose(as);
         Association as2 = (Association) as.getProperty(FORWARD_ASSOCIATION);
-        if (as2 != null)
+        if (as2 == null)
+            ForwardTaskListener.schedule((ForwardTask) as.getProperty(FORWARD_TASK));
+        else
             try {
                 as2.release();
             } catch (IOException e) {
@@ -126,5 +193,26 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
     }
 
-    
+    public Attributes readAndCoerceDataset(File file) throws IOException {
+        Attributes attrs;
+        DicomInputStream in = new DicomInputStream(file);
+        try {
+            in.setIncludeBulkDataLocator(true);
+            attrs = in.readDataset(-1, -1);
+        } finally {
+            SafeClose.close(in);
+        }
+        
+        Attributes modify = new Attributes();
+        try {
+            SAXWriter w = SAXTransformer.getSAXWriter(attributeCoercion, modify);
+            w.setIncludeKeyword(false);
+            w.write(attrs);
+        } catch (Exception e) {
+            new IOException(e);
+        }
+        attrs.addAll(modify);
+        return attrs;
+    }
+
 }

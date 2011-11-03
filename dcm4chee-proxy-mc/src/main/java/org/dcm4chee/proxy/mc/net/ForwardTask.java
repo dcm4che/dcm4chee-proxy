@@ -36,44 +36,58 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.mc.net.service;
+package org.dcm4chee.proxy.mc.net;
 
-import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.DimseRSP;
-import org.dcm4che.net.pdu.AAbort;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.BasicCEchoSCP;
-import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.net.service.InstanceLocator;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  *
  */
-public class CEchoSCPImpl extends BasicCEchoSCP {
+public class ForwardTask implements Serializable {
 
-    static final Logger LOG = LoggerFactory.getLogger(CEchoSCPImpl.class);
+    private static final long serialVersionUID = 9206183954959066423L;
 
-    @Override
-    public void onCEchoRQ(Association as, PresentationContext pc, Attributes cmd)
-            throws IOException {
-        Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (as2 == null) {
-            super.onCEchoRQ(as, pc, cmd);
-            return;
-        }
-        try {
-            DimseRSP rsp = as2.cecho();
-            rsp.next();
-            as.writeDimseRSP(pc, rsp.getCommand(), null);
-        } catch (Exception e) {
-            LOG.warn("Failed to forward C-ECHO RQ to " + as2, e);
-            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
-        }
+    private final String proxyAET;
+    private final String callingAET;
+    private final String calledAET;
+    private final List<InstanceLocator> instances = new ArrayList<InstanceLocator>();
+    private long forwardTime;
+
+    public ForwardTask(ProxyApplicationEntity proxy, AAssociateRQ rq, long forwardTime) {
+        proxyAET = proxy.getAETitle();
+        callingAET = rq.getCallingAET();
+        calledAET = rq.getCalledAET();
+        this.forwardTime = forwardTime;
+    }
+
+    public final String getProxyAET() {
+        return proxyAET;
+    }
+
+    public final String getCallingAET() {
+        return callingAET;
+    }
+
+    public final String getCalledAET() {
+        return calledAET;
+    }
+
+    public final List<InstanceLocator> getInstances() {
+        return instances;
+    }
+
+    public final long getForwardTime() {
+        return forwardTime;
+    }
+
+    public void add(InstanceLocator instance) {
+        instances.add(instance);
     }
 
 }

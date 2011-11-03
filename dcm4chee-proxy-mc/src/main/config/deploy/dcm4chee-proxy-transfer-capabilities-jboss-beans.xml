@@ -1,0 +1,1918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is part of dcm4che, an implementation of DICOM(TM) in
+   - Java(TM), hosted at https://github.com/gunterze/dcm4che.
+   -
+   - The Initial Developer of the Original Code is
+   - Agfa Healthcare.
+   - Portions created by the Initial Developer are Copyright (C) 2011
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Gunter Zeilinger <gunterze@gmail.com>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the GPL or the LGPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK *****  -->
+
+<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="urn:jboss:bean-deployer bean-deployer_2_0.xsd"
+  xmlns="urn:jboss:bean-deployer:2.0">
+
+  <!-- VERIFICATION SERVICE CLASS -->
+
+  <!-- Verification SOP Class -->
+  <bean name="VerificationSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!--Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- STORAGE SERVICE CLASS -->
+
+  <bean name="ImageTSUIDs" class="java.util.List">
+    <constructor factoryClass="java.util.Arrays" factoryMethod="asList">
+      <parameter>
+        <array>
+          <!--Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+          <!--Explicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.1</value>
+          <!--Deflated Explicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.1.99</value>
+          <!--Explicit VR Big Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.2</value>
+          <!-- JPEG Baseline (Process 1), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.50</value>
+          <!-- JPEG Extended (Process 2 and 4), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.51</value>
+          <!-- JPEG Lossless, Non-Hierarchical (Process 14), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.57</value>
+          <!-- JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 - Selection value 1), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.70</value>
+          <!-- JPEG-LS Lossless Image Compression, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.80</value>
+          <!-- JPEG-LS Lossy (Near-Lossless) Image Compression, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.81</value>
+          <!-- JPEG 2000 Image Compression (Lossless Only), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.90</value>
+          <!-- JPEG 2000 Image Compression, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.91</value>
+          <!-- RLE Lossless, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.5</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <bean name="VideoTSUIDs" class="java.util.List">
+    <constructor factoryClass="java.util.Arrays" factoryMethod="asList">
+      <parameter>
+        <array>
+          <!-- JPEG Baseline (Process 1), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.50</value>
+          <!-- MPEG2 Main Profile @ Main Level, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.100</value>
+          <!-- MPEG2 Main Profile @ High Level, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.101</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <bean name="NoneImageTSUIDs" class="java.util.List">
+    <constructor factoryClass="java.util.Arrays" factoryMethod="asList">
+      <parameter>
+        <array>
+          <!--Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+          <!--Explicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.1</value>
+          <!--Deflated Explicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.1.99</value>
+          <!--Explicit VR Big Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Computed Radiography Image Storage -->
+  <bean name="CRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="CRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital X-Ray Image Storage - For Presentation -->
+  <bean name="DXPresStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="DXPresStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital X-Ray Image Storage - For Processing -->
+  <bean name="DXProcStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="DXProcStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Mammography Image Storage - For Presentation -->
+  <bean name="MGPresStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MGPresStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Mammography Image Storage - For Processing -->
+  <bean name="MGProcStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MGProcStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Intra-oral X-Ray Image Storage - For Presentation -->
+  <bean name="IOPresStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="IOPresStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Intra-oral X-Ray Image Storage - For Processing -->
+  <bean name="IOProcStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="IOProcStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- CT Image Storage -->
+  <bean name="CTStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="CTStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced CT Image Storage -->
+  <bean name="EnhancedCTStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedCTStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ultrasound Multi-frame Image Storage -->
+  <bean name="USMFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.3.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="USMFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.3.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- MR Image Storage -->
+  <bean name="MRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!--Enhanced MR Image Storage -->
+  <bean name="EnhancedMRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedMRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!--MR Spectroscopy Storage -->
+  <bean name="MSStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MSStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!--Enhanced MR Color Image Storage -->
+  <bean name="EnhancedMRColorStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedMRColorStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ultrasound Image Storage -->
+  <bean name="USStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.6.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="USStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.6.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced US Volume Storage -->
+  <bean name="EnhancedUSStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.6.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedUSStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.6.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Secondary Capture Image Storage -->
+  <bean name="SCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="SCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Multi-frame Single Bit Secondary Capture Image Storage -->
+  <bean name="MFSingleBitSCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MFSingleBitSCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Multi-frame Grayscale Byte Secondary Capture Image Storage -->
+  <bean name="MFGrayscaleByteSCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MFGrayscaleByteSCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Multi-frame Grayscale Word Secondary Capture Image Storage -->
+  <bean name="MFGrayscaleWordSCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MFGrayscaleWordSCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Multi-frame True Color Secondary Capture Image Storage -->
+  <bean name="MFTrueColorSCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MFTrueColorSCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.7.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- 12-lead ECG Waveform Storage -->
+  <bean name="TwelveLeadECGStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="TwelveLeadECGStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- General ECG Waveform Storage -->
+  <bean name="ECGStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ECGStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ambulatory ECG Waveform Storage -->
+  <bean name="AmbulatoryECGStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="AmbulatoryECGStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.1.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Hemodynamic Waveform Storage -->
+  <bean name="HDStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="HDStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Cardiac Electrophysiology Waveform Storage -->
+  <bean name="EPSStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.3.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EPSStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.3.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Basic Voice Audio Waveform Storage -->
+  <bean name="BasicVoiceAUStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.4.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="BasicVoiceAUStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.4.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- General Audio Waveform Storage -->
+  <bean name="AUStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.4.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="AUStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.4.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Arterial Pulse Waveform Storage -->
+  <bean name="ArterialPulseHDStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.5.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ArterialPulseHDStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.5.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Respiratory Waveform Storage -->
+  <bean name="RESPStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.6.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RESPStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.9.6.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Grayscale Softcopy Presentation State Storage -->
+  <bean name="GrayscalePRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="GrayscalePRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Color Softcopy Presentation State Storage -->
+  <bean name="ColorPRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ColorPRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Pseudo-Color Softcopy Presentation State Storage -->
+  <bean name="PseudoColorPRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="PseudoColorPRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Blending Softcopy Presentation State Storage -->
+  <bean name="BlendingPRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="BlendingPRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- XA/XRF Grayscale Softcopy Presentation State Storage -->
+  <bean name="XAXRFGrayscalePRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.5</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="XAXRFGrayscalePRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.11.5</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- X-Ray Angiographic Image Storage -->
+  <bean name="XAStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="XAStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced X-Ray Angiographic Image Storage -->
+  <bean name="EnhancedXAStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedXAStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- X-Ray Radiofluoroscopic Image Storage -->
+  <bean name="XRFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="XRFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced X-Ray Radiofluoroscopic Image Storage -->
+  <bean name="EnhancedXRFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedXRFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- X-Ray 3D Angiographic Image Storage -->
+  <bean name="XA3DStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.13.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="XA3DStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.13.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- X-Ray 3D Craniofacial Image Storage -->
+  <bean name="CraniofacialStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.13.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="CraniofacialStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.13.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Breast Tomosynthesis Image Storage -->
+  <bean name="BreastTomosynthesisStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.13.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="BreastTomosynthesisStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.13.1.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Nuclear Medicine Image Storage -->
+  <bean name="NMStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.20</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="NMStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.20</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Raw Data Storage -->
+  <bean name="RawDataStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RawDataStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Spatial Registration Storage -->
+  <bean name="REGStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="REGStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Spatial Fiducials Storage -->
+  <bean name="FIDStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="FIDStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Deformable Spatial Registration Storage -->
+  <bean name="DeformableREGStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="DeformableREGStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Segmentation Storage -->
+  <bean name="SEGStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="SEGStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.66.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Real World Value Mapping Storage -->
+  <bean name="RWVStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.67</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RWVStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.67</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- VL Endoscopic Image Storage -->
+  <bean name="ESStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ESStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Video Endoscopic Image Storage -->
+  <bean name="VideoESStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="VideoESStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- VL Microscopic Image Storage -->
+  <bean name="GMStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="GMStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Video Microscopic Image Storage -->
+  <bean name="VideoGMStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="VideoGMStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- VL Slide-Coordinates Microscopic Image Storage -->
+  <bean name="SMStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="SMStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- VL Photographic Image Storage -->
+  <bean name="XCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="XCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Video Photographic Image Storage -->
+  <bean name="VideoXCStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.4.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="VideoXCStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.4.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ophthalmic Photography 8 Bit Image Storage -->
+  <bean name="OP8BitStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="OP8BitStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ophthalmic Photography 16 Bit Image Storage -->
+  <bean name="OP16BitStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="OP16BitStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Stereometric Relationship Storage -->
+  <bean name="SMRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="SMRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ophthalmic Tomography Image Storage -->
+  <bean name="OPTStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="OPTStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Lensometry Measurements Storage -->
+  <bean name="LENStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="LENStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Autorefraction Measurements Storage -->
+  <bean name="ARStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ARStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Keratometry Measurements Storage -->
+  <bean name="KERStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="KERStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Subjective Refraction Measurements Storage -->
+  <bean name="SRFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="SRFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Visual Acuity Measurements Storage -->
+  <bean name="VAStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.5</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="VAStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.5</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Spectacle Prescription Report Storage -->
+  <bean name="SpectaclePrescriptionSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.6</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="SpectaclePrescriptionSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.78.6</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Macular Grid Thickness and Volume Report Storage -->
+  <bean name="MacularGridThicknessVolumeSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.79.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MacularGridThicknessVolumeSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.79.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Basic Text SR Storage -->
+  <bean name="BasicTextSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.11</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="BasicTextSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.11</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced SR Storage -->
+  <bean name="EnhancedSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.22</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.22</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Comprehensive SR Storage -->
+  <bean name="ComprehensiveSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.33</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ComprehensiveSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.33</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Procedure Log Storage -->
+  <bean name="ProcedureLogStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.40</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ProcedureLogStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.40</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Mammography CAD SR Storage -->
+  <bean name="MammoCADSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.50</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MammoCADSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.50</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Key Object Selection Storage -->
+  <bean name="KOStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.59</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="KOStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.59</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Chest CAD SR Storage -->
+  <bean name="ChestCADSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.65</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ChestCADSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.65</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- X-Ray Radiation Dose SR Storage -->
+  <bean name="RadiationDoseSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.67</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RadiationDoseSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.67</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Colon CAD SR Storage -->
+  <bean name="ColonCADSRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.69</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="ColonCADSRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.88.69</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Encapsulated PDF Storage -->
+  <bean name="EncapsulatedPDFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.104.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EncapsulatedPDFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.104.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+   <!-- Encapsulated CDA Storage -->
+  <bean name="EncapsulatedCDAStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.104.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EncapsulatedCDAStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.104.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Positron Emission Tomography Image Storage -->
+  <bean name="PETStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.128</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="PETStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.128</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced PET Image Storage -->
+  <bean name="EnhancedPETStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.130</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedPETStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.130</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Basic Structured Display Storage -->
+  <bean name="StructuredDisplayStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.131</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="StructuredDisplayStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.104.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Image Storage -->
+  <bean name="RTImageStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTImageStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Dose Storage -->
+  <bean name="RTDoseStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTDoseStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Structure Set Storage -->
+  <bean name="RTStructStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTStructStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Beams Treatment Record Storage -->
+  <bean name="RTBeamsTreatmentRecordStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTBeamsTreatmentRecordStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Plan Storage -->
+  <bean name="RTPlanStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.5</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTPlanStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.5</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Brachy Treatment Record Storage -->
+  <bean name="RTBrachyTreatmentRecordStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.6</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTBrachyTreatmentRecordStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.6</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Treatment Summary Record Storage -->
+  <bean name="RTTreatmentSummaryRecordStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.7</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTTreatmentSummaryRecordStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.7</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Ion Plan Storage -->
+  <bean name="RTIonPlanStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.8</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTPIonlanStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.8</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RT Ion Beams Treatment Record Storage -->
+  <bean name="RTIonBeamsTreatmentRecordStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.9</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RTIonBeamsTreatmentRecordStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.481.9</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- RETIRED STORAGE SOP CLASSES -->
+
+  <!-- Retired Nuclear Medicine Image Storage -->
+  <bean name="RetiredNMStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.5</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RetiredNMStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.5</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Retired Ultrasound Image Storage -->
+  <bean name="RetiredUSStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.6</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RetiredUSStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.6</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Retired Ultrasound Multi-frame Image Storage -->
+  <bean name="RetiredUSMFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RetiredUSMFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Retired X-Ray Angiographic Bi-plane Image Storage -->
+  <bean name="RetiredXABiPlaneStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="RetiredXABiPlaneStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.12.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+    </constructor>
+  </bean>
+
+</deployment>

@@ -36,44 +36,20 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.mc.net.service;
-
-import java.io.IOException;
-
-import org.dcm4che.data.Attributes;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.DimseRSP;
-import org.dcm4che.net.pdu.AAbort;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.BasicCEchoSCP;
-import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package org.dcm4chee.proxy.mc.net;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  *
  */
-public class CEchoSCPImpl extends BasicCEchoSCP {
+public class Schedule {
 
-    static final Logger LOG = LoggerFactory.getLogger(CEchoSCPImpl.class);
-
-    @Override
-    public void onCEchoRQ(Association as, PresentationContext pc, Attributes cmd)
-            throws IOException {
-        Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (as2 == null) {
-            super.onCEchoRQ(as, pc, cmd);
-            return;
-        }
-        try {
-            DimseRSP rsp = as2.cecho();
-            rsp.next();
-            as.writeDimseRSP(pc, rsp.getCommand(), null);
-        } catch (Exception e) {
-            LOG.warn("Failed to forward C-ECHO RQ to " + as2, e);
-            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
-        }
+    public Schedule(String s) {
+        //TODO
     }
 
+    public long getForwardTime() {
+        //TODO
+        return 0L;
+    }
 }

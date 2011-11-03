@@ -28,6 +28,7 @@
     <property name="dimseRQHandler">
       <inject bean="DicomServiceRegistry" />
     </property>
+    <demand>HornetQServer</demand>
     <install method="addConnection">
       <parameter>
         <inject bean="ProxyConnection1" />
@@ -66,10 +67,15 @@
     <property name="associationInitiator">true</property>
     <property name="maxOpsPerformed">0</property>
     <property name="maxOpsInvoked">0</property>
-    <property name="forwardApplicationEntity">
+    <property name="spoolDirectory">${jboss.server.data.dir}</property>
+    <property name="forwardDestination">
       <inject bean="ForwardApplicationEntity1" />
     </property>
     <property name="useCallingAETitle">
+      <null/>
+    </property>
+    <property name="attributeCoercionURI">resource:dcm4chee-proxy-nullify-pn.xsl</property>
+    <property name="forwardSchedule">
       <null/>
     </property>
     <install method="addConnection">
@@ -109,5 +115,17 @@
       </parameter>
     </uninstall>
   </bean>
+
+  <!-- ForwardTaskListener -->
+  <bean name="ForwardTaskListener" class="org.dcm4chee.proxy.mc.net.ForwardTaskListener">
+    <constructor>
+      <parameter>
+        <inject bean="Device" />
+      </parameter>
+    </constructor>
+    <start method="start" />
+    <stop method="stop" />
+  </bean>
+  
 
 </deployment>
