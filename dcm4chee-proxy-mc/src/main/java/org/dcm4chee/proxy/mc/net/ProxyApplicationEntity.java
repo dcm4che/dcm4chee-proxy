@@ -183,9 +183,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected void onClose(Association as) {
         super.onClose(as);
         Association as2 = (Association) as.getProperty(FORWARD_ASSOCIATION);
-        if (as2 == null)
-            ForwardTaskListener.schedule((ForwardTask) as.getProperty(FORWARD_TASK));
-        else
+        ForwardTask ft = (ForwardTask) as.getProperty(FORWARD_TASK);
+        if (ft != null)
+            ForwardTaskListener.schedule(ft);
+        else if (as2 != null)
             try {
                 as2.release();
             } catch (IOException e) {
