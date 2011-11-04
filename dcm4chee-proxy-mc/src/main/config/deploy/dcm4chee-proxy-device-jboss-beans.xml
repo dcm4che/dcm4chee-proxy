@@ -123,6 +123,7 @@
         <inject bean="Device" />
       </parameter>
     </constructor>
+    <depends>org.hornetq:module=JMS,type=Queue,name="ForwardTaskQueue"</depends>
     <start method="start" />
     <stop method="stop" />
   </bean>
