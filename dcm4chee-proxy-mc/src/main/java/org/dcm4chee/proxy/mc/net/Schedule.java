@@ -38,18 +38,73 @@
 
 package org.dcm4chee.proxy.mc.net;
 
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class Schedule {
 
-    public Schedule(String s) {
-        //TODO
-    }
+    private static final Logger LOG =
+        LoggerFactory.getLogger(Schedule.class);
+
+    private GregorianCalendar startCal;
+    private GregorianCalendar endCal;
 
     public long getForwardTime() {
-        //TODO
-        return 0L;
+        Date now = new GregorianCalendar().getTime();
+        if ( !isNowBetweenDate( now, startCal.getTime(), endCal.getTime() ) )
+            return startCal.getTimeInMillis();
+        return 0;
+    }
+
+    public Schedule(String dayOfWeek, String hour) {
+
+        if ( dayOfWeek != null ) {
+            String[] days = dayOfWeek.split("-");
+            if (days.length == 2) {
+                startCal = setCalFromDay(days[0], startCal);
+                endCal = setCalFromDay(days[1], endCal);
+            } else {
+                LOG.error("Wrong format for dayOfWeek: " + dayOfWeek);
+            }
+        }
+
+        if ( hour != null ) {
+            String[] hours = hour.split("-");
+            if (hours.length == 2) {
+                startCal = setCalFromHour(hours[0], startCal);
+                endCal = setCalFromHour(hours[1], endCal);
+            } else {
+                LOG.error("Wrong format for hour: " + hour);
+            }
+        }
+    }
+
+    private GregorianCalendar setCalFromHour(final String hh, GregorianCalendar gc) {
+        if (hh.matches("^[0-2][0-9]$"))
+            gc.set(Calendar.HOUR_OF_DAY, Integer.parseInt(hh));
+        return gc;
+    }
+
+    private GregorianCalendar setCalFromDay(final String day, GregorianCalendar gc) {
+        final List<String> days = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+        if(days.contains(day))
+            gc.set(Calendar.DAY_OF_WEEK, days.indexOf(day));
+        return gc;
+    }
+    
+    boolean isNowBetweenDate(Date now, Date start, Date end) {
+        if (start.after(end))
+            return now.after(start) || now.before(end);
+        return now.after(start) && now.before(end);
     }
 }

@@ -65,7 +65,7 @@ import org.dcm4che.util.SafeClose;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class ProxyApplicationEntity extends ApplicationEntity {
 
@@ -79,6 +79,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private ApplicationEntity destination;
     private Templates attributeCoercion;
     private Schedule schedule;
+    private Integer forwardInterval;
     private File spoolDirectory;
     private String attributeCoercionURI;
 
@@ -138,6 +139,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return schedule;
     }
 
+    public void setForwardInterval(Integer forwardInterval) {
+        this.forwardInterval = forwardInterval;
+    }
+
+    public Integer getForwardInterval() {
+        return forwardInterval;
+    }
+
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
@@ -145,7 +154,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             long forwardTime = schedule.getForwardTime();
             if (forwardTime > 0) {
                 as.setProperty(FORWARD_TASK, new ForwardTask(this, rq, forwardTime));
-                return super.negotiate(as, rq, ac);
             }
         }
         return forwardAAssociateRQ(as, rq, ac);
@@ -170,6 +178,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : ac2.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
+        } catch (IOException e) {
+            LOG.warn("Unable to connect to " + destination.getAETitle());
+            //TODO: reschedule
+            throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception:", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);

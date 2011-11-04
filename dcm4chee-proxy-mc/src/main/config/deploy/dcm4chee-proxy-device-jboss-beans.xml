@@ -76,8 +76,9 @@
     </property>
     <property name="attributeCoercionURI">resource:dcm4chee-proxy-nullify-pn.xsl</property>
     <property name="forwardSchedule">
-      <null/>
+      <inject bean="forwardScheduleApplicationEntity1"/>
     </property>
+    <property name="forwardInterval">600</property><!-- time in seconds -->
     <install method="addConnection">
       <parameter>
         <inject bean="ProxyConnection1" />
@@ -114,6 +115,14 @@
         <inject bean="ForwardConnection1" />
       </parameter>
     </uninstall>
+  </bean>
+  
+  <!-- Schedule for Forward DICOM Application Entity -->
+  <bean name="forwardScheduleApplicationEntity1" class="org.dcm4chee.proxy.mc.net.Schedule">
+    <constructor>
+      <parameter>Mon-Fri</parameter><!-- dayOfWeek -->
+      <parameter>08-18</parameter><!-- hour -->
+    </constructor>
   </bean>
 
   <!-- ForwardTaskListener -->
