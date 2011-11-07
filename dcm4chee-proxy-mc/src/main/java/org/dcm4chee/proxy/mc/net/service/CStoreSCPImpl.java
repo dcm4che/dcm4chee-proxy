@@ -86,7 +86,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
             File dir = new File(ae.getSpoolDirectory(), as.getCalledAET());
             dir.mkdir();
-            return File.createTempFile("dcm", ".part", dir);
+            return File.createTempFile("dcm", ".dcm.part", dir);
         } catch (Exception e) {
             LOG.warn(as + ": Failed to create temp file:", e);
             throw new DicomServiceException(Status.OutOfResources, e);
