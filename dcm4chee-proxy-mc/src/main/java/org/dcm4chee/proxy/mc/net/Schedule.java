@@ -39,8 +39,8 @@
 package org.dcm4chee.proxy.mc.net;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -56,55 +56,66 @@ public class Schedule {
     private static final Logger LOG =
         LoggerFactory.getLogger(Schedule.class);
 
-    private GregorianCalendar startCal;
-    private GregorianCalendar endCal;
+    private BitSet days = new BitSet(7);
+    private BitSet hours = new BitSet(24);
 
     public long getForwardTime() {
-        Date now = new GregorianCalendar().getTime();
-        if ( !isNowBetweenDate( now, startCal.getTime(), endCal.getTime() ) )
-            return startCal.getTimeInMillis();
-        return 0;
+        final Calendar now = new GregorianCalendar();
+        return days.get(now.get(Calendar.DAY_OF_WEEK)) 
+                ? hours.get(now.get(Calendar.HOUR_OF_DAY)) 
+                        ? 0 
+                        : getNextDate(now) 
+                : getNextDate(now);
+    }
+
+    private long getNextDate(Calendar now) {
+        final GregorianCalendar cal = new GregorianCalendar();
+        
+        int nextDay = days.nextSetBit(now.get(Calendar.DAY_OF_WEEK));
+        if ( nextDay == -1 )
+            cal.set(Calendar.DAY_OF_WEEK, days.nextSetBit(0));
+        else
+            cal.set(Calendar.DAY_OF_WEEK, nextDay);
+        
+        int nextHour = days.nextSetBit(now.get(Calendar.HOUR_OF_DAY));
+        if ( nextHour == -1 )
+            cal.set(Calendar.HOUR_OF_DAY, hours.nextSetBit(0));
+        else
+            cal.set(Calendar.HOUR_OF_DAY, nextHour);
+        
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        
+        return cal.getTimeInMillis();
     }
 
     public Schedule(String dayOfWeek, String hour) {
-
+        
+        String[] schedule;
+        
         if ( dayOfWeek != null ) {
-            String[] days = dayOfWeek.split("-");
-            if (days.length == 2) {
-                startCal = setCalFromDay(days[0], startCal);
-                endCal = setCalFromDay(days[1], endCal);
+            schedule = dayOfWeek.split("-");
+            if (schedule.length == 2) {
+                final List<String> dl = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+                int j = dl.indexOf(schedule[1])+1;
+                for ( int i = dl.indexOf(schedule[0])+1; i % 7 != j; i++)
+                    days.set( i % 7 );
+                days.set(j);
             } else {
                 LOG.error("Wrong format for dayOfWeek: " + dayOfWeek);
             }
         }
-
+        
         if ( hour != null ) {
-            String[] hours = hour.split("-");
-            if (hours.length == 2) {
-                startCal = setCalFromHour(hours[0], startCal);
-                endCal = setCalFromHour(hours[1], endCal);
+            schedule = hour.split("-");
+            if (schedule.length == 2) {
+                int j = Integer.parseInt(schedule[1]);
+                for ( int i = Integer.parseInt(schedule[0]); i % 24 != j; i++)
+                    hours.set( i % 24 );
             } else {
                 LOG.error("Wrong format for hour: " + hour);
             }
         }
-    }
-
-    private GregorianCalendar setCalFromHour(final String hh, GregorianCalendar gc) {
-        if (hh.matches("^[0-2][0-9]$"))
-            gc.set(Calendar.HOUR_OF_DAY, Integer.parseInt(hh));
-        return gc;
-    }
-
-    private GregorianCalendar setCalFromDay(final String day, GregorianCalendar gc) {
-        final List<String> days = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
-        if(days.contains(day))
-            gc.set(Calendar.DAY_OF_WEEK, days.indexOf(day));
-        return gc;
-    }
-    
-    boolean isNowBetweenDate(Date now, Date start, Date end) {
-        if (start.after(end))
-            return now.after(start) || now.before(end);
-        return now.after(start) && now.before(end);
     }
 }
