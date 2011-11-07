@@ -70,7 +70,6 @@ import org.dcm4che.util.SafeClose;
 public class ProxyApplicationEntity extends ApplicationEntity {
 
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
-    public static final String FORWARD_TASK = "forward.task";
 
     private static SAXTransformerFactory saxTransformerFactory =
             (SAXTransformerFactory) TransformerFactory.newInstance();
@@ -150,13 +149,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
-        if (schedule != null) {
-            long forwardTime = schedule.getForwardTime();
-            if (forwardTime > 0) {
-                as.setProperty(FORWARD_TASK, new ForwardTask(this, rq, forwardTime));
-            }
-        }
-        return forwardAAssociateRQ(as, rq, ac);
+        if (schedule == null || schedule.getForwardTime() == 0L)
+            return forwardAAssociateRQ(as, rq, ac);
+
+        return super.negotiate(as, rq, ac);
     }
 
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq,
@@ -195,10 +191,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected void onClose(Association as) {
         super.onClose(as);
         Association as2 = (Association) as.getProperty(FORWARD_ASSOCIATION);
-        ForwardTask ft = (ForwardTask) as.getProperty(FORWARD_TASK);
-        if (ft != null)
-            ForwardTaskListener.schedule(ft);
-        else if (as2 != null)
+        if (as2 != null)
             try {
                 as2.release();
             } catch (IOException e) {

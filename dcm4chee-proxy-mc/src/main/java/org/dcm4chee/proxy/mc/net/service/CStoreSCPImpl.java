@@ -55,8 +55,6 @@ import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.net.service.InstanceLocator;
-import org.dcm4chee.proxy.mc.net.ForwardTask;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
@@ -86,7 +84,9 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             throws DicomServiceException {
         try {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
-            return File.createTempFile("dcm", ".dcm", ae.getSpoolDirectory());
+            File dir = new File(ae.getSpoolDirectory(), as.getCalledAET());
+            dir.mkdir();
+            return File.createTempFile("dcm", ".part", dir);
         } catch (Exception e) {
             LOG.warn(as + ": Failed to create temp file:", e);
             throw new DicomServiceException(Status.OutOfResources, e);
@@ -98,21 +98,24 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             Object storage, File file, MessageDigest digest) throws IOException {
         Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (as2 == null) {
-            scheduleForward(as, pc, rq, file);
+            rename(as, file);
             return null;
         }
-        Attributes attrs = ((ProxyApplicationEntity) as.getApplicationEntity()).readAndCoerceDataset(file);
+        Attributes attrs = ((ProxyApplicationEntity) as.getApplicationEntity())
+                .readAndCoerceDataset(file);
         forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
         return file;
     }
 
-    private static void scheduleForward(Association as, PresentationContext pc, Attributes rq,
-                File file) {
-        ForwardTask forwardTask = (ForwardTask) as.getProperty(ProxyApplicationEntity.FORWARD_TASK);
-        String tsuid = pc.getTransferSyntax();
-        String cuid = rq.getString(Tag.AffectedSOPClassUID);
-        String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
-        forwardTask.add(new InstanceLocator(cuid, iuid, tsuid, file.toURI().toString()));
+    private void rename(Association as, File file) throws DicomServiceException {
+        String path = file.getPath();
+        File dst = new File(path.substring(0, path.length()-5));
+        if (file.renameTo(dst))
+            LOG.info("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
+        else {
+            LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] {as, file, dst});
+            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
+        }
     }
 
     private static void forward(final Association as, final PresentationContext pc,

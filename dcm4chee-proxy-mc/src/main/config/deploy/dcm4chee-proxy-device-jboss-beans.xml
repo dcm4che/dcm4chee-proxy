@@ -124,18 +124,6 @@
       <parameter>08-18</parameter><!-- hour -->
     </constructor>
   </bean>
-
-  <!-- ForwardTaskListener -->
-  <bean name="ForwardTaskListener" class="org.dcm4chee.proxy.mc.net.ForwardTaskListener">
-    <constructor>
-      <parameter>
-        <inject bean="Device" />
-      </parameter>
-    </constructor>
-    <depends>org.hornetq:module=JMS,type=Queue,name="ForwardTaskQueue"</depends>
-    <start method="start" />
-    <stop method="stop" />
-  </bean>
   
 
 </deployment>
