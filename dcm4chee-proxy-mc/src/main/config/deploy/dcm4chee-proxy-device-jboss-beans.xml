@@ -98,6 +98,7 @@
         <inject bean="ProxyConnection1" />
       </parameter>
     </uninstall>
+    <incallback method="addTransferCapability" />
   </bean>
 
   <!-- Forward Connection -->
