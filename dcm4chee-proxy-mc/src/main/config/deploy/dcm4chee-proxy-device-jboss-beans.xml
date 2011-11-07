@@ -141,6 +141,8 @@
         <inject bean="Device"></inject>
       </parameter>
     </constructor>
+    <start method="start" />
+    <stop method="stop" />
   </bean>
 
 </deployment>
