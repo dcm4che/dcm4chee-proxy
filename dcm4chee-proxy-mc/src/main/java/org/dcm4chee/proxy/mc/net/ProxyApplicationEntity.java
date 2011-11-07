@@ -240,10 +240,20 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         String aet = getAETitle();
         if (aet.equals("*")) {
             for (String calledAET : spoolDirectory.list())
-                forwardFiles(calledAET);
+                startForwardFiles(calledAET);
         } else {
-            forwardFiles(aet);
+            startForwardFiles(aet);
         }
+    }
+
+    private void startForwardFiles(final String calledAET) {
+        getDevice().execute(new Runnable() {
+            
+            @Override
+            public void run() {
+                forwardFiles(calledAET);
+            }
+        });
     }
 
     private void forwardFiles(String calledAET) {
