@@ -91,7 +91,7 @@ public class Schedule {
         }
     }
     
-    public boolean isInsideInterval(){
+    public boolean sendNow(){
         final Calendar now = new GregorianCalendar();
         return days.get(now.get(Calendar.DAY_OF_WEEK)) 
                 ? hours.get(now.get(Calendar.HOUR_OF_DAY)) 

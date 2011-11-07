@@ -157,7 +157,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
-        if (schedule == null || schedule.isInsideInterval())
+        if (schedule == null || schedule.sendNow())
             return forwardAAssociateRQ(as, rq, ac);
 
         return super.negotiate(as, rq, ac);
@@ -234,7 +234,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public void forwardFiles() {
-        if (schedule != null && !schedule.isInsideInterval())
+        if (schedule != null && !schedule.sendNow())
             return;
 
         String aet = getAETitle();
