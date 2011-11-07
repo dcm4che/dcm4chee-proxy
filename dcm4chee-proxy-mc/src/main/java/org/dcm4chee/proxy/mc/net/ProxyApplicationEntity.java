@@ -306,6 +306,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
                         delete(as2, file);
+                        break;
                     default:
                         LOG.warn("{}: Failed to forward file {} with error status {}", 
                                 new Object[]{ as2, file, Integer.toHexString(status) + 'H' });
