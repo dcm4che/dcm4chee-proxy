@@ -58,64 +58,45 @@ public class Schedule {
 
     private BitSet days = new BitSet(7);
     private BitSet hours = new BitSet(24);
-
-    public long getForwardTime() {
-        final Calendar now = new GregorianCalendar();
-        return days.get(now.get(Calendar.DAY_OF_WEEK)) 
-                ? hours.get(now.get(Calendar.HOUR_OF_DAY)) 
-                        ? 0 
-                        : getNextDate(now) 
-                : getNextDate(now);
-    }
-
-    private long getNextDate(Calendar now) {
-        final GregorianCalendar cal = new GregorianCalendar();
-        
-        int nextDay = days.nextSetBit(now.get(Calendar.DAY_OF_WEEK));
-        if ( nextDay == -1 )
-            cal.set(Calendar.DAY_OF_WEEK, days.nextSetBit(0));
-        else
-            cal.set(Calendar.DAY_OF_WEEK, nextDay);
-        
-        int nextHour = days.nextSetBit(now.get(Calendar.HOUR_OF_DAY));
-        if ( nextHour == -1 )
-            cal.set(Calendar.HOUR_OF_DAY, hours.nextSetBit(0));
-        else
-            cal.set(Calendar.HOUR_OF_DAY, nextHour);
-        
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        
-        return cal.getTimeInMillis();
-    }
-
-    public Schedule(String dayOfWeek, String hour) {
-        
-        String[] schedule;
-        
-        if ( dayOfWeek != null ) {
-            schedule = dayOfWeek.split("-");
-            if (schedule.length == 2) {
-                final List<String> dl = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
-                int j = dl.indexOf(schedule[1])+1;
-                for ( int i = dl.indexOf(schedule[0])+1; i % 7 != j; i++)
-                    days.set( i % 7 );
-                days.set(j);
+    
+    public void setDays(String dayOfWeek) {
+        final List<String> dl = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+        String[] schedule = dayOfWeek.split("-");
+        if (dayOfWeek.split("-").length == 2) {
+            if ( dl.indexOf(schedule[0]) != -1 && dl.indexOf(schedule[1]) != -1 ) {
+                for ( int i = dl.indexOf(schedule[0])+1; i % 7 != dl.indexOf(schedule[1])+1; i++)
+                    this.days.set( i % 7 );
+                this.days.set(dl.indexOf(schedule[1])+1);
             } else {
                 LOG.error("Wrong format for dayOfWeek: " + dayOfWeek);
             }
-        }
-        
-        if ( hour != null ) {
-            schedule = hour.split("-");
-            if (schedule.length == 2) {
-                int j = Integer.parseInt(schedule[1]);
-                for ( int i = Integer.parseInt(schedule[0]); i % 24 != j; i++)
-                    hours.set( i % 24 );
-            } else {
-                LOG.error("Wrong format for hour: " + hour);
+        } else {
+            for (String day : dayOfWeek.split(",")) {
+                if ( dl.indexOf(day) != -1 )
+                    this.days.set(dl.indexOf(day)+1);
+                else
+                    LOG.error("Incompatible day: " + day);
             }
         }
+    }
+    
+    public void setHours(String hour) {
+        String[] schedule = hour.split("-");
+        if (schedule.length == 2) {
+            int j = Integer.parseInt(schedule[1]);
+            for ( int i = Integer.parseInt(schedule[0]); i % 24 != j; i++)
+                this.hours.set( i % 24 );
+        } else {
+            LOG.error("Wrong format for hour: " + hour);
+        }
+    }
+    
+    public boolean isInsideInterval(){
+        final Calendar now = new GregorianCalendar();
+        return days.get(now.get(Calendar.DAY_OF_WEEK)) 
+                ? hours.get(now.get(Calendar.HOUR_OF_DAY)) 
+                        ? true 
+                        : false 
+                : false;
     }
 }
