@@ -39,6 +39,16 @@
         <inject bean="ProxyApplicationEntity1" />
       </parameter>
     </install>
+    <install method="setProperty">
+      <parameter>scheduler.period</parameter>
+      <parameter>
+        <javabean xmlns="urn:jboss:javabean:2.0" class="java.lang.Long">
+          <constructor>
+            <property name="anLong">60</property><!-- time in seconds -->
+          </constructor>
+        </javabean>
+      </parameter>
+    </install>
     <uninstall method="removeApplicationEntity">
       <parameter>
         <inject bean="ProxyApplicationEntity1" />
@@ -78,7 +88,6 @@
     <property name="forwardSchedule">
       <inject bean="forwardScheduleApplicationEntity1"/>
     </property>
-    <property name="forwardInterval">600</property><!-- time in seconds -->
     <install method="addConnection">
       <parameter>
         <inject bean="ProxyConnection1" />
@@ -125,5 +134,13 @@
     </constructor>
   </bean>
   
+  <!-- Schedule -->
+  <bean name="Scheduler" class="org.dcm4chee.proxy.mc.net.Scheduler">
+    <constructor>
+      <parameter>
+        <inject bean="Device"></inject>
+      </parameter>
+    </constructor>
+  </bean>
 
 </deployment>
