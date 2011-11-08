@@ -51,53 +51,8 @@ import org.dcm4che.util.StringUtils;
 public class Schedule {
 
     private static final String[] DAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-    private enum ToInt {
-        parseHour {
-
-            @Override
-            public int begin(String s, String value) {
-                try {
-                    int index = Integer.parseInt(s);
-                    if (index >= 0 && index < 24)
-                        return index;
-                } catch (NumberFormatException e) {
-                }
-                throw new IllegalArgumentException(value);
-            }
-
-            @Override
-            public int end(String s, String value) {
-                return begin(s, value);
-            }
-
-            @Override
-            public int size() {
-                return 24;
-            }},
-        parseDay {
-
-                @Override
-                public int begin(String s, String value) {
-                    for (int i = 0; i < DAYS.length; i++)
-                        if (s.equalsIgnoreCase(DAYS[i]))
-                            return i;
-                    throw new IllegalArgumentException(value);
-                }
-
-                @Override
-                public int end(String s, String value) {
-                    return begin(s, value) + 1;
-                }
-
-            @Override
-            public int size() {
-                return 7;
-            }
-        };
-        abstract int begin(String s, String value);
-        abstract int end(String s, String value);
-        abstract int size();
-    }
+    private static final String[] HOURS = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+            "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23" };
 
     private final BitSet days = new BitSet(7);
     private final BitSet hours = new BitSet(24);
@@ -108,39 +63,47 @@ public class Schedule {
     }
 
     public void setDays(String dayOfWeek) {
-        set(days, dayOfWeek, ToInt.parseDay);
-    }
-    
-    public void setHours(String hour) {
-        set(hours, hour, ToInt.parseHour);
-    }
-    
-    public boolean sendNow(){
-        final Calendar now = new GregorianCalendar();
-        return days.get(now.get(Calendar.DAY_OF_WEEK)) 
-                && hours.get(now.get(Calendar.HOUR_OF_DAY)-1);
+        set(days, dayOfWeek, DAYS, 1);
     }
 
-    private void set(BitSet bs, String value, ToInt ti) {
+    public void setHours(String hour) {
+        set(hours, hour, HOURS, 0);
+    }
+
+    public boolean sendNow() {
+        final Calendar now = new GregorianCalendar();
+        return days.get(now.get(Calendar.DAY_OF_WEEK))
+                && hours.get(now.get(Calendar.HOUR_OF_DAY) - 1);
+    }
+
+    private static void set(BitSet bs, String value, String[] a, int incEnd) {
         bs.clear();
         for (String s : StringUtils.split(value, ','))
-            set(bs, StringUtils.split(s, '-'), value, ti);
+            set(bs, StringUtils.split(s, '-'), value, a, incEnd);
     }
 
-    private void set(BitSet bs, String[] range, String value, ToInt ti) {
+    private static void set(BitSet bs, String[] range, String value, String[] values, int incEnd) {
         switch (range.length) {
         case 1:
-            bs.set(ti.begin(range[0], value));
+            bs.set(indexOf(range[0], values, value));
             break;
         case 2:
-            for (int i = ti.begin(range[0], value), end = ti.begin(range[1], value);
-                i != end ; i = (i + 1) % ti.size())
-                    bs.set(i);
+            for (int i = indexOf(range[0], values, value),
+                   end = indexOf(range[1], values, value) + incEnd;
+                    i != end; i = (i + 1) % values.length)
+                bs.set(i);
             break;
         default:
             throw new IllegalArgumentException(value);
         }
-        
+
+    }
+
+    private static int indexOf(String s, String[] values, String value) {
+        for (int i = 0; i < values.length; i++)
+            if (s.equalsIgnoreCase(values[i]))
+                return i;
+        throw new IllegalArgumentException(value);
     }
 
 }
