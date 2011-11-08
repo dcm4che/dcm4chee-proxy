@@ -86,7 +86,8 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
             File dir = new File(ae.getSpoolDirectory(), as.getCalledAET());
             dir.mkdir();
-            return File.createTempFile("dcm", "dcm.part", dir);
+            
+            return File.createTempFile("dcm", ".dcm.part", dir);
         } catch (Exception e) {
             LOG.warn(as + ": Failed to create temp file:", e);
             throw new DicomServiceException(Status.OutOfResources, e);
@@ -108,6 +109,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     private void rename(Association as, File file) throws DicomServiceException {
+        //TODO: rename suffix to (String) ae.getProperty("FILE_SUFFIX")
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5));
         if (file.renameTo(dst))

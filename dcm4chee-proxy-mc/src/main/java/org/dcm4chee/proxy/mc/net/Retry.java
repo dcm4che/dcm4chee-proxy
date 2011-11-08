@@ -46,6 +46,7 @@ public class Retry {
 
     public final String suffix;
     public final int delay;
+    public final static String FILE_SUFFIX = "dcm.retry";
 
     public Retry(String suffix, int delay) {
         this.suffix = suffix;

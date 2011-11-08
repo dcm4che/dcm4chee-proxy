@@ -70,8 +70,7 @@ public class Schedule {
         set(hours, hour, HOURS, 0);
     }
 
-    public boolean sendNow() {
-        final Calendar now = new GregorianCalendar();
+    public boolean sendNow(final Calendar now) {
         return days.get(now.get(Calendar.DAY_OF_WEEK))
                 && hours.get(now.get(Calendar.HOUR_OF_DAY) - 1);
     }

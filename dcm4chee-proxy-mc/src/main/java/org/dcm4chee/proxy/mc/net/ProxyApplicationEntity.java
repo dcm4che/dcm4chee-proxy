@@ -42,7 +42,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -81,6 +83,7 @@ import org.dcm4che.util.SafeClose;
 public class ProxyApplicationEntity extends ApplicationEntity {
 
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
+    private static final String FILE_SUFFIX = ".dcm.part";
 
     private static SAXTransformerFactory saxTransformerFactory =
             (SAXTransformerFactory) TransformerFactory.newInstance();
@@ -93,6 +96,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String attributeCoercionURI;
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
+    private boolean acceptDataWhenCalledAETUnavailable;
 
     public ProxyApplicationEntity(String aeTitle) {
         super(aeTitle);
@@ -105,6 +109,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public final File getSpoolDirectory() {
         return spoolDirectory;
+    }
+
+    public void setAcceptDataWhenCalledAETUnavailable(boolean acceptDataWhenCalledAETUnavailable) {
+        this.acceptDataWhenCalledAETUnavailable = acceptDataWhenCalledAETUnavailable;
+    }
+
+    public boolean isAcceptDataWhenCalledAETUnavailable() {
+        return acceptDataWhenCalledAETUnavailable;
     }
 
     public void setUseCallingAETitle(String useCallingAETitle) {
@@ -161,21 +173,35 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
-        if (schedule == null || schedule.sendNow())
-            return forwardAAssociateRQ(as, rq, ac);
-
+        final Calendar now = new GregorianCalendar();
+        if (schedule == null || schedule.sendNow(now)) {
+            try {
+                return forwardAAssociateRQ(as, rq, ac, true);
+            } catch (IOException e) {
+                LOG.warn("Unable to connect to " + destination.getAETitle());
+                if(acceptDataWhenCalledAETUnavailable) {
+                    //TODO set different suffix with regards to exception
+                    as.setProperty(FILE_SUFFIX, ".tcp");
+                    return super.negotiate(as, rq, ac);
+                    }
+                throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
+                }
+            }
         return super.negotiate(as, rq, ac);
     }
-
+    
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq,
-            AAssociateAC ac) throws IOException {
+            AAssociateAC ac, boolean sendNow) throws IOException {
         try {
             if (useCallingAETitle != null)
                 rq.setCallingAET(useCallingAETitle);
             if (!destination.getAETitle().equals("*"))
                 rq.setCalledAET(destination.getAETitle());
             Association as2 = connect(destination, rq);
-            as.setProperty(FORWARD_ASSOCIATION, as2);
+            if (sendNow)
+                as.setProperty(FORWARD_ASSOCIATION, as2);
+            else
+                releaseAS(as2);
             AAssociateAC ac2 = as2.getAAssociateAC();
             for (PresentationContext pc : ac2.getPresentationContexts())
                 ac.addPresentationContext(pc);
@@ -186,10 +212,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : ac2.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
-        } catch (IOException e) {
-            LOG.warn("Unable to connect to " + destination.getAETitle());
-            //TODO: reschedule
-            throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception:", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
@@ -203,6 +225,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected void onClose(Association as) {
         super.onClose(as);
         Association as2 = (Association) as.getProperty(FORWARD_ASSOCIATION);
+        if (as2 != null)
+            try {
+                as2.release();
+            } catch (IOException e) {
+                LOG.warn("Failed to release " + as2, e);
+            }
+    }
+    
+    protected void releaseAS(Association as) {
+        Association as2 = (Association) as.clearProperty(FORWARD_ASSOCIATION);
         if (as2 != null)
             try {
                 as2.release();
@@ -238,7 +270,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public void forwardFiles() {
-        if (schedule != null && !schedule.sendNow())
+        final Calendar now = new GregorianCalendar();
+        if (schedule != null && !schedule.sendNow(now))
             return;
 
         String aet = getAETitle();
