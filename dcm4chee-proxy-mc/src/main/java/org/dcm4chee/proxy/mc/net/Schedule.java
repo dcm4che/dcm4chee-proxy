@@ -50,46 +50,54 @@ import org.dcm4che.util.StringUtils;
  */
 public class Schedule {
 
-    private interface ToInt {
-        int begin(String s, String value);
-        int end(String s, String value);
-    }
-
-    private static final ToInt parseHour = new ToInt() {
-
-        @Override
-        public int begin(String s, String value) {
-            try {
-                int index = Integer.parseInt(s);
-                if (index >= 0 && index < 24)
-                    return index;
-            } catch (NumberFormatException e) {
-            }
-            throw new IllegalArgumentException(value);
-        }
-
-        @Override
-        public int end(String s, String value) {
-            return begin(s, value) + 1;
-        }
-    };
-
     private static final String[] DAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-    private static final ToInt parseDay = new ToInt() {
+    private enum ToInt {
+        parseHour {
 
-        @Override
-        public int begin(String s, String value) {
-            for (int i = 0; i < DAYS.length; i++)
-                if (s.equalsIgnoreCase(DAYS[i]))
-                    return i;
-            throw new IllegalArgumentException(value);
-        }
+            @Override
+            public int begin(String s, String value) {
+                try {
+                    int index = Integer.parseInt(s);
+                    if (index >= 0 && index < 24)
+                        return index;
+                } catch (NumberFormatException e) {
+                }
+                throw new IllegalArgumentException(value);
+            }
 
-        @Override
-        public int end(String s, String value) {
-            return begin(s, value);
-        }
-    };
+            @Override
+            public int end(String s, String value) {
+                return begin(s, value) + 1;
+            }
+
+            @Override
+            public int size() {
+                return 24;
+            }},
+        parseDay {
+
+                @Override
+                public int begin(String s, String value) {
+                    for (int i = 0; i < DAYS.length; i++)
+                        if (s.equalsIgnoreCase(DAYS[i]))
+                            return i;
+                    throw new IllegalArgumentException(value);
+                }
+
+                @Override
+                public int end(String s, String value) {
+                    return begin(s, value);
+                }
+
+            @Override
+            public int size() {
+                return 7;
+            }
+        };
+        abstract int begin(String s, String value);
+        abstract int end(String s, String value);
+        abstract int size();
+    }
 
     private final BitSet days = new BitSet(7);
     private final BitSet hours = new BitSet(24);
@@ -100,11 +108,11 @@ public class Schedule {
     }
 
     public void setDays(String dayOfWeek) {
-        set(days, dayOfWeek, parseDay);
+        set(days, dayOfWeek, ToInt.parseDay);
     }
     
     public void setHours(String hour) {
-        set(hours, hour, parseHour);
+        set(hours, hour, ToInt.parseHour);
     }
     
     public boolean sendNow(){
@@ -125,7 +133,7 @@ public class Schedule {
             break;
         case 2:
             for (int i = ti.begin(range[0], value), end = ti.begin(range[1], value);
-                i != end ; i = (i + 1) % bs.size())
+                i != end ; i = (i + 1) % ti.size())
                     bs.set(i);
             break;
         default:
