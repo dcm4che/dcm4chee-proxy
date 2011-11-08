@@ -39,10 +39,12 @@
 package org.dcm4chee.proxy.mc.net;
 
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
@@ -80,13 +82,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
 
-    private static final FilenameFilter NOT_FILE_EXT_PART = new FilenameFilter(){
-
-        @Override
-        public boolean accept(File dir, String name) {
-            return !name.endsWith(".part");
-        }};
-
     private static SAXTransformerFactory saxTransformerFactory =
             (SAXTransformerFactory) TransformerFactory.newInstance();
 
@@ -97,6 +92,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private File spoolDirectory;
     private String attributeCoercionURI;
     private int forwardPriority;
+    private List<Retry> retries = new ArrayList<Retry>();
 
     public ProxyApplicationEntity(String aeTitle) {
         super(aeTitle);
@@ -152,6 +148,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public final Schedule getForwardSchedule() {
         return schedule;
+    }
+
+    public void setRetries(List<Retry> retries) {
+        this.retries = retries;
+    }
+
+    public List<Retry> getRetries() {
+        return retries;
     }
 
     @Override
@@ -258,10 +262,28 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void forwardFiles(String calledAET) {
         File dir = new File(spoolDirectory, calledAET);
-        File[] files = dir.listFiles(NOT_FILE_EXT_PART);
+        File[] files = dir.listFiles(fileFilter());
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))
                 process(ft);
+    }
+
+    private FileFilter fileFilter() {
+        final long now = System.currentTimeMillis();
+        return new FileFilter() {
+
+            @Override
+            public boolean accept(File pathname) {
+                String path = pathname.getPath();
+                if (path.endsWith(".dcm"))
+                    return true;
+                for (Retry retry : retries)
+                    if (path.endsWith(retry.suffix)
+                            && (now > pathname.lastModified() + retry.delay * 1000))
+                        return true;
+                return false;
+            }
+        };
     }
 
     private void process(ForwardTask ft) {

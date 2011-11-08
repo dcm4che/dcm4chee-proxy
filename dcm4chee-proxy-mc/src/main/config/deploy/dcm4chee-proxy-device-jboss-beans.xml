@@ -88,6 +88,16 @@
     <property name="forwardSchedule">
       <inject bean="forwardScheduleApplicationEntity1"/>
     </property>
+    <property name="retries">
+      <list>
+        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
+          <constructor>
+            <property name="AString">.tcp</property>
+            <property name="AInt">600</property>
+          </constructor>
+        </javabean>
+      </list>
+    </property>
     <install method="addConnection">
       <parameter>
         <inject bean="ProxyConnection1" />
@@ -130,7 +140,7 @@
   <!-- Schedule for Forward DICOM Application Entity -->
   <bean name="forwardScheduleApplicationEntity1" class="org.dcm4chee.proxy.mc.net.Schedule">
     <property name="days">Mon-Fri</property>
-    <property name="hours">08-18</property>
+    <property name="hours">8-18</property>
   </bean>
   
   <!-- Schedule -->
