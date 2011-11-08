@@ -96,7 +96,7 @@ public class Schedule {
 
     public Schedule() {
         days.set(0, 7);
-        hours.set(0, 23);
+        hours.set(0, 24);
     }
 
     public void setDays(String dayOfWeek) {
