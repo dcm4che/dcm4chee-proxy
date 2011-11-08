@@ -38,14 +38,11 @@
 
 package org.dcm4chee.proxy.mc.net;
 
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -53,50 +50,88 @@ import org.slf4j.LoggerFactory;
  */
 public class Schedule {
 
-    private static final Logger LOG =
-        LoggerFactory.getLogger(Schedule.class);
+    private interface ToInt {
+        int begin(String s, String value);
+        int end(String s, String value);
+    }
 
-    private BitSet days = new BitSet(7);
-    private BitSet hours = new BitSet(24);
-    
-    public void setDays(String dayOfWeek) {
-        final List<String> dl = Arrays.asList("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
-        String[] schedule = dayOfWeek.split("-");
-        if (dayOfWeek.split("-").length == 2) {
-            if ( dl.indexOf(schedule[0]) != -1 && dl.indexOf(schedule[1]) != -1 ) {
-                for ( int i = dl.indexOf(schedule[0])+1; i % 7 != dl.indexOf(schedule[1])+1; i++)
-                    this.days.set( i % 7 );
-                this.days.set(dl.indexOf(schedule[1])+1);
-            } else {
-                LOG.error("Wrong format for dayOfWeek: " + dayOfWeek);
+    private static final ToInt parseHour = new ToInt() {
+
+        @Override
+        public int begin(String s, String value) {
+            try {
+                int index = Integer.parseInt(s);
+                if (index >= 0 && index < 24)
+                    return index;
+            } catch (NumberFormatException e) {
             }
-        } else {
-            for (String day : dayOfWeek.split(",")) {
-                if ( dl.indexOf(day) != -1 )
-                    this.days.set(dl.indexOf(day)+1);
-                else
-                    LOG.error("Incompatible day: " + day);
-            }
+            throw new IllegalArgumentException(value);
         }
+
+        @Override
+        public int end(String s, String value) {
+            return begin(s, value) + 1;
+        }
+    };
+
+    private static final String[] DAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    private static final ToInt parseDay = new ToInt() {
+
+        @Override
+        public int begin(String s, String value) {
+            for (int i = 0; i < DAYS.length; i++)
+                if (s.equalsIgnoreCase(DAYS[i]))
+                    return i;
+            throw new IllegalArgumentException(value);
+        }
+
+        @Override
+        public int end(String s, String value) {
+            return begin(s, value);
+        }
+    };
+
+    private final BitSet days = new BitSet(7);
+    private final BitSet hours = new BitSet(24);
+
+    public Schedule() {
+        days.set(0, 7);
+        hours.set(0, 23);
+    }
+
+    public void setDays(String dayOfWeek) {
+        set(days, dayOfWeek, parseDay);
     }
     
     public void setHours(String hour) {
-        String[] schedule = hour.split("-");
-        if (schedule.length == 2) {
-            int j = Integer.parseInt(schedule[1]);
-            for ( int i = Integer.parseInt(schedule[0]); i % 24 != j; i++)
-                this.hours.set( i % 24 );
-        } else {
-            LOG.error("Wrong format for hour: " + hour);
-        }
+        set(hours, hour, parseHour);
     }
     
     public boolean sendNow(){
         final Calendar now = new GregorianCalendar();
         return days.get(now.get(Calendar.DAY_OF_WEEK)) 
-                ? hours.get(now.get(Calendar.HOUR_OF_DAY)) 
-                        ? true 
-                        : false 
-                : false;
+                && hours.get(now.get(Calendar.HOUR_OF_DAY)-1);
     }
+
+    private void set(BitSet bs, String value, ToInt ti) {
+        for (String s : StringUtils.split(value, ','))
+            set(bs, StringUtils.split(s, '-'), value, ti);
+    }
+
+    private void set(BitSet bs, String[] range, String value, ToInt ti) {
+        switch (range.length) {
+        case 1:
+            bs.set(ti.begin(range[0], value));
+            break;
+        case 2:
+            for (int i = ti.begin(range[0], value), end = ti.begin(range[1], value);
+                i != end ; i = (i + 1) % bs.size())
+                    bs.set(i);
+            break;
+        default:
+            throw new IllegalArgumentException(value);
+        }
+        
+    }
+
 }
