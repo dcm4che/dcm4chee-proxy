@@ -67,7 +67,7 @@ public class Schedule {
 
             @Override
             public int end(String s, String value) {
-                return begin(s, value) + 1;
+                return begin(s, value);
             }
 
             @Override
@@ -86,7 +86,7 @@ public class Schedule {
 
                 @Override
                 public int end(String s, String value) {
-                    return begin(s, value);
+                    return begin(s, value) + 1;
                 }
 
             @Override
@@ -122,6 +122,7 @@ public class Schedule {
     }
 
     private void set(BitSet bs, String value, ToInt ti) {
+        bs.clear();
         for (String s : StringUtils.split(value, ','))
             set(bs, StringUtils.split(s, '-'), value, ti);
     }
