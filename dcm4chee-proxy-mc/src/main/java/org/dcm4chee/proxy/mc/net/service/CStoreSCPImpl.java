@@ -45,6 +45,8 @@ import java.security.MessageDigest;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
+import org.dcm4che.net.AssociationStateException;
+import org.dcm4che.net.Commands;
 import org.dcm4che.net.DataWriter;
 import org.dcm4che.net.DataWriterAdapter;
 import org.dcm4che.net.DimseRSPHandler;
@@ -87,7 +89,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             File dir = new File(ae.getSpoolDirectory(), as.getCalledAET());
             dir.mkdir();
             
-            return File.createTempFile("dcm", ".dcm.part", dir);
+            return File.createTempFile("dcm", ".part", dir);
         } catch (Exception e) {
             LOG.warn(as + ": Failed to create temp file:", e);
             throw new DicomServiceException(Status.OutOfResources, e);
@@ -104,14 +106,24 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         }
         Attributes attrs = ((ProxyApplicationEntity) as.getApplicationEntity())
                 .readAndCoerceDataset(file);
-        forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
+        try {
+            forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
+        } catch (AssociationStateException ass) {
+            LOG.warn(ass.getMessage());
+            as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ass");
+            rename(as, file);
+            rsp = Commands.mkRSP(rq, Status.Success);
+            as.writeDimseRSP(pc, rsp);
+            return null;
+        }
         return file;
     }
 
     private void rename(Association as, File file) throws DicomServiceException {
-        //TODO: rename suffix to (String) ae.getProperty("FILE_SUFFIX")
         String path = file.getPath();
-        File dst = new File(path.substring(0, path.length() - 5));
+        File dst = new File(path.substring(0, path.length() - 5)
+                .concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst))
             LOG.info("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
         else {

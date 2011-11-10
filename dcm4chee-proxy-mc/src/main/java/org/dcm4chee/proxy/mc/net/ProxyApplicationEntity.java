@@ -61,19 +61,23 @@ import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
+import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.DataWriter;
 import org.dcm4che.net.DataWriterAdapter;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.InputStreamDataWriter;
+import org.dcm4che.net.NoPresentationContextException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.AAssociateAC;
+import org.dcm4che.net.pdu.AAssociateRJ;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.CommonExtendedNegotiation;
 import org.dcm4che.net.pdu.ExtendedNegotiation;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
+import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 
 /**
@@ -83,7 +87,7 @@ import org.dcm4che.util.SafeClose;
 public class ProxyApplicationEntity extends ApplicationEntity {
 
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
-    private static final String FILE_SUFFIX = ".dcm.part";
+    public static final String FILE_SUFFIX = ".dcm";
 
     private static SAXTransformerFactory saxTransformerFactory =
             (SAXTransformerFactory) TransformerFactory.newInstance();
@@ -96,7 +100,15 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String attributeCoercionURI;
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
-    private boolean acceptDataWhenCalledAETUnavailable;
+    private boolean acceptDataOnFailedNegotiation;
+
+    public boolean isAcceptDataOnFailedNegotiation() {
+        return acceptDataOnFailedNegotiation;
+    }
+
+    public void setAcceptDataOnFailedNegotiation(boolean acceptDataOnFailedNegotiation) {
+        this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
+    }
 
     public ProxyApplicationEntity(String aeTitle) {
         super(aeTitle);
@@ -109,14 +121,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public final File getSpoolDirectory() {
         return spoolDirectory;
-    }
-
-    public void setAcceptDataWhenCalledAETUnavailable(boolean acceptDataWhenCalledAETUnavailable) {
-        this.acceptDataWhenCalledAETUnavailable = acceptDataWhenCalledAETUnavailable;
-    }
-
-    public boolean isAcceptDataWhenCalledAETUnavailable() {
-        return acceptDataWhenCalledAETUnavailable;
     }
 
     public void setUseCallingAETitle(String useCallingAETitle) {
@@ -174,30 +178,20 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
         final Calendar now = new GregorianCalendar();
-        if (schedule == null || schedule.sendNow(now)) {
-            try {
-                return forwardAAssociateRQ(as, rq, ac, true);
-            } catch (IOException e) {
-                LOG.warn("Unable to connect to " + destination.getAETitle());
-                if(acceptDataWhenCalledAETUnavailable) {
-                    //TODO set different suffix with regards to exception
-                    as.setProperty(FILE_SUFFIX, ".tcp");
-                    return super.negotiate(as, rq, ac);
-                    }
-                throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
-                }
-            }
+        if (schedule == null || schedule.sendNow(now))
+            return forwardAAssociateRQ(as, rq, ac, true);
         return super.negotiate(as, rq, ac);
     }
     
-    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq,
-            AAssociateAC ac, boolean sendNow) throws IOException {
+    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac,
+            boolean sendNow) throws IOException {
         try {
             if (useCallingAETitle != null)
                 rq.setCallingAET(useCallingAETitle);
             if (!destination.getAETitle().equals("*"))
                 rq.setCalledAET(destination.getAETitle());
-            Association as2 = connect(destination, rq);
+            Association as2;
+            as2 = connect(destination, rq);
             if (sendNow)
                 as.setProperty(FORWARD_ASSOCIATION, as2);
             else
@@ -212,13 +206,30 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : ac2.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
+        } catch (AAssociateRJ rj) {
+            return handleConnectException(as, rq, ac, rj, ".rj-" + rj.getReason() + "-"
+                    + rj.getSource() + "-" + rj.getResult());
+        } catch (AAbort aa) {
+            return handleConnectException(as, rq, ac, aa, ".aa-" + aa.getReason() + "-"
+                    + aa.getSource());
+        } catch (IOException e) {
+            return handleConnectException(as, rq, ac, e, ".conn");
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception:", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
-        } catch (IncompatibleConnectionException e) {
-            LOG.warn(e.getMessage());
-            throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
+        } catch (IncompatibleConnectionException ic) {
+            return handleConnectException(as, rq, ac, ic, ".conf"); 
         }
+    }
+
+    private AAssociateAC handleConnectException(Association as, AAssociateRQ rq, AAssociateAC ac,
+            Exception e, String suffix) throws IOException, AAbort {
+        LOG.warn("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
+        if (acceptDataOnFailedNegotiation) {
+            as.setProperty(FILE_SUFFIX, suffix);
+            return super.negotiate(as, rq, ac);
+        }
+        throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
     }
 
     @Override
@@ -239,7 +250,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             try {
                 as2.release();
             } catch (IOException e) {
-                LOG.warn("Failed to release " + as2, e);
+                LOG.warn(e.getMessage());
             }
     }
 
@@ -334,7 +345,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 forward(as2, file);
             }
         } catch (IOException e) {
-            LOG.warn("Unable to connect to " + destination.getAETitle());
+            LOG.warn("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception:", e);
         } catch (IncompatibleConnectionException e) {
@@ -353,7 +364,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void forward(final Association as2, final File file) {
+    private void forward(final Association as2, final File file) throws DicomServiceException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -372,21 +383,51 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     case Status.CoercionOfDataElements:
                         delete(as2, file);
                         break;
-                    default:
+                    default: {
                         LOG.warn("{}: Failed to forward file {} with error status {}", 
                                 new Object[]{ as2, file, Integer.toHexString(status) + 'H' });
+                        as2.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
+                        try {
+                            rename(as2, file);
+                        } catch (DicomServiceException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     }
                 }
             };
             as2.cstore(cuid, iuid, forwardPriority, createDataWriter(in), tsuid, rspHandler);
+        } catch (NoPresentationContextException npc) {
+            handleForwardException(as2, file, npc, ".npc");
+        } catch (AssociationStateException as) {
+            handleForwardException(as2, file, as, ".ass");
         } catch (IOException e) {
-            LOG.warn(as2 + ": Failed to forward file:" + file, e);
+            handleForwardException(as2, file, e, ".conn");
         } catch (InterruptedException e) {
             LOG.warn(as2 + ": Unexpected exception:", e);
         } finally {
             SafeClose.close(in);
         }
       
+    }
+
+    private void handleForwardException(final Association as, final File file,
+            Exception e, String suffix) throws DicomServiceException {
+        LOG.warn(as + ": Failed to forward file:" + file + " : " + e.getMessage());
+        as.setProperty(FILE_SUFFIX, suffix);
+        rename(as, file);
+    }
+    
+    private void rename(Association as, File file) throws DicomServiceException {
+        String path = file.getPath();
+        File dst = new File(path.concat((String) as.getProperty(FILE_SUFFIX)));
+        dst.setLastModified(System.currentTimeMillis());
+        if (file.renameTo(dst))
+            LOG.info("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
+        else {
+            LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] {as, file, dst});
+            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
+        }
     }
 
     private DataWriter createDataWriter(DicomInputStream in) throws IOException {

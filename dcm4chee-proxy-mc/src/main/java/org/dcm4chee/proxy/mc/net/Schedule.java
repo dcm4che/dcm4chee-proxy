@@ -40,7 +40,6 @@ package org.dcm4chee.proxy.mc.net;
 
 import java.util.BitSet;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 
 import org.dcm4che.util.StringUtils;
 

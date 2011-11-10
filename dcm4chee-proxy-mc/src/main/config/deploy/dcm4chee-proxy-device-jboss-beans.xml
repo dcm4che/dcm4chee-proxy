@@ -78,7 +78,7 @@
     <property name="maxOpsPerformed">0</property>
     <property name="maxOpsInvoked">0</property>
     <property name="spoolDirectory">${jboss.server.data.dir}/proxy/</property>
-    <property name="acceptDataWhenCalledAETUnavailable">true</property>
+    <property name="acceptDataOnFailedNegotiation">true</property>
     <property name="forwardDestination">
       <inject bean="ForwardApplicationEntity1" />
     </property>
@@ -93,8 +93,20 @@
       <list>
         <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
           <constructor>
-            <property name="AString">.tcp</property>
-            <property name="AInt">600</property>
+            <property name="AString">.conn</property>
+            <property name="AInt">60</property>
+          </constructor>
+        </javabean>
+        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
+          <constructor>
+            <property name="AString">.ass</property>
+            <property name="AInt">60</property>
+          </constructor>
+        </javabean>
+        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
+          <constructor>
+            <property name="AString">.npc</property>
+            <property name="AInt">60</property>
           </constructor>
         </javabean>
       </list>
@@ -154,5 +166,5 @@
     <start method="start" />
     <stop method="stop" />
   </bean>
-
+  
 </deployment>
