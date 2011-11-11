@@ -53,7 +53,6 @@ import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.PDVInputStream;
 import org.dcm4che.net.Status;
-import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
@@ -77,8 +76,21 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             super.onCStoreRQ(as, pc, rq, data);
         else if (((ProxyApplicationEntity) as.getApplicationEntity()).isCoerceAttributes())
             super.store(as, pc, rq, data, null);
-        else
-            forward(as, pc, rq, new InputStreamDataWriter(data), as2);
+        else {
+            try {
+                forward(as, pc, rq, new InputStreamDataWriter(data), as2);
+            } catch (InterruptedException e) {
+                LOG.warn(e.getMessage());
+                as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+                as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                super.onCStoreRQ(as, pc, rq, data);
+            } catch (IOException e) {
+                LOG.warn(e.getMessage());
+                as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+                as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                super.onCStoreRQ(as, pc, rq, data);
+            }
+        }
     }
 
     @Override
@@ -108,10 +120,26 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
                 .readAndCoerceDataset(file);
         try {
             forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
+        } catch (InterruptedException ie) {
+            LOG.warn(ie.getMessage());
+            as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+            rename(as, file);
+            rsp = Commands.mkRSP(rq, Status.Success);
+            as.writeDimseRSP(pc, rsp);
+            return null;
         } catch (AssociationStateException ass) {
             LOG.warn(ass.getMessage());
             as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
             as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ass");
+            rename(as, file);
+            rsp = Commands.mkRSP(rq, Status.Success);
+            as.writeDimseRSP(pc, rsp);
+            return null;
+        } catch (IOException e) {
+            LOG.warn(e.getMessage());
+            as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
             rename(as, file);
             rsp = Commands.mkRSP(rq, Status.Success);
             as.writeDimseRSP(pc, rsp);
@@ -133,30 +161,25 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     private static void forward(final Association as, final PresentationContext pc,
-            Attributes rq, DataWriter data, Association as2) throws IOException {
-        try {
-            String tsuid = pc.getTransferSyntax();
-            String cuid = rq.getString(Tag.AffectedSOPClassUID);
-            String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
-            int priority = rq.getInt(Tag.Priority, 0);
-            int msgId = rq.getInt(Tag.MessageID, 0);
-            DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
-                
-                @Override
-                public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
-                    super.onDimseRSP(as2, cmd, data);
-                    try {
-                        as.writeDimseRSP(pc, cmd, data);
-                    } catch (IOException e) {
-                        LOG.warn("Failed to forward C-STORE RSP to " + as, e);
-                    }
+            Attributes rq, DataWriter data, Association as2) throws IOException, InterruptedException {
+        String tsuid = pc.getTransferSyntax();
+        String cuid = rq.getString(Tag.AffectedSOPClassUID);
+        String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
+        int priority = rq.getInt(Tag.Priority, 0);
+        int msgId = rq.getInt(Tag.MessageID, 0);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
+
+            @Override
+            public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
+                super.onDimseRSP(as2, cmd, data);
+                try {
+                    as.writeDimseRSP(pc, cmd, data);
+                } catch (IOException e) {
+                    LOG.warn("Failed to forward C-STORE RSP to " + as, e);
                 }
-            };
-            as2.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
-        } catch (Exception e) {
-            LOG.warn("Failed to forward C-STORE RQ to " + as2, e);
-            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
-        }
+            }
+        };
+        as2.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
     }
 
 }
