@@ -70,7 +70,7 @@ public class Schedule {
     }
 
     public boolean sendNow(final Calendar now) {
-        return days.get(now.get(Calendar.DAY_OF_WEEK))
+        return days.get(now.get(Calendar.DAY_OF_WEEK) - 1)
                 && hours.get(now.get(Calendar.HOUR_OF_DAY) - 1);
     }
 
