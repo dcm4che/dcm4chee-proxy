@@ -79,12 +79,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         else {
             try {
                 forward(as, pc, rq, new InputStreamDataWriter(data), as2);
-            } catch (InterruptedException e) {
-                LOG.warn(e.getMessage());
-                as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-                as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
-                super.onCStoreRQ(as, pc, rq, data);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.warn(e.getMessage());
                 as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
                 as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
@@ -120,32 +115,23 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
                 .readAndCoerceDataset(file);
         try {
             forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
-        } catch (InterruptedException ie) {
-            LOG.warn(ie.getMessage());
-            as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
-            rename(as, file);
-            rsp = Commands.mkRSP(rq, Status.Success);
-            as.writeDimseRSP(pc, rsp);
-            return null;
         } catch (AssociationStateException ass) {
-            LOG.warn(ass.getMessage());
-            as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ass");
-            rename(as, file);
-            rsp = Commands.mkRSP(rq, Status.Success);
-            as.writeDimseRSP(pc, rsp);
-            return null;
-        } catch (IOException e) {
-            LOG.warn(e.getMessage());
-            as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
-            rename(as, file);
-            rsp = Commands.mkRSP(rq, Status.Success);
-            as.writeDimseRSP(pc, rsp);
-            return null;
+            handleForwardException(as, pc, rq, file, ".ass", ass);
+        } catch (Exception e) {
+            handleForwardException(as, pc, rq, file, ".conn", e);
         }
         return file;
+    }
+
+    private File handleForwardException(Association as, PresentationContext pc, Attributes rq,
+            File file, String suffix, Exception e) throws DicomServiceException, IOException {
+        LOG.warn(e.getMessage());
+        as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
+        rename(as, file);
+        Attributes rsp = Commands.mkRSP(rq, Status.Success);
+        as.writeDimseRSP(pc, rsp);
+        return null;
     }
 
     private void rename(Association as, File file) throws DicomServiceException {

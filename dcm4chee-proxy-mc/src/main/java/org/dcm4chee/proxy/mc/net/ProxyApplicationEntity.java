@@ -352,22 +352,34 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         try {
             as2 = connect(destination, rq);
             for (File file : ft.getFiles()) {
-                if (!as2.isReadyForDataTransfer())
-                    break;
-                forward(as2, file);
+                try {
+                    if (as2.isReadyForDataTransfer())
+                        forward(as2, file);
+                    else {
+                        as2.setProperty(FILE_SUFFIX, ".conn");
+                        rename(as2, file);
+                    }
+                } catch (NoPresentationContextException npc) {
+                    handleForwardException(as2, file, npc, ".npc");
+                } catch (AssociationStateException ass) {
+                    handleForwardException(as2, file, ass, ".ass");
+                } catch (IOException ioe){
+                    handleForwardException(as2, file, ioe, ".conn");
+                    releaseAS(as2);
+                }
             }
         } catch (AAssociateRJ rj) {
-            handleNegotiateConnectException(ft, rj, ".rj-" + rj.getResult() + "-" 
+            handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" 
                     + rj.getSource() + "-" + rj.getReason());
         } catch (AAbort aa) {
-            handleNegotiateConnectException(ft, aa, ".aa-" + aa.getSource() + "-"
+            handleProcessException(ft, aa, ".aa-" + aa.getSource() + "-"
                     + aa.getReason());
         } catch (IOException e) {
-            handleNegotiateConnectException(ft, e, ".conn");
+            handleProcessException(ft, e, ".conn");
         } catch (InterruptedException e) {
-            LOG.warn("Unexpected exception:", e);
+            LOG.warn(as2 + ": connection exception: " + e.getMessage());
         } catch (IncompatibleConnectionException e) {
-            LOG.warn(e.getMessage());
+            LOG.warn(as2 + ": incompatible connection: " + e.getMessage());
         } finally {
             if (as2 != null && as2.isReadyForDataTransfer()) {
                 try {
@@ -382,9 +394,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void handleNegotiateConnectException(ForwardTask ft, Exception e, String suffix) 
+    private void handleForwardException(Association as, File file, Exception e, String suffix)
+            throws DicomServiceException {
+        LOG.warn(as + ": " + e.getMessage());
+        as.setProperty(FILE_SUFFIX, suffix);
+        rename(as, file);
+    }
+
+    private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.warn("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
+        LOG.warn(destination.getAETitle() + " connection error: " + e.getMessage());
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));
@@ -399,7 +418,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void forward(final Association as2, final File file) throws DicomServiceException {
+    private void forward(final Association as2, final File file) throws IOException,
+    InterruptedException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -408,7 +428,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
             String tsuid = fmi.getString(Tag.TransferSyntaxUID);
             DimseRSPHandler rspHandler = new DimseRSPHandler(as2.nextMessageID()) {
-                
+
                 @Override
                 public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
                     super.onDimseRSP(as2, cmd, data);
@@ -419,8 +439,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                         delete(as2, file);
                         break;
                     default: {
-                        LOG.warn("{}: Failed to forward file {} with error status {}", 
-                                new Object[]{ as2, file, Integer.toHexString(status) + 'H' });
+                        LOG.warn("{}: Failed to forward file {} with error status {}",
+                                new Object[] { as2, file, Integer.toHexString(status) + 'H' });
                         as2.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                         try {
                             rename(as2, file);
@@ -432,27 +452,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 }
             };
             as2.cstore(cuid, iuid, forwardPriority, createDataWriter(in), tsuid, rspHandler);
-        } catch (NoPresentationContextException npc) {
-            handleForwardException(as2, file, npc, ".npc");
-        } catch (AssociationStateException as) {
-            handleForwardException(as2, file, as, ".ass");
-        } catch (IOException e) {
-            handleForwardException(as2, file, e, ".conn");
-        } catch (InterruptedException e) {
-            LOG.warn(as2 + ": Unexpected exception:", e);
         } finally {
             SafeClose.close(in);
         }
-      
+
     }
 
-    private void handleForwardException(final Association as, final File file,
-            Exception e, String suffix) throws DicomServiceException {
-        LOG.warn(as + ": Failed to forward file:" + file + " : " + e.getMessage());
-        as.setProperty(FILE_SUFFIX, suffix);
-        rename(as, file);
-    }
-    
     private void rename(Association as, File file) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.concat((String) as.getProperty(FILE_SUFFIX)));
