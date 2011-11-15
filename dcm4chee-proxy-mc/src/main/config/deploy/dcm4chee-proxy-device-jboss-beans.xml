@@ -93,20 +93,23 @@
       <list>
         <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
           <constructor>
-            <property name="AString">.conn</property>
-            <property name="AInt">60</property>
+            <property name="AString">.conn</property><!-- retry type -->
+            <property name="AInt">60</property><!-- time in seconds -->
+            <property name="AInt">5</property><!-- number of retries -->
           </constructor>
         </javabean>
         <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
           <constructor>
-            <property name="AString">.ass</property>
-            <property name="AInt">60</property>
+            <property name="AString">.ass</property><!-- retry type -->
+            <property name="AInt">60</property><!-- time in seconds -->
+            <property name="AInt">5</property><!-- number of retries -->
           </constructor>
         </javabean>
         <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
           <constructor>
-            <property name="AString">.npc</property>
-            <property name="AInt">60</property>
+            <property name="AString">.npc</property><!-- retry type -->
+            <property name="AInt">60</property><!-- time in seconds -->
+            <property name="AInt">5</property><!-- number of retries -->
           </constructor>
         </javabean>
       </list>

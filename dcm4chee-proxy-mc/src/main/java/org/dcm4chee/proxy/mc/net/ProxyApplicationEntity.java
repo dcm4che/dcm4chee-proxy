@@ -47,6 +47,8 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
@@ -79,6 +81,7 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -327,17 +330,21 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 String path = pathname.getPath();
                 if (path.endsWith(".dcm"))
                     return true;
+                String file = path.substring(path.lastIndexOf(System.getProperty("file.separator")) + 1);
                 for (Retry retry : retries)
-                    if (path.endsWith(retry.suffix)
-                            && (now > pathname.lastModified() + retryDelay(retry, path)))
+                    if (path.endsWith(retry.suffix) && numRetry(retry, file) 
+                            && (now > pathname.lastModified() + retryDelay(retry, file)))
                         return true;
                 return false;
             }
 
-            private double retryDelay(Retry retry, String path) {
-                String file = path.substring(path.lastIndexOf(System.getProperty("file.separator")) + 1);
+            private double retryDelay(Retry retry, String file) {
                 int power = file.split("\\.").length - 2;
                 return retry.delay * 1000 * Math.pow(2, power);
+            }
+            
+            private boolean numRetry(Retry retry, String file) {
+                return file.split(retry.suffix, -1).length -1 <= (Integer) retry.numretry;
             }
         };
     }

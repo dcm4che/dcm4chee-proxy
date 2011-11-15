@@ -40,15 +40,17 @@ package org.dcm4chee.proxy.mc.net;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class Retry {
 
     public final String suffix;
     public final int delay;
+    public final int numretry;
 
-    public Retry(String suffix, int delay) {
+    public Retry(String suffix, int delay, int numretry) {
         this.suffix = suffix;
         this.delay = delay;
+        this.numretry = numretry;
     }
 }
