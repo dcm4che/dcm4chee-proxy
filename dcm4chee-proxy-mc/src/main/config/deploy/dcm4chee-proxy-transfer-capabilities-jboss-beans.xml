@@ -50,10 +50,10 @@
       <parameter>1.2.840.10008.1.1</parameter>
       <parameter>SCP</parameter>
       <parameter>
-        <array>
+        <list>
           <!--Implicit VR Little Endian, Transfer Syntax -->
           <value>1.2.840.10008.1.2</value>
-        </array>
+        </list>
       </parameter>
     </constructor>
   </bean>

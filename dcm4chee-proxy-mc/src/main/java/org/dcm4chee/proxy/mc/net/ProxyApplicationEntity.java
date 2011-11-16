@@ -238,8 +238,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq, AAssociateAC ac,
-            Exception e, String suffix, int reason) throws IOException, AAbort {
+    private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
+            AAssociateAC ac, Exception e, String suffix, int reason) throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
         LOG.warn("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
         if (acceptDataOnFailedNegotiation) {
