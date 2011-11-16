@@ -124,6 +124,7 @@
         <inject bean="ProxyConnection1" />
       </parameter>
     </uninstall>
+    <property name="exclusiveUseDefinedTS">true</property>
     <incallback method="addTransferCapability" />
   </bean>
 

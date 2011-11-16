@@ -47,8 +47,6 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
@@ -81,7 +79,6 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
-import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -104,6 +101,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
     private boolean acceptDataOnFailedNegotiation;
+    private boolean exclusiveUseDefinedTS;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -111,6 +109,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void setAcceptDataOnFailedNegotiation(boolean acceptDataOnFailedNegotiation) {
         this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
+    }
+
+    public void setExclusiveUseDefinedTS(boolean exclusiveUseDefinedTS) {
+        this.exclusiveUseDefinedTS = exclusiveUseDefinedTS;
+    }
+
+    public boolean isExclusiveUseDefinedTS() {
+        return exclusiveUseDefinedTS;
     }
 
     public ProxyApplicationEntity(String aeTitle) {
@@ -201,8 +207,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             else
                 releaseAS(as2);
             AAssociateAC ac2 = as2.getAAssociateAC();
-            for (PresentationContext pc : ac2.getPresentationContexts())
-                ac.addPresentationContext(pc);
+            if (exclusiveUseDefinedTS) {
+                AAssociateAC acLocal = super.negotiate(as, rq, new AAssociateAC());
+                for (PresentationContext pc : ac2.getPresentationContexts())
+                    if (acLocal.getPresentationContext(pc.getPCID())!=null)
+                        ac.addPresentationContext(pc);
+            } else
+                for (PresentationContext pc : ac2.getPresentationContexts())
+                    ac.addPresentationContext(pc);
             for (RoleSelection rs : ac2.getRoleSelections())
                 ac.addRoleSelection(rs);
             for (ExtendedNegotiation extNeg : ac2.getExtendedNegotiations())
@@ -212,29 +224,29 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             return ac;
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, rj, ".rj-" + rj.getResult() + "-" 
-                    + rj.getSource() + "-" + rj.getReason());
+                    + rj.getSource() + "-" + rj.getReason(), rj.getReason());
         } catch (AAbort aa) {
             return handleNegotiateConnectException(as, rq, ac, aa, ".aa-" + aa.getSource() + "-"
-                    + aa.getReason());
+                    + aa.getReason(), aa.getReason());
         } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, e, ".conn");
+            return handleNegotiateConnectException(as, rq, ac, e, ".conn", 0);
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception:", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException ic) {
-            return handleNegotiateConnectException(as, rq, ac, ic, ".conf"); 
+            return handleNegotiateConnectException(as, rq, ac, ic, ".conf", 0); 
         }
     }
 
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq, AAssociateAC ac,
-            Exception e, String suffix) throws IOException, AAbort {
+            Exception e, String suffix, int reason) throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
         LOG.warn("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
         if (acceptDataOnFailedNegotiation) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
         }
-        throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
+        throw new AAbort(AAbort.UL_SERIVE_PROVIDER, reason);
     }
 
     @Override
@@ -344,7 +356,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
             
             private boolean numRetry(Retry retry, String file) {
-                return file.split(retry.suffix, -1).length -1 <= (Integer) retry.numretry;
+                return file.split(retry.suffix, -1).length -1 < (Integer) retry.numretry;
             }
         };
     }
