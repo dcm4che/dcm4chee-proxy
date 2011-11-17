@@ -111,11 +111,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
     }
 
-    public void setExclusiveUseDefinedTS(boolean exclusiveUseDefinedTS) {
-        this.exclusiveUseDefinedTC = exclusiveUseDefinedTS;
+    public void setExclusiveUseDefinedTC(boolean exclusiveUseDefinedTC) {
+        this.exclusiveUseDefinedTC = exclusiveUseDefinedTC;
     }
 
-    public boolean isExclusiveUseDefinedTS() {
+    public boolean isExclusiveUseDefinedTC() {
         return exclusiveUseDefinedTC;
     }
 

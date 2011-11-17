@@ -145,6 +145,8 @@
   <bean name="ForwardConnection1" class="org.dcm4che.net.Connection">
     <property name="hostname">localhost</property>
     <property name="port">11113</property>
+    <property name="requestTimeout">1000</property><!-- time in milliseconds -->
+    <property name="dimseRSPTimeout">1000</property><!-- time in milliseconds -->
   </bean>
 
   <!-- Forward DICOM Application Entity -->
