@@ -209,9 +209,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (exclusiveUseDefinedTS) {
                 AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
-                for (PresentationContext pc : acCalled.getPresentationContexts()) {
-                    final PresentationContext localPC = acProxy.getPresentationContext(pc.getPCID());
-                    ac.addPresentationContext(localPC.isAccepted() ? pc : localPC);
+                for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
+                    final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
+                    ac.addPresentationContext(pcLocal.isAccepted() ? pcCalled : pcLocal);
                 }
             } else
                 for (PresentationContext pc : acCalled.getPresentationContexts())
