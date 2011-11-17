@@ -125,7 +125,20 @@
       </parameter>
     </uninstall>
     <property name="exclusiveUseDefinedTS">true</property>
+    <!-- add all TC -->
     <incallback method="addTransferCapability" />
+    <!-- add defined TC 
+    <install method="addTransferCapability" >
+      <parameter>
+        <inject bean="MRStorageSCP" />
+      </parameter>
+    </install>
+    <install method="addTransferCapability" >
+      <parameter>
+        <inject bean="MRStorageSCU" />
+      </parameter>
+    </install>
+    -->
   </bean>
 
   <!-- Forward Connection -->
