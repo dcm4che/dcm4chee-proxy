@@ -101,7 +101,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
     private boolean acceptDataOnFailedNegotiation;
-    private boolean exclusiveUseDefinedTS;
+    private boolean exclusiveUseDefinedTC;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -112,11 +112,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public void setExclusiveUseDefinedTS(boolean exclusiveUseDefinedTS) {
-        this.exclusiveUseDefinedTS = exclusiveUseDefinedTS;
+        this.exclusiveUseDefinedTC = exclusiveUseDefinedTS;
     }
 
     public boolean isExclusiveUseDefinedTS() {
-        return exclusiveUseDefinedTS;
+        return exclusiveUseDefinedTC;
     }
 
     public ProxyApplicationEntity(String aeTitle) {
@@ -207,7 +207,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             else
                 releaseAS(asCalled);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
-            if (exclusiveUseDefinedTS) {
+            if (exclusiveUseDefinedTC) {
                 AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());

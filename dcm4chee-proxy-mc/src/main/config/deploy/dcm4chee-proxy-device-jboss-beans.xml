@@ -124,7 +124,7 @@
         <inject bean="ProxyConnection1" />
       </parameter>
     </uninstall>
-    <property name="exclusiveUseDefinedTS">true</property>
+    <property name="exclusiveUseDefinedTC">true</property>
     <!-- add all TC -->
     <incallback method="addTransferCapability" />
     <!-- add defined TC 
