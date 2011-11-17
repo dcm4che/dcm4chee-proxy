@@ -200,26 +200,27 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 rq.setCallingAET(useCallingAETitle);
             if (!destination.getAETitle().equals("*"))
                 rq.setCalledAET(destination.getAETitle());
-            Association as2;
-            as2 = connect(destination, rq);
+            Association asCalled;
+            asCalled = connect(destination, rq);
             if (sendNow)
-                as.setProperty(FORWARD_ASSOCIATION, as2);
+                as.setProperty(FORWARD_ASSOCIATION, asCalled);
             else
-                releaseAS(as2);
-            AAssociateAC ac2 = as2.getAAssociateAC();
+                releaseAS(asCalled);
+            AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (exclusiveUseDefinedTS) {
-                AAssociateAC acLocal = super.negotiate(as, rq, new AAssociateAC());
-                for (PresentationContext pc : ac2.getPresentationContexts())
-                    if (acLocal.getPresentationContext(pc.getPCID())!=null)
-                        ac.addPresentationContext(pc);
+                AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
+                for (PresentationContext pc : acCalled.getPresentationContexts()) {
+                    final PresentationContext localPC = acProxy.getPresentationContext(pc.getPCID());
+                    ac.addPresentationContext(localPC.isAccepted() ? pc : localPC);
+                }
             } else
-                for (PresentationContext pc : ac2.getPresentationContexts())
+                for (PresentationContext pc : acCalled.getPresentationContexts())
                     ac.addPresentationContext(pc);
-            for (RoleSelection rs : ac2.getRoleSelections())
+            for (RoleSelection rs : acCalled.getRoleSelections())
                 ac.addRoleSelection(rs);
-            for (ExtendedNegotiation extNeg : ac2.getExtendedNegotiations())
+            for (ExtendedNegotiation extNeg : acCalled.getExtendedNegotiations())
                 ac.addExtendedNegotiation(extNeg);
-            for (CommonExtendedNegotiation extNeg : ac2.getCommonExtendedNegotiations())
+            for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
         } catch (AAssociateRJ rj) {
