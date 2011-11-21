@@ -105,13 +105,6 @@
             <property name="AInt">5</property><!-- number of retries -->
           </constructor>
         </javabean>
-        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
-          <constructor>
-            <property name="AString">.npc</property><!-- retry type -->
-            <property name="AInt">60</property><!-- time in seconds -->
-            <property name="AInt">5</property><!-- number of retries -->
-          </constructor>
-        </javabean>
       </list>
     </property>
     <install method="addConnection">
@@ -139,6 +132,8 @@
       </parameter>
     </install>
     -->
+    <property name="enableAuditLog">true</property>
+    <property name="auditDirectory">${jboss.server.data.dir}/auditlog/</property>
   </bean>
 
   <!-- Forward Connection -->
@@ -181,9 +176,17 @@
       <parameter>
         <inject bean="Device"></inject>
       </parameter>
+      <parameter>
+        <inject bean="AuditLog"></inject>
+      </parameter>
     </constructor>
     <start method="start" />
     <stop method="stop" />
+  </bean>
+  
+  <!-- Audit Log -->
+  <bean name="AuditLog" class="org.dcm4chee.proxy.mc.net.AuditLog">
+    <property name="schedule">60</property>
   </bean>
   
 </deployment>

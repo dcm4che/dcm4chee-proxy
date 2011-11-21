@@ -74,13 +74,14 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (as2 == null)
             super.onCStoreRQ(as, pc, rq, data);
-        else if (((ProxyApplicationEntity) as.getApplicationEntity()).isCoerceAttributes())
+        else if (((ProxyApplicationEntity) as.getApplicationEntity()).isCoerceAttributes()
+                || ((ProxyApplicationEntity) as.getApplicationEntity()).isEnableAuditLog())
             super.store(as, pc, rq, data, null);
         else {
             try {
                 forward(as, pc, rq, new InputStreamDataWriter(data), as2);
             } catch (Exception e) {
-                LOG.warn(e.getMessage());
+                LOG.debug(e.getMessage());
                 as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
                 as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
                 super.onCStoreRQ(as, pc, rq, data);
@@ -111,8 +112,12 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             rename(as, file);
             return null;
         }
-        Attributes attrs = ((ProxyApplicationEntity) as.getApplicationEntity())
-                .readAndCoerceDataset(file);
+        ProxyApplicationEntity pae = ((ProxyApplicationEntity) as.getApplicationEntity());
+        Attributes attrs = pae.readAndCoerceDataset(file);
+        if (pae.isEnableAuditLog()) {
+            pae.createStartLogFile(as2, attrs);
+            pae.writeLogFile(as2, attrs, file.length());
+        }
         try {
             forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
         } catch (AssociationStateException ass) {
@@ -125,7 +130,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
 
     private File handleForwardException(Association as, PresentationContext pc, Attributes rq,
             File file, String suffix, Exception e) throws DicomServiceException, IOException {
-        LOG.warn(e.getMessage());
+        LOG.debug(e.getMessage());
         as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
         rename(as, file);
@@ -139,7 +144,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         File dst = new File(path.substring(0, path.length() - 5)
                 .concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst))
-            LOG.info("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
+            LOG.debug("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
         else {
             LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] {as, file, dst});
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");

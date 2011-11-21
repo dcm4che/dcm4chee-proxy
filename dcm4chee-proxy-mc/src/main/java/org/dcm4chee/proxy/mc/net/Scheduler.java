@@ -51,10 +51,12 @@ import org.dcm4che.net.Device;
 public class Scheduler {
 
     private final Device device;
+    private final AuditLog log;
     private ScheduledFuture<?> timer;
 
-    public Scheduler(Device device) {
+    public Scheduler(Device device, AuditLog log) {
         this.device = device;
+        this.log = log;
     }
 
     public void start() {
@@ -64,8 +66,10 @@ public class Scheduler {
             @Override
             public void run() {
                 for (ApplicationEntity ae : device.getApplicationEntities()) {
-                    if (ae instanceof ProxyApplicationEntity)
+                    if (ae instanceof ProxyApplicationEntity) {
                         ((ProxyApplicationEntity) ae).forwardFiles();
+                        log.writeLog((ProxyApplicationEntity) ae);
+                    }
                 }
             }}, period, period, TimeUnit.SECONDS);
     }

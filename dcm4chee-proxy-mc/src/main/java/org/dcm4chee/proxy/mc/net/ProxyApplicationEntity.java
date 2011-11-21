@@ -40,6 +40,7 @@ package org.dcm4chee.proxy.mc.net;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -47,6 +48,7 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
@@ -86,6 +88,7 @@ import org.dcm4che.util.SafeClose;
  */
 public class ProxyApplicationEntity extends ApplicationEntity {
 
+    private static final String separator = System.getProperty("file.separator");
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
 
@@ -102,6 +105,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private List<Retry> retries = new ArrayList<Retry>();
     private boolean acceptDataOnFailedNegotiation;
     private boolean exclusiveUseDefinedTC;
+    private boolean enableAuditLog;
+    private File auditDirectory;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -183,6 +188,22 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return retries;
     }
 
+    public void setEnableAuditLog(boolean enableAuditLog) {
+        this.enableAuditLog = enableAuditLog;
+    }
+
+    public boolean isEnableAuditLog() {
+        return enableAuditLog;
+    }
+
+    public void setAuditDirectory(File auditDirectory) {
+        this.auditDirectory = auditDirectory;
+    }
+
+    public File getAuditDirectory() {
+        return auditDirectory;
+    }
+
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
@@ -242,7 +263,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
             AAssociateAC ac, Exception e, String suffix, int reason) throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.warn("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
+        LOG.debug("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
         if (acceptDataOnFailedNegotiation) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
@@ -281,8 +302,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } finally {
             SafeClose.close(in);
         }
-        
-        coerceAttributes(attrs);
+        if(isCoerceAttributes())
+            coerceAttributes(attrs);
         return attrs;
     }
 
@@ -343,7 +364,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 String path = pathname.getPath();
                 if (path.endsWith(".dcm"))
                     return true;
-                String file = path.substring(path.lastIndexOf(System.getProperty("file.separator")) + 1);
+                String file = path.substring(path.lastIndexOf(separator) + 1);
                 for (Retry retry : retries)
                     if (path.endsWith(retry.suffix) && numRetry(retry, file) 
                             && (now > pathname.lastModified() + retryDelay(retry, file)))
@@ -373,8 +394,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             as2 = connect(destination, rq);
             for (File file : ft.getFiles()) {
                 try {
-                    if (as2.isReadyForDataTransfer())
+                    if (as2.isReadyForDataTransfer()){
                         forward(as2, file);
+                    }
                     else {
                         as2.setProperty(FILE_SUFFIX, ".conn");
                         rename(as2, file);
@@ -416,20 +438,20 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void handleForwardException(Association as, File file, Exception e, String suffix)
             throws DicomServiceException {
-        LOG.warn(as + ": " + e.getMessage());
+        LOG.debug(as + ": " + e.getMessage());
         as.setProperty(FILE_SUFFIX, suffix);
         rename(as, file);
     }
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.warn(destination.getAETitle() + " connection error: " + e.getMessage());
+        LOG.debug(destination.getAETitle() + " connection error: " + e.getMessage());
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));
             if (file.renameTo(dst)) {
                 dst.setLastModified(System.currentTimeMillis());
-                LOG.info("{}: M-RENAME to {}", new Object[] { file, dst });
+                LOG.debug("{}: M-RENAME to {}", new Object[] { file, dst });
             }
             else {
                 LOG.warn("{}: Failed to M-RENAME to {}", new Object[] { file, dst });
@@ -444,9 +466,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         try {
             in = new DicomInputStream(file);
             Attributes fmi = in.readFileMetaInformation();
-            String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
-            String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
-            String tsuid = fmi.getString(Tag.TransferSyntaxUID);
+            final String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
+            final String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
+            final String tsuid = fmi.getString(Tag.TransferSyntaxUID);
+            final Attributes[] ds = new Attributes[1];
+            final long fileSize = file.length();
             DimseRSPHandler rspHandler = new DimseRSPHandler(as2.nextMessageID()) {
 
                 @Override
@@ -456,6 +480,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     switch (status) {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
+                        try {
+                            writeLogFile(as2, ds[0], fileSize);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         delete(as2, file);
                         break;
                     default: {
@@ -471,11 +500,25 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            as2.cstore(cuid, iuid, forwardPriority, createDataWriter(in), tsuid, rspHandler);
+            if (isEnableAuditLog())
+                createStartLogFile(as2, ds[0]);
+            as2.cstore(cuid, iuid, forwardPriority, 
+                    createDataWriter(in, as2, ds), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }
 
+    }
+
+    public void createStartLogFile(final Association as2, final Attributes attrs)
+            throws IOException {
+        File file = new File(getLogDir(as2, attrs), "start.log");
+        if (!file.exists()) {
+            Properties prop = new Properties();
+            prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
+            prop.store(new FileOutputStream(file), null);
+            prop.store(new FileOutputStream(file), null);
+        }
     }
 
     private void rename(Association as, File file) throws DicomServiceException {
@@ -483,7 +526,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         File dst = new File(path.concat((String) as.getProperty(FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.info("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
+            LOG.debug("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
         }
         else {
             LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] {as, file, dst});
@@ -491,11 +534,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private DataWriter createDataWriter(DicomInputStream in) throws IOException {
+    private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds) 
+        throws IOException {
         if (isCoerceAttributes()) {
             in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);
             coerceAttributes(attrs);
+            ds[0] = attrs;
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);
@@ -503,7 +548,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private static void delete(Association as, File file) {
         if (file.delete())
-            LOG.info("{}: M-DELETE {}", as, file);
+            LOG.debug("{}: M-DELETE {}", as, file);
         else
             LOG.warn("{}: Failed to M-DELETE {}", as, file);
     }
@@ -537,6 +582,30 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } finally {
             SafeClose.close(in);
         }
+    }
+    
+    public void writeLogFile(Association as, Attributes attrs, long size)
+    throws IOException {
+        Properties prop = new Properties();
+        try {
+            File file = new File(getLogDir(as, attrs), 
+                    attrs.getString(Tag.SOPInstanceUID).concat(".log"));
+            prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
+            prop.setProperty("size", String.valueOf(size));
+            prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
+            prop.store(new FileOutputStream(file), null);
+        } catch (Exception e) {
+            LOG.warn(as + ": Failed to create log file:", e);
+            throw new IOException(e);
+        }
+    }
+
+    private File getLogDir(Association as, Attributes attrs) {
+        File logDir = new File(getAuditDirectory() + separator + as.getCalledAET() + separator 
+                + as.getCallingAET() + separator + attrs.getString(Tag.StudyInstanceUID));
+        if (!logDir.exists())
+            logDir.mkdirs();
+        return logDir;
     }
 
 }
