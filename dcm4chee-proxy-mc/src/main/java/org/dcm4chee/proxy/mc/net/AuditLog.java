@@ -45,8 +45,12 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,10 +124,13 @@ public class AuditLog {
             String callingAET = path.substring(path.lastIndexOf(separator)+1);
             path = path.substring(0, path.lastIndexOf(separator));
             String calledAET = path.substring(path.lastIndexOf(separator)+1);
-            LOG.info(MessageFormat.format("Sent {0} objects (={1}MB) of study {2} from {3} to {4} in {5}s (={6}MB/s)",
-                    log.files - 1, mb, studyIUID, callingAET, calledAET, time, (log.totalSize / 1048576F) / time));
+            LOG.info(MessageFormat.format(
+                    "Sent {0} objects (={1}MB) of study [{2}] with SOPClassUIDs {3} " +
+                    "from {4} to {5} in {6}s (={7}MB/s)",
+                    log.files - 1, mb, studyIUID, Arrays.toString(log.sopclassuid.toArray()), 
+                    callingAET, calledAET, time, (log.totalSize / 1048576F) / time));
             for (File file : logFiles)
-                if(!file.delete())
+                if (!file.delete())
                     LOG.warn("Failed to delete " + file);
             if (!studyIUIDDir.delete())
                 LOG.warn("Failed to delete " + studyIUIDDir);
@@ -135,8 +142,10 @@ public class AuditLog {
         try {
             final FileInputStream inStream = new FileInputStream(file);
             prop.load(inStream);
-            if (!file.getPath().endsWith("start.log"))
+            if (!file.getPath().endsWith("start.log")) {
                 log.totalSize = log.totalSize + Long.parseLong(prop.getProperty("size"));
+                log.sopclassuid.add(prop.getProperty("SOPClassUID"));
+            }
             long time = Long.parseLong(prop.getProperty("time"));
             inStream.close();
             log.t1 = (log.t1 == 0 || log.t1 > time) ? time : log.t1;
@@ -160,9 +169,10 @@ public class AuditLog {
         };
     }
 
-    public class Log {
+    private class Log {
         private long totalSize;
         private int files;
         private long t1, t2;
+        private Set<String> sopclassuid = new HashSet<String>();
     }
 }
