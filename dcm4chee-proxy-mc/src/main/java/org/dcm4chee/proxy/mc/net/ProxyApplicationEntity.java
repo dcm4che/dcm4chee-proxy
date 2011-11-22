@@ -500,8 +500,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            if (isEnableAuditLog())
-                createStartLogFile(as2, ds[0]);
             as2.cstore(cuid, iuid, forwardPriority, 
                     createDataWriter(in, as2, ds), tsuid, rspHandler);
         } finally {
@@ -510,9 +508,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     }
 
-    public void createStartLogFile(final Association as2, final Attributes attrs)
+    public void createStartLogFile(final Association as, final Attributes attrs)
             throws IOException {
-        File file = new File(getLogDir(as2, attrs), "start.log");
+        File file = new File(getLogDir(as, attrs), "start.log");
         if (!file.exists()) {
             Properties prop = new Properties();
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
@@ -536,11 +534,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds) 
         throws IOException {
-        if (isCoerceAttributes()) {
+        if (isCoerceAttributes() || isEnableAuditLog()) {
             in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);
             coerceAttributes(attrs);
             ds[0] = attrs;
+            if (isEnableAuditLog())
+                createStartLogFile(as, ds[0]);
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);
@@ -601,7 +601,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private File getLogDir(Association as, Attributes attrs) {
-        File logDir = new File(getAuditDirectory() + separator + as.getCalledAET() + separator 
+        File logDir = new File(getAuditDirectory().getPath() + separator + as.getCalledAET() + separator 
                 + as.getCallingAET() + separator + attrs.getString(Tag.StudyInstanceUID));
         if (!logDir.exists())
             logDir.mkdirs();
