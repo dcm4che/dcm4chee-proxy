@@ -12,8 +12,8 @@
    - for the specific language governing rights and limitations under the
    - License.
    -
-   - The Original Code is part of dcm4che, an implementation of DICOM(TM) in
-   - Java(TM), hosted at https://github.com/gunterze/dcm4che.
+   - The Original Code is part of dcm4chee-proxy, an implementation of DICOM(TM) in
+   - Java(TM), hosted at https://github.com/gunterze/dcm4chee-proxy.
    -
    - The Initial Developer of the Original Code is
    - Agfa Healthcare.
@@ -50,18 +50,22 @@
       <parameter>1.2.840.10008.1.1</parameter>
       <parameter>SCP</parameter>
       <parameter>
-        <list>
+        <array>
           <!--Implicit VR Little Endian, Transfer Syntax -->
           <value>1.2.840.10008.1.2</value>
-        </list>
+        </array>
       </parameter>
     </constructor>
   </bean>
 
   <!-- STORAGE SERVICE CLASS -->
 
-  <bean name="ImageTSUIDs" class="java.util.List">
-    <constructor factoryClass="java.util.Arrays" factoryMethod="asList">
+  <!-- Computed Radiography Image Storage -->
+  <bean name="CRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1</parameter>
+      <parameter>SCP</parameter>
       <parameter>
         <array>
           <!--Implicit VR Little Endian, Transfer Syntax -->
@@ -95,23 +99,230 @@
     </constructor>
   </bean>
 
-  <bean name="VideoTSUIDs" class="java.util.List">
-    <constructor factoryClass="java.util.Arrays" factoryMethod="asList">
-      <parameter>
-        <array>
-          <!-- JPEG Baseline (Process 1), Transfer Syntax -->
-          <value>1.2.840.10008.1.2.4.50</value>
-          <!-- MPEG2 Main Profile @ Main Level, Transfer Syntax -->
-          <value>1.2.840.10008.1.2.4.100</value>
-          <!-- MPEG2 Main Profile @ High Level, Transfer Syntax -->
-          <value>1.2.840.10008.1.2.4.101</value>
-        </array>
-      </parameter>
+  <bean name="CRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
-  <bean name="NoneImageTSUIDs" class="java.util.List">
-    <constructor factoryClass="java.util.Arrays" factoryMethod="asList">
+  <!-- Digital X-Ray Image Storage - For Presentation -->
+  <bean name="DXPresStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="DXPresStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="DXPresStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital X-Ray Image Storage - For Processing -->
+  <bean name="DXProcStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="DXProcStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.1.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="DXProcStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Mammography Image Storage - For Presentation -->
+  <bean name="MGPresStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MGPresStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="MGPresStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Mammography Image Storage - For Processing -->
+  <bean name="MGProcStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MGProcStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="MGProcStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Intra-oral X-Ray Image Storage - For Presentation -->
+  <bean name="IOPresStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="IOPresStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="IOPresStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Digital Intra-oral X-Ray Image Storage - For Processing -->
+  <bean name="IOProcStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="IOProcStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.1.3.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="IOProcStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- CT Image Storage -->
+  <bean name="CTStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="CTStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="CTStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Enhanced CT Image Storage -->
+  <bean name="EnhancedCTStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedCTStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.2.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="EnhancedCTStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- Ultrasound Multi-frame Image Storage -->
+  <bean name="USMFStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.3.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="USMFStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.3.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="USMFStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- MR Image Storage -->
+  <bean name="MRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="MRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="MRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!--Enhanced MR Image Storage -->
+  <bean name="EnhancedMRStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <bean name="EnhancedMRStorageSCU" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.1</parameter>
+      <parameter>SCU</parameter>
+      <parameter><inject bean="EnhancedMRStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!--MR Spectroscopy Storage -->
+  <bean name="MSStorageSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.1.4.2</parameter>
+      <parameter>SCP</parameter>
       <parameter>
         <array>
           <!--Implicit VR Little Endian, Transfer Syntax -->
@@ -127,250 +338,12 @@
     </constructor>
   </bean>
 
-  <!-- Computed Radiography Image Storage -->
-  <bean name="CRStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="CRStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Digital X-Ray Image Storage - For Presentation -->
-  <bean name="DXPresStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="DXPresStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Digital X-Ray Image Storage - For Processing -->
-  <bean name="DXProcStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.1.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="DXProcStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.1.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Digital Mammography Image Storage - For Presentation -->
-  <bean name="MGPresStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.2</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="MGPresStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.2</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Digital Mammography Image Storage - For Processing -->
-  <bean name="MGProcStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.2.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="MGProcStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.2.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Digital Intra-oral X-Ray Image Storage - For Presentation -->
-  <bean name="IOPresStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.3</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="IOPresStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.3</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Digital Intra-oral X-Ray Image Storage - For Processing -->
-  <bean name="IOProcStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.3.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="IOProcStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.1.3.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- CT Image Storage -->
-  <bean name="CTStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.2</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="CTStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.2</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Enhanced CT Image Storage -->
-  <bean name="EnhancedCTStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.2.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="EnhancedCTStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.2.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- Ultrasound Multi-frame Image Storage -->
-  <bean name="USMFStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.3.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="USMFStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.3.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!-- MR Image Storage -->
-  <bean name="MRStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.4</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="MRStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.4</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!--Enhanced MR Image Storage -->
-  <bean name="EnhancedMRStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.4.1</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <bean name="EnhancedMRStorageSCU" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.4.1</parameter>
-      <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
-  <!--MR Spectroscopy Storage -->
-  <bean name="MSStorageSCP" class="org.dcm4che.net.TransferCapability">
-    <constructor>
-      <parameter><null/></parameter>
-      <parameter>1.2.840.10008.5.1.4.1.1.4.2</parameter>
-      <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
-    </constructor>
-  </bean>
-
   <bean name="MSStorageSCU" class="org.dcm4che.net.TransferCapability">
     <constructor>
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.4.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -380,7 +353,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.4.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -389,7 +362,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.4.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -399,7 +372,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.6.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -408,7 +381,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.6.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -418,7 +391,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.6.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -427,7 +400,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.6.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -437,7 +410,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -446,7 +419,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -456,7 +429,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -465,7 +438,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MFSingleBitSCStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -475,7 +448,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -484,7 +457,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -494,7 +467,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -503,7 +476,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -513,7 +486,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -522,7 +495,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.7.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -532,7 +505,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.1.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -541,7 +514,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.1.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="TwelveLeadECGStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -551,7 +524,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.1.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -560,7 +533,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.1.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ECGStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -570,7 +543,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.1.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -579,7 +552,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.1.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="AmbulatoryECGStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -589,7 +562,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.2.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -598,7 +571,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.2.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="HDStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -608,7 +581,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.3.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -617,7 +590,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.3.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="EPSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -627,7 +600,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.4.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -636,7 +609,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.4.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="BasicVoiceAUStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -646,7 +619,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.4.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -655,7 +628,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.4.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="AUStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -665,7 +638,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.5.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -674,7 +647,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.5.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ArterialPulseHDStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -684,7 +657,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.6.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -693,7 +666,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.9.6.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RESPStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -703,7 +676,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -712,7 +685,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="GrayscalePRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -722,7 +695,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -731,7 +704,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ColorPRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -741,7 +714,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -750,7 +723,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="PseudoColorPRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -760,7 +733,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -769,7 +742,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="BlendingPRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -779,7 +752,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.5</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -788,7 +761,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.11.5</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="XAXRFGrayscalePRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -798,7 +771,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="XAStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -807,7 +780,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="XAStorageSCU" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -817,7 +790,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.1.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -826,7 +799,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.1.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="EnhancedXAStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -836,7 +809,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -845,7 +818,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="XRFStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -855,7 +828,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.2.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -864,7 +837,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.2.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="EnhancedXRFStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -874,7 +847,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.13.1.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -883,7 +856,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.13.1.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="XA3DStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -893,7 +866,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.13.1.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -902,7 +875,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.13.1.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CraniofacialStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -912,7 +885,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.13.1.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -921,7 +894,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.13.1.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="BreastTomosynthesisStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -931,7 +904,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.20</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -940,7 +913,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.20</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="NMStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -950,7 +923,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -959,7 +932,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RawDataStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -969,7 +942,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -978,7 +951,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="REGStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -988,7 +961,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -997,7 +970,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="FIDStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1007,7 +980,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1016,7 +989,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="DeformableREGStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1026,7 +999,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1035,7 +1008,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.66.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="SEGStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1045,7 +1018,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.67</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1054,7 +1027,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.67</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RWVStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1064,7 +1037,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1073,7 +1046,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="ESStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1083,7 +1056,16 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.1.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+      <parameter>
+        <array>
+          <!-- JPEG Baseline (Process 1), Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.50</value>
+          <!-- MPEG2 Main Profile @ Main Level, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.100</value>
+          <!-- MPEG2 Main Profile @ High Level, Transfer Syntax -->
+          <value>1.2.840.10008.1.2.4.101</value>
+        </array>
+      </parameter>
     </constructor>
   </bean>
 
@@ -1092,7 +1074,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.1.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+      <parameter><inject bean="VideoESStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1102,7 +1084,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1111,7 +1093,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="GMStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1121,7 +1103,8 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.2.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+      <parameter><inject bean="VideoESStorageSCP" property="transferSyntaxes"/></parameter>
+
     </constructor>
   </bean>
 
@@ -1130,7 +1113,8 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.2.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+      <parameter><inject bean="VideoGMStorageSCP" property="transferSyntaxes"/></parameter>
+
     </constructor>
   </bean>
 
@@ -1140,7 +1124,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1149,7 +1133,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="SMStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1159,7 +1143,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1168,7 +1152,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="XCStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1178,7 +1162,8 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.4.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+      <parameter><inject bean="VideoESStorageSCP" property="transferSyntaxes"/></parameter>
+
     </constructor>
   </bean>
 
@@ -1187,7 +1172,8 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.4.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="VideoTSUIDs"/></parameter>
+      <parameter><inject bean="VideoXCStorageSCP" property="transferSyntaxes"/></parameter>
+
     </constructor>
   </bean>
 
@@ -1197,7 +1183,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1206,7 +1192,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="OP8BitStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1216,7 +1202,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1225,7 +1211,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="OP16BitStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1235,7 +1221,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1244,7 +1230,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="SMRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1254,7 +1240,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1263,7 +1249,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.77.1.5.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="OPTStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1273,7 +1259,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1282,7 +1268,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="LENStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1292,7 +1278,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1301,7 +1287,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ARStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1311,7 +1297,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1320,7 +1306,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="KERStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1330,7 +1316,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1339,7 +1325,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="SRFStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1349,7 +1335,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.5</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1358,7 +1344,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.5</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="VAStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1368,7 +1354,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.6</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1377,7 +1363,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.78.6</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="SpectaclePrescriptionSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1387,7 +1373,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.79.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1396,7 +1382,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.79.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MacularGridThicknessVolumeSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1406,7 +1392,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.11</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1415,7 +1401,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.11</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="BasicTextSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1425,7 +1411,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.22</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1434,7 +1420,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.22</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="EnhancedSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1444,7 +1430,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.33</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1453,7 +1439,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.33</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ComprehensiveSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1463,7 +1449,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.40</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1472,7 +1458,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.40</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ProcedureLogStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1482,7 +1468,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.50</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1491,7 +1477,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.50</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MammoCADSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1501,7 +1487,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.59</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1510,7 +1496,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.59</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="KOStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1520,7 +1506,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.65</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1529,7 +1515,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.65</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ChestCADSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1539,7 +1525,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.67</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1548,7 +1534,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.67</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RadiationDoseSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1558,7 +1544,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.69</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1567,7 +1553,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.88.69</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="ColonCADSRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1577,7 +1563,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.104.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1586,7 +1572,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.104.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="EncapsulatedPDFStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1596,7 +1582,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.104.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1605,7 +1591,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.104.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="EncapsulatedCDAStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1615,7 +1601,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.128</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1624,7 +1610,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.128</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="PETStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1634,7 +1620,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.130</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1643,7 +1629,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.130</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="EnhancedPETStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1653,7 +1639,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.131</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1662,7 +1648,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.104.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="StructuredDisplayStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1672,7 +1658,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.1</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1681,7 +1667,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.1</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTImageStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1691,7 +1677,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.2</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1700,7 +1686,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.2</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTDoseStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1710,7 +1696,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1719,7 +1705,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTStructStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1729,7 +1715,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.4</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1738,7 +1724,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.4</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTBeamsTreatmentRecordStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1748,7 +1734,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.5</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1757,7 +1743,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.5</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTPlanStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1767,7 +1753,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.6</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1776,7 +1762,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.6</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTBrachyTreatmentRecordStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1786,7 +1772,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.7</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1795,7 +1781,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.7</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTTreatmentSummaryRecordStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1805,7 +1791,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.8</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1814,7 +1800,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.8</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTIonPlanStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1824,7 +1810,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.9</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="MSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1833,7 +1819,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.481.9</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="NoneImageTSUIDs"/></parameter>
+      <parameter><inject bean="RTIonBeamsTreatmentRecordStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1845,7 +1831,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.5</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1854,7 +1840,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.5</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="RetiredNMStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1864,7 +1850,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.6</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1873,7 +1859,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.6</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="RetiredUSStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1883,7 +1869,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1892,7 +1878,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="RetiredUSMFStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1902,7 +1888,7 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.3</parameter>
       <parameter>SCP</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="CRStorageSCP" property="transferSyntaxes"/></parameter>
     </constructor>
   </bean>
 
@@ -1911,7 +1897,175 @@
       <parameter><null/></parameter>
       <parameter>1.2.840.10008.5.1.4.1.1.12.3</parameter>
       <parameter>SCU</parameter>
-      <parameter class="java.util.List"><inject bean="ImageTSUIDs"/></parameter>
+      <parameter><inject bean="RetiredXABiPlaneStorageSCP" property="transferSyntaxes"/></parameter>
+    </constructor>
+  </bean>
+
+  <!-- QUERY/RETRIEVE SERVICE CLASS -->
+
+  <!-- Patient Root Query/Retrieve Information Model - FIND -->
+  <bean name="PatientRootFindSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.1.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Patient Root Query/Retrieve Information Model - MOVE -->
+  <bean name="PatientRootMoveSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.1.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Patient Root Query/Retrieve Information Model - GET -->
+  <bean name="PatientRootGetSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.1.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Study Root Query/Retrieve Information Model - FIND -->
+  <bean name="StudyRootFindSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.2.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Study Root Query/Retrieve Information Model - MOVE -->
+  <bean name="StudyRootMoveSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.2.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Study Root Query/Retrieve Information Model - GET -->
+  <bean name="StudyRootGetSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.2.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Retired Patient/Study Only Root Query/Retrieve Information Model - FIND -->
+  <bean name="PatientStudyOnlyFindSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.3.1</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+ 
+  <!-- Retired Patient/Study Only Root Query/Retrieve Information Model - MOVE -->
+  <bean name="PatientStudyOnlyMoveSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.3.2</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Retired Patient/Study Only Root Query/Retrieve Information Model - GET -->
+  <bean name="PatientStudyOnlyGetSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.3.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Composite Instance Retrieve Without Bulk Data - GET -->
+  <bean name="WithoutBulkDataGetSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.1.2.5.3</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+
+  <!-- Modality Worklist Information Model - FIND -->
+  <bean name="ModalityWorklistFindSCP" class="org.dcm4che.net.TransferCapability">
+    <constructor>
+      <parameter><null/></parameter>
+      <parameter>1.2.840.10008.5.1.4.31</parameter>
+      <parameter>SCP</parameter>
+      <parameter>
+        <array>
+          <!-- Implicit VR Little Endian, Transfer Syntax -->
+          <value>1.2.840.10008.1.2</value>
+        </array>
+      </parameter>
     </constructor>
   </bean>
 
