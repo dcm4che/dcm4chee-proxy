@@ -186,7 +186,7 @@
   
   <!-- Audit Log -->
   <bean name="AuditLog" class="org.dcm4chee.proxy.mc.net.AuditLog">
-    <property name="schedule">60</property>
+    <property name="delay">60</property><!-- time in seconds -->
   </bean>
   
 </deployment>

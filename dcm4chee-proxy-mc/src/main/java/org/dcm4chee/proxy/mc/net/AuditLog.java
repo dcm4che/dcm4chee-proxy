@@ -45,7 +45,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -64,14 +63,14 @@ public class AuditLog {
 
     ProxyApplicationEntity ae;
 
-    private long schedule;
+    private long delay;
 
-    public long getSchedule() {
-        return schedule;
+    public long getDelay() {
+        return delay;
     }
 
-    public void setSchedule(long schedule) {
-        this.schedule = schedule;
+    public void setDelay(long delay) {
+        this.delay = delay;
     }
 
     public void writeLog(ProxyApplicationEntity ae) {
@@ -125,7 +124,7 @@ public class AuditLog {
             path = path.substring(0, path.lastIndexOf(separator));
             String calledAET = path.substring(path.lastIndexOf(separator)+1);
             LOG.info(MessageFormat.format(
-                    "Sent {0} objects (={1}MB) of study [{2}] with SOPClassUIDs {3} " +
+                    "Sent {0} objects (={1}MB) of study {2} with SOPClassUIDs {3} " +
                     "from {4} to {5} in {6}s (={7}MB/s)",
                     log.files - 1, mb, studyIUID, Arrays.toString(log.sopclassuid.toArray()), 
                     callingAET, calledAET, time, (log.totalSize / 1048576F) / time));
@@ -162,7 +161,7 @@ public class AuditLog {
             @Override
             public boolean accept(File pathname) {
                 String path = pathname.getPath();
-                if (path.endsWith(".log") && now > pathname.lastModified() + getSchedule())
+                if (path.endsWith(".log") && now > pathname.lastModified() + getDelay()*1000)
                     return true;
                 return false;
             }
