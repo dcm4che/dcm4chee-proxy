@@ -77,7 +77,7 @@ public class AuditLog {
         this.ae = ae;
         String aet = ae.getAETitle();
         if (aet.equals("*"))
-            for (String calledAET : ae.getAuditDirectory().list()) {
+            for (String calledAET : ae.getAuditDirectoryPath().list()) {
                 File calledAETDir = new File(ae.getAuditDirectory(), calledAET);
                 scanCalledAETDir(calledAETDir);
             }

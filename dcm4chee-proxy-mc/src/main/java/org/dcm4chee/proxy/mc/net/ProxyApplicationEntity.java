@@ -51,11 +51,8 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.stream.StreamSource;
 
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.io.DicomInputStream;
@@ -89,24 +86,21 @@ import org.dcm4che.util.SafeClose;
 public class ProxyApplicationEntity extends ApplicationEntity {
 
     private static final String separator = System.getProperty("file.separator");
+    private static final String jbossServerDataDir = System.getProperty("jboss.server.data.dir");
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
 
-    private static SAXTransformerFactory saxTransformerFactory =
-            (SAXTransformerFactory) TransformerFactory.newInstance();
-
     private String useCallingAETitle;
-    private ApplicationEntity destination;
+    private String destinationAETitle;
     private Templates attributeCoercion;
     private Schedule schedule;
-    private File spoolDirectory;
-    private String attributeCoercionURI;
+    private String spoolDirectory;
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
     private boolean acceptDataOnFailedNegotiation;
     private boolean exclusiveUseDefinedTC;
     private boolean enableAuditLog;
-    private File auditDirectory;
+    private String auditDirectory;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -128,13 +122,28 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         super(aeTitle);
     }
 
-    public final void setSpoolDirectory(File spoolDirectory) {
-        spoolDirectory.mkdirs();
-        this.spoolDirectory = spoolDirectory;
+    public final void setSpoolDirectory(String spoolDirectoryString) {
+        this.spoolDirectory = spoolDirectoryString;
     }
 
-    public final File getSpoolDirectory() {
+    public final String getSpoolDirectory() {
         return spoolDirectory;
+    }
+    
+    public File getSpoolDirectoryPath() {
+        File path = new File(spoolDirectory);
+        if (!path.isAbsolute())
+            path = new File(jbossServerDataDir, spoolDirectory);
+        path.mkdirs();
+        return path;
+    }
+
+    public int getForwardPriority() {
+        return forwardPriority;
+    }
+
+    public void setForwardPriority(int forwardPriority) {
+        this.forwardPriority = forwardPriority;
     }
 
     public void setUseCallingAETitle(String useCallingAETitle) {
@@ -145,23 +154,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return useCallingAETitle;
     }
 
-    public final void setForwardDestination(ApplicationEntity destination) {
-        this.destination = destination;
+    public String getDestinationAETitle() {
+        return destinationAETitle;
     }
 
-    public final ApplicationEntity getForwardDestination() {
-        return destination;
-    }
-
-    public void setAttributeCoercionURI(String uri) throws TransformerConfigurationException {
-        this.attributeCoercion = uri != null
-                ? saxTransformerFactory.newTemplates(new StreamSource(uri))
-                : null;
-        this.attributeCoercionURI = uri;
-    }
-
-    public final String getAttributeCoercionURI() {
-        return attributeCoercionURI;
+    public void setDestinationAETitle(String destinationAET) {
+        this.destinationAETitle = destinationAET;
     }
 
     public final Templates getAttributeCoercion() {
@@ -169,7 +167,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public final boolean isCoerceAttributes() {
-        return attributeCoercion != null;
+        return getAttributeCoercion() != null;
     }
 
     public final void setForwardSchedule(Schedule schedule) {
@@ -196,19 +194,27 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return enableAuditLog;
     }
 
-    public void setAuditDirectory(File auditDirectory) {
-        this.auditDirectory = auditDirectory;
+    public void setAuditDirectory(String auditDirectoryString) {
+        this.auditDirectory = auditDirectoryString;
     }
 
-    public File getAuditDirectory() {
+    public String getAuditDirectory() {
         return auditDirectory;
+    }
+
+    public File getAuditDirectoryPath() {
+        File path = new File(auditDirectory);
+        if (!path.isAbsolute())
+            path = new File(jbossServerDataDir, auditDirectory);
+        path.mkdirs();
+        return path;
     }
 
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
         final Calendar now = new GregorianCalendar();
-        if (schedule == null || schedule.sendNow(now))
+        if (getForwardSchedule() == null || getForwardSchedule().sendNow(now))
             return forwardAAssociateRQ(as, rq, ac, true);
         as.setProperty(FILE_SUFFIX, ".dcm");
         return super.negotiate(as, rq, ac);
@@ -217,18 +223,18 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac,
             boolean sendNow) throws IOException {
         try {
-            if (useCallingAETitle != null)
-                rq.setCallingAET(useCallingAETitle);
-            if (!destination.getAETitle().equals("*"))
-                rq.setCalledAET(destination.getAETitle());
+            if (getUseCallingAETitle() != null)
+                rq.setCallingAET(getUseCallingAETitle());
+            if (!getDestinationAETitle().equals("*"))
+                rq.setCalledAET(getDestinationAETitle());
             Association asCalled;
-            asCalled = connect(destination, rq);
+            asCalled = connect(getDestinationAE(), rq);
             if (sendNow)
                 as.setProperty(FORWARD_ASSOCIATION, asCalled);
             else
                 releaseAS(asCalled);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
-            if (exclusiveUseDefinedTC) {
+            if (isExclusiveUseDefinedTC()) {
                 AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
@@ -244,6 +250,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
+        } catch (ConfigurationException ce) {
+            LOG.warn("Unable to load configuration for destination AET:", ce);
+            throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, rj, ".rj-" + rj.getResult() + "-" 
                     + rj.getSource() + "-" + rj.getReason(), rj.getReason());
@@ -260,11 +269,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
+    private ApplicationEntity getDestinationAE() throws ConfigurationException {
+        ProxyDevice device = (ProxyDevice) getDevice();
+        return device.findApplicationEntity(destinationAETitle);
+    }
+
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
             AAssociateAC ac, Exception e, String suffix, int reason) throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.debug("Unable to connect to " + destination.getAETitle() + " (" + e.getMessage() + ")");
-        if (acceptDataOnFailedNegotiation) {
+        LOG.debug("Unable to connect to " + getDestinationAETitle() + " (" + e.getMessage() + ")");
+        if (isAcceptDataOnFailedNegotiation()) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
         }
@@ -310,7 +324,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private void coerceAttributes(Attributes attrs) {
         Attributes modify = new Attributes();
         try {
-            SAXWriter w = SAXTransformer.getSAXWriter(attributeCoercion, modify);
+            SAXWriter w = SAXTransformer.getSAXWriter(getAttributeCoercion(), modify);
             w.setIncludeKeyword(false);
             w.write(attrs);
         } catch (Exception e) {
@@ -321,12 +335,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void forwardFiles() {
         final Calendar now = new GregorianCalendar();
-        if (schedule != null && !schedule.sendNow(now))
+        if (getForwardSchedule() != null && !getForwardSchedule().sendNow(now))
             return;
 
         String aet = getAETitle();
         if (aet.equals("*")) {
-            for (String calledAET : spoolDirectory.list())
+            for (String calledAET : getSpoolDirectoryPath().list())
                 startForwardFiles(calledAET);
         } else {
             startForwardFiles(aet);
@@ -344,7 +358,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private void forwardFiles(String calledAET) {
-        File dir = new File(spoolDirectory, calledAET);
+        File dir = new File(getSpoolDirectory(), calledAET);
         File[] files = dir.listFiles(fileFilter());
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))
@@ -385,13 +399,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void process(ForwardTask ft) throws DicomServiceException {
         AAssociateRQ rq = ft.getAAssociateRQ();
-        if (useCallingAETitle != null)
-            rq.setCallingAET(useCallingAETitle);
-        if (!destination.getAETitle().equals("*"))
-            rq.setCalledAET(destination.getAETitle());
+        if (getUseCallingAETitle() != null)
+            rq.setCallingAET(getUseCallingAETitle());
+        if (!getDestinationAETitle().equals("*"))
+            rq.setCalledAET(getDestinationAETitle());
         Association as2 = null;
         try {
-            as2 = connect(destination, rq);
+            as2 = connect(getDestinationAE(), rq);
             for (File file : ft.getFiles()) {
                 try {
                     if (as2.isReadyForDataTransfer()){
@@ -410,6 +424,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     releaseAS(as2);
                 }
             }
+        } catch (ConfigurationException ce) {
+            LOG.warn(as2 + ": unable to load configuration: ", ce.getMessage());
         } catch (AAssociateRJ rj) {
             handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" 
                     + rj.getSource() + "-" + rj.getReason());
@@ -445,7 +461,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.debug(destination.getAETitle() + " connection error: " + e.getMessage());
+        LOG.debug(getDestinationAETitle() + " connection error: " + e.getMessage());
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));
@@ -500,7 +516,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            as2.cstore(cuid, iuid, forwardPriority, 
+            as2.cstore(cuid, iuid, getForwardPriority(), 
                     createDataWriter(in, as2, ds), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
@@ -601,7 +617,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private File getLogDir(Association as, Attributes attrs) {
-        File logDir = new File(getAuditDirectory().getPath() + separator + as.getCalledAET() + separator 
+        File logDir = new File(getAuditDirectoryPath().getPath() + separator + as.getCalledAET() + separator 
                 + as.getCallingAET() + separator + attrs.getString(Tag.StudyInstanceUID));
         if (!logDir.exists())
             logDir.mkdirs();

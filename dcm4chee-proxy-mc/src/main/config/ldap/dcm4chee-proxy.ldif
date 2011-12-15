@@ -1,0 +1,90 @@
+# Extended DICOM Application Configuration Data Model Hierarchy LDAP Schema
+dn: cn=dcm4chee-proxy,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: dcm4chee-proxy
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.1 NAME 'dcmSchedulerInterval'
+  DESC 'Integer : interval to check for scheduled c-stores and logging'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  DESC 'Boolean : accept Associations'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  DESC 'Boolean : initiate associations'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  DESC 'Integer : max operations performed'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  DESC 'Integer : max operations invoked'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.6 NAME 'dcmSpoolDirectory'
+  DESC 'String : directory for temporary DICOM files'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.7 NAME 'dcmAcceptDataOnFailedNegotiation'
+  DESC 'Boolean : temporary store data on failed negotiation with Called AET'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.8 NAME 'dcmDestinationAETitle'
+  DESC 'String : send DICOM files to target Called AET'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.9 NAME 'dcmUseCallingAETitle'
+  DESC 'String : set value for default Calling AE Title to be used by proxy'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.10 NAME 'dcmExclusiveUseDefinedTC'
+  DESC 'Boolean : only use transfer capabilities defined for proxy'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.11 NAME 'dcmEnableAuditLog'
+  DESC 'Boolean : enable audit logging'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.12 NAME 'dcmAuditDirectory'
+  DESC 'String : audit log directory'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
+  DESC 'DICOM Proxy Device related information'
+  SUP top AUXILIARY
+  MUST (
+    dcmSchedulerInterval ) )
+olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
+  DESC 'DICOM Proxy Network AE related information'
+  SUP top AUXILIARY
+  MUST (
+    dcmSpoolDirectory $
+    dcmAcceptDataOnFailedNegotiation $
+    dcmDestinationAETitle $
+    dcmExclusiveUseDefinedTC $
+    dcmEnableAuditLog )
+  MAY (
+    dcmUseCallingAETitle $
+    dcmAuditDirectory ) )
+
