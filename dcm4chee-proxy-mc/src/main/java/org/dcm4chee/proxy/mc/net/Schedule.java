@@ -62,11 +62,21 @@ public class Schedule {
     }
 
     public void setDays(String dayOfWeek) {
-        set(days, dayOfWeek, DAYS, 1);
+        if(dayOfWeek!=null)
+            set(days, dayOfWeek, DAYS, 1);
+    }
+    
+    public String getDays() {
+        return toString(days, DAYS);
     }
 
     public void setHours(String hour) {
-        set(hours, hour, HOURS, 0);
+        if(hour!=null)
+            set(hours, hour, HOURS, 0);
+    }
+    
+    public String getHours() {
+        return toString(hours, HOURS);
     }
 
     public boolean sendNow(final Calendar now) {
@@ -103,5 +113,13 @@ public class Schedule {
                 return i;
         throw new IllegalArgumentException(value);
     }
-
+    
+    private String toString(BitSet bs, String[] values) {
+        StringBuffer sb = new StringBuffer();
+        for(int i = 0; i < bs.length(); i++) {
+            if(bs.get(i))
+                sb.append(sb.length()==0 ? values[i] : ",".concat(values[i]));
+        }
+        return sb.toString();
+    }
 }

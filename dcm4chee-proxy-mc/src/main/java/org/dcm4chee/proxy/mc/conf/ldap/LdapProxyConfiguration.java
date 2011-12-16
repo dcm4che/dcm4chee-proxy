@@ -38,18 +38,24 @@
 
 package org.dcm4chee.proxy.mc.conf.ldap;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.SearchResult;
 
 import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
+import org.dcm4chee.proxy.mc.net.Retry;
+import org.dcm4chee.proxy.mc.net.Schedule;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -115,10 +121,11 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmDestinationAETitle", proxyAE.getDestinationAETitle());
         storeNotNull(attrs, "dcmUseCallingAETitle", proxyAE.getUseCallingAETitle());
         storeNotNull(attrs, "dcmExclusiveUseDefinedTC", proxyAE.isExclusiveUseDefinedTC());
-//        storeNotNull(attrs, "dcmForwardSchedule", proxyAE.getForwardSchedule());
-//        storeNotNull(attrs, "dcmRetries", proxyAE.getRetries());
         storeNotNull(attrs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         storeNotNull(attrs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
+        Schedule schedule = proxyAE.getForwardSchedule();
+        storeNotNull(attrs, "dcmForwardScheduleDays", schedule.getDays());
+        storeNotNull(attrs, "dcmForwardScheduleHours", schedule.getHours());
         return attrs;
     }
 
@@ -149,9 +156,88 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
        proxyAE.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
        proxyAE.setUseCallingAETitle(stringValue(attrs.get("dcmUseCallingAETitle")));
        proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
-//       proxyAE.setForwardSchedule(schedule);
-//       proxyAE.setRetries(retries);
        proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
        proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
+       Schedule schedule = new Schedule();
+       schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
+       schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
+       proxyAE.setForwardSchedule(schedule);
     }
+
+    @Override
+    protected void loadChilds(ApplicationEntity ae, String aeDN) throws NamingException {
+        super.loadChilds(ae, aeDN);
+        if (!(ae instanceof ProxyApplicationEntity))
+            return;
+        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
+        loadRetries(proxyAE, aeDN);
+    }
+
+    private void loadRetries(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
+        NamingEnumeration<SearchResult> ne = 
+            search(aeDN, "(objectclass=dcmRetry)");
+        try {
+            List<Retry> retries = new ArrayList<Retry>();
+            while (ne.hasMore()) {
+                SearchResult sr = ne.next();
+                Attributes attrs = sr.getAttributes();
+                Retry retry = new Retry(
+                        stringValue(attrs.get("dcmRetrySuffix")), 
+                        intValue(attrs.get("dcmRetryDelay"), 60),
+                        intValue(attrs.get("dcmRetryNum"), 10));
+                retries.add(retry);
+            }
+            proxyAE.setRetries(retries);
+        } finally {
+           safeClose(ne);
+        }
+    }
+
+    @Override
+    protected void storeChilds(String aeDN, ApplicationEntity ae) throws NamingException {
+        super.storeChilds(aeDN, ae);
+        if (!(ae instanceof ProxyApplicationEntity))
+            return;
+        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
+        storeRetries(proxyAE.getRetries(), aeDN);
+    }
+
+    private void storeRetries(List<Retry> retries, String parentDN) throws NamingException {
+        for(Retry retry : retries)
+            createSubcontext(dnOf(retry, parentDN), storeTo(retry, new BasicAttributes(true)));
+    }
+
+    private Attributes storeTo(Retry retry, BasicAttributes attrs) {
+        attrs.put("objectclass", "dcmRetry");
+        storeNotNull(attrs, "dcmRetrySuffix", retry.getSuffix());
+        storeNotNull(attrs, "dcmRetryDelay", retry.getDelay());
+        storeNotNull(attrs, "dcmRetryNum", retry.getNumRetry());
+        return attrs;
+    }
+
+    private String dnOf(Retry retry, String parentDN) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("dcmRetryCase=").append(retry.getSuffix().substring(1));
+        sb.append(',').append(parentDN);
+        return sb.toString();
+    }
+
+    @Override
+    protected void storeChilds(String deviceDN, Device device) throws NamingException {
+        super.storeChilds(deviceDN, device);
+        if (!(device instanceof ProxyDevice))
+            return;
+        ProxyDevice proxyDev = (ProxyDevice) device;
+        store(proxyDev.getAttributeCoercions(), deviceDN);
+    }
+
+    @Override
+    protected void loadChilds(Device device, String deviceDN) throws NamingException {
+        super.loadChilds(device, deviceDN);
+        if (!(device instanceof ProxyDevice))
+            return;
+        ProxyDevice proxyDev = (ProxyDevice) device;
+        load(proxyDev.getAttributeCoercions(), deviceDN);
+    }
+    
 }

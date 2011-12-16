@@ -53,4 +53,16 @@ public class Retry {
         this.delay = delay;
         this.numretry = numretry;
     }
+    
+    public String getSuffix(){
+        return suffix;
+    }
+    
+    public int getDelay() {
+        return delay;
+    }
+    
+    public int getNumRetry() {
+        return numretry;
+    }
 }

@@ -38,6 +38,9 @@
 
 package org.dcm4chee.proxy.mc.conf.ldap;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.ldap.LdapEnv;
@@ -47,6 +50,8 @@ import org.dcm4che.net.Connection;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
+import org.dcm4chee.proxy.mc.net.Retry;
+import org.dcm4chee.proxy.mc.net.Schedule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +66,7 @@ public class LdapProxyConfigurationTest {
     private static final String DCM4CHEE_PROXY = "DCM4CHEE Proxy";
 
     private LdapProxyConfiguration config;
-    
+
     private static final String[] IMAGE_TSUIDS = {
         UID.ImplicitVRLittleEndian,
         UID.ExplicitVRLittleEndian,
@@ -203,6 +208,7 @@ public class LdapProxyConfigurationTest {
         UID.RTIonPlanStorage,
         UID.RTIonBeamsTreatmentRecordStorage,
     };
+
     @Before
     public void setUp() throws Exception {
         LdapEnv env = new LdapEnv();
@@ -244,6 +250,7 @@ public class LdapProxyConfigurationTest {
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));
+        
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
@@ -255,6 +262,17 @@ public class LdapProxyConfigurationTest {
         ae.setExclusiveUseDefinedTC(false);
         ae.setEnableAuditLog(true);
         ae.setAuditDirectory("audit");
+        
+        Schedule schedule = new Schedule();
+        schedule.setDays("Mon-Fri");
+        schedule.setHours("8-18");
+        ae.setForwardSchedule(schedule);
+        
+        List<Retry> retries = new ArrayList<Retry>();
+        retries.add(new Retry(".conn", 60, 5));
+        retries.add(new Retry(".ass", 60, 5));
+        ae.setRetries(retries);
+        
         addVerificationStorageTransferCapabilities(ae);
         addStorageTransferCapabilities(ae, IMAGE_CUIDS, IMAGE_TSUIDS);
         addStorageTransferCapabilities(ae, VIDEO_CUIDS, VIDEO_TSUIDS);
