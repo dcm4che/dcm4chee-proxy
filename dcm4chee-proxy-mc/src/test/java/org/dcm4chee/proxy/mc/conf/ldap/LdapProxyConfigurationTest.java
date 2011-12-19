@@ -45,7 +45,6 @@ import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4che.data.UID;
-import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
@@ -231,7 +230,13 @@ public class LdapProxyConfigurationTest {
         config.unregisterAETitle("DCM4CHEE-PROXY");
         config.registerAETitle("DCM4CHEE-PROXY");
         config.persist(createProxyDevice(DCM4CHEE_PROXY));
-        ApplicationEntity ae = config.findApplicationEntity("DCM4CHEE-PROXY");
+        ProxyApplicationEntity pa = (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
+        List<Retry> retries = new ArrayList<Retry>();
+        List<Retry> prevRetries = pa.getRetries();
+        retries.add(prevRetries.get(0));
+        retries.add(new Retry(".temp", 10, 1));
+        pa.setRetries(retries);
+        config.merge(pa.getDevice());
         config.removeDevice(DCM4CHEE_PROXY);
         config.unregisterAETitle("DCM4CHEE-PROXY");
     }
@@ -239,17 +244,6 @@ public class LdapProxyConfigurationTest {
     private ProxyDevice createProxyDevice(String name) throws Exception {
         ProxyDevice device = new ProxyDevice(name);
         device.setSchedulerInterval(60);
-        
-        device.addAttributeCoercion(new AttributeCoercion(null, 
-                AttributeCoercion.DIMSE.C_STORE_RQ, 
-                TransferCapability.Role.SCP,
-                "ENSURE_PID",
-                "resource:dcm4chee-proxy-ensure-pid.xsl"));
-        device.addAttributeCoercion(new AttributeCoercion(null, 
-                AttributeCoercion.DIMSE.C_STORE_RQ, 
-                TransferCapability.Role.SCU,
-                "WITHOUT_PN",
-                "resource:dcm4chee-proxy-nullify-pn.xsl"));
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
         ae.setAssociationAcceptor(true);
@@ -262,6 +256,16 @@ public class LdapProxyConfigurationTest {
         ae.setExclusiveUseDefinedTC(false);
         ae.setEnableAuditLog(true);
         ae.setAuditDirectory("audit");
+        ae.addAttributeCoercion(new AttributeCoercion(null, 
+                AttributeCoercion.DIMSE.C_STORE_RQ, 
+                TransferCapability.Role.SCP,
+                "ENSURE_PID",
+                "resource:dcm4chee-proxy-ensure-pid.xsl"));
+        ae.addAttributeCoercion(new AttributeCoercion(null, 
+                AttributeCoercion.DIMSE.C_STORE_RQ, 
+                TransferCapability.Role.SCU,
+                "WITHOUT_PN",
+                "resource:dcm4chee-proxy-nullify-pn.xsl"));
         
         Schedule schedule = new Schedule();
         schedule.setDays("Mon-Fri");

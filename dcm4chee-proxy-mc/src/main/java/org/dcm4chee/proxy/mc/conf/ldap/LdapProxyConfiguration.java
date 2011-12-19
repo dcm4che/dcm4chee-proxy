@@ -41,19 +41,20 @@ package org.dcm4chee.proxy.mc.conf.ldap;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Random;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchResult;
 
+import org.dcm4che.conf.api.AttributeCoercion;
+import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
-import org.dcm4che.util.StringUtils;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Retry;
@@ -173,6 +174,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         loadRetries(proxyAE, aeDN);
+        load(proxyAE.getAttributeCoercions(), aeDN);
     }
 
     private void loadRetries(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
@@ -202,6 +204,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeDN);
+        store(proxyAE.getAttributeCoercions(), aeDN);
     }
 
     private void storeRetries(List<Retry> retries, String parentDN) throws NamingException {
@@ -225,21 +228,90 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
     }
 
     @Override
-    protected void storeChilds(String deviceDN, Device device) throws NamingException {
-        super.storeChilds(deviceDN, device);
-        if (!(device instanceof ProxyDevice))
-            return;
-        ProxyDevice proxyDev = (ProxyDevice) device;
-        store(proxyDev.getAttributeCoercions(), deviceDN);
+    protected List<ModificationItem> storeDiffs(ApplicationEntity a, ApplicationEntity b,
+            String deviceDN, List<ModificationItem> mods) {
+        super.storeDiffs(a, b, deviceDN, mods);
+        if (!(a instanceof ProxyApplicationEntity) || !(b instanceof ProxyApplicationEntity))
+            return mods;
+        ProxyApplicationEntity pa = (ProxyApplicationEntity) a;
+        ProxyApplicationEntity pb = (ProxyApplicationEntity) b;
+        storeDiff(mods, "dcmSpoolDirectory",
+                pa.getSpoolDirectory(),
+                pb.getSpoolDirectory());
+        storeDiff(mods, "dcmAcceptDataOnFailedNegotiation",
+                pa.isAcceptDataOnFailedNegotiation(),
+                pb.isAcceptDataOnFailedNegotiation());
+        storeDiff(mods, "dcmDestinationAETitle",
+                pa.getDestinationAETitle(),
+                pb.getDestinationAETitle());
+        storeDiff(mods, "dcmUseCallingAETitle",
+                pa.getUseCallingAETitle(),
+                pb.getUseCallingAETitle());
+        storeDiff(mods, "dcmExclusiveUseDefinedTC",
+                pa.isExclusiveUseDefinedTC(),
+                pb.isExclusiveUseDefinedTC());
+        storeDiff(mods, "dcmEnableAuditLog",
+                pa.isEnableAuditLog(),
+                pb.isEnableAuditLog());
+        storeDiff(mods, "dcmAuditDirectory",
+                pa.getAuditDirectory(),
+                pb.getAuditDirectory());
+        Schedule scheduleA = pa.getForwardSchedule();
+        Schedule scheduleB = pb.getForwardSchedule();
+        storeDiff(mods, "dcmForwardScheduleDays",
+                scheduleA.getDays(),
+                scheduleB.getDays());
+        storeDiff(mods, "dcmUseCallingAETitle",
+                scheduleA.getHours(),
+                scheduleB.getHours());
+        return mods;
     }
 
     @Override
-    protected void loadChilds(Device device, String deviceDN) throws NamingException {
-        super.loadChilds(device, deviceDN);
-        if (!(device instanceof ProxyDevice))
-            return;
-        ProxyDevice proxyDev = (ProxyDevice) device;
-        load(proxyDev.getAttributeCoercions(), deviceDN);
+    protected List<ModificationItem> storeDiffs(Device a, Device b, List<ModificationItem> mods) {
+        super.storeDiffs(a, b, mods);
+        if (!(a instanceof ProxyDevice) || !(b instanceof ProxyDevice))
+            return mods;
+        ProxyDevice pa = (ProxyDevice) a;
+        ProxyDevice pb = (ProxyDevice) b;
+        storeDiff(mods, "dcmSchedulerInterval",
+                pa.getSchedulerInterval(),
+                pb.getSchedulerInterval());
+        return mods;
     }
-    
+
+    @Override
+    protected void mergeChilds(ApplicationEntity prev, ApplicationEntity ae, String aeDN)
+            throws NamingException {
+        super.mergeChilds(prev, ae, aeDN);
+        if (!(prev instanceof ProxyApplicationEntity) || !(ae instanceof ProxyApplicationEntity))
+            return;
+        ProxyApplicationEntity pprev = (ProxyApplicationEntity) prev;
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
+        merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeDN);
+        mergeRetries(pprev.getRetries(), pae.getRetries(), aeDN);
+    }
+
+    private void mergeRetries(List<Retry> prevs, List<Retry> retries,
+            String parentDN) throws NamingException {
+        for (Retry prev : prevs)
+            if (!retries.contains(prev))
+                destroySubcontext(dnOf(prev, parentDN));
+        for (Retry retry : retries) {
+            String dn = dnOf(retry, parentDN);
+            Integer indexOfPrevRetry = prevs.indexOf(retry);
+            if (indexOfPrevRetry == -1)
+                createSubcontext(dn, storeTo(retry, new BasicAttributes(true)));
+            else
+                modifyAttributes(dn, storeDiffs(prevs.get(indexOfPrevRetry), retry,
+                        new ArrayList<ModificationItem>()));
+        }
+}
+
+    private List<ModificationItem> storeDiffs(Retry prev, Retry ac,
+            ArrayList<ModificationItem> mods) {
+        storeDiff(mods, "dcmRetryDelay", prev.getDelay(), ac.getDelay());
+        storeDiff(mods, "dcmRetryNum", prev.getNumRetry(), ac.getNumRetry());
+        return mods;
+    }
 }

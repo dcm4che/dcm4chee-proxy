@@ -74,7 +74,8 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (as2 == null)
             super.onCStoreRQ(as, pc, rq, data);
-        else if (((ProxyApplicationEntity) as.getApplicationEntity()).isCoerceAttributes()
+        else if (!((ProxyApplicationEntity) as.getApplicationEntity()).getAttributeCoercions()
+                .getAll().isEmpty()
                 || ((ProxyApplicationEntity) as.getApplicationEntity()).isEnableAuditLog())
             super.store(as, pc, rq, data, null);
         else {
@@ -113,7 +114,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             return null;
         }
         ProxyApplicationEntity pae = ((ProxyApplicationEntity) as.getApplicationEntity());
-        Attributes attrs = pae.readAndCoerceDataset(file);
+        Attributes attrs = pae.readAndCoerceDataset(file, as2.getRemoteAET());
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(as2, attrs);
             pae.writeLogFile(as2, attrs, file.length());

@@ -51,8 +51,12 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.xml.transform.Templates;
+import javax.xml.transform.TransformerConfigurationException;
 
+import org.dcm4che.conf.api.AttributeCoercion;
+import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
+import org.dcm4che.conf.api.AttributeCoercion.DIMSE;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.io.DicomInputStream;
@@ -68,6 +72,7 @@ import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.NoPresentationContextException;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.AAssociateAC;
 import org.dcm4che.net.pdu.AAssociateRJ;
@@ -92,7 +97,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private String useCallingAETitle;
     private String destinationAETitle;
-    private Templates attributeCoercion;
     private Schedule schedule;
     private String spoolDirectory;
     private int forwardPriority;
@@ -101,6 +105,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private boolean exclusiveUseDefinedTC;
     private boolean enableAuditLog;
     private String auditDirectory;
+    private final AttributeCoercions attributeCoercions = new AttributeCoercions();
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -160,14 +165,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void setDestinationAETitle(String destinationAET) {
         this.destinationAETitle = destinationAET;
-    }
-
-    public final Templates getAttributeCoercion() {
-        return attributeCoercion;
-    }
-
-    public final boolean isCoerceAttributes() {
-        return getAttributeCoercion() != null;
     }
 
     public final void setForwardSchedule(Schedule schedule) {
@@ -307,7 +304,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
     }
 
-    public Attributes readAndCoerceDataset(File file) throws IOException {
+    public Attributes readAndCoerceDataset(File file, String remoteAET) throws IOException {
         Attributes attrs;
         DicomInputStream in = new DicomInputStream(file);
         try {
@@ -316,15 +313,19 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } finally {
             SafeClose.close(in);
         }
-        if(isCoerceAttributes())
-            coerceAttributes(attrs);
+        AttributeCoercion ac =
+                getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
+                        DIMSE.C_STORE_RQ);
+        if (ac != null)
+            ;
+        coerceAttributes(attrs, ac);
         return attrs;
     }
 
-    private void coerceAttributes(Attributes attrs) {
+    private void coerceAttributes(Attributes attrs, AttributeCoercion ac) {
         Attributes modify = new Attributes();
         try {
-            SAXWriter w = SAXTransformer.getSAXWriter(getAttributeCoercion(), modify);
+            SAXWriter w = SAXTransformer.getSAXWriter(getTemplates(ac.getURI()), modify);
             w.setIncludeKeyword(false);
             w.write(attrs);
         } catch (Exception e) {
@@ -517,7 +518,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 }
             };
             as2.cstore(cuid, iuid, getForwardPriority(), 
-                    createDataWriter(in, as2, ds), tsuid, rspHandler);
+                    createDataWriter(in, as2, ds, cuid), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }
@@ -548,12 +549,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds) 
-        throws IOException {
-        if (isCoerceAttributes() || isEnableAuditLog()) {
+    private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds,
+            String cuid) throws IOException {
+        AttributeCoercion ac =
+                getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCU, DIMSE.C_STORE_RQ);
+        if (ac != null || isEnableAuditLog()) {
             in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);
-            coerceAttributes(attrs);
+            coerceAttributes(attrs, ac);
             ds[0] = attrs;
             if (isEnableAuditLog())
                 createStartLogFile(as, ds[0]);
@@ -624,4 +627,24 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return logDir;
     }
 
+    public AttributeCoercion addAttributeCoercion(AttributeCoercion ac) {
+        return attributeCoercions.add(ac);
+    }
+
+    public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
+            Role role, AttributeCoercion.DIMSE cmd) {
+        return attributeCoercions.get(sopClass, cmd, role, aeTitle);
+    }
+
+    public AttributeCoercions getAttributeCoercions() {
+        return attributeCoercions;
+    }
+    
+    private ProxyDevice getProxyDevice() {
+        return (ProxyDevice) this.getDevice();
+    }
+    
+    private Templates getTemplates(String uri) throws TransformerConfigurationException {
+        return getProxyDevice().getTemplates(uri);
+    }
 }

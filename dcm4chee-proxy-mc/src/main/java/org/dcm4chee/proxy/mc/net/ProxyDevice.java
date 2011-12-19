@@ -38,13 +38,14 @@
 
 package org.dcm4chee.proxy.mc.net;
 
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Device;
-import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.conf.api.AttributeCoercion;
-import org.dcm4che.conf.api.AttributeCoercions;
+import javax.xml.transform.Templates;
+import javax.xml.transform.TransformerConfigurationException;
+
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.io.TemplatesCache;
+import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.net.Device;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -54,7 +55,11 @@ public class ProxyDevice extends Device {
 
     private Integer schedulerInterval;
     private DicomConfiguration dicomConf;
-    private final AttributeCoercions attributeCoercions = new AttributeCoercions();
+    private final TemplatesCache templateCache = new TemplatesCache();
+    
+    public Templates getTemplates(String uri) throws TransformerConfigurationException {
+        return templateCache.get(uri);
+    }
 
     public ProxyDevice(String name) {
         super(name);
@@ -78,19 +83,6 @@ public class ProxyDevice extends Device {
 
     public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {
         return dicomConf.findApplicationEntity(aet);
-    }
-
-    public AttributeCoercion addAttributeCoercion(AttributeCoercion ac) {
-        return attributeCoercions.add(ac);
-    }
-
-    public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
-            Role role, AttributeCoercion.DIMSE cmd) {
-        return attributeCoercions.get(sopClass, cmd, role, aeTitle);
-    }
-
-    public AttributeCoercions getAttributeCoercions() {
-        return attributeCoercions;
     }
 
 }
