@@ -41,6 +41,7 @@ package org.dcm4chee.proxy.mc.conf.ldap;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Random;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -52,6 +53,7 @@ import javax.naming.directory.SearchResult;
 import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
+import org.dcm4che.util.StringUtils;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Retry;
@@ -217,7 +219,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     private String dnOf(Retry retry, String parentDN) {
         StringBuilder sb = new StringBuilder();
-        sb.append("dcmRetryCase=").append(retry.getSuffix().substring(1));
+        sb.append("dcmRetrySuffix=").append(retry.getSuffix());
         sb.append(',').append(parentDN);
         return sb.toString();
     }
