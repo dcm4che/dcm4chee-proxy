@@ -38,6 +38,7 @@
 
 package org.dcm4chee.proxy.mc.conf.ldap;
 
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -50,8 +51,6 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchResult;
 
-import org.dcm4che.conf.api.AttributeCoercion;
-import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
@@ -133,7 +132,8 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
     }
 
     @Override
-    protected void loadFrom(Device device, Attributes attrs) throws NamingException {
+    protected void loadFrom(Device device, Attributes attrs) throws NamingException, 
+        CertificateException {
         super.loadFrom(device, attrs);
         if (!(device instanceof ProxyDevice))
             return;

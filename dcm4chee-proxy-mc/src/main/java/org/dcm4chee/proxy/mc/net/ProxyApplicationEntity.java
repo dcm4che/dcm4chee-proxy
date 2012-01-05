@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.KeyManagementException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -247,6 +248,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
+        } catch (KeyManagementException kme) {
+            throw new DicomServiceException(Status.UnableToPerformSubOperations, kme);
         } catch (ConfigurationException ce) {
             LOG.warn("Unable to load configuration for destination AET:", ce);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
@@ -425,6 +428,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     releaseAS(as2);
                 }
             }
+        } catch (KeyManagementException kme) {
+            throw new DicomServiceException(Status.UnableToPerformSubOperations, kme);
         } catch (ConfigurationException ce) {
             LOG.warn(as2 + ": unable to load configuration: ", ce.getMessage());
         } catch (AAssociateRJ rj) {
@@ -620,8 +625,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private File getLogDir(Association as, Attributes attrs) {
-        File logDir = new File(getAuditDirectoryPath().getPath() + separator + as.getCalledAET() + separator 
-                + as.getCallingAET() + separator + attrs.getString(Tag.StudyInstanceUID));
+        File logDir = new File(getAuditDirectoryPath().getPath() + separator + as.getCalledAET()
+                + separator + as.getCallingAET() + separator + attrs.getString(Tag.StudyInstanceUID));
         if (!logDir.exists())
             logDir.mkdirs();
         return logDir;

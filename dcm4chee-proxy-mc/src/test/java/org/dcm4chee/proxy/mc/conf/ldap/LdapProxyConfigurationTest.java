@@ -38,6 +38,8 @@
 
 package org.dcm4chee.proxy.mc.conf.ldap;
 
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +48,7 @@ import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4che.data.UID;
 import org.dcm4che.net.Connection;
+import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
@@ -61,8 +64,6 @@ import org.junit.Test;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class LdapProxyConfigurationTest {
-
-    private static final String DCM4CHEE_PROXY = "DCM4CHEE Proxy";
 
     private LdapProxyConfiguration config;
 
@@ -208,6 +209,15 @@ public class LdapProxyConfigurationTest {
         UID.RTIonBeamsTreatmentRecordStorage,
     };
 
+    private static final KeyStore KEYSTORE = loadKeyStore();
+    private static KeyStore loadKeyStore() {
+        try {
+            return SSLManagerFactory.loadKeyStore("JKS", "resource:cacerts.jks", "secret");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     @Before
     public void setUp() throws Exception {
         LdapEnv env = new LdapEnv();
@@ -225,31 +235,32 @@ public class LdapProxyConfigurationTest {
     @Test
     public void testPersist() throws Exception {
         try {
-            config.removeDevice(DCM4CHEE_PROXY);
-        }  catch (ConfigurationNotFoundException e) {}
+            config.removeDevice("dcm4chee-proxy");
+        } catch (ConfigurationNotFoundException e) {}
         config.unregisterAETitle("DCM4CHEE-PROXY");
         config.registerAETitle("DCM4CHEE-PROXY");
-        config.persist(createProxyDevice(DCM4CHEE_PROXY));
-        ProxyApplicationEntity pa = (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
+        config.persist(createProxyDevice("dcm4chee-proxy"));
+        ProxyApplicationEntity pa =
+                (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
         List<Retry> retries = new ArrayList<Retry>();
         List<Retry> prevRetries = pa.getRetries();
         retries.add(prevRetries.get(0));
         retries.add(new Retry(".temp", 10, 1));
         pa.setRetries(retries);
         config.merge(pa.getDevice());
-        config.removeDevice(DCM4CHEE_PROXY);
+        config.removeDevice("dcm4chee-proxy");
         config.unregisterAETitle("DCM4CHEE-PROXY");
     }
 
     private ProxyDevice createProxyDevice(String name) throws Exception {
         ProxyDevice device = new ProxyDevice(name);
+        device.setThisNodeCertificates(config.deviceRef(name),
+                (X509Certificate) KEYSTORE.getCertificate(name));
         device.setSchedulerInterval(60);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
-        ae.setMaxOpsInvoked(0);
-        ae.setMaxOpsPerformed(0);
         ae.setSpoolDirectory("proxy");
         ae.setAcceptDataOnFailedNegotiation(false);
         ae.setDestinationAETitle("STORESCP");
@@ -283,13 +294,18 @@ public class LdapProxyConfigurationTest {
         addStorageTransferCapabilities(ae, OTHER_CUIDS, OTHER_TSUIDS);
         device.addApplicationEntity(ae);
         Connection dicom = new Connection("dicom", "localhost", 11113);
+        dicom.setMaxOpsInvoked(0);
+        dicom.setMaxOpsPerformed(0);
+//        dicom.setInstalled(true);
         device.addConnection(dicom);
         ae.addConnection(dicom);
         Connection dicomTLS = new Connection("dicom-tls", "localhost", 2763);
+        dicomTLS.setMaxOpsInvoked(0);
+        dicomTLS.setMaxOpsPerformed(0);
         dicomTLS.setTlsCipherSuites(
                 Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
                 Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
-        dicomTLS.setInstalled(false);
+//        dicomTLS.setInstalled(false);
         device.addConnection(dicomTLS);
         ae.addConnection(dicomTLS);
         return device;

@@ -78,11 +78,20 @@
   </bean>
   -->
   
+  <bean name="KeyManager" class="javax.net.ssl.KeyManager">
+    <constructor factoryClass="org.dcm4che.net.SSLManagerFactory" factoryMethod="createKeyManager">
+      <parameter>JKS</parameter>
+      <parameter>resource:dcm4chee-proxy-key.jks</parameter>
+      <parameter class="java.lang.String">secret</parameter>
+      <parameter class="java.lang.String">secret</parameter>
+    </constructor>
+  </bean>
+  
   <!-- The DICOM Device -->
   <bean name="Device" class="org.dcm4chee.proxy.mc.net.ProxyDevice">
     <constructor factoryMethod="findDevice">
       <factory bean="ArchiveConfiguration"/>
-      <parameter>DCM4CHEE Proxy</parameter>
+      <parameter>dcm4chee-proxy</parameter>
     </constructor>
     <property name="executor">
       <inject bean="Executer" />
@@ -93,6 +102,10 @@
     <property name="dimseRQHandler">
       <inject bean="DicomServiceRegistry" />
     </property>
+    <property name="keyManager">
+      <inject bean="KeyManager" />
+    </property>
+    <create method="initTrustManager" />
     <start method="activate" />
     <stop method="deactivate" />
     <demand>HornetQServer</demand>
