@@ -141,13 +141,6 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         proxyDev.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
     }
 
-    protected static int[] tags(Attribute attr) throws NamingException {
-        int[] is = new int[attr.size()];
-        for (int i = 0; i < is.length; i++)
-            is[i] = Integer.parseInt((String) attr.get(i), 16);
-        return is;
-    }
-
     @Override
     protected void loadFrom(ApplicationEntity ae, Attributes attrs) throws NamingException {
        super.loadFrom(ae, attrs);
