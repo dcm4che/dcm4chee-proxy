@@ -52,7 +52,7 @@
       factoryMethod="newSingleThreadScheduledExecutor" />
   </bean>
   
-  <!-- LDAP Dicom Configuration -->
+  <!-- OpenLDAP Dicom Configuration 
   <bean name="DicomConfiguration" class="org.dcm4chee.proxy.mc.conf.ldap.LdapProxyConfiguration">
     <constructor>
       <parameter>
@@ -65,7 +65,21 @@
       <parameter>dc=nodomain</parameter>
     </constructor>
   </bean>
-  
+  -->
+
+  <!-- OpenDS Dicom Configuration -->
+  <bean name="DicomConfiguration" class="org.dcm4chee.proxy.mc.conf.ldap.LdapProxyConfiguration">
+    <constructor>
+      <parameter>
+        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4che.conf.ldap.LdapEnv">
+          <property name="url">ldap://localhost:1389</property>
+          <property name="userDN">cn=Directory Manager</property>
+          <property name="password">admin</property>
+        </javabean>
+      </parameter>
+      <parameter>dc=nodomain</parameter>
+    </constructor>
+  </bean>
 
   <!-- Preferences Dicom Configuration 
   <bean name="DicomConfiguration" class="org.dcm4che.conf.prefs.PreferencesDicomConfiguration">

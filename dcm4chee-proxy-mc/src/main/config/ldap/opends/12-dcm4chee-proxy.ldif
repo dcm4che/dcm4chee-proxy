@@ -2,87 +2,87 @@
 dn: cn=dcm4chee-proxy,cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: dcm4chee-proxy
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.1 NAME 'dcmSchedulerInterval'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.1 NAME 'dcmSchedulerInterval'
   DESC 'Integer : interval to check for scheduled c-stores and logging'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.6 NAME 'dcmSpoolDirectory'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.6 NAME 'dcmSpoolDirectory'
   DESC 'String : directory for temporary DICOM files'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.7 NAME 'dcmAcceptDataOnFailedNegotiation'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.7 NAME 'dcmAcceptDataOnFailedNegotiation'
   DESC 'Boolean : temporary store data on failed negotiation with Called AET'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.8 NAME 'dcmDestinationAETitle'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.8 NAME 'dcmDestinationAETitle'
   DESC 'String : send DICOM files to target Called AET'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.9 NAME 'dcmUseCallingAETitle'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.9 NAME 'dcmUseCallingAETitle'
   DESC 'String : value for Calling AE Title to be used by proxy'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.10 NAME 'dcmExclusiveUseDefinedTC'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.10 NAME 'dcmExclusiveUseDefinedTC'
   DESC 'Boolean : only use transfer capabilities defined for proxy'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.11 NAME 'dcmEnableAuditLog'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.11 NAME 'dcmEnableAuditLog'
   DESC 'Boolean : enable audit logging'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.12 NAME 'dcmAuditDirectory'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.12 NAME 'dcmAuditDirectory'
   DESC 'String : audit log directory'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.13 NAME 'dcmForwardScheduleDays'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.13 NAME 'dcmForwardScheduleDays'
   DESC 'Comma separated list or range : days for availability of destination AET'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.14 NAME 'dcmForwardScheduleHours'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.14 NAME 'dcmForwardScheduleHours'
   DESC 'Comma separated list or range : hours for availability of destination AET'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.15 NAME 'dcmRetrySuffix'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.15 NAME 'dcmRetrySuffix'
   DESC 'Suffix of retry case'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.16 NAME 'dcmRetryDelay'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.16 NAME 'dcmRetryDelay'
   DESC 'Delay before trying to resend'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.17 NAME 'dcmRetryNum'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.17 NAME 'dcmRetryNum'
   DESC 'Number of failed retries'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
+objectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
   SUP top AUXILIARY
   MUST (
     dcmSchedulerInterval ) )
-olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
+objectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
   DESC 'DICOM Proxy Network AE related information'
   SUP top AUXILIARY
   MUST (
@@ -96,7 +96,7 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
     dcmAuditDirectory $
     dcmForwardScheduleDays $
     dcmForwardScheduleHours) )
-olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.3 NAME 'dcmRetry'
+objectClasses: ( 1.2.40.0.13.1.2.15.0.4.3 NAME 'dcmRetry'
   DESC 'Retry configuration for specific cases'
   SUP top STRUCTURAL
   MUST (

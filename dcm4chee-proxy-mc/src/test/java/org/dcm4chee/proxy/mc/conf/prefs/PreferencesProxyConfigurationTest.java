@@ -259,7 +259,7 @@ public class PreferencesProxyConfigurationTest {
         retries.add(new Retry(".tmp", 60, 5));
         pa.setRetries(retries);
         config.merge(pa.getDevice());
-        export();
+//        export();
         config.removeDevice("dcm4chee-proxy");
         config.removeDevice("storescu");
         config.removeDevice("storescp");
