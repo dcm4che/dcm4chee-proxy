@@ -91,6 +91,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         if (!hasObjectClass(attrs, "dcmProxyDevice"))
             return super.newDevice(attrs);
         ProxyDevice device = new ProxyDevice(stringValue(attrs.get("dicomDeviceName")));
+        device.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
         device.setDicomConf(this);
         return device;
     }
@@ -151,7 +152,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
        proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"), Boolean.FALSE));
        proxyAE.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
        proxyAE.setUseCallingAETitle(stringValue(attrs.get("dcmUseCallingAETitle")));
-       proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
+       proxyAE.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
        proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
        proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
        Schedule schedule = new Schedule();

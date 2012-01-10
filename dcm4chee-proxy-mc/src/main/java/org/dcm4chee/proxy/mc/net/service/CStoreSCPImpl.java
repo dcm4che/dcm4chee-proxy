@@ -95,7 +95,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             throws DicomServiceException {
         try {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
-            File dir = new File(ae.getSpoolDirectory(), as.getCalledAET());
+            File dir = new File(ae.getSpoolDirectoryPath(), as.getCalledAET());
             dir.mkdir();
             
             return File.createTempFile("dcm", ".part", dir);

@@ -70,7 +70,9 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         if (!deviceNode.getBoolean("dcmProxyDevice", false))
             return super.newDevice(deviceNode);
 
-        return new ProxyDevice(deviceNode.name());
+        ProxyDevice device = new ProxyDevice(deviceNode.name());
+        device.setDicomConf(this);
+        return device;
     }
 
     @Override

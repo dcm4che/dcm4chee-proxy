@@ -42,25 +42,24 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Device;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class Scheduler {
 
-    private final Device device;
+    private final ProxyDevice device;
     private final AuditLog log;
     private ScheduledFuture<?> timer;
 
-    public Scheduler(Device device, AuditLog log) {
+    public Scheduler(ProxyDevice device, AuditLog log) {
         this.device = device;
         this.log = log;
     }
 
     public void start() {
-        long period = (Long) device.getProperty("schedulerInterval");
+        long period = device.getSchedulerInterval();
         timer = device.scheduleAtFixedRate(new Runnable(){
 
             @Override

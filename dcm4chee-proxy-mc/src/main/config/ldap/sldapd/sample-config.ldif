@@ -17,13 +17,37 @@ dn: dicomAETitle=DCM4CHEE-PROXY,cn=Unique AE Titles Registry,cn=DICOM Config
 objectClass: dicomUniqueAETitle
 dicomAETitle: DCM4CHEE-PROXY
 
+dn: dicomAETitle=STORESCP,cn=Unique AE Titles Registry,cn=DICOM Configuratio
+ n,dc=nodomain
+objectClass: dicomUniqueAETitle
+dicomAETitle: STORESCP
+
 dn: dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodo
  main
 objectClass: dicomDevice
 objectClass: dcmProxyDevice
+objectClass: pkiUser
 dcmSchedulerInterval: 60
 dicomDeviceName: dcm4chee-proxy
 dicomInstalled: TRUE
+dicomThisNodeCertificateReference: dicomDeviceName=dcm4chee-proxy,cn=Devices
+ ,cn=DICOM Configuration,dc=nodomain
+userCertificate;binary:: MIIDVDCCAjygAwIBAgIETwV5ZTANBgkqhkiG9w0BAQUFADBsMRA
+ wDgYDVQQGEwdVbmtub3duMRAwDgYDVQQIEwdVbmtub3duMRAwDgYDVQQHEwdVbmtub3duMRAwDg
+ YDVQQKEwdVbmtub3duMRAwDgYDVQQLEwdVbmtub3duMRAwDgYDVQQDEwdVbmtub3duMB4XDTEyM
+ DEwNTEwMjAyMVoXDTIyMDEwMjEwMjAyMVowbDEQMA4GA1UEBhMHVW5rbm93bjEQMA4GA1UECBMH
+ VW5rbm93bjEQMA4GA1UEBxMHVW5rbm93bjEQMA4GA1UEChMHVW5rbm93bjEQMA4GA1UECxMHVW5
+ rbm93bjEQMA4GA1UEAxMHVW5rbm93bjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAI
+ odS5rhsEXeXf6WdXEvdvah2YViyYBZaHgNujmaxwLZtOSdpdBSIi7FuDoEenIflhG7wu6hpppGO
+ k4me4/bGHcYxAe33OQ0I99+/bDXjEweLZLqvzFK8cY7hBiNNl2pveq9tIsPLRbGDbvnAHrgKud/
+ ykMc6trbMkgjWJ4oqlGXu+WLDBm8Fmr77kdyD7kkZf0NPw+O0tTtSo1Lc9TANsEkf2OrIkCxYlk
+ jeQcA3yMHHNGLIA5WX5ICaZ8OSPohv6XkQ2oqyVprO/vauSClAmYyoynn8xpazhRhSzda6wceG5
+ XQxPO2mYM4zdc7FtnQI4jsQGoCiQaO/PQSj00Yt3cCAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAZ
+ wNG2ayIjVsH3N71qef206xcEj/ASzPB4Bd4GM38rTivFJW9vpC8fpJkaiIohpT6ad55UzK+26Ep
+ hYR8lMSDbWzko1wmbAjfWDGk2Ns8YBPjWTdrNyq1CEUZ+Le6nH+c/hYv7Ov0SYKUrWfteSqh2dn
+ xdFxYW9vLQjN1KAFtxHQfVoP0MXOAoDA2YALCQ22l1183Tl2ugrpTH0FZ8rjex+VHwXM31VgIbt
+ R2QEM/CSvSpX7PcQejgeHOKVYHpo+yuqzFAeiOWL6q1EAUfjxs1eXJkd67Tx2+bDVLDtLitd2A3
+ 9cv+HhNqiyGLwUxIVMFDPxHQQo5xN+RYly9EKItUg==
 
 dn: cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuratio
  n,dc=nodomain
@@ -31,8 +55,9 @@ objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
 dicomHostname: localhost
 cn: dicom
-dcmTCPNoDelay: TRUE
-dicomPort: 11113
+dcmMaxOpsInvoked: 0
+dcmMaxOpsPerformed: 0
+dicomPort: 11112
 
 dn: cn=dicom-tls,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
  ation,dc=nodomain
@@ -40,12 +65,11 @@ objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
 dicomHostname: localhost
 cn: dicom-tls
-dcmTCPNoDelay: TRUE
-dcmTLSNeedClientAuth: TRUE
+dcmMaxOpsInvoked: 0
+dcmMaxOpsPerformed: 0
 dcmTLSProtocol: TLSv1
 dcmTLSProtocol: SSLv3
-dicomInstalled: FALSE
-dicomPort: 2763
+dicomPort: 2762
 dicomTLSCipherSuite: TLS_RSA_WITH_AES_128_CBC_SHA
 dicomTLSCipherSuite: SSL_RSA_WITH_3DES_EDE_CBC_SHA
 
@@ -66,13 +90,9 @@ dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=
  Devices,cn=DICOM Configuration,dc=nodomain
 dicomNetworkConnectionReference: cn=dicom-tls,dicomDeviceName=dcm4chee-proxy
  ,cn=Devices,cn=DICOM Configuration,dc=nodomain
-dcmAcceptOnlyPreferredCallingAETitle: FALSE
 dcmAuditDirectory: audit
 dcmForwardScheduleDays: Mon,Tue,Wed,Thu,Fri
 dcmForwardScheduleHours: 8,9,10,11,12,13,14,15,16,17
-dcmMaxOpsInvoked: 0
-dcmMaxOpsPerformed: 0
-dcmPackPDV: TRUE
 
 dn: cn=Standalone VOI LUT Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomai
@@ -121,8 +141,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Standalone Modality LUT Storage (Retired) SCP
 
-dn: cn=RT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.1
@@ -154,8 +174,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Mammography CAD SR Storage SCP
 
-dn: cn=RT Dose Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4C
- HEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Dose Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
+ hee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.2
@@ -204,8 +224,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.103
 dicomTransferSyntax: 1.2.840.10008.1.2.4.102
 cn: Video Endoscopic Image Storage SCP
 
-dn: cn=RT Ion Plan Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=D
- CM4CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Ion Plan Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
+ cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.8
@@ -240,8 +260,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: RT Brachy Treatment Record Storage SCP
 
-dn: cn=RT Plan Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4C
- HEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Plan Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
+ hee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.5
@@ -1065,8 +1085,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Real World Value Mapping Storage SCP
 
-dn: cn=Raw Data Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=Raw Data Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66
@@ -1380,8 +1400,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: Nuclear Medicine Image Storage (Retired) SCP
 
-dn: cn=MR Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=MR Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4
@@ -1423,8 +1443,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: Ultrasound Multi-frame Image Storage (Retired) SCP
 
-dn: cn=CT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=CT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.2
@@ -1493,6 +1513,27 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Segmentation Storage SCP
 
+dn: cn=Secondary Capture Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
+ DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+objectClass: dicomTransferCapability
+objectClass: dcmTransferCapability
+dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7
+dicomTransferRole: SCP
+dicomTransferSyntax: 1.2.840.10008.1.2
+dicomTransferSyntax: 1.2.840.10008.1.2.1
+dicomTransferSyntax: 1.2.840.10008.1.2.1.99
+dicomTransferSyntax: 1.2.840.10008.1.2.2
+dicomTransferSyntax: 1.2.840.10008.1.2.4.50
+dicomTransferSyntax: 1.2.840.10008.1.2.4.51
+dicomTransferSyntax: 1.2.840.10008.1.2.4.70
+dicomTransferSyntax: 1.2.840.10008.1.2.4.57
+dicomTransferSyntax: 1.2.840.10008.1.2.4.80
+dicomTransferSyntax: 1.2.840.10008.1.2.4.81
+dicomTransferSyntax: 1.2.840.10008.1.2.4.90
+dicomTransferSyntax: 1.2.840.10008.1.2.4.91
+dicomTransferSyntax: 1.2.840.10008.1.2.5
+cn: Secondary Capture Image Storage SCP
+
 dn: cn=X-Ray Radiofluoroscopic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodoma
  in
@@ -1514,27 +1555,6 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.90
 dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: X-Ray Radiofluoroscopic Image Storage SCP
-
-dn: cn=Secondary Capture Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
- DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
-objectClass: dicomTransferCapability
-objectClass: dcmTransferCapability
-dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7
-dicomTransferRole: SCP
-dicomTransferSyntax: 1.2.840.10008.1.2
-dicomTransferSyntax: 1.2.840.10008.1.2.1
-dicomTransferSyntax: 1.2.840.10008.1.2.1.99
-dicomTransferSyntax: 1.2.840.10008.1.2.2
-dicomTransferSyntax: 1.2.840.10008.1.2.4.50
-dicomTransferSyntax: 1.2.840.10008.1.2.4.51
-dicomTransferSyntax: 1.2.840.10008.1.2.4.70
-dicomTransferSyntax: 1.2.840.10008.1.2.4.57
-dicomTransferSyntax: 1.2.840.10008.1.2.4.80
-dicomTransferSyntax: 1.2.840.10008.1.2.4.81
-dicomTransferSyntax: 1.2.840.10008.1.2.4.90
-dicomTransferSyntax: 1.2.840.10008.1.2.4.91
-dicomTransferSyntax: 1.2.840.10008.1.2.5
-cn: Secondary Capture Image Storage SCP
 
 dn: cn=Ultrasound Image Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
@@ -1752,8 +1772,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: Enhanced XRF Image Storage SCP
 
-dn: cn=Enhanced SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=D
- CM4CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=Enhanced SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
+ cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.22
@@ -1856,8 +1876,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Standalone Modality LUT Storage (Retired) SCU
 
-dn: cn=RT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.1
@@ -1889,8 +1909,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Mammography CAD SR Storage SCU
 
-dn: cn=RT Dose Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4C
- HEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Dose Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
+ hee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.2
@@ -1939,8 +1959,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.103
 dicomTransferSyntax: 1.2.840.10008.1.2.4.102
 cn: Video Endoscopic Image Storage SCU
 
-dn: cn=RT Ion Plan Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=D
- CM4CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Ion Plan Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
+ cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.8
@@ -1975,8 +1995,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: RT Brachy Treatment Record Storage SCU
 
-dn: cn=RT Plan Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4C
- HEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=RT Plan Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
+ hee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.5
@@ -2800,8 +2820,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Real World Value Mapping Storage SCU
 
-dn: cn=Raw Data Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=Raw Data Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66
@@ -3115,8 +3135,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: Nuclear Medicine Image Storage (Retired) SCU
 
-dn: cn=MR Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=MR Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4
@@ -3158,8 +3178,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: Ultrasound Multi-frame Image Storage (Retired) SCU
 
-dn: cn=CT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4
- CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=CT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
+ chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.2
@@ -3228,6 +3248,27 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Segmentation Storage SCU
 
+dn: cn=Secondary Capture Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
+ DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+objectClass: dicomTransferCapability
+objectClass: dcmTransferCapability
+dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7
+dicomTransferRole: SCU
+dicomTransferSyntax: 1.2.840.10008.1.2
+dicomTransferSyntax: 1.2.840.10008.1.2.1
+dicomTransferSyntax: 1.2.840.10008.1.2.1.99
+dicomTransferSyntax: 1.2.840.10008.1.2.2
+dicomTransferSyntax: 1.2.840.10008.1.2.4.50
+dicomTransferSyntax: 1.2.840.10008.1.2.4.51
+dicomTransferSyntax: 1.2.840.10008.1.2.4.70
+dicomTransferSyntax: 1.2.840.10008.1.2.4.57
+dicomTransferSyntax: 1.2.840.10008.1.2.4.80
+dicomTransferSyntax: 1.2.840.10008.1.2.4.81
+dicomTransferSyntax: 1.2.840.10008.1.2.4.90
+dicomTransferSyntax: 1.2.840.10008.1.2.4.91
+dicomTransferSyntax: 1.2.840.10008.1.2.5
+cn: Secondary Capture Image Storage SCU
+
 dn: cn=X-Ray Radiofluoroscopic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodoma
  in
@@ -3249,27 +3290,6 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.90
 dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: X-Ray Radiofluoroscopic Image Storage SCU
-
-dn: cn=Secondary Capture Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
- DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
-objectClass: dicomTransferCapability
-objectClass: dcmTransferCapability
-dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7
-dicomTransferRole: SCU
-dicomTransferSyntax: 1.2.840.10008.1.2
-dicomTransferSyntax: 1.2.840.10008.1.2.1
-dicomTransferSyntax: 1.2.840.10008.1.2.1.99
-dicomTransferSyntax: 1.2.840.10008.1.2.2
-dicomTransferSyntax: 1.2.840.10008.1.2.4.50
-dicomTransferSyntax: 1.2.840.10008.1.2.4.51
-dicomTransferSyntax: 1.2.840.10008.1.2.4.70
-dicomTransferSyntax: 1.2.840.10008.1.2.4.57
-dicomTransferSyntax: 1.2.840.10008.1.2.4.80
-dicomTransferSyntax: 1.2.840.10008.1.2.4.81
-dicomTransferSyntax: 1.2.840.10008.1.2.4.90
-dicomTransferSyntax: 1.2.840.10008.1.2.4.91
-dicomTransferSyntax: 1.2.840.10008.1.2.5
-cn: Secondary Capture Image Storage SCU
 
 dn: cn=Ultrasound Image Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
@@ -3487,8 +3507,8 @@ dicomTransferSyntax: 1.2.840.10008.1.2.4.91
 dicomTransferSyntax: 1.2.840.10008.1.2.5
 cn: Enhanced XRF Image Storage SCU
 
-dn: cn=Enhanced SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=D
- CM4CHEE Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: cn=Enhanced SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
+ cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.22
@@ -3544,33 +3564,105 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Encapsulated PDF Storage SCU
 
-dn: dcmRetrySuffix=.conn,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4CHE
- E Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: dcmRetrySuffix=.conn,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4che
+ e-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dcmRetry
 dcmRetryDelay: 60
 dcmRetryNum: 5
 dcmRetrySuffix: .conn
 
-dn: dcmRetrySuffix=.ass,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=DCM4CHEE
-  Proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: dcmRetrySuffix=.ass,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee
+ -proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass: dcmRetry
 dcmRetryDelay: 60
 dcmRetryNum: 5
 dcmRetrySuffix: .ass
 
-dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomD
- eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
+ ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
+ nfiguration,dc=nodomain
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCU
 labeledURI: resource:dcm4chee-proxy-nullify-pn.xsl
 dicomAETitle: WITHOUT_PN
 
-dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomD
- eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
+ ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
+ nfiguration,dc=nodomain
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCP
 labeledURI: resource:dcm4chee-proxy-ensure-pid.xsl
 dicomAETitle: ENSURE_PID
+
+dn: dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,dc=nodomain
+objectClass: dicomDevice
+objectClass: pkiUser
+dicomDeviceName: storescp
+dicomInstalled: TRUE
+dicomThisNodeCertificateReference: dicomDeviceName=storescp,cn=Devices,cn=DI
+ COM Configuration,dc=nodomain
+userCertificate;binary:: MIICTTCCAbagAwIBAgIETcfJ0zANBgkqhkiG9w0BAQUFADBrMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3AwHhcNMTEwN
+ TA5MTEwMjQzWhcNMTIwNTA4MTEwMjQzWjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
+ MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9
+ vbDERMA8GA1UEAxMIc3RvcmVzY3AwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIS0bk+A9a
+ BRcko1Hxr11MB+NuQhyORTefh8K0cwyCXZJLuDHrF2A9OJUmlj9pB1QZAvLP6Z5UK6owMFmuwn1
+ pFdcOoy4ffoOfbz57MFp1GtUGQMR9CUcvQ/yakd1tAkT7t69sHWgQIjIdsx2xarMuEy66G5JF8X
+ 9F9TbGYkEm67AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAWxbB+7UJzXw7p4+n2RpPMLZWdAUGaGR
+ JzvqY96lZQZuN8SgPb8f6FjXVR3UbVzBc3vQyCiDpfA2xC+Dx6RK3MYsE4M56PwmG6aB1Du93Re
+ 8b4LmFJJLPkekmLp9OiZNxyXE+PzQkGf0f/AbXJn8HbGhWIBVjO4XzLFH+dF7Wl5w=
+
+dn: cn=dicom,dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,dc=n
+ odomain
+objectClass: dicomNetworkConnection
+objectClass: dcmNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11113
+
+dn: cn=dicom-tls,dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,
+ dc=nodomain
+objectClass: dicomNetworkConnection
+objectClass: dcmNetworkConnection
+dicomHostname: localhost
+cn: dicom-tls
+dcmTLSProtocol: TLSv1
+dcmTLSProtocol: SSLv3
+dicomPort: 2763
+dicomTLSCipherSuite: TLS_RSA_WITH_AES_128_CBC_SHA
+dicomTLSCipherSuite: SSL_RSA_WITH_3DES_EDE_CBC_SHA
+
+dn: dicomAETitle=STORESCP,dicomDeviceName=storescp,cn=Devices,cn=DICOM Confi
+ guration,dc=nodomain
+objectClass: dicomNetworkAE
+objectClass: dcmNetworkAE
+dicomAETitle: STORESCP
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: FALSE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=storescp,cn=Device
+ s,cn=DICOM Configuration,dc=nodomain
+dicomNetworkConnectionReference: cn=dicom-tls,dicomDeviceName=storescp,cn=De
+ vices,cn=DICOM Configuration,dc=nodomain
+
+dn: dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,dc=nodomain
+objectClass: dicomDevice
+objectClass: pkiUser
+dicomDeviceName: storescu
+dicomInstalled: TRUE
+dicomThisNodeCertificateReference: dicomDeviceName=storescu,cn=Devices,cn=DI
+ COM Configuration,dc=nodomain
+userCertificate;binary:: MIICTTCCAbagAwIBAgIETcfJhjANBgkqhkiG9w0BAQUFADBrMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwHhcNMTEwN
+ TA5MTEwMTI2WhcNMTIwNTA4MTEwMTI2WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
+ MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9
+ vbDERMA8GA1UEAxMIc3RvcmVzY3UwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIWXv47tVn
+ a0cmqkTIWlyjo30I5xiQn87+pkOFCtpK6lXpuL4eQ4Wsafcv/fBEe564nd+a8lArBmrcHlS7yU/
+ VX1bPHMOdot6R+qF2icohL9e43Wgvcq7aV3gV2Wtvrg7+STMzV+GgULEYBw0T9pTi1mBTr5hEFV
+ uwqK4lSkmF9dAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAENTJn6dkVMnz3qhfBb86nso5pp9+sFE
+ xHHQ33yrbbK+m63fQ9gKCJ02VCFW3hBq8IjGAlbZNchHFNE0uJ3GrDXjtXGpNPMmo+2pQ+5quq/
+ 6g3bgcFt+Yn8jd/Y4w1mgP0i5Dc2niJA0FhY0qjzjNp/WfsoiwW8yM1+UFY5BZTBI=
 

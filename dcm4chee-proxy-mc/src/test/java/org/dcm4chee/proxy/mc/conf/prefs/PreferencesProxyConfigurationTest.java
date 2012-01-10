@@ -38,6 +38,8 @@
 
 package org.dcm4chee.proxy.mc.conf.prefs;
 
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -47,9 +49,12 @@ import java.util.prefs.Preferences;
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.data.UID;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
+import org.dcm4che.net.Device;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
+import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Retry;
@@ -233,19 +238,43 @@ public class PreferencesProxyConfigurationTest {
         try {
             config.removeDevice("dcm4chee-proxy");
         } catch (ConfigurationNotFoundException e) {}
+        try {
+            config.removeDevice("storescp");
+        }  catch (ConfigurationNotFoundException e) {}
+        try {
+            config.removeDevice("storescu");
+        }  catch (ConfigurationNotFoundException e) {}
         config.unregisterAETitle("DCM4CHEE-PROXY");
+        config.unregisterAETitle("STORESCP");
         config.registerAETitle("DCM4CHEE-PROXY");
+        config.registerAETitle("STORESCP");
         config.persist(createProxyDevice("dcm4chee-proxy"));
+        config.persist(createOtherSCP("storescp", "STORESCP", "localhost",11113, 2763));
+        config.persist(createDevice("storescu"));
         ProxyApplicationEntity pa =
                 (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
         List<Retry> retries = new ArrayList<Retry>();
         List<Retry> prevRetries = pa.getRetries();
         retries.add(prevRetries.get(0));
-        retries.add(new Retry(".temp", 10, 1));
+        retries.add(new Retry(".tmp", 60, 5));
         pa.setRetries(retries);
         config.merge(pa.getDevice());
+        export();
         config.removeDevice("dcm4chee-proxy");
+        config.removeDevice("storescu");
+        config.removeDevice("storescp");
         config.unregisterAETitle("DCM4CHEE-PROXY");
+        config.unregisterAETitle("STORESCP");
+    }
+    
+    private void export() throws Exception {
+        OutputStream os = new FileOutputStream(
+        "/home/solidether/code/git/dcm4chee-proxy/dcm4chee-proxy-mc/src/main/config/prefs/sample-config.xml");
+        try {
+            Preferences.userRoot().node("org/dcm4chee/proxy").exportSubtree(os);
+        } finally {
+            SafeClose.close(os);
+        }
     }
 
     private ProxyDevice createProxyDevice(String name) throws Exception {
@@ -273,17 +302,14 @@ public class PreferencesProxyConfigurationTest {
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));
-        
         Schedule schedule = new Schedule();
         schedule.setDays("Mon-Fri");
         schedule.setHours("8-18");
         ae.setForwardSchedule(schedule);
-        
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(".conn", 60, 5));
         retries.add(new Retry(".ass", 60, 5));
         ae.setRetries(retries);
-        
         addVerificationStorageTransferCapabilities(ae);
         addStorageTransferCapabilities(ae, IMAGE_CUIDS, IMAGE_TSUIDS);
         addStorageTransferCapabilities(ae, VIDEO_CUIDS, VIDEO_TSUIDS);
@@ -304,6 +330,31 @@ public class PreferencesProxyConfigurationTest {
 //        dicomTLS.setInstalled(false);
         device.addConnection(dicomTLS);
         ae.addConnection(dicomTLS);
+        return device;
+    }
+    
+    private Device createOtherSCP(String name, String aet,
+            String host, int port, int tlsPort) throws Exception {
+         Device device = createDevice(name);
+         ApplicationEntity ae = new ApplicationEntity(aet);
+         ae.setAssociationAcceptor(true);
+         device.addApplicationEntity(ae);
+         Connection dicom = new Connection("dicom", host, port);
+         device.addConnection(dicom);
+         ae.addConnection(dicom);
+         Connection dicomTLS = new Connection("dicom-tls", host, tlsPort);
+         dicomTLS.setTlsCipherSuites(
+                 Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
+                 Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
+         device.addConnection(dicomTLS);
+         ae.addConnection(dicomTLS);
+         return device;
+     }
+
+    private Device createDevice(String name) throws Exception {
+        Device device = new Device(name);
+        device.setThisNodeCertificates(config.deviceRef(name),
+                (X509Certificate) KEYSTORE.getCertificate(name));
         return device;
     }
 

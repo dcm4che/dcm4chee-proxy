@@ -52,8 +52,8 @@
       factoryMethod="newSingleThreadScheduledExecutor" />
   </bean>
   
-  <!-- LDAP Archive Configuration -->
-  <bean name="ArchiveConfiguration" class="org.dcm4chee.archive.conf.ldap.LdapArchiveConfiguration">
+  <!-- LDAP Dicom Configuration -->
+  <bean name="DicomConfiguration" class="org.dcm4chee.proxy.mc.conf.ldap.LdapProxyConfiguration">
     <constructor>
       <parameter>
         <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4che.conf.ldap.LdapEnv">
@@ -65,9 +65,10 @@
       <parameter>dc=nodomain</parameter>
     </constructor>
   </bean>
+  
 
-  <!-- Preferences Archive Configuration
-  <bean name="ArchiveConfiguration" class="org.dcm4chee.archive.conf.pref.PreferencesArchiveConfiguration">
+  <!-- Preferences Dicom Configuration 
+  <bean name="DicomConfiguration" class="org.dcm4che.conf.prefs.PreferencesDicomConfiguration">
     <constructor>
       <parameter>
         <javabean xmlns="urn:jboss:javabean:2.0" class="java.util.prefs.Preferences">
@@ -88,9 +89,9 @@
   </bean>
   
   <!-- The DICOM Device -->
-  <bean name="Device" class="org.dcm4chee.proxy.mc.net.ProxyDevice">
+  <bean name="ProxyDevice" class="org.dcm4chee.proxy.mc.net.ProxyDevice">
     <constructor factoryMethod="findDevice">
-      <factory bean="ArchiveConfiguration"/>
+      <factory bean="DicomConfiguration"/>
       <parameter>dcm4chee-proxy</parameter>
     </constructor>
     <property name="executor">
@@ -110,119 +111,36 @@
     <stop method="deactivate" />
     <demand>HornetQServer</demand>
   </bean>
-
-  <!-- Proxy Connection -->
-  <bean name="ProxyConnection1" class="org.dcm4che.net.Connection">
-    <property name="port">11112</property>
-  </bean>
-
-  <!-- Proxy DICOM Application Entity -->
-  <bean name="ProxyApplicationEntity1" class="org.dcm4chee.proxy.mc.net.ProxyApplicationEntity">
-    <constructor>
-      <parameter>*</parameter>
-    </constructor>
-    <property name="associationAcceptor">true</property>
-    <property name="associationInitiator">true</property>
-    <property name="maxOpsPerformed">0</property>
-    <property name="maxOpsInvoked">0</property>
-    <property name="spoolDirectory">${jboss.server.data.dir}/proxy/</property>
-    <property name="acceptDataOnFailedNegotiation">true</property>
-    <property name="forwardDestination">
-      <inject bean="ForwardApplicationEntity1" />
-    </property>
-    <property name="useCallingAETitle">
-      <null/>
-    </property>
-    <property name="attributeCoercionURI">resource:dcm4chee-proxy-nullify-pn.xsl</property>
-    <property name="forwardSchedule">
-      <inject bean="forwardScheduleApplicationEntity1"/>
-    </property>
-    <property name="retries">
-      <list>
-        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
-          <constructor>
-            <property name="AString">.conn</property><!-- retry type -->
-            <property name="AInt">60</property><!-- time in seconds -->
-            <property name="AInt">5</property><!-- number of retries -->
-          </constructor>
-        </javabean>
-        <javabean xmlns="urn:jboss:javabean:2.0" class="org.dcm4chee.proxy.mc.net.Retry">
-          <constructor>
-            <property name="AString">.ass</property><!-- retry type -->
-            <property name="AInt">60</property><!-- time in seconds -->
-            <property name="AInt">5</property><!-- number of retries -->
-          </constructor>
-        </javabean>
-      </list>
-    </property>
-    <install method="addConnection">
-      <parameter>
-        <inject bean="ProxyConnection1" />
-      </parameter>
-    </install>
-    <uninstall method="removeConnection">
-      <parameter>
-        <inject bean="ProxyConnection1" />
-      </parameter>
-    </uninstall>
-    <property name="exclusiveUseDefinedTC">true</property>
-    <!-- add all TC -->
-    <incallback method="addTransferCapability" />
-    <!-- add defined TC 
-    <install method="addTransferCapability" >
-      <parameter>
-        <inject bean="MRStorageSCP" />
-      </parameter>
-    </install>
-    <install method="addTransferCapability" >
-      <parameter>
-        <inject bean="MRStorageSCU" />
-      </parameter>
-    </install>
-    -->
-    <property name="enableAuditLog">true</property>
-    <property name="auditDirectory">${jboss.server.data.dir}/auditlog/</property>
-  </bean>
-
-  <!-- Forward Connection -->
-  <bean name="ForwardConnection1" class="org.dcm4che.net.Connection">
-    <property name="hostname">localhost</property>
-    <property name="port">11113</property>
-    <property name="requestTimeout">1000</property><!-- time in milliseconds -->
-    <property name="dimseRSPTimeout">1000</property><!-- time in milliseconds -->
-  </bean>
-
-  <!-- Forward DICOM Application Entity -->
-  <bean name="ForwardApplicationEntity1" class="org.dcm4che.net.ApplicationEntity">
-    <constructor>
-      <parameter>*</parameter>
-    </constructor>
-    <property name="associationAcceptor">true</property>
-    <property name="maxOpsPerformed">0</property>
-    <property name="maxOpsInvoked">0</property>
-    <install method="addConnection">
-      <parameter>
-        <inject bean="ForwardConnection1" />
-      </parameter>
-    </install>
-    <uninstall method="removeConnection">
-      <parameter>
-        <inject bean="ForwardConnection1" />
-      </parameter>
-    </uninstall>
+  
+  <!-- Service Registry -->
+  <bean name="DicomServiceRegistry" class="org.dcm4che.net.service.DicomServiceRegistry">
+    <incallback method="addDicomService" />
   </bean>
   
-  <!-- Schedule for Forward DICOM Application Entity -->
-  <bean name="forwardScheduleApplicationEntity1" class="org.dcm4chee.proxy.mc.net.Schedule">
-    <property name="days">Mon-Fri</property>
-    <property name="hours">8-18</property>
+  <!-- CEchoSCP -->
+  <bean name="CEchoSCP" class="org.dcm4chee.proxy.mc.net.service.CEchoSCPImpl"/>
+
+  <!-- CStoreSCP -->
+  <bean name="CStoreSCP" class="org.dcm4chee.proxy.mc.net.service.CStoreSCPImpl">
+    <constructor>
+      <parameter>
+        <array>
+          <value>*</value>
+        </array>
+      </parameter>
+    </constructor>
   </bean>
   
-  <!-- Schedule -->
+  <!-- Audit Log -->
+  <bean name="AuditLog" class="org.dcm4chee.proxy.mc.net.AuditLog">
+    <property name="delay">60</property><!-- time in seconds -->
+  </bean>
+  
+  <!-- Schedule for basic services -->
   <bean name="Scheduler" class="org.dcm4chee.proxy.mc.net.Scheduler">
     <constructor>
       <parameter>
-        <inject bean="Device"></inject>
+        <inject bean="ProxyDevice"></inject>
       </parameter>
       <parameter>
         <inject bean="AuditLog"></inject>
@@ -231,10 +149,5 @@
     <start method="start" />
     <stop method="stop" />
   </bean>
-  
-  <!-- Audit Log -->
-  <bean name="AuditLog" class="org.dcm4chee.proxy.mc.net.AuditLog">
-    <property name="delay">60</property><!-- time in seconds -->
-  </bean>
-  
+
 </deployment>

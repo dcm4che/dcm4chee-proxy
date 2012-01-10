@@ -342,13 +342,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         if (getForwardSchedule() != null && !getForwardSchedule().sendNow(now))
             return;
 
-        String aet = getAETitle();
-        if (aet.equals("*")) {
-            for (String calledAET : getSpoolDirectoryPath().list())
-                startForwardFiles(calledAET);
-        } else {
-            startForwardFiles(aet);
-        }
+        for (String calledAET : getSpoolDirectoryPath().list())
+            startForwardFiles(calledAET);
     }
 
     private void startForwardFiles(final String calledAET) {
@@ -362,7 +357,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private void forwardFiles(String calledAET) {
-        File dir = new File(getSpoolDirectory(), calledAET);
+        File dir = new File(getSpoolDirectoryPath(), calledAET);
         File[] files = dir.listFiles(fileFilter());
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))

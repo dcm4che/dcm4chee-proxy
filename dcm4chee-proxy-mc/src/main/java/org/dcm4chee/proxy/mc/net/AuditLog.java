@@ -75,14 +75,8 @@ public class AuditLog {
 
     public void writeLog(ProxyApplicationEntity ae) {
         this.ae = ae;
-        String aet = ae.getAETitle();
-        if (aet.equals("*"))
-            for (String calledAET : ae.getAuditDirectoryPath().list()) {
-                File calledAETDir = new File(ae.getAuditDirectory(), calledAET);
-                scanCalledAETDir(calledAETDir);
-            }
-        else {
-            File calledAETDir = new File(ae.getAuditDirectory(), aet);
+        for (String calledAET : ae.getAuditDirectoryPath().list()) {
+            File calledAETDir = new File(ae.getAuditDirectoryPath(), calledAET);
             scanCalledAETDir(calledAETDir);
         }
     }
