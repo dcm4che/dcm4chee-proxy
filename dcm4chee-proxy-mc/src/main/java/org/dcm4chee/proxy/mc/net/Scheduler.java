@@ -60,7 +60,7 @@ public class Scheduler {
     }
 
     public void start() {
-        long period = (Long) device.getProperty("scheduler.period");
+        long period = (Long) device.getProperty("schedulerInterval");
         timer = device.scheduleAtFixedRate(new Runnable(){
 
             @Override

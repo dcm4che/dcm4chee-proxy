@@ -98,7 +98,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private String useCallingAETitle;
     private String destinationAETitle;
-    private Schedule schedule;
+    private Schedule forwardSchedule;
     private String spoolDirectory;
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
@@ -169,11 +169,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public final void setForwardSchedule(Schedule schedule) {
-        this.schedule = schedule;
+        this.forwardSchedule = schedule;
     }
 
     public final Schedule getForwardSchedule() {
-        return schedule;
+        return forwardSchedule;
     }
 
     public void setRetries(List<Retry> retries) {
