@@ -93,6 +93,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private static final String separator = System.getProperty("file.separator");
     private static final String jbossServerDataDir = System.getProperty("jboss.server.data.dir");
+    private static final String currentWorkingDir = System.getProperty("user.dir");
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
 
@@ -139,7 +140,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public File getSpoolDirectoryPath() {
         File path = new File(spoolDirectory);
         if (!path.isAbsolute())
-            path = new File(jbossServerDataDir, spoolDirectory);
+            path = jbossServerDataDir != null 
+                ? new File(jbossServerDataDir, spoolDirectory)
+                : new File(currentWorkingDir, spoolDirectory);
         path.mkdirs();
         return path;
     }
@@ -203,7 +206,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public File getAuditDirectoryPath() {
         File path = new File(auditDirectory);
         if (!path.isAbsolute())
-            path = new File(jbossServerDataDir, auditDirectory);
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, auditDirectory)
+                : new File(currentWorkingDir, auditDirectory);
         path.mkdirs();
         return path;
     }
@@ -212,7 +217,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
         final Calendar now = new GregorianCalendar();
-        if (getForwardSchedule() == null || getForwardSchedule().sendNow(now))
+        if (forwardSchedule == null || forwardSchedule.sendNow(now))
             return forwardAAssociateRQ(as, rq, ac, true);
         as.setProperty(FILE_SUFFIX, ".dcm");
         return super.negotiate(as, rq, ac);
@@ -221,10 +226,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac,
             boolean sendNow) throws IOException {
         try {
-            if (getUseCallingAETitle() != null)
-                rq.setCallingAET(getUseCallingAETitle());
-            if (!getDestinationAETitle().equals("*"))
-                rq.setCalledAET(getDestinationAETitle());
+            if (useCallingAETitle != null)
+                rq.setCallingAET(useCallingAETitle);
+            if (!destinationAETitle.equals("*"))
+                rq.setCalledAET(destinationAETitle);
             Association asCalled;
             asCalled = connect(getDestinationAE(), rq);
             if (sendNow)
@@ -232,7 +237,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             else
                 releaseAS(asCalled);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
-            if (isExclusiveUseDefinedTC()) {
+            if (exclusiveUseDefinedTC) {
                 AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
@@ -277,8 +282,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
             AAssociateAC ac, Exception e, String suffix, int reason) throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.debug("Unable to connect to " + getDestinationAETitle() + " (" + e.getMessage() + ")");
-        if (isAcceptDataOnFailedNegotiation()) {
+        LOG.debug("Unable to connect to " + destinationAETitle + " (" + e.getMessage() + ")");
+        if (acceptDataOnFailedNegotiation) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
         }
@@ -339,7 +344,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void forwardFiles() {
         final Calendar now = new GregorianCalendar();
-        if (getForwardSchedule() != null && !getForwardSchedule().sendNow(now))
+        if (forwardSchedule != null && !forwardSchedule.sendNow(now))
             return;
 
         for (String calledAET : getSpoolDirectoryPath().list())
@@ -400,7 +405,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         AAssociateRQ rq = ft.getAAssociateRQ();
         if (getUseCallingAETitle() != null)
             rq.setCallingAET(getUseCallingAETitle());
-        if (!getDestinationAETitle().equals("*"))
+        if (!destinationAETitle.equals("*"))
             rq.setCalledAET(getDestinationAETitle());
         Association as2 = null;
         try {
@@ -462,7 +467,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.debug(getDestinationAETitle() + " connection error: " + e.getMessage());
+        LOG.debug(destinationAETitle + " connection error: " + e.getMessage());
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));
@@ -517,7 +522,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            as2.cstore(cuid, iuid, getForwardPriority(), 
+            as2.cstore(cuid, iuid, forwardPriority, 
                     createDataWriter(in, as2, ds, cuid), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
@@ -553,7 +558,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             String cuid) throws IOException {
         AttributeCoercion ac =
                 getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCU, DIMSE.C_STORE_RQ);
-        if (ac != null || isEnableAuditLog()) {
+        if (ac != null || enableAuditLog) {
             in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);
             coerceAttributes(attrs, ac);
