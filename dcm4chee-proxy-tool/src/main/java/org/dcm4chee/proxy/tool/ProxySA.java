@@ -55,6 +55,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.dcm4che.conf.api.ConfigurationException;
+import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4che.net.SSLManagerFactory;
@@ -79,7 +80,8 @@ public class ProxySA {
         try {
             CommandLine cl = parseComandLine(args);
             DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
-            ProxyDevice proxyDevice = (ProxyDevice) dicomConfig.findDevice("dcm4chee-proxy");
+            ProxyDevice proxyDevice = 
+                (ProxyDevice) dicomConfig.findDevice(cl.getOptionValue("device"));
             ExecutorService executorService = Executors.newCachedThreadPool();
             proxyDevice.setExecutor(executorService);
             ScheduledExecutorService scheduledExecutorService = 
@@ -92,6 +94,9 @@ public class ProxySA {
             configureKeyManager(cl, proxyDevice);
             configureScheduler(cl, proxyDevice);
             proxyDevice.activate();
+        } catch (ConfigurationNotFoundException c) {
+            System.err.println("No device configuration found.");
+            System.exit(2);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(2);
@@ -100,23 +105,20 @@ public class ProxySA {
 
     private static DicomConfiguration configureDicomConfiguration(CommandLine cl)
             throws NamingException, ConfigurationException {
-        DicomConfiguration dicomConfig;
+        if (!cl.hasOption("device")) {
+            System.err.println("Missing device name.");
+            System.err.println(rb.getString("try"));
+            System.exit(2);
+        }
         if (cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd")
                 && cl.hasOption("ldap-domain")) {
             LdapEnv env = new LdapEnv();
             env.setUrl(cl.getOptionValue("ldap-url"));
             env.setUserDN(cl.getOptionValue("ldap-userDN"));
             env.setPassword(cl.getOptionValue("ldap-pwd"));
-            dicomConfig = new LdapProxyConfiguration(env, cl.getOptionValue("ldap-domain"));
+            return new LdapProxyConfiguration(env, cl.getOptionValue("ldap-domain"));
         } else
-            dicomConfig =
-                    (DicomConfiguration) new PreferencesProxyConfiguration(Preferences.userRoot());
-        if (!dicomConfig.configurationExists()) {
-            System.err.println("Error in DICOM configuration.");
-            System.err.println(rb.getString("try"));
-            System.exit(2);
-        }
-        return dicomConfig;
+            return (DicomConfiguration) new PreferencesProxyConfiguration(Preferences.userRoot());
     }
     
     private static void configureScheduler(CommandLine cl, ProxyDevice proxyDevice) {
@@ -152,12 +154,23 @@ public class ProxySA {
     private static CommandLine parseComandLine(String[] args) throws ParseException {
         Options opts = new Options();
         addCommonOptions(opts);
+        addDicomConfig(opts);
         addTLSOptions(opts);
         addLDAPOptions(opts);
         addAuditLogOptions(opts);
         return parseComandLine(args, opts, rb, ProxySA.class);
     }
     
+    @SuppressWarnings("static-access")
+    private static void addDicomConfig(Options opts) {
+        opts.addOption(OptionBuilder
+                .hasArg()
+                .withArgName("name")
+                .withDescription(rb.getString("device"))
+                .withLongOpt("device")
+                .create(null));
+    }
+
     @SuppressWarnings("static-access")
     private static void addLDAPOptions(Options opts) {
         opts.addOption(OptionBuilder
