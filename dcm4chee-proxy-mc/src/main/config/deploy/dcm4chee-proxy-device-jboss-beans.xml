@@ -145,6 +145,9 @@
     </constructor>
   </bean>
   
+  <!-- NActionSCP -->
+  <bean name="NActionSCP" class="org.dcm4chee.proxy.mc.net.service.NActionSCPImpl"/>
+  
   <!-- Audit Log -->
   <bean name="AuditLog" class="org.dcm4chee.proxy.mc.net.AuditLog">
     <property name="delay">60</property><!-- time in seconds -->

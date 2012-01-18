@@ -60,7 +60,7 @@ import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backaus@agfa.com>
  */
 public class CStoreSCPImpl extends BasicCStoreSCP {
 

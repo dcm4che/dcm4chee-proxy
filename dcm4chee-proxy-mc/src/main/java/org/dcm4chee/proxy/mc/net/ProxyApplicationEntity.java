@@ -60,6 +60,7 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.AttributeCoercion.DIMSE;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
@@ -220,6 +221,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         if (forwardSchedule == null || forwardSchedule.sendNow(now))
             return forwardAAssociateRQ(as, rq, ac, true);
         as.setProperty(FILE_SUFFIX, ".dcm");
+        rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, false));
         return super.negotiate(as, rq, ac);
     }
     
