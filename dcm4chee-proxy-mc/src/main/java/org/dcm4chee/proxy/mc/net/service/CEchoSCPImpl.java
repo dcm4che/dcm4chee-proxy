@@ -59,19 +59,19 @@ public class CEchoSCPImpl extends BasicCEchoSCP {
     static final Logger LOG = LoggerFactory.getLogger(CEchoSCPImpl.class);
 
     @Override
-    public void onCEchoRQ(Association as, PresentationContext pc, Attributes cmd)
+    public void onCEchoRQ(Association asAccepted, PresentationContext pc, Attributes cmd)
             throws IOException {
-        Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (as2 == null) {
-            super.onCEchoRQ(as, pc, cmd);
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null) {
+            super.onCEchoRQ(asAccepted, pc, cmd);
             return;
         }
         try {
-            DimseRSP rsp = as2.cecho();
+            DimseRSP rsp = asInvoked.cecho();
             rsp.next();
-            as.writeDimseRSP(pc, rsp.getCommand(), null);
+            asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
         } catch (Exception e) {
-            LOG.warn("Failed to forward C-ECHO RQ to " + as2, e);
+            LOG.warn("Failed to forward C-ECHO RQ to " + asInvoked, e);
             throw new AAbort(AAbort.UL_SERIVE_USER, 0);
         }
     }

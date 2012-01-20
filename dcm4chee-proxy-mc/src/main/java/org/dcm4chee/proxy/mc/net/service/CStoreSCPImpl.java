@@ -69,23 +69,23 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    public void onCStoreRQ(Association as, PresentationContext pc, Attributes rq, PDVInputStream data)
+    public void onCStoreRQ(Association asAccepted, PresentationContext pc, Attributes rq, PDVInputStream data)
             throws IOException {
-        Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (as2 == null)
-            super.onCStoreRQ(as, pc, rq, data);
-        else if (!((ProxyApplicationEntity) as.getApplicationEntity()).getAttributeCoercions()
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null)
+            super.onCStoreRQ(asAccepted, pc, rq, data);
+        else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getAttributeCoercions()
                 .getAll().isEmpty()
-                || ((ProxyApplicationEntity) as.getApplicationEntity()).isEnableAuditLog())
-            super.store(as, pc, rq, data, null);
+                || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog())
+            super.store(asAccepted, pc, rq, data, null);
         else {
             try {
-                forward(as, pc, rq, new InputStreamDataWriter(data), as2);
+                forward(asAccepted, pc, rq, new InputStreamDataWriter(data), asInvoked);
             } catch (Exception e) {
                 LOG.debug(e.getMessage());
-                as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-                as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
-                super.onCStoreRQ(as, pc, rq, data);
+                asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+                asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                super.onCStoreRQ(asAccepted, pc, rq, data);
             }
         }
     }
@@ -106,25 +106,25 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    protected File process(Association as, PresentationContext pc, Attributes rq, Attributes rsp,
+    protected File process(Association asAccepted, PresentationContext pc, Attributes rq, Attributes rsp,
             Object storage, File file, MessageDigest digest) throws IOException {
-        Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (as2 == null) {
-            rename(as, file);
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null) {
+            rename(asAccepted, file);
             return null;
         }
-        ProxyApplicationEntity pae = ((ProxyApplicationEntity) as.getApplicationEntity());
-        Attributes attrs = pae.readAndCoerceDataset(file, as2.getRemoteAET());
+        ProxyApplicationEntity pae = ((ProxyApplicationEntity) asAccepted.getApplicationEntity());
+        Attributes attrs = pae.readAndCoerceDataset(file, asInvoked.getRemoteAET());
         if (pae.isEnableAuditLog()) {
-            pae.createStartLogFile(as2, attrs);
-            pae.writeLogFile(as2, attrs, file.length());
+            pae.createStartLogFile(asInvoked, attrs);
+            pae.writeLogFile(asInvoked, attrs, file.length());
         }
         try {
-            forward(as, pc, rq, new DataWriterAdapter(attrs), as2);
+            forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
         } catch (AssociationStateException ass) {
-            handleForwardException(as, pc, rq, file, ".ass", ass);
+            handleForwardException(asAccepted, pc, rq, file, ".ass", ass);
         } catch (Exception e) {
-            handleForwardException(as, pc, rq, file, ".conn", e);
+            handleForwardException(asAccepted, pc, rq, file, ".conn", e);
         }
         return file;
     }
@@ -152,8 +152,8 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         }
     }
 
-    private static void forward(final Association as, final PresentationContext pc,
-            Attributes rq, DataWriter data, Association as2) throws IOException, InterruptedException {
+    private static void forward(final Association asAccepted, final PresentationContext pc,
+            Attributes rq, DataWriter data, Association asInvoked) throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
@@ -165,13 +165,13 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
                 super.onDimseRSP(as2, cmd, data);
                 try {
-                    as.writeDimseRSP(pc, cmd, data);
+                    asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward C-STORE RSP to " + as, e);
+                    LOG.warn("Failed to forward C-STORE RSP to " + asAccepted, e);
                 }
             }
         };
-        as2.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
+        asInvoked.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
     }
 
 }

@@ -209,6 +209,7 @@ public class LdapProxyConfigurationTest {
         UID.RTTreatmentSummaryRecordStorage,
         UID.RTIonPlanStorage,
         UID.RTIonBeamsTreatmentRecordStorage,
+        UID.StorageCommitmentPushModelSOPClass,
     };
 
     private static final KeyStore KEYSTORE = loadKeyStore();
@@ -247,11 +248,13 @@ public class LdapProxyConfigurationTest {
         }  catch (ConfigurationNotFoundException e) {}
         config.unregisterAETitle("DCM4CHEE-PROXY");
         config.unregisterAETitle("STORESCP");
+        config.unregisterAETitle("STORESCU");
         config.registerAETitle("DCM4CHEE-PROXY");
         config.registerAETitle("STORESCP");
+        config.registerAETitle("STORESCU");
         config.persist(createProxyDevice("dcm4chee-proxy"));
-        config.persist(createOtherSCP("storescp", "STORESCP", "localhost",11113, 2763));
-        config.persist(createDevice("storescu"));
+        config.persist(createOtherSCX("storescp", "STORESCP", "localhost",11113, 2763));
+        config.persist(createOtherSCX("storescu", "STORESCU", "localhost",11114, 2764));
         ProxyApplicationEntity pa =
                 (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
         List<Retry> retries = new ArrayList<Retry>();
@@ -265,6 +268,7 @@ public class LdapProxyConfigurationTest {
         config.removeDevice("storescp");
         config.unregisterAETitle("DCM4CHEE-PROXY");
         config.unregisterAETitle("STORESCP");
+        config.unregisterAETitle("STORESCU");
     }
 
     private ProxyDevice createProxyDevice(String name) throws Exception {
@@ -323,7 +327,7 @@ public class LdapProxyConfigurationTest {
         return device;
     }
 
-    private Device createOtherSCP(String name, String aet,
+    private Device createOtherSCX(String name, String aet,
             String host, int port, int tlsPort) throws Exception {
          Device device = createDevice(name);
          ApplicationEntity ae = new ApplicationEntity(aet);

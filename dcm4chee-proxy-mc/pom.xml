@@ -51,8 +51,14 @@
   <name>dcm4chee-proxy-mc</name>
   <description>JBoss MC Beans for DICOM Proxy J2EE application</description>
   <build>
-  	<plugins>
-  	</plugins>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skip>false</skip>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
   <dependencies>
     <dependency>

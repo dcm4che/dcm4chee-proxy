@@ -218,10 +218,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
         final Calendar now = new GregorianCalendar();
-        if (forwardSchedule == null || forwardSchedule.sendNow(now))
+        if ((forwardSchedule == null || forwardSchedule.sendNow(now)) && !rq.getCallingAET().equals(destinationAETitle))
             return forwardAAssociateRQ(as, rq, ac, true);
         as.setProperty(FILE_SUFFIX, ".dcm");
-        rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, false));
+        rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
     }
     
@@ -230,10 +230,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         try {
             if (useCallingAETitle != null)
                 rq.setCallingAET(useCallingAETitle);
-            if (!destinationAETitle.equals("*"))
-                rq.setCalledAET(destinationAETitle);
-            Association asCalled;
-            asCalled = connect(getDestinationAE(), rq);
+            else if (!getAETitle().equals("*"))
+                rq.setCallingAET(getAETitle());
+            rq.setCalledAET(destinationAETitle);
+            Association asCalled = connect(getDestinationAE(), rq);
             if (sendNow)
                 as.setProperty(FORWARD_ASSOCIATION, asCalled);
             else
@@ -293,24 +293,24 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     @Override
-    protected void onClose(Association as) {
-        super.onClose(as);
-        Association as2 = (Association) as.getProperty(FORWARD_ASSOCIATION);
-        if (as2 != null)
+    protected void onClose(Association asAccepted) {
+        super.onClose(asAccepted);
+        Association asInvoked = (Association) asAccepted.getProperty(FORWARD_ASSOCIATION);
+        if (asInvoked != null)
             try {
-                as2.release();
+                asInvoked.release();
             } catch (IOException e) {
-                LOG.warn("Failed to release " + as2, e);
+                LOG.warn("Failed to release " + asInvoked, e);
             }
     }
     
-    protected void releaseAS(Association as) {
-        Association as2 = (Association) as.clearProperty(FORWARD_ASSOCIATION);
-        if (as2 != null)
+    protected void releaseAS(Association asAccepted) {
+        Association asInvoked = (Association) asAccepted.clearProperty(FORWARD_ASSOCIATION);
+        if (asInvoked != null)
             try {
-                as2.release();
+                asInvoked.release();
             } catch (IOException e) {
-                LOG.warn("Failed to release " + as2, e);
+                LOG.warn("Failed to release " + asInvoked, e);
             }
     }
 
@@ -409,31 +409,31 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             rq.setCallingAET(getUseCallingAETitle());
         if (!destinationAETitle.equals("*"))
             rq.setCalledAET(getDestinationAETitle());
-        Association as2 = null;
+        Association asInvoked = null;
         try {
-            as2 = connect(getDestinationAE(), rq);
+            asInvoked = connect(getDestinationAE(), rq);
             for (File file : ft.getFiles()) {
                 try {
-                    if (as2.isReadyForDataTransfer()){
-                        forward(as2, file);
+                    if (asInvoked.isReadyForDataTransfer()){
+                        forward(asInvoked, file);
                     }
                     else {
-                        as2.setProperty(FILE_SUFFIX, ".conn");
-                        rename(as2, file);
+                        asInvoked.setProperty(FILE_SUFFIX, ".conn");
+                        rename(asInvoked, file);
                     }
                 } catch (NoPresentationContextException npc) {
-                    handleForwardException(as2, file, npc, ".npc");
+                    handleForwardException(asInvoked, file, npc, ".npc");
                 } catch (AssociationStateException ass) {
-                    handleForwardException(as2, file, ass, ".ass");
+                    handleForwardException(asInvoked, file, ass, ".ass");
                 } catch (IOException ioe){
-                    handleForwardException(as2, file, ioe, ".conn");
-                    releaseAS(as2);
+                    handleForwardException(asInvoked, file, ioe, ".conn");
+                    releaseAS(asInvoked);
                 }
             }
         } catch (KeyManagementException kme) {
             throw new DicomServiceException(Status.UnableToPerformSubOperations, kme);
         } catch (ConfigurationException ce) {
-            LOG.warn(as2 + ": unable to load configuration: ", ce.getMessage());
+            LOG.warn(asInvoked + ": unable to load configuration: ", ce.getMessage());
         } catch (AAssociateRJ rj) {
             handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" 
                     + rj.getSource() + "-" + rj.getReason());
@@ -443,18 +443,18 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } catch (IOException e) {
             handleProcessException(ft, e, ".conn");
         } catch (InterruptedException e) {
-            LOG.warn(as2 + ": connection exception: " + e.getMessage());
+            LOG.warn(asInvoked + ": connection exception: " + e.getMessage());
         } catch (IncompatibleConnectionException e) {
-            LOG.warn(as2 + ": incompatible connection: " + e.getMessage());
+            LOG.warn(asInvoked + ": incompatible connection: " + e.getMessage());
         } finally {
-            if (as2 != null && as2.isReadyForDataTransfer()) {
+            if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {
-                    as2.waitForOutstandingRSP();
-                    as2.release();
+                    asInvoked.waitForOutstandingRSP();
+                    asInvoked.release();
                 } catch (InterruptedException e) {
-                    LOG.warn(as2 + ": Unexpected exception:", e);
+                    LOG.warn(asInvoked + ": Unexpected exception:", e);
                 } catch (IOException e) {
-                    LOG.warn(as2 + ": Failed to release association:", e);
+                    LOG.warn(asInvoked + ": Failed to release association:", e);
                 }
             }
         }
@@ -484,7 +484,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void forward(final Association as2, final File file) throws IOException,
+    private void forward(final Association asInvoked, final File file) throws IOException,
     InterruptedException {
         DicomInputStream in = null;
         try {
@@ -495,28 +495,28 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             final String tsuid = fmi.getString(Tag.TransferSyntaxUID);
             final Attributes[] ds = new Attributes[1];
             final long fileSize = file.length();
-            DimseRSPHandler rspHandler = new DimseRSPHandler(as2.nextMessageID()) {
+            DimseRSPHandler rspHandler = new DimseRSPHandler(asInvoked.nextMessageID()) {
 
                 @Override
-                public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
-                    super.onDimseRSP(as2, cmd, data);
+                public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                    super.onDimseRSP(asInvoked, cmd, data);
                     int status = cmd.getInt(Tag.Status, -1);
                     switch (status) {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
                         try {
-                            writeLogFile(as2, ds[0], fileSize);
+                            writeLogFile(asInvoked, ds[0], fileSize);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        delete(as2, file);
+                        delete(asInvoked, file);
                         break;
                     default: {
                         LOG.warn("{}: Failed to forward file {} with error status {}",
-                                new Object[] { as2, file, Integer.toHexString(status) + 'H' });
-                        as2.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
+                                new Object[] { asInvoked, file, Integer.toHexString(status) + 'H' });
+                        asInvoked.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                         try {
-                            rename(as2, file);
+                            rename(asInvoked, file);
                         } catch (DicomServiceException e) {
                             e.printStackTrace();
                         }
@@ -524,8 +524,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            as2.cstore(cuid, iuid, forwardPriority, 
-                    createDataWriter(in, as2, ds, cuid), tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, forwardPriority, 
+                    createDataWriter(in, asInvoked, ds, cuid), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }

@@ -67,6 +67,8 @@ import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Scheduler;
 import org.dcm4chee.proxy.mc.net.service.CEchoSCPImpl;
 import org.dcm4chee.proxy.mc.net.service.CStoreSCPImpl;
+import org.dcm4chee.proxy.mc.net.service.NActionSCPImpl;
+import org.dcm4chee.proxy.mc.net.service.NEventReportSCUImpl;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -90,6 +92,8 @@ public class ProxySA {
             DicomServiceRegistry dcmService = new DicomServiceRegistry();
             dcmService.addDicomService(new CEchoSCPImpl());
             dcmService.addDicomService(new CStoreSCPImpl("*"));
+            dcmService.addDicomService(new NActionSCPImpl());
+            dcmService.addDicomService(new NEventReportSCUImpl());
             proxyDevice.setDimseRQHandler(dcmService);
             configureKeyManager(cl, proxyDevice);
             configureScheduler(cl, proxyDevice);

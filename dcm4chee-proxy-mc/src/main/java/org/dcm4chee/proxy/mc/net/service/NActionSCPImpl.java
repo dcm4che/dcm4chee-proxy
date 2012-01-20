@@ -38,6 +38,7 @@
 
 package org.dcm4chee.proxy.mc.net.service;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.dcm4che.data.Attributes;
@@ -46,13 +47,10 @@ import org.dcm4che.data.UID;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.DimseRSPHandler;
-import org.dcm4che.net.NoRoleSelectionException;
 import org.dcm4che.net.Status;
-import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.net.pdu.AAssociateAC;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.BasicNActionSCP;
+import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,32 +59,32 @@ import org.slf4j.LoggerFactory;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class NActionSCPImpl extends BasicNActionSCP {
-    
+
     public static final Logger LOG = LoggerFactory.getLogger(NActionSCPImpl.class);
-    
+
     public NActionSCPImpl(){
         super(UID.StorageCommitmentPushModelSOPClass);
     }
 
     @Override
-    public void onNActionRQ(Association as, PresentationContext pc, Attributes rq,
+    public void onNActionRQ(Association asAccepted, PresentationContext pc, Attributes rq,
             Attributes actionInfo) throws IOException {
-        Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (as2 == null) {
-            as.writeDimseRSP(pc, Commands.mkRSP(rq, Status.ResourceLimitation), null);
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null) {
+            asAccepted.writeDimseRSP(pc, Commands.mkRSP(rq, Status.ResourceLimitation), null);
         } else {
             try {
-                forward(as, as2, pc, rq, actionInfo);
+                forward(asAccepted, asInvoked, pc, rq, actionInfo);
             } catch (Exception e) {
                 e.printStackTrace();
-                LOG.warn("Failure in forwarding N-ACTION-RQ from " + as.getCallingAET() + " to "
-                        + as.getCalledAET());
-                as.writeDimseRSP(pc, Commands.mkRSP(rq, Status.ProcessingFailure), null);
+                LOG.warn("Failure in forwarding N-ACTION-RQ from " + asAccepted.getCallingAET() + " to "
+                        + asAccepted.getCalledAET());
+                asAccepted.writeDimseRSP(pc, Commands.mkRSP(rq, Status.ProcessingFailure), null);
             }
         }
     }
 
-    private void forward(final Association as, Association as2, final PresentationContext pc, 
+    private void forward(final Association asAccepted, Association asInvoked, final PresentationContext pc, 
             Attributes rq, Attributes data) throws IOException, InterruptedException {
         int actionTypeId = rq.getInt(Tag.ActionTypeID, 0);
         String tsuid = pc.getTransferSyntax();
@@ -95,16 +93,30 @@ public class NActionSCPImpl extends BasicNActionSCP {
         int msgId = rq.getInt(Tag.MessageID, 0);
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
-            public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
-                super.onDimseRSP(as2, cmd, data);
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asInvoked, cmd, data);
                 try {
-                    as.writeDimseRSP(pc, cmd, data);
+                    asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward N-ACTION RSP to " + as, e);
+                    LOG.warn("Failed to forward N-ACTION RSP to " + asInvoked.getCalledAET());
                 }
             }
         };
-        as2.naction(cuid, iuid, actionTypeId, data, tsuid, rspHandler);
+        createTransactionUidFile(asAccepted, data.getString(Tag.TransactionUID));
+        asInvoked.naction(cuid, iuid, actionTypeId, data, tsuid, rspHandler);
     }
 
+    protected void createTransactionUidFile(Association asAccepted, String transactionUID)
+    throws DicomServiceException {
+        try {
+            ProxyApplicationEntity ae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+            File dir = new File(ae.getSpoolDirectoryPath(), asAccepted.getAAssociateAC().getCallingAET());
+            dir.mkdir();
+            File file = new File(dir, transactionUID+".tid");
+            file.createNewFile();
+        } catch (Exception e) {
+            LOG.warn(asAccepted + ": Failed to create temp file:", e);
+            throw new DicomServiceException(Status.OutOfResources, e);
+        }
+    }
 }
