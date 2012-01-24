@@ -539,7 +539,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             Properties prop = new Properties();
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);
-            prop.store(new FileOutputStream(file), null);
         }
     }
 

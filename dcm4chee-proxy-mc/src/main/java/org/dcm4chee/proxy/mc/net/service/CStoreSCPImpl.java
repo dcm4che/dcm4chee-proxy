@@ -74,9 +74,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             super.onCStoreRQ(asAccepted, pc, rq, data);
-        else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getAttributeCoercions()
-                .getAll().isEmpty()
-                || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog())
+        else if (needToParseObjects(asAccepted))
             super.store(asAccepted, pc, rq, data, null);
         else {
             try {
@@ -88,6 +86,12 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
                 super.onCStoreRQ(asAccepted, pc, rq, data);
             }
         }
+    }
+
+    private boolean needToParseObjects(Association asAccepted) {
+        return !((ProxyApplicationEntity) asAccepted.getApplicationEntity())
+                .getAttributeCoercions().getAll().isEmpty()
+                || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog();
     }
 
     @Override
@@ -135,7 +139,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
         rename(as, file);
-        Attributes rsp = Commands.mkRSP(rq, Status.Success);
+        Attributes rsp = Commands.mkCStoreRSP(rq, Status.Success);
         as.writeDimseRSP(pc, rsp);
         return null;
     }

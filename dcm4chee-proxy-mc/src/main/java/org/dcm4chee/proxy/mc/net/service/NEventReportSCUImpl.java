@@ -75,9 +75,7 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
         Association asInvoked =
                 (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            if (asAccepted.getCallingAET().equals(
-                    ((ProxyApplicationEntity) asAccepted.getApplicationEntity())
-                            .getDestinationAETitle()))
+            if (isAssociationFromDestinationAET(asAccepted))
                 forwardFromDestinationAET(asAccepted, pc, rq, eventInfo);
             else
                 super.onNEventReportRQ(asAccepted, pc, rq, eventInfo);
@@ -92,22 +90,24 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
         }
     }
 
+    private boolean isAssociationFromDestinationAET(Association asAccepted) {
+        return asAccepted.getCallingAET().equals(
+                ((ProxyApplicationEntity) asAccepted.getApplicationEntity())
+                        .getDestinationAETitle());
+    }
+
     private void forwardFromDestinationAET(Association asAccepted, PresentationContext pc,
             Attributes data, final Attributes eventInfo) throws IOException {
         File file = getTransactionUIDFile(asAccepted, eventInfo.getString(Tag.TransactionUID));
         if (file == null) {
-            abortForward(pc, asAccepted, Commands.mkRSP(data, Status.ProcessingFailure),
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.ProcessingFailure),
                     "Failed load transaction uid mapping for N-EVENT-REPORT-RQ from "
                             + asAccepted.getCallingAET());
             return;
         }
-        String separator = System.getProperty("file.separator");
-        String path = file.getPath();
-        path = path.substring(0, path.lastIndexOf(separator));
-        String calledAEString = path.substring(path.lastIndexOf(separator) + 1);
+        String calledAEString = getCalledAEFromFilePath(file);
         ProxyApplicationEntity ae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         ProxyDevice device = (ProxyDevice) ae.getDevice();
-        Association asInvoked;
         try {
             ApplicationEntity calledAE = device.findApplicationEntity(calledAEString);
             AAssociateRQ rq = asAccepted.getAAssociateRQ();
@@ -116,19 +116,26 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
                 rq.setCalledAET(ae.getUseCallingAETitle());
             else if (!ae.getAETitle().equals("*"))
                 rq.setCallingAET(ae.getAETitle());
-            asInvoked = ae.connect(calledAE, rq);
+            Association asInvoked = ae.connect(calledAE, rq);
             forward(asAccepted, asInvoked, pc, data, eventInfo);
         } catch (Exception e) {
-            abortForward(pc, asAccepted, Commands.mkRSP(data, Status.ProcessingFailure), e
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.ProcessingFailure), e
                     .getLocalizedMessage());
         }
     }
 
+    private String getCalledAEFromFilePath(File file) {
+        String separator = System.getProperty("file.separator");
+        String path = file.getPath();
+        String pathWithoutFile = path.substring(0, path.lastIndexOf(separator));
+        String calledAEString = pathWithoutFile.substring(pathWithoutFile.lastIndexOf(separator) + 1);
+        return calledAEString;
+    }
+
     private File getTransactionUIDFile(Association asAccepted, final String transactionUID) 
     throws IOException {
-        File spoolDir =
-                ((ProxyApplicationEntity) asAccepted.getApplicationEntity())
-                        .getSpoolDirectoryPath();
+        File spoolDir = ((ProxyApplicationEntity) asAccepted.getApplicationEntity())
+                            .getSpoolDirectoryPath();
         File[] truidFiles = null;
         for (File callingAet : spoolDir.listFiles()) {
             truidFiles = callingAet.listFiles(new FilenameFilter() {
@@ -139,11 +146,9 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
             if (truidFiles.length > 0)
                 break;
         }
-        if (truidFiles == null || truidFiles.length == 0) {
-            return null;
-        }
-        File file = truidFiles[0];
-        return file;
+        return (truidFiles == null || truidFiles.length == 0)
+            ? null
+            : truidFiles[0];
     }
 
     private void abortForward(PresentationContext pc, Association asAccepted, Attributes response,

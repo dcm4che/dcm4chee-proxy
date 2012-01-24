@@ -262,7 +262,7 @@ public class PreferencesProxyConfigurationTest {
         retries.add(new Retry(".tmp", 60, 5));
         pa.setRetries(retries);
         config.merge(pa.getDevice());
-        export();
+//        export();
         config.removeDevice("dcm4chee-proxy");
         config.removeDevice("storescu");
         config.removeDevice("storescp");
@@ -271,15 +271,15 @@ public class PreferencesProxyConfigurationTest {
         config.unregisterAETitle("STORESCU");
     }
     
-    private void export() throws Exception {
-        OutputStream os = new FileOutputStream(
-        "/home/solidether/code/git/dcm4chee-proxy/dcm4chee-proxy-mc/src/main/config/prefs/sample-config.xml");
-        try {
-            Preferences.userRoot().node("org/dcm4chee/proxy").exportSubtree(os);
-        } finally {
-            SafeClose.close(os);
-        }
-    }
+//    private void export() throws Exception {
+//        OutputStream os = new FileOutputStream(
+//        "/home/solidether/code/git/dcm4chee-proxy/dcm4chee-proxy-mc/src/main/config/prefs/sample-config.xml");
+//        try {
+//            Preferences.userRoot().node("org/dcm4chee/proxy").exportSubtree(os);
+//        } finally {
+//            SafeClose.close(os);
+//        }
+//    }
 
     private ProxyDevice createProxyDevice(String name) throws Exception {
         ProxyDevice device = new ProxyDevice(name);

@@ -114,8 +114,7 @@ public class ProxySA {
             System.err.println(rb.getString("try"));
             System.exit(2);
         }
-        if (cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd")
-                && cl.hasOption("ldap-domain")) {
+        if (useLdapConfiguration(cl)) {
             LdapEnv env = new LdapEnv();
             env.setUrl(cl.getOptionValue("ldap-url"));
             env.setUserDN(cl.getOptionValue("ldap-userDN"));
@@ -123,6 +122,11 @@ public class ProxySA {
             return new LdapProxyConfiguration(env, cl.getOptionValue("ldap-domain"));
         } else
             return (DicomConfiguration) new PreferencesProxyConfiguration(Preferences.userRoot());
+    }
+
+    private static boolean useLdapConfiguration(CommandLine cl) {
+        return cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd")
+                && cl.hasOption("ldap-domain");
     }
     
     private static void configureScheduler(CommandLine cl, ProxyDevice proxyDevice) {

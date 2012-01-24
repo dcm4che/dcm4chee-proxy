@@ -71,7 +71,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
             Attributes actionInfo) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            asAccepted.writeDimseRSP(pc, Commands.mkRSP(rq, Status.ResourceLimitation), null);
+            asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.ResourceLimitation), null);
         } else {
             try {
                 forward(asAccepted, asInvoked, pc, rq, actionInfo);
@@ -79,7 +79,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
                 e.printStackTrace();
                 LOG.warn("Failure in forwarding N-ACTION-RQ from " + asAccepted.getCallingAET() + " to "
                         + asAccepted.getCalledAET());
-                asAccepted.writeDimseRSP(pc, Commands.mkRSP(rq, Status.ProcessingFailure), null);
+                asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.ProcessingFailure), null);
             }
         }
     }
@@ -115,7 +115,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
             File file = new File(dir, transactionUID+".tid");
             file.createNewFile();
         } catch (Exception e) {
-            LOG.warn(asAccepted + ": Failed to create temp file:", e);
+            LOG.warn("Failed to create transaction UID file", e);
             throw new DicomServiceException(Status.OutOfResources, e);
         }
     }
