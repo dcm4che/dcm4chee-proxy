@@ -32,6 +32,7 @@
                     <entry key="dcmExclusiveUseDefinedTC" value="false"/>
                     <entry key="dcmForwardScheduleDays" value="Mon,Tue,Wed,Thu,Fri"/>
                     <entry key="dcmForwardScheduleHours" value="8,9,10,11,12,13,14,15,16,17"/>
+                    <entry key="dcmNactionDirectory" value="naction"/>
                     <entry key="dcmProxyNetworkAE" value="true"/>
                     <entry key="dcmSpoolDirectory" value="proxy"/>
                     <entry key="dicomAssociationAcceptor" value="true"/>

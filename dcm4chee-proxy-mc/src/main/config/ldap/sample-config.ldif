@@ -87,6 +87,8 @@ dcmAcceptDataOnFailedNegotiation: FALSE
 dcmDestinationAETitle: STORESCP
 dcmEnableAuditLog: TRUE
 dcmExclusiveUseDefinedTC: FALSE
+dcmNactionDirectory: naction
+dcmNeventDirectory: nevent
 dcmSpoolDirectory: proxy
 dicomAETitle: DCM4CHEE-PROXY
 dicomAssociationAcceptor: TRUE

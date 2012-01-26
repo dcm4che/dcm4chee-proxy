@@ -126,6 +126,8 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmExclusiveUseDefinedTC", proxyAE.isExclusiveUseDefinedTC());
         storeNotNull(attrs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         storeNotNull(attrs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
+        storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
+        storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
         Schedule schedule = proxyAE.getForwardSchedule();
         storeNotNull(attrs, "dcmForwardScheduleDays", schedule.getDays());
         storeNotNull(attrs, "dcmForwardScheduleHours", schedule.getHours());
@@ -155,6 +157,8 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
        proxyAE.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
        proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
        proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
+       proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
+       proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
        Schedule schedule = new Schedule();
        schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
        schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
@@ -250,6 +254,12 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmAuditDirectory",
                 pa.getAuditDirectory(),
                 pb.getAuditDirectory());
+        storeDiff(mods, "dcmNactionDirectory",
+                pa.getNactionDirectory(),
+                pb.getNactionDirectory());
+        storeDiff(mods, "dcmNeventDirectory",
+                pa.getNeventDirectory(),
+                pb.getNeventDirectory());
         Schedule scheduleA = pa.getForwardSchedule();
         Schedule scheduleB = pb.getForwardSchedule();
         storeDiff(mods, "dcmForwardScheduleDays",

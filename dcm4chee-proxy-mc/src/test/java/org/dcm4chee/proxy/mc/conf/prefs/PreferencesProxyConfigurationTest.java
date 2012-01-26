@@ -296,6 +296,8 @@ public class PreferencesProxyConfigurationTest {
         ae.setExclusiveUseDefinedTC(false);
         ae.setEnableAuditLog(true);
         ae.setAuditDirectory("audit");
+        ae.setNactionDirectory("naction");
+        ae.setNeventDirectory("nevent");
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 AttributeCoercion.DIMSE.C_STORE_RQ, 
                 TransferCapability.Role.SCP,

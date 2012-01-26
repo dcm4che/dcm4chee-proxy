@@ -44,7 +44,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -59,6 +58,7 @@ import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.AttributeCoercion.DIMSE;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
@@ -109,6 +109,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private boolean enableAuditLog;
     private String auditDirectory;
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
+    private String nactionDirectory;
+    private String neventDirectory;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -214,15 +216,54 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
+    public void setNactionDirectory(String nactionDirectory) {
+        this.nactionDirectory = nactionDirectory;
+    }
+
+    public String getNactionDirectory() {
+        return nactionDirectory;
+    }
+    
+    public File getNactionDirectoryPath() {
+        File path = new File(nactionDirectory);
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, nactionDirectory)
+                : new File(currentWorkingDir, nactionDirectory);
+        path.mkdirs();
+        return path;
+    }
+
+    public void setNeventDirectory(String neventDirectory) {
+        this.neventDirectory = neventDirectory;
+    }
+
+    public String getNeventDirectory() {
+        return neventDirectory;
+    }
+    
+    public File getNeventDirectoryPath() {
+        File path = new File(neventDirectory);
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, neventDirectory)
+                : new File(currentWorkingDir, neventDirectory);
+        path.mkdirs();
+        return path;
+    }
+
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
-        final Calendar now = new GregorianCalendar();
-        if ((forwardSchedule == null || forwardSchedule.sendNow(now)) && !rq.getCallingAET().equals(destinationAETitle))
+        if (sendNow() && !rq.getCallingAET().equals(destinationAETitle))
             return forwardAAssociateRQ(as, rq, ac, true);
         as.setProperty(FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
+    }
+
+    private boolean sendNow() {
+        return (forwardSchedule == null || forwardSchedule.sendNow(new GregorianCalendar()));
     }
     
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac,
@@ -345,12 +386,121 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public void forwardFiles() {
-        final Calendar now = new GregorianCalendar();
-        if (forwardSchedule != null && !forwardSchedule.sendNow(now))
+        if (!sendNow())
             return;
-
+        
         for (String calledAET : getSpoolDirectoryPath().list())
             startForwardFiles(calledAET);
+        
+        startForwardNActionEvent(getNactionDirectoryPath().listFiles(fileFilter()));
+    }
+
+    private void startForwardNActionEvent(final File[] files) {
+        getDevice().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                forwardNActionEvent(files);
+            }
+        });
+    }
+    
+    private void forwardNActionEvent(File[] files) {
+        for (File file : files) {
+            try {
+                AAssociateRQ rq = new AAssociateRQ();
+                rq.addPresentationContext(new PresentationContext(1,
+                        UID.StorageCommitmentPushModelSOPClass, UID.ImplicitVRLittleEndian));
+                Attributes fmi = readFileMetaInformation(file);
+                String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+                setCallingAET(rq, sourceAET);
+                rq.setCalledAET(getDestinationAETitle());
+                Association as = connect(getDestinationAE(), rq);
+                try {
+                    if (as.isReadyForDataTransfer()) {
+                        forwardNActionEvent(as, file, fmi);
+                    } else {
+                        as.setProperty(FILE_SUFFIX, ".conn");
+                        rename(as, file);
+                    }
+                } finally {
+                    if (as != null && as.isReadyForDataTransfer()) {
+                        try {
+                            as.waitForOutstandingRSP();
+                            as.release();
+                        } catch (InterruptedException e) {
+                            LOG.warn(as + ": Unexpected exception:", e);
+                        } catch (IOException e) {
+                            LOG.warn(as + ": Failed to release association:", e);
+                        }
+                    }
+                }
+            } catch (KeyManagementException e) {
+                LOG.warn("SSL exception: " + e);
+            } catch (InterruptedException e) {
+                LOG.warn("Connection exception: " + e);
+            } catch (IncompatibleConnectionException e) {
+                LOG.warn("Incompatible connection: " + e);
+            } catch (ConfigurationException e) {
+                LOG.warn("Unable to load configuration: ", e);
+            } catch (IOException e) {
+                LOG.warn("Unable to read from file: ", e);
+            }
+        }
+    }
+
+    private void setCallingAET(AAssociateRQ rq, String sourceAET) {
+        if (getUseCallingAETitle() != null)
+            rq.setCallingAET(getUseCallingAETitle());
+        else if (!getAETitle().equals("*"))
+            rq.setCallingAET(getAETitle());
+        else
+            rq.setCallingAET(sourceAET);
+    }
+
+    private void forwardNActionEvent(final Association as, final File file, Attributes fmi) 
+            throws IOException, InterruptedException {
+        String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
+        String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
+        String tsuid = UID.ImplicitVRLittleEndian;
+        DicomInputStream in = new DicomInputStream(file);
+        Attributes attrs = in.readDataset(-1, -1);
+        // TODO check if spoolDir still contains referenced UIDs
+        final String transactionUID = attrs.getString(Tag.TransactionUID);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
+            @Override
+            public void onDimseRSP(Association asDestinationAET, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asDestinationAET, cmd, data);
+                int status = cmd.getInt(Tag.Status, -1);
+                switch (status) {
+                case Status.Success: {
+                    File dest = new File(getNeventDirectoryPath(), transactionUID);
+                    if (file.renameTo(dest)) {
+                        dest.setLastModified(System.currentTimeMillis());
+                        LOG.debug("{}: RENAME {} to {}", new Object[] {as, file, dest});
+                    }
+                    else
+                        LOG.warn("{}: Failed to RENAME {} to {}", new Object[] {as, file, dest});
+                    break;
+                }
+                default: {
+                    LOG.warn("{}: Failed to forward N-ACTION file {} with error status {}", new Object[] {
+                            as, file, Integer.toHexString(status) + 'H' });
+                    as.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
+                    try {
+                        rename(as, file);
+                    } catch (DicomServiceException e) {
+                        e.printStackTrace();
+                    }
+                }
+                }
+            }
+        };
+        try {
+            as.naction(cuid, iuid, 1, attrs, tsuid, rspHandler);
+        } finally {
+            SafeClose.close(in);
+        }
     }
 
     private void startForwardFiles(final String calledAET) {
@@ -542,12 +692,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void rename(Association as, File file) throws DicomServiceException {
+    private File rename(Association as, File file) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.concat((String) as.getProperty(FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
+            return dst;
         }
         else {
             LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] {as, file, dst});

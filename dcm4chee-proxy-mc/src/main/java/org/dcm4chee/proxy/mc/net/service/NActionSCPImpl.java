@@ -44,6 +44,8 @@ import java.io.IOException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
+import org.dcm4che.data.VR;
+import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.DimseRSPHandler;
@@ -51,6 +53,7 @@ import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicNActionSCP;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,12 +74,11 @@ public class NActionSCPImpl extends BasicNActionSCP {
             Attributes actionInfo) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.ResourceLimitation), null);
+            super.onNActionRQ(asAccepted, pc, rq, actionInfo);
         } else {
             try {
                 forward(asAccepted, asInvoked, pc, rq, actionInfo);
             } catch (Exception e) {
-                e.printStackTrace();
                 LOG.warn("Failure in forwarding N-ACTION-RQ from " + asAccepted.getCallingAET() + " to "
                         + asAccepted.getCalledAET());
                 asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.ProcessingFailure), null);
@@ -84,13 +86,22 @@ public class NActionSCPImpl extends BasicNActionSCP {
         }
     }
 
-    private void forward(final Association asAccepted, Association asInvoked, final PresentationContext pc, 
-            Attributes rq, Attributes data) throws IOException, InterruptedException {
+    @Override
+    protected Attributes action(Association as, int actionTypeID, Attributes dataset,
+            Attributes rsp, Object[] handback) throws DicomServiceException {
+            createTransactionUidFile(as, dataset, ".dcm");
+            return null;
+    }
+
+    private void forward(final Association asAccepted, Association asInvoked,
+            final PresentationContext pc, Attributes rq, Attributes data) throws IOException,
+            InterruptedException {
         int actionTypeId = rq.getInt(Tag.ActionTypeID, 0);
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.RequestedSOPClassUID);
         String iuid = rq.getString(Tag.RequestedSOPInstanceUID);
         int msgId = rq.getInt(Tag.MessageID, 0);
+        final File file = createTransactionUidFile(asAccepted, data, ".dcm.fwd");
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
@@ -98,25 +109,46 @@ public class NActionSCPImpl extends BasicNActionSCP {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward N-ACTION RSP to " + asInvoked.getCalledAET());
+                    LOG.warn(asAccepted + ": Failed to forward N-ACTION-RSP:" + e);
+                    rename(asAccepted, file);
                 }
             }
         };
-        createTransactionUidFile(asAccepted, data.getString(Tag.TransactionUID));
         asInvoked.naction(cuid, iuid, actionTypeId, data, tsuid, rspHandler);
     }
 
-    protected void createTransactionUidFile(Association asAccepted, String transactionUID)
+    protected File createTransactionUidFile(Association as, Attributes data, String suffix)
     throws DicomServiceException {
+        File file = new File(((ProxyApplicationEntity) as.getApplicationEntity())
+                        .getNactionDirectoryPath(), data.getString(Tag.TransactionUID) + suffix);
+        DicomOutputStream stream = null;
         try {
-            ProxyApplicationEntity ae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-            File dir = new File(ae.getSpoolDirectoryPath(), asAccepted.getAAssociateAC().getCallingAET());
-            dir.mkdir();
-            File file = new File(dir, transactionUID+".tid");
-            file.createNewFile();
+            stream = new DicomOutputStream(file);
+            String iuid = UID.StorageCommitmentPushModelSOPInstance;
+            String cuid = UID.StorageCommitmentPushModelSOPClass;
+            String tsuid = UID.ImplicitVRLittleEndian;
+            Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, as.getCallingAET());
+            stream.writeDataset(fmi, data);
         } catch (Exception e) {
-            LOG.warn("Failed to create transaction UID file", e);
+            LOG.warn(as + ": Failed to create transaction UID file:", e);
+            file.delete();
             throw new DicomServiceException(Status.OutOfResources, e);
+        } finally {
+            SafeClose.close(stream);
+        }
+        return file;
+    }
+    
+    private void rename(Association as, File file) {
+        String path = file.getPath();
+        File dst = new File(path.substring(0, path.length() - 4));
+        if (file.renameTo(dst)) {
+            dst.setLastModified(System.currentTimeMillis());
+            LOG.debug("{}: RENAME {} to {}", new Object[] {as, file, dst});
+        }
+        else {
+            LOG.warn("{}: Failed to RENAME {} to {}", new Object[] {as, file, dst});
         }
     }
 }

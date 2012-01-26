@@ -109,6 +109,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmExclusiveUseDefinedTC", proxyAE.isExclusiveUseDefinedTC());
         storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         storeNotNull(prefs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
+        storeNotNull(prefs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
+        storeNotNull(prefs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
         Schedule schedule = proxyAE.getForwardSchedule();
         storeNotNull(prefs, "dcmForwardScheduleDays", schedule.getDays());
         storeNotNull(prefs, "dcmForwardScheduleHours", schedule.getHours());
@@ -137,6 +139,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmExclusiveUseDefinedTC", false));
         proxyAE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
         proxyAE.setAuditDirectory(prefs.get("dcmAuditDirectory", null));
+        proxyAE.setNactionDirectory(prefs.get("dcmNactionDirectory", null));
+        proxyAE.setNeventDirectory(prefs.get("dcmNeventDirectory", null));
         Schedule schedule = new Schedule();
         schedule.setDays(prefs.get("dcmForwardScheduleDays", null));
         schedule.setHours(prefs.get("dcmForwardScheduleHours", null));
@@ -222,6 +226,12 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmAuditDirectory",
                 pa.getAuditDirectory(),
                 pb.getAuditDirectory());
+        storeDiff(prefs, "dcmNactionDirectory",
+                pa.getNactionDirectory(),
+                pb.getNactionDirectory());
+        storeDiff(prefs, "dcmNeventDirectory",
+                pa.getNeventDirectory(),
+                pb.getNeventDirectory());
         Schedule scheduleA = pa.getForwardSchedule();
         Schedule scheduleB = pb.getForwardSchedule();
         storeDiff(prefs, "dcmForwardScheduleDays",

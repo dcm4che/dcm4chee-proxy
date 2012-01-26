@@ -225,7 +225,8 @@ public class LdapProxyConfigurationTest {
     public void setUp() throws Exception {
         LdapEnv env = new LdapEnv();
         env.setUrl("ldap://localhost:389");
-        env.setUserDN("cn=admin,dc=nodomain");
+        env.setUserDN("cn=admin,dc=nodomain"); //slapd
+//        env.setUserDN("cn=Directory Manager"); //OpenDJ
         env.setPassword("admin");
         config = new LdapProxyConfiguration(env, "dc=nodomain");
     }
@@ -286,6 +287,8 @@ public class LdapProxyConfigurationTest {
         ae.setExclusiveUseDefinedTC(false);
         ae.setEnableAuditLog(true);
         ae.setAuditDirectory("audit");
+        ae.setNactionDirectory("naction");
+        ae.setNeventDirectory("nevent");
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 AttributeCoercion.DIMSE.C_STORE_RQ, 
                 TransferCapability.Role.SCP,
