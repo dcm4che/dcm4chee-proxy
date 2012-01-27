@@ -122,6 +122,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
                         LOG.warn(asAccepted + ": Failed to forward N-ACTION-RSP:" + e);
+                        asAccepted.setProperty(FILE_SUFFIX, ".dcm");
                         rename(asAccepted, file);
                     }
                     break;
@@ -163,7 +164,8 @@ public class NActionSCPImpl extends BasicNActionSCP {
     
     private void rename(Association as, File file) {
         String path = file.getPath();
-        File dst = new File(path.substring(0, path.length() - 4));
+        File dst = new File(path.substring(0, path.length() - 8).concat(
+                        (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] {as, file, dst});
