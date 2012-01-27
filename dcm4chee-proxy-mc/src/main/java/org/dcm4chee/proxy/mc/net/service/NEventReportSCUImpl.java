@@ -40,8 +40,10 @@ package org.dcm4chee.proxy.mc.net.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
@@ -75,12 +77,19 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
     @Override
     public void onNEventReportRQ(Association asAccepted, PresentationContext pc, Attributes rq,
             Attributes eventInfo) throws IOException {
-        File transactionUIDFile = new File(((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getNeventDirectoryPath(), eventInfo.getString(Tag.TransactionUID));
+        File transactionUIDFile = new File(((ProxyApplicationEntity) 
+                asAccepted.getApplicationEntity()).getNeventDirectoryPath(), 
+                eventInfo.getString(Tag.TransactionUID));
         if (!transactionUIDFile.exists()) {
             abortForward(pc, asAccepted, Commands
                     .mkNEventReportRSP(rq, Status.InvalidArgumentValue),
-                    "Failed load Transaction UID mapping for N-EVENT-REPORT-RQ from "
+                    "Failed to load Transaction UID mapping for N-EVENT-REPORT-RQ from "
                             + asAccepted.getCallingAET());
+            return;
+        }
+        if (pendingFileForwarding(asAccepted, eventInfo)) {
+            LOG.debug("Pending file forwading before sending NEventReportRQ for TransactionUID:" 
+                    + eventInfo.getString(Tag.TransactionUID));
             return;
         }
         Association asInvoked =
@@ -99,6 +108,24 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
                         + asAccepted.getCallingAET() + " to " + asAccepted.getCalledAET());
             }
         }
+    }
+
+    private boolean pendingFileForwarding(Association as, Attributes eventInfo) {
+        File dir = new File(((ProxyApplicationEntity) as.getApplicationEntity())
+                .getSpoolDirectoryPath(), as.getCalledAET());
+        if (!dir.exists())
+            return false;
+        String[] files = dir.list();
+        Sequence referencedSOPSequence = eventInfo.getSequence(Tag.ReferencedSOPSequence);
+        Iterator<Attributes> it = referencedSOPSequence.iterator();
+        while(it.hasNext()) {
+            Attributes item = it.next();
+            String referencedSOPInstanceUID = item.getString(Tag.ReferencedSOPInstanceUID);
+            for (String file : files)
+                if (file.startsWith(referencedSOPInstanceUID))
+                    return true;
+        }
+        return false;
     }
 
     private boolean isAssociationFromDestinationAET(Association asAccepted) {

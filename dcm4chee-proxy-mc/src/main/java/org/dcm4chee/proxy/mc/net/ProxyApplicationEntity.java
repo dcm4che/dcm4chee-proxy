@@ -459,7 +459,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         String tsuid = UID.ImplicitVRLittleEndian;
         DicomInputStream in = new DicomInputStream(file);
         Attributes attrs = in.readDataset(-1, -1);
-        // TODO check if spoolDir still contains referenced UIDs
         final String transactionUID = attrs.getString(Tag.TransactionUID);
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override

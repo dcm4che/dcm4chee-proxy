@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 public class NActionSCPImpl extends BasicNActionSCP {
 
     public static final Logger LOG = LoggerFactory.getLogger(NActionSCPImpl.class);
+    protected static final String FILE_SUFFIX = ".dcm.fwd";
 
     public NActionSCPImpl(){
         super(UID.StorageCommitmentPushModelSOPClass);
@@ -100,17 +101,37 @@ public class NActionSCPImpl extends BasicNActionSCP {
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.RequestedSOPClassUID);
         String iuid = rq.getString(Tag.RequestedSOPInstanceUID);
+        final String transactionUID = data.getString(Tag.TransactionUID);
         int msgId = rq.getInt(Tag.MessageID, 0);
-        final File file = createTransactionUidFile(asAccepted, data, ".dcm.fwd");
+        final File file = createTransactionUidFile(asAccepted, data, FILE_SUFFIX);
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
-                try {
-                    asAccepted.writeDimseRSP(pc, cmd, data);
-                } catch (IOException e) {
-                    LOG.warn(asAccepted + ": Failed to forward N-ACTION-RSP:" + e);
+                int status = cmd.getInt(Tag.Status, -1);
+                switch (status) {
+                case Status.Success: {
+                    File dest = new File(((ProxyApplicationEntity)asAccepted.getApplicationEntity()).getNeventDirectoryPath(), transactionUID);
+                    if (file.renameTo(dest)) {
+                        dest.setLastModified(System.currentTimeMillis());
+                        LOG.debug("{}: RENAME {} to {}", new Object[] {asAccepted, file, dest});
+                    }
+                    else
+                        LOG.warn("{}: Failed to RENAME {} to {}", new Object[] {asAccepted, file, dest});
+                    try {
+                        asAccepted.writeDimseRSP(pc, cmd, data);
+                    } catch (IOException e) {
+                        LOG.warn(asAccepted + ": Failed to forward N-ACTION-RSP:" + e);
+                        rename(asAccepted, file);
+                    }
+                    break;
+                }
+                default: {
+                    LOG.warn("{}: Failed to forward N-ACTION file {} with error status {}", new Object[] {
+                            asAccepted, file, Integer.toHexString(status) + 'H' });
+                    asAccepted.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     rename(asAccepted, file);
+                }
                 }
             }
         };
