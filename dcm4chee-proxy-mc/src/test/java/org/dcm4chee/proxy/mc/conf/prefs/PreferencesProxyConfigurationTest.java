@@ -72,6 +72,11 @@ public class PreferencesProxyConfigurationTest {
 
     private PreferencesProxyConfiguration config;
 
+    private static final String[] OTHER_DEVICES = {
+        "storescp",
+        "storescu"
+    };
+
     private static final String[] IMAGE_TSUIDS = {
         UID.ImplicitVRLittleEndian,
         UID.ExplicitVRLittleEndian,
@@ -251,9 +256,9 @@ public class PreferencesProxyConfigurationTest {
         config.registerAETitle("DCM4CHEE-PROXY");
         config.registerAETitle("STORESCP");
         config.registerAETitle("STORESCU");
-        config.persist(createProxyDevice("dcm4chee-proxy"));
         config.persist(createOtherSCX("storescp", "STORESCP", "localhost",11113, 2763));
         config.persist(createOtherSCX("storescu", "STORESCU", "localhost",11114, 2764));
+        config.persist(createProxyDevice("dcm4chee-proxy"));
         ProxyApplicationEntity pa =
                 (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
         List<Retry> retries = new ArrayList<Retry>();
@@ -262,7 +267,7 @@ public class PreferencesProxyConfigurationTest {
         retries.add(new Retry(".tmp", 60, 5));
         pa.setRetries(retries);
         config.merge(pa.getDevice());
-//        export();
+        export();
         config.removeDevice("dcm4chee-proxy");
         config.removeDevice("storescu");
         config.removeDevice("storescp");
@@ -271,20 +276,23 @@ public class PreferencesProxyConfigurationTest {
         config.unregisterAETitle("STORESCU");
     }
     
-//    private void export() throws Exception {
-//        OutputStream os = new FileOutputStream(
-//        "/home/solidether/code/git/dcm4chee-proxy/dcm4chee-proxy-mc/src/main/config/prefs/sample-config.xml");
-//        try {
-//            Preferences.userRoot().node("org/dcm4chee/proxy").exportSubtree(os);
-//        } finally {
-//            SafeClose.close(os);
-//        }
-//    }
+    private void export() throws Exception {
+        OutputStream os = new FileOutputStream(
+        "/home/solidether/code/git/dcm4chee-proxy/dcm4chee-proxy-mc/src/main/config/prefs/sample-config.xml");
+        try {
+            Preferences.userRoot().node("org/dcm4chee/proxy").exportSubtree(os);
+        } finally {
+            SafeClose.close(os);
+        }
+    }
 
     private ProxyDevice createProxyDevice(String name) throws Exception {
         ProxyDevice device = new ProxyDevice(name);
         device.setThisNodeCertificates(config.deviceRef(name),
                 (X509Certificate) KEYSTORE.getCertificate(name));
+        for (String other : OTHER_DEVICES)
+            device.setAuthorizedNodeCertificates(config.deviceRef(other),
+                    (X509Certificate) KEYSTORE.getCertificate(other));
         device.setSchedulerInterval(60);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");

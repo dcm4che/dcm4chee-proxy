@@ -51,7 +51,6 @@
       <directory>src</directory>
       <includes>
         <include>bin/proxysa</include>
-        <include>etc/proxysa/log4j.properties</include>
       </includes>
       <outputDirectory>.</outputDirectory>
       <fileMode>0755</fileMode>
@@ -64,6 +63,27 @@
       </includes>
       <outputDirectory>.</outputDirectory>
       <lineEnding>dos</lineEnding>
+    </fileSet>
+    <fileSet>
+      <directory>src/etc/proxysa</directory>
+      <includes>
+        <include>log4j.properties</include>
+      </includes>
+      <outputDirectory>etc</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>../dcm4chee-proxy-mc/src/test/resources</directory>
+      <includes>
+        <include>cacerts.jks</include>
+      </includes>
+      <outputDirectory>etc</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>../dcm4chee-proxy-mc/src/main/config/conf</directory>
+      <includes>
+        <include>dcm4chee-proxy-key.jks</include>
+      </includes>
+      <outputDirectory>etc</outputDirectory>
     </fileSet>
   </fileSets>
   <dependencySets>

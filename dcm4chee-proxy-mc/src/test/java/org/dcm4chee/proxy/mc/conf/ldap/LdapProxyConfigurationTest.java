@@ -68,6 +68,11 @@ import org.junit.Test;
 public class LdapProxyConfigurationTest {
 
     private LdapProxyConfiguration config;
+    
+    private static final String[] OTHER_DEVICES = {
+        "storescp",
+        "storescu"
+    };
 
     private static final String[] IMAGE_TSUIDS = {
         UID.ImplicitVRLittleEndian,
@@ -253,9 +258,9 @@ public class LdapProxyConfigurationTest {
         config.registerAETitle("DCM4CHEE-PROXY");
         config.registerAETitle("STORESCP");
         config.registerAETitle("STORESCU");
-        config.persist(createProxyDevice("dcm4chee-proxy"));
         config.persist(createOtherSCX("storescp", "STORESCP", "localhost",11113, 2763));
         config.persist(createOtherSCX("storescu", "STORESCU", "localhost",11114, 2764));
+        config.persist(createProxyDevice("dcm4chee-proxy"));
         ProxyApplicationEntity pa =
                 (ProxyApplicationEntity) config.findApplicationEntity("DCM4CHEE-PROXY");
         List<Retry> retries = new ArrayList<Retry>();
@@ -276,6 +281,9 @@ public class LdapProxyConfigurationTest {
         ProxyDevice device = new ProxyDevice(name);
         device.setThisNodeCertificates(config.deviceRef(name),
                 (X509Certificate) KEYSTORE.getCertificate(name));
+        for (String other : OTHER_DEVICES)
+            device.setAuthorizedNodeCertificates(config.deviceRef(other),
+                    (X509Certificate) KEYSTORE.getCertificate(other));
         device.setSchedulerInterval(60);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");

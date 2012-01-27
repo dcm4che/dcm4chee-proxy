@@ -15,6 +15,9 @@
               <map>
                 <entry key="dcmProxyDevice" value="true"/>
                 <entry key="dcmSchedulerInterval" value="60"/>
+                <entry key="dicomAuthorizedNodeCertificateReference.#" value="2"/>
+                <entry key="dicomAuthorizedNodeCertificateReference.1" value="org/dcm4chee/proxy/dicomDevicesRoot/storescp"/>
+                <entry key="dicomAuthorizedNodeCertificateReference.2" value="org/dcm4chee/proxy/dicomDevicesRoot/storescu"/>
                 <entry key="dicomInstalled" value="true"/>
                 <entry key="dicomThisNodeCertificateReference.#" value="1"/>
                 <entry key="dicomThisNodeCertificateReference.1" value="org/dcm4chee/proxy/dicomDevicesRoot/dcm4chee-proxy"/>
@@ -33,6 +36,7 @@
                     <entry key="dcmForwardScheduleDays" value="Mon,Tue,Wed,Thu,Fri"/>
                     <entry key="dcmForwardScheduleHours" value="8,9,10,11,12,13,14,15,16,17"/>
                     <entry key="dcmNactionDirectory" value="naction"/>
+                    <entry key="dcmNeventDirectory" value="nevent"/>
                     <entry key="dcmProxyNetworkAE" value="true"/>
                     <entry key="dcmSpoolDirectory" value="proxy"/>
                     <entry key="dicomAssociationAcceptor" value="true"/>

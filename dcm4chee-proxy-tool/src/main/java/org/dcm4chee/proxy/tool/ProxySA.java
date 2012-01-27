@@ -38,6 +38,12 @@
 
 package org.dcm4chee.proxy.tool;
 
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -142,20 +148,35 @@ public class ProxySA {
     }
 
     private static void configureKeyManager(CommandLine cl, ProxyDevice proxyDevice) {
-        if(cl.hasOption("key-store")) {
+        try {
+            KeyManager keyMgr;
             try {
-                KeyManager keyMgr= SSLManagerFactory.createKeyManager(
-                        cl.getOptionValue("key-store-type"), 
-                        cl.getOptionValue("key-store"), 
-                        cl.getOptionValue("key-store-pwd"), 
-                        cl.getOptionValue("key-pwd"));
+                keyMgr = SSLManagerFactory.createKeyManager(
+                        cl.getOptionValue("key-store-type", "JKS"), 
+                        cl.getOptionValue("key-store", "resource:dcm4chee-proxy-key.jks"), 
+                        cl.getOptionValue("key-store-pwd", "secret"), 
+                        cl.getOptionValue("key-pwd", "secret"));
                 proxyDevice.setKeyManager(keyMgr);
-                proxyDevice.initTrustManager();
-            } catch (Exception e) {
-                System.err.println("Keystore error.");
-                System.err.println(rb.getString("try"));
+            } catch (UnrecoverableKeyException e) {
+                System.err.println("Key for device not found in keystore.");
+                System.exit(2);
+            } catch (IOException e) {
+                System.err.println("Failed to read key-store.");
                 System.exit(2);
             }
+            proxyDevice.initTrustManager();
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Requested cryptographic algorithm is not available.");
+            System.exit(2);
+        } catch (CertificateException e) {
+            System.err.println("Certificate error.");
+            System.exit(2);
+        } catch (KeyStoreException e) {
+            System.err.println("Key-store error.");
+            System.exit(2);
+        } catch (KeyManagementException e) {
+            System.err.println("Key management error.");
+            System.exit(2);
         }
     }
     

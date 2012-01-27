@@ -42,7 +42,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.KeyManagementException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -58,7 +57,6 @@ import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.AttributeCoercion.DIMSE;
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
@@ -296,8 +294,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
-        } catch (KeyManagementException kme) {
-            throw new DicomServiceException(Status.UnableToPerformSubOperations, kme);
         } catch (ConfigurationException ce) {
             LOG.warn("Unable to load configuration for destination AET:", ce);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
@@ -435,8 +431,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                         }
                     }
                 }
-            } catch (KeyManagementException e) {
-                LOG.warn("SSL exception: " + e);
             } catch (InterruptedException e) {
                 LOG.warn("Connection exception: " + e);
             } catch (IncompatibleConnectionException e) {
@@ -580,8 +574,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     releaseAS(asInvoked);
                 }
             }
-        } catch (KeyManagementException kme) {
-            throw new DicomServiceException(Status.UnableToPerformSubOperations, kme);
         } catch (ConfigurationException ce) {
             LOG.warn(asInvoked + ": unable to load configuration: ", ce.getMessage());
         } catch (AAssociateRJ rj) {

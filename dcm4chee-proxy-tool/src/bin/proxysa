@@ -37,7 +37,7 @@ else
 fi
 
 # Setup the classpath
-CP="$PROXY_HOME/etc/proxysa/"
+CP="$PROXY_HOME/etc/"
 CP="$CP:$PROXY_HOME/lib/$MAIN_JAR"
 CP="$CP:$PROXY_HOME/lib/dcm4che-core-3.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4che-net-3.0.0-SNAPSHOT.jar"

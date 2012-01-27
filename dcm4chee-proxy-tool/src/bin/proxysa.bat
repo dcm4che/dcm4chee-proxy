@@ -40,7 +40,7 @@ set JAVA=%JAVA_HOME%\bin\java
 
 :SKIP_SET_JAVA_HOME
 
-set CP=%PROXY_HOME%\etc\proxysa\
+set CP=%PROXY_HOME%\etc\
 set CP=%CP%;%PROXY_HOME%\lib\%MAIN_JAR%
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-core-3.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-net-3.0.0-SNAPSHOT.jar
