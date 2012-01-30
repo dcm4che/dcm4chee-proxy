@@ -386,22 +386,22 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             return;
         
         for (String calledAET : getSpoolDirectoryPath().list())
-            startForwardFiles(calledAET);
+            startForwardScheduledFiles(calledAET);
         
-        startForwardNActionEvent(getNactionDirectoryPath().listFiles(fileFilter()));
+        startForwardScheduledNAction(getNactionDirectoryPath().listFiles(fileFilter()));
     }
 
-    private void startForwardNActionEvent(final File[] files) {
+    private void startForwardScheduledNAction(final File[] files) {
         getDevice().execute(new Runnable() {
 
             @Override
             public void run() {
-                forwardNActionEvent(files);
+                forwardScheduledNAction(files);
             }
         });
     }
     
-    private void forwardNActionEvent(File[] files) {
+    private void forwardScheduledNAction(File[] files) {
         for (File file : files) {
             try {
                 AAssociateRQ rq = new AAssociateRQ();
@@ -414,7 +414,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 Association as = connect(getDestinationAE(), rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
-                        forwardNActionEvent(as, file, fmi);
+                        forwardScheduledNAction(as, file, fmi);
                     } else {
                         as.setProperty(FILE_SUFFIX, ".conn");
                         rename(as, file);
@@ -452,7 +452,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             rq.setCallingAET(sourceAET);
     }
 
-    private void forwardNActionEvent(final Association as, final File file, Attributes fmi) 
+    private void forwardScheduledNAction(final Association as, final File file, Attributes fmi) 
             throws IOException, InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
@@ -496,23 +496,23 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void startForwardFiles(final String calledAET) {
+    private void startForwardScheduledFiles(final String calledAET) {
         getDevice().execute(new Runnable() {
             
             @Override
             public void run() {
-                forwardFiles(calledAET);
+                forwardScheduledFiles(calledAET);
             }
         });
     }
 
-    private void forwardFiles(String calledAET) {
+    private void forwardScheduledFiles(String calledAET) {
         File dir = new File(getSpoolDirectoryPath(), calledAET);
         File[] files = dir.listFiles(fileFilter());
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))
                 try {
-                    process(ft);
+                    processForwardTask(ft);
                 } catch (DicomServiceException e) {
                     e.printStackTrace();
                 }
@@ -546,7 +546,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         };
     }
 
-    private void process(ForwardTask ft) throws DicomServiceException {
+    private void processForwardTask(ForwardTask ft) throws DicomServiceException {
         AAssociateRQ rq = ft.getAAssociateRQ();
         if (getUseCallingAETitle() != null)
             rq.setCallingAET(getUseCallingAETitle());
@@ -558,7 +558,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (File file : ft.getFiles()) {
                 try {
                     if (asInvoked.isReadyForDataTransfer()){
-                        forward(asInvoked, file);
+                        forwardScheduledFiles(asInvoked, file);
                     }
                     else {
                         asInvoked.setProperty(FILE_SUFFIX, ".conn");
@@ -625,7 +625,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private void forward(final Association asInvoked, final File file) throws IOException,
+    private void forwardScheduledFiles(final Association asInvoked, final File file) throws IOException,
     InterruptedException {
         DicomInputStream in = null;
         try {

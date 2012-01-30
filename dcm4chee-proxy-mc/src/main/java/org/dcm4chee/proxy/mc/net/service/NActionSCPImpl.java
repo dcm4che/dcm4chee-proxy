@@ -64,7 +64,6 @@ import org.slf4j.LoggerFactory;
 public class NActionSCPImpl extends BasicNActionSCP {
 
     public static final Logger LOG = LoggerFactory.getLogger(NActionSCPImpl.class);
-    protected static final String FILE_SUFFIX = ".dcm.fwd";
 
     public NActionSCPImpl(){
         super(UID.StorageCommitmentPushModelSOPClass);
@@ -103,7 +102,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
         String iuid = rq.getString(Tag.RequestedSOPInstanceUID);
         final String transactionUID = data.getString(Tag.TransactionUID);
         int msgId = rq.getInt(Tag.MessageID, 0);
-        final File file = createTransactionUidFile(asAccepted, data, FILE_SUFFIX);
+        final File file = createTransactionUidFile(asAccepted, data, ".dcm.fwd");
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
@@ -122,7 +121,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
                         LOG.warn(asAccepted + ": Failed to forward N-ACTION-RSP:" + e);
-                        asAccepted.setProperty(FILE_SUFFIX, ".dcm");
+                        asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
                         rename(asAccepted, file);
                     }
                     break;
@@ -130,7 +129,7 @@ public class NActionSCPImpl extends BasicNActionSCP {
                 default: {
                     LOG.warn("{}: Failed to forward N-ACTION file {} with error status {}", new Object[] {
                             asAccepted, file, Integer.toHexString(status) + 'H' });
-                    asAccepted.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
+                    asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     rename(asAccepted, file);
                 }
                 }

@@ -65,8 +65,6 @@ import org.slf4j.LoggerFactory;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class NEventReportSCUImpl extends BasicNEventReportSCU {
-    
-    public static final String FILE_SUFFIX = ".dcm.fwd";
 
     public static final Logger LOG = LoggerFactory.getLogger(NEventReportSCUImpl.class);
 
@@ -192,7 +190,7 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
                     int status = cmd.getInt(Tag.Status, -1);
                     LOG.warn("{}: Failed to forward file {} with error status {}",
                             new Object[] { asAccepted, file, Integer.toHexString(status) + 'H' });
-                    asAccepted.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
+                    asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     rename(asAccepted, file);
                 }
             }
@@ -210,7 +208,7 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
 
     private void rename(Association as, File file) {
         String path = file.getPath();
-        File dst = new File(path.concat((String) as.getProperty(FILE_SUFFIX)));
+        File dst = new File(path.concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] {as, file, dst});
