@@ -66,32 +66,30 @@ public class MppsSCPImpl extends DicomService implements NCreateSCP, NSetSCP {
     public void onNCreateRQ(Association asAccepted, PresentationContext pc, Attributes cmd,
             Attributes dataset) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        String cuid = cmd.getString(Tag.AffectedSOPClassUID);
-        String iuid = cmd.getString(Tag.AffectedSOPInstanceUID);
         try {
-            forward(asAccepted, asInvoked, pc, cmd, dataset, "N-CREATE", cuid, iuid);
+            forwardNCreate(asAccepted, asInvoked, pc, cmd, dataset);
         } catch (InterruptedException e) {
             throw new DicomServiceException(Status.UnableToProcess, e);
         }
     }
 
     @Override
-    public void onNSetRQ(Association asAccepted, PresentationContext pc, Attributes cmd, Attributes dataset)
-            throws IOException {
+    public void onNSetRQ(Association asAccepted, PresentationContext pc, Attributes cmd,
+            Attributes dataset) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        String cuid = cmd.getString(Tag.RequestedSOPClassUID);
-        String iuid = cmd.getString(Tag.RequestedSOPInstanceUID);
         try {
-            forward(asAccepted, asInvoked, pc, cmd, dataset, "N-SET", cuid, iuid);
+            forwardNSet(asAccepted, asInvoked, pc, cmd, dataset);
         } catch (InterruptedException e) {
             throw new DicomServiceException(Status.UnableToProcess, e);
         }
     }
 
-    private void forward(final Association asAccepted, Association asInvoked,
-            final PresentationContext pc, Attributes cmd, Attributes data, final String rq,
-            String cuid, String iuid) throws IOException, InterruptedException {
+    private void forwardNCreate(final Association asAccepted, Association asInvoked,
+            final PresentationContext pc, Attributes cmd, Attributes data) throws IOException,
+            InterruptedException {
         String tsuid = pc.getTransferSyntax();
+        String cuid = cmd.getString(Tag.AffectedSOPClassUID);
+        String iuid = cmd.getString(Tag.AffectedSOPInstanceUID);
         int msgId = cmd.getInt(Tag.MessageID, 0);
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
 
@@ -101,11 +99,33 @@ public class MppsSCPImpl extends DicomService implements NCreateSCP, NSetSCP {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward " + rq + "-RSP: " + e);
+                    LOG.warn("Failed to forward N-CREATE-RSP: " + e);
                 }
             }
         };
         asInvoked.ncreate(cuid, iuid, data, tsuid, rspHandler);
+    }
+
+    private void forwardNSet(final Association asAccepted, Association asInvoked,
+            final PresentationContext pc, Attributes cmd, Attributes data) throws IOException,
+            InterruptedException {
+        String tsuid = pc.getTransferSyntax();
+        String cuid = cmd.getString(Tag.RequestedSOPClassUID);
+        String iuid = cmd.getString(Tag.RequestedSOPInstanceUID);
+        int msgId = cmd.getInt(Tag.MessageID, 0);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
+
+            @Override
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asInvoked, cmd, data);
+                try {
+                    asAccepted.writeDimseRSP(pc, cmd, data);
+                } catch (IOException e) {
+                    LOG.warn("Failed to forward N-CREATE-RSP: " + e);
+                }
+            }
+        };
+        asInvoked.nset(cuid, iuid, data, tsuid, rspHandler);
     }
 
 }
