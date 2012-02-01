@@ -111,6 +111,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
         storeNotNull(prefs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(prefs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
+        storeNotNull(prefs, "dcmIgnoreScheduleSOPClasses", proxyAE.getIgnoreScheduleSOPClassesAsString());
         Schedule schedule = proxyAE.getForwardSchedule();
         storeNotNull(prefs, "dcmForwardScheduleDays", schedule.getDays());
         storeNotNull(prefs, "dcmForwardScheduleHours", schedule.getHours());
@@ -141,6 +142,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setAuditDirectory(prefs.get("dcmAuditDirectory", null));
         proxyAE.setNactionDirectory(prefs.get("dcmNactionDirectory", null));
         proxyAE.setNeventDirectory(prefs.get("dcmNeventDirectory", null));
+        proxyAE.setIgnoreScheduleSOPClasses(prefs.get("dcmIgnoreScheduleSOPClasses", null));
         Schedule schedule = new Schedule();
         schedule.setDays(prefs.get("dcmForwardScheduleDays", null));
         schedule.setHours(prefs.get("dcmForwardScheduleHours", null));
@@ -232,6 +234,9 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmNeventDirectory",
                 pa.getNeventDirectory(),
                 pb.getNeventDirectory());
+        storeDiff(prefs, "dcmIgnoreScheduleSOPClasses",
+                pa.getIgnoreScheduleSOPClassesAsString(),
+                pb.getIgnoreScheduleSOPClassesAsString());
         Schedule scheduleA = pa.getForwardSchedule();
         Schedule scheduleB = pb.getForwardSchedule();
         storeDiff(prefs, "dcmForwardScheduleDays",

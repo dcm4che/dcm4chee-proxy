@@ -320,6 +320,13 @@ public class PreferencesProxyConfigurationTest {
         schedule.setDays("Mon-Fri");
         schedule.setHours("8-18");
         ae.setForwardSchedule(schedule);
+        List<String> ignoreScheduleSOPClasses = new ArrayList<String>();
+        ignoreScheduleSOPClasses.add("1.2.840.10008.1.20.1");
+        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.31");
+        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.1.2.1.1");
+        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.1.2.2.1");
+        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.1.2.3.1");
+        ae.setIgnoreScheduleSOPClasses(ignoreScheduleSOPClasses);
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(".conn", 60, 5));
         retries.add(new Retry(".ass", 60, 5));

@@ -83,6 +83,7 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -109,6 +110,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
     private String nactionDirectory;
     private String neventDirectory;
+    private List<String> ignoreScheduleSOPClasses = new ArrayList<String>();
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -250,20 +252,51 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
+    public void setIgnoreScheduleSOPClasses(List<String> ignoreScheduleSOPClassList) {
+        this.ignoreScheduleSOPClasses = ignoreScheduleSOPClassList;
+    }
+
+    public void setIgnoreScheduleSOPClasses(String value) {
+        ArrayList<String> al = new ArrayList<String>();
+        for (String s : StringUtils.split(value, ','))
+            al.add(s);
+        this.ignoreScheduleSOPClasses = al;
+    }
+
+    public List<String> getIgnoreScheduleSOPClasses() {
+        return ignoreScheduleSOPClasses;
+    }
+
+    public String getIgnoreScheduleSOPClassesAsString() {
+        StringBuffer sb = new StringBuffer();
+        for(String value : ignoreScheduleSOPClasses)
+                sb.append(sb.length()==0 ? value : ",".concat(value));
+        return sb.toString();
+    }
+
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
             throws IOException {
-        if (sendNow() && !rq.getCallingAET().equals(destinationAETitle))
+        if ((sendNow() || ignoreSchedule(rq.getPresentationContexts())) 
+                && !rq.getCallingAET().equals(destinationAETitle))
             return forwardAAssociateRQ(as, rq, ac, true);
         as.setProperty(FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
     }
 
+    private boolean ignoreSchedule(List<PresentationContext> pcList) {
+        for (PresentationContext pc : pcList) {
+            if (ignoreScheduleSOPClasses.contains(pc.getAbstractSyntax()))
+                return true;
+        }
+        return false;
+    }
+
     private boolean sendNow() {
         return (forwardSchedule == null || forwardSchedule.sendNow(new GregorianCalendar()));
     }
-    
+
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac,
             boolean sendNow) throws IOException {
         try {

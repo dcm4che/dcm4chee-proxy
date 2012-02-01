@@ -128,6 +128,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
         storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
+        storeNotNull(attrs, "dcmIgnoreScheduleSOPClasses", proxyAE.getIgnoreScheduleSOPClassesAsString());
         Schedule schedule = proxyAE.getForwardSchedule();
         storeNotNull(attrs, "dcmForwardScheduleDays", schedule.getDays());
         storeNotNull(attrs, "dcmForwardScheduleHours", schedule.getHours());
@@ -146,23 +147,24 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     @Override
     protected void loadFrom(ApplicationEntity ae, Attributes attrs) throws NamingException {
-       super.loadFrom(ae, attrs);
-       if (!(ae instanceof ProxyApplicationEntity))
-           return;
-       ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
-       proxyAE.setSpoolDirectory(stringValue(attrs.get("dcmSpoolDirectory")));
-       proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"), Boolean.FALSE));
-       proxyAE.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
-       proxyAE.setUseCallingAETitle(stringValue(attrs.get("dcmUseCallingAETitle")));
-       proxyAE.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
-       proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
-       proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
-       proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
-       proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
-       Schedule schedule = new Schedule();
-       schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
-       schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
-       proxyAE.setForwardSchedule(schedule);
+        super.loadFrom(ae, attrs);
+        if (!(ae instanceof ProxyApplicationEntity))
+            return;
+        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
+        proxyAE.setSpoolDirectory(stringValue(attrs.get("dcmSpoolDirectory")));
+        proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"), Boolean.FALSE));
+        proxyAE.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
+        proxyAE.setUseCallingAETitle(stringValue(attrs.get("dcmUseCallingAETitle")));
+        proxyAE.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
+        proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
+        proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
+        proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
+        proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
+        proxyAE.setIgnoreScheduleSOPClasses(stringValue(attrs.get("dcmIgnoreScheduleSOPClasses")));
+        Schedule schedule = new Schedule();
+        schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
+        schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
+        proxyAE.setForwardSchedule(schedule);
     }
 
     @Override
@@ -260,6 +262,9 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmNeventDirectory",
                 pa.getNeventDirectory(),
                 pb.getNeventDirectory());
+        storeDiff(mods, "dcmIgnoreScheduleSOPClasses",
+                pa.getIgnoreScheduleSOPClassesAsString(),
+                pb.getIgnoreScheduleSOPClassesAsString());
         Schedule scheduleA = pa.getForwardSchedule();
         Schedule scheduleB = pb.getForwardSchedule();
         storeDiff(mods, "dcmForwardScheduleDays",

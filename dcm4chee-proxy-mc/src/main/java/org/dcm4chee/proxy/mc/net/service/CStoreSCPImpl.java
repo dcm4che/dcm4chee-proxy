@@ -162,12 +162,12 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
 
             @Override
-            public void onDimseRSP(Association as2, Attributes cmd, Attributes data) {
-                super.onDimseRSP(as2, cmd, data);
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asInvoked, cmd, data);
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward C-STORE RSP to " + asAccepted, e);
+                    LOG.warn("Failed to forward C-STORE RSP: " +  e);
                 }
             }
         };

@@ -206,6 +206,9 @@ dicomNetworkConnectionReference: cn=dicom-tls,dicomDeviceName=dcm4chee-proxy
 dcmAuditDirectory: audit
 dcmForwardScheduleDays: Mon,Tue,Wed,Thu,Fri
 dcmForwardScheduleHours: 8,9,10,11,12,13,14,15,16,17
+dcmIgnoreScheduleSOPClasses: 1.2.840.10008.1.20.1,1.2.840.10008.5.1.4.31,1.2
+ .840.10008.5.1.4.1.2.1.1,1.2.840.10008.5.1.4.1.2.2.1,1.2.840.10008.5.1.4.1.
+ 2.3.1
 
 dn: cn=Standalone VOI LUT Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomai
