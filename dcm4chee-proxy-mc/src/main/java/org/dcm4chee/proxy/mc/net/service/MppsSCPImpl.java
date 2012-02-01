@@ -42,46 +42,58 @@ import java.io.IOException;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
 import org.dcm4che.net.Association;
-import org.dcm4che.net.CancelRQHandler;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.CFindSCP;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che.net.service.NCreateSCP;
+import org.dcm4che.net.service.NSetSCP;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
- * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Michael Backhaus <michael.backaus@agfa.com>
  */
-public class CFindSCPImpl extends DicomService implements CFindSCP {
-
-    public CFindSCPImpl(String... sopClasses) {
-        super(sopClasses);
+public class MppsSCPImpl extends DicomService implements NCreateSCP, NSetSCP {
+    
+    public MppsSCPImpl() {
+        super(UID.ModalityPerformedProcedureStepSOPClass);
     }
 
     @Override
-    public void onCFindRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes keys)
-            throws IOException {
+    public void onNCreateRQ(Association asAccepted, PresentationContext pc, Attributes cmd,
+            Attributes dataset) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (asInvoked == null)
-            throw new DicomServiceException(Status.UnableToProcess, "Cannot forward C-FIND");
+        String cuid = cmd.getString(Tag.AffectedSOPClassUID);
+        String iuid = cmd.getString(Tag.AffectedSOPInstanceUID);
         try {
-            forward(asAccepted, asInvoked, pc, rq, keys);
+            forward(asAccepted, asInvoked, pc, cmd, dataset, "N-CREATE", cuid, iuid);
         } catch (InterruptedException e) {
-            LOG.warn(asAccepted + ": unexpected exception: " + e);
+            throw new DicomServiceException(Status.UnableToProcess, e);
         }
     }
 
-    private void forward(final Association asAccepted, final Association asInvoked,
-            final PresentationContext pc, Attributes rq, Attributes data) throws IOException,
-            InterruptedException {
+    @Override
+    public void onNSetRQ(Association asAccepted, PresentationContext pc, Attributes cmd, Attributes dataset)
+            throws IOException {
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        String cuid = cmd.getString(Tag.RequestedSOPClassUID);
+        String iuid = cmd.getString(Tag.RequestedSOPInstanceUID);
+        try {
+            forward(asAccepted, asInvoked, pc, cmd, dataset, "N-SET", cuid, iuid);
+        } catch (InterruptedException e) {
+            throw new DicomServiceException(Status.UnableToProcess, e);
+        }
+    }
+
+    private void forward(final Association asAccepted, Association asInvoked,
+            final PresentationContext pc, Attributes cmd, Attributes data, final String rq,
+            String cuid, String iuid) throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
-        String cuid = rq.getString(Tag.AffectedSOPClassUID);
-        int priority = rq.getInt(Tag.Priority, 0);
-        int msgId = rq.getInt(Tag.MessageID, 0);
-        final DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
+        int msgId = cmd.getInt(Tag.MessageID, 0);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
 
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
@@ -89,22 +101,11 @@ public class CFindSCPImpl extends DicomService implements CFindSCP {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward C-FIND-RSP: " + e);
+                    LOG.warn("Failed to forward " + rq + "-RSP: " + e);
                 }
             }
         };
-        asAccepted.addCancelRQHandler(msgId, new CancelRQHandler() {
-            
-            @Override
-            public void onCancelRQ(Association association) {
-                try {
-                    rspHandler.cancel(asInvoked);
-                } catch (IOException e) {
-                    LOG.warn(asAccepted + ": unexpected exception: " + e);
-                }
-            }
-        });
-        asInvoked.cfind(cuid, priority, data, tsuid, rspHandler);
+        asInvoked.ncreate(cuid, iuid, data, tsuid, rspHandler);
     }
 
 }

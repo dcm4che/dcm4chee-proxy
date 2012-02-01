@@ -151,6 +151,20 @@
   <!-- NEventReportSCU -->
   <bean name="NEventReportSCU" class="org.dcm4chee.proxy.mc.net.service.NEventReportSCUImpl"/>
   
+  <!--  MppsSCP -->
+  <bean name="MppsSCP" class="org.dcm4chee.proxy.mc.net.service.MppsSCPImpl"/>
+  
+  <!-- CFindSCP -->
+  <bean name="CFindSCP" class="org.dcm4chee.proxy.mc.net.service.CFindSCPImpl">
+    <constructor>
+      <parameter>
+        <array>
+          <value>*</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+  
   <!-- Audit Log -->
   <bean name="AuditLog" class="org.dcm4chee.proxy.mc.net.AuditLog">
     <property name="delay">60</property><!-- time in seconds -->
