@@ -321,7 +321,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
             AAssociateAC ac, Exception e, String suffix, int reason) throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.debug("Unable to connect to " + destinationAETitle + " (" + e.getMessage() + ")");
+        LOG.debug(as + ": unable to connect to " + destinationAETitle + ": " + e);
         if (acceptDataOnFailedNegotiation) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
@@ -574,7 +574,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 }
             }
         } catch (ConfigurationException ce) {
-            LOG.warn(asInvoked + ": unable to load configuration: ", ce.getMessage());
+            LOG.warn(asInvoked + ": unable to load configuration: " + ce);
         } catch (AAssociateRJ rj) {
             handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" 
                     + rj.getSource() + "-" + rj.getReason());
@@ -584,18 +584,18 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } catch (IOException e) {
             handleProcessException(ft, e, ".conn");
         } catch (InterruptedException e) {
-            LOG.warn(asInvoked + ": connection exception: " + e.getMessage());
+            LOG.warn(asInvoked + ": connection exception: " + e);
         } catch (IncompatibleConnectionException e) {
-            LOG.warn(asInvoked + ": incompatible connection: " + e.getMessage());
+            LOG.warn(asInvoked + ": incompatible connection: " + e);
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {
                     asInvoked.waitForOutstandingRSP();
                     asInvoked.release();
                 } catch (InterruptedException e) {
-                    LOG.warn(asInvoked + ": Unexpected exception:", e);
+                    LOG.warn(asInvoked + ": Unexpected exception:" + e);
                 } catch (IOException e) {
-                    LOG.warn(asInvoked + ": Failed to release association:", e);
+                    LOG.warn(asInvoked + ": Failed to release association:" + e);
                 }
             }
         }
@@ -603,14 +603,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void handleForwardException(Association as, File file, Exception e, String suffix)
             throws DicomServiceException {
-        LOG.debug(as + ": " + e.getMessage());
+        LOG.debug(as + ": " + e);
         as.setProperty(FILE_SUFFIX, suffix);
         rename(as, file);
     }
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.debug(destinationAETitle + " connection error: " + e.getMessage());
+        LOG.debug(destinationAETitle + " connection error: " + e);
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));

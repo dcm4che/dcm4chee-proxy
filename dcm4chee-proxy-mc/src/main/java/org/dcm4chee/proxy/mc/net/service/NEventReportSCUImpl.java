@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
@@ -51,7 +52,9 @@ import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.DimseRSPHandler;
+import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.pdu.AAssociateRJ;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicNEventReportSCU;
@@ -79,14 +82,15 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
                 asAccepted.getApplicationEntity()).getNeventDirectoryPath(), 
                 eventInfo.getString(Tag.TransactionUID));
         if (!transactionUIDFile.exists()) {
+            LOG.warn(asAccepted
+                    + ": failed to load Transaction UID mapping for N-EVENT-REPORT-RQ from "
+                    + asAccepted.getCallingAET());
             abortForward(pc, asAccepted, Commands
-                    .mkNEventReportRSP(rq, Status.InvalidArgumentValue),
-                    "Failed to load Transaction UID mapping for N-EVENT-REPORT-RQ from "
-                            + asAccepted.getCallingAET());
+                    .mkNEventReportRSP(rq, Status.InvalidArgumentValue));
             return;
         }
         if (pendingFileForwarding(asAccepted, eventInfo)) {
-            LOG.debug("Pending file forwading before sending NEventReportRQ for TransactionUID:" 
+            LOG.debug("Pending file forwading before sending NEventReportRQ for TransactionUID: " 
                     + eventInfo.getString(Tag.TransactionUID));
             return;
         }
@@ -100,10 +104,9 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
         } else {
             try {
                 forward(asAccepted, asInvoked, pc, rq, eventInfo, transactionUIDFile);
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (InterruptedException e) {
                 LOG.warn("Failure in forwarding N-EVENT-REPORT-RQ from "
-                        + asAccepted.getCallingAET() + " to " + asAccepted.getCalledAET());
+                        + asAccepted.getCallingAET() + " to " + asAccepted.getCalledAET() + ": " + e);
             }
         }
     }
@@ -135,10 +138,11 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
     private void forwardFromDestinationAET(Association asAccepted, PresentationContext pc,
             Attributes data, final Attributes eventInfo, File file) {
         DicomInputStream dis = null;
+        String calledAEString = null;
         try {
             dis = new DicomInputStream(file);
             Attributes fmi = dis.readFileMetaInformation();
-            String calledAEString = fmi.getString(Tag.SourceApplicationEntityTitle);
+            calledAEString = fmi.getString(Tag.SourceApplicationEntityTitle);
             ProxyApplicationEntity ae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
             ProxyDevice device = (ProxyDevice) ae.getDevice();
             ApplicationEntity calledAE = device.findApplicationEntity(calledAEString);
@@ -150,23 +154,43 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
                 rq.setCallingAET(ae.getAETitle());
             Association asInvoked = ae.connect(calledAE, rq);
             forward(asAccepted, asInvoked, pc, data, eventInfo, file);
-        } catch (Exception e) {
-            abortForward(pc, asAccepted,
-                    Commands.mkNEventReportRSP(data, Status.ProcessingFailure), e
-                            .getLocalizedMessage());
+        } catch (AAssociateRJ rj) {
+            LOG.warn(asAccepted + ": rejected association to forward AET: " + rj.getReason());
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".rj-" + rj.getResult()
+                    + "-" + rj.getSource() + "-" + rj.getReason());
+            rename(asAccepted, file);
+        } catch (IOException e) {
+            LOG.warn(asAccepted + ": unexpected exception: " + e);
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+            rename(asAccepted, file);
+        } catch (ConfigurationException e) {
+            LOG.warn(asAccepted + ": error loading AET [" + calledAEString + "] from configuration: " + e);
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+            rename(asAccepted, file);
+        } catch (InterruptedException e) {
+            LOG.warn(asAccepted + ": error connecting to forward AET [" + calledAEString + "]: " + e);
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+            rename(asAccepted, file);
+        } catch (IncompatibleConnectionException e) {
+            LOG.warn(asAccepted + ": incompatible connection to forward AET [" + calledAEString + "]: " + e);
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+            rename(asAccepted, file);
         } finally {
             SafeClose.close(dis);
         }
     }
 
-    private void abortForward(PresentationContext pc, Association asAccepted, Attributes response,
-            String logMessage) {
-        LOG.warn(logMessage);
+    private void abortForward(PresentationContext pc, Association asAccepted, Attributes response) {
         try {
             asAccepted.writeDimseRSP(pc, response, null);
             asAccepted.release();
         } catch (IOException e) {
-            LOG.warn(asAccepted + ": Failed to make N-EVENT-REPORT-RSP:" + e);
+            LOG.warn(asAccepted + ": Failed to write N-EVENT-REPORT-RSP: " + e);
         }
     }
 
