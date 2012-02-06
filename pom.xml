@@ -82,5 +82,6 @@
   </build>
   <modules>
     <module>dcm4chee-proxy-mc</module>
+    <module>dcm4chee-proxy-tool</module>
   </modules>
 </project>
