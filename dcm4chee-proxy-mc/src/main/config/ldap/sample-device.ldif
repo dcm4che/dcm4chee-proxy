@@ -1,34 +1,22 @@
 version: 1
 
-dn: dicomDeviceName=sampleDevice,cn=Devices,cn=DICOM Configuration,dc=nodomain
+dn: dicomDeviceName=sampleDevice,cn=Devices,cn=DICOM Configuration,dc=nodoma
+ in
 objectClass: dicomDevice
 objectClass: pkiUser
 dicomDeviceName: sampleDevice
 dicomInstalled: TRUE
-dicomThisNodeCertificateReference: dicomDeviceName=storescu,cn=Devices,cn=DI
- COM Configuration,dc=nodomain
-userCertificate;binary:: MIICTTCCAbagAwIBAgIETcfJhjANBgkqhkiG9w0BAQUFADBrMQs
- wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
- RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwHhcNMTEwN
- TA5MTEwMTI2WhcNMTIwNTA4MTEwMTI2WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
- MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9
- vbDERMA8GA1UEAxMIc3RvcmVzY3UwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIWXv47tVn
- a0cmqkTIWlyjo30I5xiQn87+pkOFCtpK6lXpuL4eQ4Wsafcv/fBEe564nd+a8lArBmrcHlS7yU/
- VX1bPHMOdot6R+qF2icohL9e43Wgvcq7aV3gV2Wtvrg7+STMzV+GgULEYBw0T9pTi1mBTr5hEFV
- uwqK4lSkmF9dAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAENTJn6dkVMnz3qhfBb86nso5pp9+sFE
- xHHQ33yrbbK+m63fQ9gKCJ02VCFW3hBq8IjGAlbZNchHFNE0uJ3GrDXjtXGpNPMmo+2pQ+5quq/
- 6g3bgcFt+Yn8jd/Y4w1mgP0i5Dc2niJA0FhY0qjzjNp/WfsoiwW8yM1+UFY5BZTBI=
 
-dn: cn=dicom,dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,dc=n
- odomain
+dn: cn=dicom,dicomDeviceName=sampleDevice,cn=Devices,cn=DICOM Configuration,
+ dc=nodomain
 objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
 dicomHostname: localhost
 cn: dicom
 dicomPort: 11114
 
-dn: cn=dicom-tls,dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,
- dc=nodomain
+dn: cn=dicom-tls,dicomDeviceName=sampleDevice,cn=Devices,cn=DICOM Configurat
+ ion,dc=nodomain
 objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
 dicomHostname: localhost
