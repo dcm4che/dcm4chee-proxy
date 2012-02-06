@@ -397,8 +397,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
                         DIMSE.C_STORE_RQ);
         if (ac != null)
-            ;
-        coerceAttributes(attrs, ac);
+            coerceAttributes(attrs, ac);
         return attrs;
     }
 
