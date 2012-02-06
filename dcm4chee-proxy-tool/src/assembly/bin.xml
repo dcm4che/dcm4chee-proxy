@@ -85,6 +85,20 @@
       </includes>
       <outputDirectory>etc</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>../dcm4chee-proxy-mc/src/main/config/ldap</directory>
+      <includes>
+        <include>**/*</include>
+      </includes>
+      <outputDirectory>conf</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>../dcm4chee-proxy-mc/src/main/config/prefs</directory>
+      <includes>
+        <include>sample-config.xml</include>
+      </includes>
+      <outputDirectory>conf</outputDirectory>
+    </fileSet>
   </fileSets>
   <dependencySets>
     <dependencySet>
