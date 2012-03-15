@@ -38,7 +38,6 @@
     <groupId>org.dcm4che.dcm4chee-proxy</groupId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <groupId>org.dcm4che.dcm4chee-proxy</groupId>
   <artifactId>dcm4chee-proxy-tool</artifactId>
   <name>dcm4chee-proxy-tool</name>
   <description>Receive DICOM Composite Objects from peer DICOM AEs and forward to configured DICOM AE</description>

@@ -48,6 +48,7 @@ import org.dcm4che.data.VR;
 import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Commands;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
@@ -70,18 +71,23 @@ public class NActionSCPImpl extends BasicNActionSCP {
     }
 
     @Override
-    public void onNActionRQ(Association asAccepted, PresentationContext pc, Attributes rq,
-            Attributes actionInfo) throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
+            Attributes rq, Attributes actionInfo) throws IOException {
+        if (dimse != Dimse.N_ACTION_RQ)
+            throw new DicomServiceException(Status.UnrecognizedOperation);
+
+        Association asInvoked = (Association) asAccepted
+                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            super.onNActionRQ(asAccepted, pc, rq, actionInfo);
+            super.onDimseRQ(asAccepted, pc, dimse, rq, actionInfo);
         } else {
             try {
                 forward(asAccepted, asInvoked, pc, rq, actionInfo);
             } catch (Exception e) {
-                LOG.warn("Failure in forwarding N-ACTION-RQ from " + asAccepted.getCallingAET() + " to "
-                        + asAccepted.getCalledAET());
-                asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.ProcessingFailure), null);
+                LOG.warn("Failure in forwarding N-ACTION-RQ from " + asAccepted.getCallingAET()
+                        + " to " + asAccepted.getCalledAET());
+                asAccepted.writeDimseRSP(pc, 
+                        Commands.mkNActionRSP(rq, Status.ProcessingFailure), null);
             }
         }
     }

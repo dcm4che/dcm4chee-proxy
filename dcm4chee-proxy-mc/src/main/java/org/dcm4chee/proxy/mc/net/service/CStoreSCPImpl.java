@@ -49,6 +49,7 @@ import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.DataWriter;
 import org.dcm4che.net.DataWriterAdapter;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.PDVInputStream;
@@ -69,11 +70,11 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    public void onCStoreRQ(Association asAccepted, PresentationContext pc, Attributes rq, PDVInputStream data)
-            throws IOException {
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
+            PDVInputStream data) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null)
-            super.onCStoreRQ(asAccepted, pc, rq, data);
+            super.onDimseRQ(asAccepted, pc, dimse, rq, data);
         else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity())
                 .getAttributeCoercions().getAll().isEmpty()
                 || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog())
@@ -85,7 +86,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
                 LOG.debug(e.getMessage());
                 asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
                 asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
-                super.onCStoreRQ(asAccepted, pc, rq, data);
+                super.onDimseRQ(asAccepted, pc, dimse, rq, data);
             }
         }
     }

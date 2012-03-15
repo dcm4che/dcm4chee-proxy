@@ -42,28 +42,25 @@ import java.io.IOException;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.net.Association;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSP;
 import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCEchoSCP;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class CEchoSCPImpl extends BasicCEchoSCP {
 
-    static final Logger LOG = LoggerFactory.getLogger(CEchoSCPImpl.class);
-
     @Override
-    public void onCEchoRQ(Association asAccepted, PresentationContext pc, Attributes cmd)
-            throws IOException {
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
+            Attributes data) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            super.onCEchoRQ(asAccepted, pc, cmd);
+            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
             return;
         }
         try {

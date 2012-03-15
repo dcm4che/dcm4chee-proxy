@@ -45,9 +45,7 @@
     <groupId>org.dcm4che.dcm4chee-proxy</groupId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <groupId>org.dcm4che.dcm4chee-proxy</groupId>
   <artifactId>dcm4chee-proxy-mc</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <name>dcm4chee-proxy-mc</name>
   <description>JBoss MC Beans for DICOM Proxy J2EE application</description>
   <build>

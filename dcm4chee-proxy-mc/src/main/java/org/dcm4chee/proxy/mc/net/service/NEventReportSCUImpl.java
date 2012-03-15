@@ -51,6 +51,7 @@ import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Commands;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
@@ -76,37 +77,41 @@ public class NEventReportSCUImpl extends BasicNEventReportSCU {
     }
 
     @Override
-    public void onNEventReportRQ(Association asAccepted, PresentationContext pc, Attributes rq,
-            Attributes eventInfo) throws IOException {
-        File transactionUIDFile = new File(((ProxyApplicationEntity) 
-                asAccepted.getApplicationEntity()).getNeventDirectoryPath(), 
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
+            Attributes rq, Attributes eventInfo) throws IOException {
+        File transactionUIDFile = new File(
+                ((ProxyApplicationEntity) asAccepted.getApplicationEntity())
+                        .getNeventDirectoryPath(),
                 eventInfo.getString(Tag.TransactionUID));
         if (!transactionUIDFile.exists()) {
             LOG.warn(asAccepted
                     + ": failed to load Transaction UID mapping for N-EVENT-REPORT-RQ from "
                     + asAccepted.getCallingAET());
-            abortForward(pc, asAccepted, Commands
-                    .mkNEventReportRSP(rq, Status.InvalidArgumentValue));
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(rq, Status.InvalidArgumentValue));
             return;
         }
+        
         if (pendingFileForwarding(asAccepted, eventInfo)) {
-            LOG.debug("Pending file forwading before sending NEventReportRQ for TransactionUID: " 
+            LOG.debug("Pending file forwading before sending NEventReportRQ for TransactionUID: "
                     + eventInfo.getString(Tag.TransactionUID));
             return;
         }
-        Association asInvoked =
-                (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        
+        Association asInvoked = (Association) asAccepted
+                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
             if (isAssociationFromDestinationAET(asAccepted))
                 forwardFromDestinationAET(asAccepted, pc, rq, eventInfo, transactionUIDFile);
             else
-                super.onNEventReportRQ(asAccepted, pc, rq, eventInfo);
+                super.onDimseRQ(asAccepted, pc, dimse, rq, eventInfo);
         } else {
             try {
                 forward(asAccepted, asInvoked, pc, rq, eventInfo, transactionUIDFile);
             } catch (InterruptedException e) {
                 LOG.warn("Failure in forwarding N-EVENT-REPORT-RQ from "
-                        + asAccepted.getCallingAET() + " to " + asAccepted.getCalledAET() + ": " + e);
+                        + asAccepted.getCallingAET() + " to " + asAccepted.getCalledAET() + ": "
+                        + e);
             }
         }
     }

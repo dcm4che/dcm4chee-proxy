@@ -51,6 +51,7 @@ import org.dcm4che.data.UID;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
@@ -279,12 +280,12 @@ public class ProxyConfigurationTestUtils {
         ae.setNactionDirectory("naction");
         ae.setNeventDirectory("nevent");
         ae.addAttributeCoercion(new AttributeCoercion(null, 
-                AttributeCoercion.DIMSE.C_STORE_RQ, 
+                Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
                 "resource:dcm4chee-proxy-ensure-pid.xsl"));
         ae.addAttributeCoercion(new AttributeCoercion(null, 
-                AttributeCoercion.DIMSE.C_STORE_RQ, 
+                Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));

@@ -42,26 +42,19 @@ import java.io.IOException;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.DicomService;
+import org.dcm4che.net.service.BasicMppsSCP;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.net.service.NCreateSCP;
-import org.dcm4che.net.service.NSetSCP;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
  */
-public class MppsSCPImpl extends DicomService implements NCreateSCP, NSetSCP {
+public class MppsSCPImpl extends BasicMppsSCP {
     
-    public MppsSCPImpl() {
-        super(UID.ModalityPerformedProcedureStepSOPClass);
-    }
-
     @Override
     public void onNCreateRQ(Association asAccepted, PresentationContext pc, Attributes cmd,
             Attributes dataset) throws IOException {

@@ -55,7 +55,6 @@ import javax.xml.transform.TransformerConfigurationException;
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.AttributeCoercion.DIMSE;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
@@ -67,6 +66,7 @@ import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.DataWriter;
 import org.dcm4che.net.DataWriterAdapter;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.InputStreamDataWriter;
@@ -395,7 +395,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
         AttributeCoercion ac =
                 getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
-                        DIMSE.C_STORE_RQ);
+                        Dimse.C_STORE_RQ);
         if (ac != null)
             coerceAttributes(attrs, ac);
         return attrs;
@@ -732,7 +732,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds,
             String cuid) throws IOException {
         AttributeCoercion ac =
-                getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCU, DIMSE.C_STORE_RQ);
+                getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCU, Dimse.C_STORE_RQ);
         if (ac != null || enableAuditLog) {
             in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);
@@ -812,7 +812,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
-            Role role, AttributeCoercion.DIMSE cmd) {
+            Role role, Dimse cmd) {
         return attributeCoercions.get(sopClass, cmd, role, aeTitle);
     }
 

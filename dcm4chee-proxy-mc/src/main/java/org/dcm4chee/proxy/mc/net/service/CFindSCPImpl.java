@@ -44,29 +44,34 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.CancelRQHandler;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.CFindSCP;
-import org.dcm4che.net.service.DicomService;
+import org.dcm4che.net.service.BasicCFindSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CFindSCPImpl extends DicomService implements CFindSCP {
-
+public class CFindSCPImpl extends BasicCFindSCP {
+    
     public CFindSCPImpl(String... sopClasses) {
         super(sopClasses);
     }
 
     @Override
-    public void onCFindRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes keys)
-            throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
+            Attributes rq, Attributes keys) throws IOException {
+        if (dimse != Dimse.C_FIND_RQ)
+            throw new DicomServiceException(Status.UnrecognizedOperation);
+        
+        Association asInvoked = (Association) asAccepted
+                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             throw new DicomServiceException(Status.UnableToProcess, "Cannot forward C-FIND");
+        
         try {
             forward(asAccepted, asInvoked, pc, rq, keys);
         } catch (InterruptedException e) {
