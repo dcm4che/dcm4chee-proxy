@@ -70,9 +70,10 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
-            PDVInputStream data) throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
+            Attributes rq, PDVInputStream data) throws IOException {
+        Association asInvoked = (Association) asAccepted
+                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             super.onDimseRQ(asAccepted, pc, dimse, rq, data);
         else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity())

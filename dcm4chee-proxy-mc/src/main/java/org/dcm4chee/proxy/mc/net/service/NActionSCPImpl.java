@@ -73,9 +73,6 @@ public class NActionSCPImpl extends BasicNActionSCP {
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
             Attributes rq, Attributes actionInfo) throws IOException {
-        if (dimse != Dimse.N_ACTION_RQ)
-            throw new DicomServiceException(Status.UnrecognizedOperation);
-
         Association asInvoked = (Association) asAccepted
                 .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
