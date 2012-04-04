@@ -145,11 +145,8 @@
     </constructor>
   </bean>
   
-  <!-- NActionSCP -->
-  <bean name="NActionSCP" class="org.dcm4chee.proxy.mc.net.service.NActionSCPImpl"/>
-  
-  <!-- NEventReportSCU -->
-  <bean name="NEventReportSCU" class="org.dcm4chee.proxy.mc.net.service.NEventReportSCUImpl"/>
+  <!-- StgCmtSCP -->
+  <bean name="StgCmtSCP" class="org.dcm4chee.proxy.mc.net.service.StgCmtSCPImpl"/>
   
   <!--  MppsSCP -->
   <bean name="MppsSCP" class="org.dcm4chee.proxy.mc.net.service.MppsSCPImpl"/>
@@ -159,7 +156,10 @@
     <constructor>
       <parameter>
         <array>
-          <value>*</value>
+          <value>1.2.840.10008.5.1.4.1.2.1.1</value>
+          <value>1.2.840.10008.5.1.4.1.2.2.1</value>
+          <value>1.2.840.10008.5.1.4.1.2.3.1</value>
+          <value>1.2.840.10008.5.1.4.31</value>
         </array>
       </parameter>
     </constructor>

@@ -65,6 +65,7 @@ public class LdapProxyConfigurationTest {
 //        env.setUserDN("uid=admin,ou=system"); //ApacheDS
 //        env.setPassword("secret"); //ApacheDS
         config = new LdapProxyConfiguration(env, "dc=nodomain");
+//        config.setUserCertificate("userCertificate");
         ProxyConfigurationTestUtils.cleanUp(config);
     }
 

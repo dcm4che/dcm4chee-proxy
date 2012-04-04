@@ -102,7 +102,10 @@ public class ProxySA {
             dcmService.addDicomService(new CStoreSCPImpl("*"));
             dcmService.addDicomService(new NActionSCPImpl());
             dcmService.addDicomService(new NEventReportSCUImpl());
-            dcmService.addDicomService(new CFindSCPImpl("*"));
+            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.1.1"));
+            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.2.1"));
+            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.3.1"));
+            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.31"));
             dcmService.addDicomService(new MppsSCPImpl());
             proxyDevice.setDimseRQHandler(dcmService);
             configureKeyManager(cl, proxyDevice);

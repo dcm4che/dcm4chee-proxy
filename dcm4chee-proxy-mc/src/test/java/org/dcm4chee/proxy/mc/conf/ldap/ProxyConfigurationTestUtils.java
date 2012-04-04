@@ -41,6 +41,7 @@ package org.dcm4chee.proxy.mc.conf.ldap;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.dcm4che.conf.api.AttributeCoercion;
@@ -52,8 +53,10 @@ import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
+import org.dcm4che.net.QueryOption;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Retry;
@@ -220,6 +223,13 @@ public class ProxyConfigurationTestUtils {
         UID.StorageCommitmentPushModelSOPClass,
     };
 
+    private static final String[] QUERY_CUIDS = {
+        UID.PatientRootQueryRetrieveInformationModelFIND,
+        UID.StudyRootQueryRetrieveInformationModelFIND,
+        UID.PatientStudyOnlyQueryRetrieveInformationModelFINDRetired,
+        UID.ModalityWorklistInformationModelFIND
+    };
+
     private static final KeyStore KEYSTORE = loadKeyStore();
     private static KeyStore loadKeyStore() {
         try {
@@ -284,6 +294,7 @@ public class ProxyConfigurationTestUtils {
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
                 "resource:dcm4chee-proxy-ensure-pid.xsl"));
+        
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
@@ -305,9 +316,13 @@ public class ProxyConfigurationTestUtils {
         retries.add(new Retry(".ass", 60, 5));
         ae.setRetries(retries);
         addVerificationStorageTransferCapabilities(ae);
-        addStorageTransferCapabilities(ae, IMAGE_CUIDS, IMAGE_TSUIDS);
-        addStorageTransferCapabilities(ae, VIDEO_CUIDS, VIDEO_TSUIDS);
-        addStorageTransferCapabilities(ae, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
+        addTCs(ae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);
+        addTCs(ae, null, Role.SCP, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(ae, null, Role.SCU, IMAGE_CUIDS, IMAGE_TSUIDS);
+        addTCs(ae, null, Role.SCU, VIDEO_CUIDS, VIDEO_TSUIDS);
+        addTCs(ae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(ae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
         device.addApplicationEntity(ae);
         Connection dicom = new Connection("dicom", "localhost", 11112);
         dicom.setMaxOpsInvoked(0);
@@ -364,14 +379,17 @@ public class ProxyConfigurationTestUtils {
         
     }
 
-    private static void addStorageTransferCapabilities(ProxyApplicationEntity ae,
-            String[] cuids, String[] tss) {
-        for (String cuid : cuids) {
-            String name = UID.nameOf(cuid).replace('/', ' ');
-            ae.addTransferCapability(
-                    new TransferCapability(name + " SCP", cuid, TransferCapability.Role.SCP, tss));
-            ae.addTransferCapability(
-                    new TransferCapability(name + " SCU", cuid, TransferCapability.Role.SCU, tss));
-        }
+    private static void addTCs(ProxyApplicationEntity ae, EnumSet<QueryOption> queryOpts,
+            TransferCapability.Role role, String[] cuids, String... tss) {
+        for (String cuid : cuids)
+            addTC(ae, queryOpts, role, cuid, tss);
+    }
+
+    private static void addTC(ProxyApplicationEntity ae, EnumSet<QueryOption> queryOpts,
+            TransferCapability.Role role, String cuid, String... tss) {
+        String name = UID.nameOf(cuid).replace('/', ' ');
+        TransferCapability tc = new TransferCapability(name + ' ' + role, cuid, role, tss);
+        tc.setQueryOptions(queryOpts);
+        ae.addTransferCapability(tc);
     }
 }

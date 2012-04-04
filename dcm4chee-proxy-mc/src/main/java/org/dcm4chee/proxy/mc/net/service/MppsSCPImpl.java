@@ -42,6 +42,7 @@ import java.io.IOException;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
@@ -56,25 +57,43 @@ import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
  */
 public class MppsSCPImpl extends DicomService {
     
+    public MppsSCPImpl(){
+        super(UID.ModalityPerformedProcedureStepSOPClass);
+    }
+    
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
+            Attributes data) throws IOException {
+        switch (dimse) {
+        case N_CREATE_RQ:
+            onNCreateRQ(asAccepted, pc, dimse, cmd, data);
+            break;
+        case N_SET_RQ:
+            onNSetRQ(asAccepted, pc, dimse, cmd, data);
+            break;
+        default:
+            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
+        }
+    }
+    
+    private void onNCreateRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
             Attributes data) throws IOException {
         Association asInvoked = (Association) asAccepted
                 .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         try {
-            forwardDimseRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
+            forwardNCreateRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
         } catch (InterruptedException e) {
             throw new DicomServiceException(Status.UnableToProcess, e);
         }
     }
 
-    private void forwardDimseRQ(final Association asAccepted, Association asInvoked,
-            final PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
+    private void forwardNCreateRQ(final Association asAccepted, Association asInvoked,
+            final PresentationContext pc, Dimse dimse, Attributes rq, Attributes data)
             throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
-        String cuid = cmd.getString(dimse.tagOfSOPClassUID());
-        String iuid = cmd.getString(dimse.tagOfSOPInstanceUID());
-        int msgId = cmd.getInt(Tag.MessageID, 0);
+        String cuid = rq.getString(Tag.AffectedSOPClassUID);
+        String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
+        int msgId = rq.getInt(Tag.MessageID, 0);
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
 
             @Override
@@ -88,5 +107,38 @@ public class MppsSCPImpl extends DicomService {
             }
         };
         asInvoked.ncreate(cuid, iuid, data, tsuid, rspHandler);
+    }
+    
+    private void onNSetRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
+            Attributes data) throws IOException {
+        Association asInvoked = (Association) asAccepted
+                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        try {
+            forwardNSetRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
+        } catch (InterruptedException e) {
+            throw new DicomServiceException(Status.UnableToProcess, e);
+        }
+    }
+    
+    private void forwardNSetRQ(final Association asAccepted, Association asInvoked,
+            final PresentationContext pc, Dimse dimse, Attributes rq, Attributes data)
+            throws IOException, InterruptedException {
+        String tsuid = pc.getTransferSyntax();
+        String cuid = rq.getString(Tag.RequestedSOPClassUID);
+        String iuid = rq.getString(Tag.RequestedSOPInstanceUID);
+        int msgId = rq.getInt(Tag.MessageID, 0);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
+
+            @Override
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asInvoked, cmd, data);
+                try {
+                    asAccepted.writeDimseRSP(pc, cmd, data);
+                } catch (IOException e) {
+                    LOG.warn(asAccepted + ": failed to forward DIMSE request: ", e);
+                }
+            }
+        };
+        asInvoked.nset(cuid, iuid, data, tsuid, rspHandler);
     }
 }
