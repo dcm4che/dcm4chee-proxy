@@ -807,13 +807,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return logDir;
     }
 
-    public AttributeCoercion addAttributeCoercion(AttributeCoercion ac) {
-        return attributeCoercions.add(ac);
+    public void addAttributeCoercion(AttributeCoercion ac) {
+        attributeCoercions.add(ac);
     }
 
     public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
             Role role, Dimse cmd) {
-        return attributeCoercions.get(sopClass, cmd, role, aeTitle);
+        return attributeCoercions.findMatching(sopClass, cmd, role, aeTitle);
     }
 
     public AttributeCoercions getAttributeCoercions() {
