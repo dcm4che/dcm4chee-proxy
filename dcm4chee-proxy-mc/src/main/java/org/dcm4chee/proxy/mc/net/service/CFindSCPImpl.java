@@ -64,9 +64,11 @@ public class CFindSCPImpl extends BasicCFindSCP {
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
             Attributes rq, Attributes keys) throws IOException {
+        if (dimse != Dimse.C_FIND_RQ)
+            throw new DicomServiceException(Status.UnrecognizedOperation);
+        
         Association asInvoked = (Association) asAccepted
                 .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        
         try {
             forward(asAccepted, asInvoked, pc, rq, keys);
         } catch (InterruptedException e) {
