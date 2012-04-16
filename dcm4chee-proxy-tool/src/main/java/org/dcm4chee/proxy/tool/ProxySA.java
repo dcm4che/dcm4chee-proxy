@@ -75,8 +75,7 @@ import org.dcm4chee.proxy.mc.net.service.CEchoSCPImpl;
 import org.dcm4chee.proxy.mc.net.service.CFindSCPImpl;
 import org.dcm4chee.proxy.mc.net.service.CStoreSCPImpl;
 import org.dcm4chee.proxy.mc.net.service.MppsSCPImpl;
-import org.dcm4chee.proxy.mc.net.service.NActionSCPImpl;
-import org.dcm4chee.proxy.mc.net.service.NEventReportSCUImpl;
+import org.dcm4chee.proxy.mc.net.service.StgCmtSCPImpl;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -100,8 +99,7 @@ public class ProxySA {
             DicomServiceRegistry dcmService = new DicomServiceRegistry();
             dcmService.addDicomService(new CEchoSCPImpl());
             dcmService.addDicomService(new CStoreSCPImpl("*"));
-            dcmService.addDicomService(new NActionSCPImpl());
-            dcmService.addDicomService(new NEventReportSCUImpl());
+            dcmService.addDicomService(new StgCmtSCPImpl());
             dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.1.1"));
             dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.2.1"));
             dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.3.1"));
