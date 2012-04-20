@@ -384,21 +384,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
     }
 
-    public Attributes readAndCoerceDataset(File file, String remoteAET) throws IOException {
-        Attributes attrs;
-        DicomInputStream in = new DicomInputStream(file);
-        try {
-            in.setIncludeBulkDataLocator(true);
-            attrs = in.readDataset(-1, -1);
-        } finally {
-            SafeClose.close(in);
-        }
+    public void coerceDataset(String remoteAET, Attributes attrs) throws IOException {
         AttributeCoercion ac =
                 getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
                         Dimse.C_STORE_RQ);
         if (ac != null)
             coerceAttributes(attrs, ac);
-        return attrs;
     }
 
     private void coerceAttributes(Attributes attrs, AttributeCoercion ac) {

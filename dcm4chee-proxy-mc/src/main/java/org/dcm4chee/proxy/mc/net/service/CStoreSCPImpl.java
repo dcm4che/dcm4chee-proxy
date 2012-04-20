@@ -96,8 +96,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    protected File createFile(Association as, Attributes rq, Object storage)
-            throws DicomServiceException {
+    protected File createFile(Association as, Attributes rq) throws DicomServiceException {
         try {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
             File dir = new File(ae.getSpoolDirectoryPath(), as.getCalledAET());
@@ -111,15 +110,16 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    protected File process(Association asAccepted, PresentationContext pc, Attributes rq, Attributes rsp,
-            Object storage, File file, MessageDigest digest) throws IOException {
+    protected boolean process(Association asAccepted, PresentationContext pc, Attributes rq,
+            Attributes rsp, File file, MessageDigest digest,
+            Attributes fmi, Attributes attrs) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            rename(asAccepted, file);
-            return null;
+            rename(asAccepted, file, attrs);
+            return true;
         }
         ProxyApplicationEntity pae = ((ProxyApplicationEntity) asAccepted.getApplicationEntity());
-        Attributes attrs = pae.readAndCoerceDataset(file, asInvoked.getRemoteAET());
+        pae.coerceDataset(asInvoked.getRemoteAET(), attrs);
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(asInvoked, attrs);
             pae.writeLogFile(asInvoked, attrs, file.length());
@@ -127,34 +127,22 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         try {
             forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
         } catch (AssociationStateException ass) {
-            handleForwardException(asAccepted, pc, rq, file, ".ass", ass);
+            handleForwardException(asAccepted, pc, rq, attrs, file, ".ass", ass);
         } catch (Exception e) {
-            handleForwardException(asAccepted, pc, rq, file, ".conn", e);
+            handleForwardException(asAccepted, pc, rq, attrs, file, ".conn", e);
         }
-        return file;
+        return true;
     }
 
     private File handleForwardException(Association as, PresentationContext pc, Attributes rq,
-            File file, String suffix, Exception e) throws DicomServiceException, IOException {
+            Attributes attrs, File file, String suffix, Exception e) throws DicomServiceException, IOException {
         LOG.debug(e.getMessage());
         as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
-        rename(as, file);
+        rename(as, file, attrs);
         Attributes rsp = Commands.mkCStoreRSP(rq, Status.Success);
         as.writeDimseRSP(pc, rsp);
         return null;
-    }
-
-    private void rename(Association as, File file) throws DicomServiceException {
-        String path = file.getPath();
-        File dst = new File(path.substring(0, path.length() - 5)
-                .concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
-        if (file.renameTo(dst))
-            LOG.debug("{}: M-RENAME {} to {}", new Object[] {as, file, dst});
-        else {
-            LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] {as, file, dst});
-            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
-        }
     }
 
     private static void forward(final Association asAccepted, final PresentationContext pc,
