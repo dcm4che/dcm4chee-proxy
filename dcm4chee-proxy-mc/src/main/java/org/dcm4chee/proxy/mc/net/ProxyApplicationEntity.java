@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -91,6 +92,7 @@ import org.dcm4che.util.StringUtils;
  */
 public class ProxyApplicationEntity extends ApplicationEntity {
 
+    private static final long serialVersionUID = -3552156927326582473L;
     private static final String separator = System.getProperty("file.separator");
     private static final String jbossServerDataDir = System.getProperty("jboss.server.data.dir");
     private static final String currentWorkingDir = System.getProperty("user.dir");
@@ -328,7 +330,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
         } catch (ConfigurationException ce) {
-            LOG.warn("Unable to load configuration for destination AET:", ce);
+            LOG.warn("Unable to load configuration for destination AET: ", ce);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, rj, ".rj-" + rj.getResult() + "-" 
@@ -339,10 +341,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } catch (IOException e) {
             return handleNegotiateConnectException(as, rq, ac, e, ".conn", 0);
         } catch (InterruptedException e) {
-            LOG.warn("Unexpected exception:", e);
+            LOG.warn("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException ic) {
             return handleNegotiateConnectException(as, rq, ac, ic, ".conf", 0); 
+        } catch (GeneralSecurityException e) {
+            LOG.warn("Failed to create SSL context: ", e);
+            return handleNegotiateConnectException(as, rq, ac, e, ".ssl", 0);
         }
     }
 
@@ -462,6 +467,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 LOG.warn("Unable to load configuration: ", e);
             } catch (IOException e) {
                 LOG.warn("Unable to read from file: ", e);
+            } catch (GeneralSecurityException e) {
+                LOG.warn("Failed to create SSL context: ", e);
             }
         }
     }
@@ -564,7 +571,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
             
             private boolean numRetry(Retry retry, String file) {
-                return file.split(retry.suffix, -1).length -1 < (Integer) retry.numretry;
+                return file.split(retry.suffix, -1).length -1 < (Integer) retry.numberOfRetries;
             }
         };
     }
@@ -610,6 +617,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.warn(asInvoked + ": connection exception: " + e);
         } catch (IncompatibleConnectionException e) {
             LOG.warn(asInvoked + ": incompatible connection: " + e);
+        } catch (GeneralSecurityException e) {
+            LOG.warn("Failed to create SSL context: ", e);
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {

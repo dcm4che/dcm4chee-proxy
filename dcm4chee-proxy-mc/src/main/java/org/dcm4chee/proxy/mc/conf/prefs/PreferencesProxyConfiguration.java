@@ -196,7 +196,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     private void storeTo(Retry retry, Preferences prefs) {
         storeNotNull(prefs, "dcmRetrySuffix", retry.getSuffix());
         storeNotNull(prefs, "dcmRetryDelay", retry.getDelay());
-        storeNotNull(prefs, "dcmRetryNum", retry.getNumRetry());
+        storeNotNull(prefs, "dcmRetryNum", retry.getNumberOfRetries());
     }
 
     @Override
@@ -293,6 +293,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
     private void storeDiffs(Preferences prefs, Retry a, Retry b) {
         storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
-        storeDiff(prefs, "dcmRetryNum", a.getNumRetry(), b.getNumRetry());
+        storeDiff(prefs, "dcmRetryNum", a.getNumberOfRetries(), b.getNumberOfRetries());
     }
 }

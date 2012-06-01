@@ -52,7 +52,7 @@
       factoryMethod="newSingleThreadScheduledExecutor" />
   </bean>
   
-  <!-- OpenLDAP Dicom Configuration 
+  <!-- OpenLDAP Dicom Configuration -->
   <bean name="DicomConfiguration" class="org.dcm4chee.proxy.mc.conf.ldap.LdapProxyConfiguration">
     <constructor>
       <parameter>
@@ -65,9 +65,8 @@
       <parameter>dc=nodomain</parameter>
     </constructor>
   </bean>
-  -->
 
-  <!-- OpenDS Dicom Configuration -->
+  <!-- OpenDS Dicom Configuration 
   <bean name="DicomConfiguration" class="org.dcm4chee.proxy.mc.conf.ldap.LdapProxyConfiguration">
     <constructor>
       <parameter>
@@ -80,6 +79,7 @@
       <parameter>dc=nodomain</parameter>
     </constructor>
   </bean>
+  -->
 
   <!-- Preferences Dicom Configuration 
   <bean name="DicomConfiguration" class="org.dcm4che.conf.prefs.PreferencesDicomConfiguration">
@@ -120,9 +120,8 @@
     <property name="keyManager">
       <inject bean="KeyManager" />
     </property>
-    <create method="initTrustManager" />
-    <start method="activate" />
-    <stop method="deactivate" />
+    <start method="bindConnections" />
+    <stop method="unbindConnections" />
     <demand>HornetQServer</demand>
   </bean>
   

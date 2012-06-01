@@ -53,6 +53,8 @@ import org.dcm4che.net.Device;
  */
 public class ProxyDevice extends Device {
 
+    private static final long serialVersionUID = -7370790158878613899L;
+
     private Integer schedulerInterval;
     private DicomConfiguration dicomConf;
     private final TemplatesCache templateCache = new TemplatesCache();

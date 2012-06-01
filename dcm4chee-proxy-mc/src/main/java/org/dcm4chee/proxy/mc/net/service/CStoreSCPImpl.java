@@ -131,7 +131,23 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         } catch (Exception e) {
             handleForwardException(asAccepted, pc, rq, attrs, file, ".conn", e);
         }
-        return true;
+        return false;
+    }
+
+    @Override
+    protected File rename(Association as, File file, Attributes attrs)
+            throws DicomServiceException {
+        String path = file.getPath();
+        File dst = new File(path.substring(0, path.length() - 5)
+                .concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
+        if (file.renameTo(dst)) {
+            dst.setLastModified(System.currentTimeMillis());
+            LOG.debug("{}: M-RENAME {} to {}", new Object[] { as, file, dst });
+            return dst;
+        } else {
+            LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] { as, file, dst });
+            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
+        }
     }
 
     private File handleForwardException(Association as, PresentationContext pc, Attributes rq,

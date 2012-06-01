@@ -46,12 +46,12 @@ public class Retry {
 
     public final String suffix;
     public final int delay;
-    public final int numretry;
+    public final int numberOfRetries;
 
-    public Retry(String suffix, int delay, int numretry) {
+    public Retry(String suffix, int delay, int numberOfRetries) {
         this.suffix = suffix;
         this.delay = delay;
-        this.numretry = numretry;
+        this.numberOfRetries = numberOfRetries;
     }
     
     public String getSuffix(){
@@ -62,7 +62,7 @@ public class Retry {
         return delay;
     }
     
-    public int getNumRetry() {
-        return numretry;
+    public int getNumberOfRetries() {
+        return numberOfRetries;
     }
 }

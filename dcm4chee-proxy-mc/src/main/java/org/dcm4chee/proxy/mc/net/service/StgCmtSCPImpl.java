@@ -40,6 +40,7 @@ package org.dcm4chee.proxy.mc.net.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Iterator;
 
 import org.dcm4che.conf.api.ConfigurationException;
@@ -220,6 +221,11 @@ public class StgCmtSCPImpl extends DicomService {
                     + "]: " + e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+            rename(asAccepted, file);
+        } catch (GeneralSecurityException e) {
+            LOG.warn(asAccepted + ": failed to create SSL context: " + e);
+            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ssl");
             rename(asAccepted, file);
         } finally {
             SafeClose.close(dis);

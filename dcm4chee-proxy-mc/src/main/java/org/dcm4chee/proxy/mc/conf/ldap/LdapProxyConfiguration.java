@@ -216,7 +216,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         attrs.put("objectclass", "dcmRetry");
         storeNotNull(attrs, "dcmRetrySuffix", retry.getSuffix());
         storeNotNull(attrs, "dcmRetryDelay", retry.getDelay());
-        storeNotNull(attrs, "dcmRetryNum", retry.getNumRetry());
+        storeNotNull(attrs, "dcmRetryNum", retry.getNumberOfRetries());
         return attrs;
     }
 
@@ -320,7 +320,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
     private List<ModificationItem> storeDiffs(Retry prev, Retry ac,
             ArrayList<ModificationItem> mods) {
         storeDiff(mods, "dcmRetryDelay", prev.getDelay(), ac.getDelay());
-        storeDiff(mods, "dcmRetryNum", prev.getNumRetry(), ac.getNumRetry());
+        storeDiff(mods, "dcmRetryNum", prev.getNumberOfRetries(), ac.getNumberOfRetries());
         return mods;
     }
 }

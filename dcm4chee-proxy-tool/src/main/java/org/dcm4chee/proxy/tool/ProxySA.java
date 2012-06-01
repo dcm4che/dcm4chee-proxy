@@ -39,7 +39,6 @@
 package org.dcm4chee.proxy.tool;
 
 import java.io.IOException;
-import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
@@ -86,6 +85,7 @@ public class ProxySA {
         ResourceBundle.getBundle("org.dcm4chee.proxy.tool.messages");
     
     public static void main(String[] args) {
+        
         try {
             CommandLine cl = parseComandLine(args);
             DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
@@ -108,7 +108,7 @@ public class ProxySA {
             proxyDevice.setDimseRQHandler(dcmService);
             configureKeyManager(cl, proxyDevice);
             configureScheduler(cl, proxyDevice);
-            proxyDevice.activate();
+            proxyDevice.bindConnections();
         } catch (ConfigurationNotFoundException c) {
             System.err.println("No device configuration found.");
             System.exit(2);
@@ -169,7 +169,6 @@ public class ProxySA {
                 System.err.println("Failed to read key-store.");
                 System.exit(2);
             }
-            proxyDevice.initTrustManager();
         } catch (NoSuchAlgorithmException e) {
             System.err.println("Requested cryptographic algorithm is not available.");
             System.exit(2);
@@ -178,9 +177,6 @@ public class ProxySA {
             System.exit(2);
         } catch (KeyStoreException e) {
             System.err.println("Key-store error.");
-            System.exit(2);
-        } catch (KeyManagementException e) {
-            System.err.println("Key management error.");
             System.exit(2);
         }
     }
