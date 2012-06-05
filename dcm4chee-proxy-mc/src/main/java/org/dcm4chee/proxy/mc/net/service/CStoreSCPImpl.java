@@ -38,12 +38,18 @@
 
 package org.dcm4chee.proxy.mc.net.service;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.security.DigestOutputStream;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
+import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.Commands;
@@ -57,7 +63,9 @@ import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.mc.net.MultiFileOutputStream;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
+import org.dcm4chee.proxy.mc.net.Schedule;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -70,17 +78,16 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
-    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
-            Attributes rq, PDVInputStream data) throws IOException {
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
+            PDVInputStream data) throws IOException {
         if (dimse != Dimse.C_STORE_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
-        
-        Association asInvoked = (Association) asAccepted
-                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             super.onDimseRQ(asAccepted, pc, dimse, rq, data);
-        else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity())
-                .getAttributeCoercions().getAll().isEmpty()
+        else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getAttributeCoercions().getAll()
+                .isEmpty()
                 || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog())
             super.store(asAccepted, pc, rq, data, null);
         else {
@@ -96,12 +103,57 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     @Override
+    protected void store(Association as, PresentationContext pc, Attributes rq, PDVInputStream data, Attributes rsp)
+            throws IOException {
+        List<File> files = createFiles(as, rq);
+        MessageDigest digest = getMessageDigest(as);
+        Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
+        for (File file : files)
+            LOG.info("{}: M-WRITE {}", as, file);
+        MultiFileOutputStream mfout = new MultiFileOutputStream(files);
+        BufferedOutputStream bout = new BufferedOutputStream(digest == null ? mfout : new DigestOutputStream(mfout,
+                digest));
+        DicomOutputStream out = new DicomOutputStream(bout, UID.ExplicitVRLittleEndian);
+        out.writeFileMetaInformation(fmi);
+        try {
+            data.copyTo(out);
+        } finally {
+            out.close();
+        }
+        for (File file : files) {
+            boolean keepFile = false;
+            try {
+                Attributes attrs = parse(as, file);
+                file = rename(as, file, attrs);
+                keepFile = process(as, pc, rq, rsp, file, digest, fmi, attrs);
+            } finally {
+                if (!keepFile)
+                    if (file.delete())
+                        LOG.info("{}: M-DELETE {}", as, file);
+                    else
+                        LOG.warn("{}: Failed to M-DELETE {}", as, file);
+            }
+        }
+    }
+
+    private List<File> createFiles(Association as, Attributes rq) throws DicomServiceException {
+        List<File> files = new ArrayList<File>();
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+        if (pae.getCurrentForwardSchedules().size() > 0)
+            for (Schedule schedule : pae.getCurrentForwardSchedules()) {
+                as.getAAssociateRQ().setCalledAET(schedule.getDestinationAETitle());
+                files.add(createFile(as, rq));
+            }
+        else
+            files.add(createFile(as, rq));
+        return files;
+    }
+
     protected File createFile(Association as, Attributes rq) throws DicomServiceException {
         try {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
             File dir = new File(ae.getSpoolDirectoryPath(), as.getCalledAET());
             dir.mkdir();
-            
             return File.createTempFile("dcm", ".part", dir);
         } catch (Exception e) {
             LOG.warn(as + ": Failed to create temp file:", e);
@@ -109,13 +161,12 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         }
     }
 
-    @Override
     protected boolean process(Association asAccepted, PresentationContext pc, Attributes rq,
             Attributes rsp, File file, MessageDigest digest,
             Attributes fmi, Attributes attrs) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            rename(asAccepted, file, attrs);
+            rename(asAccepted, file);
             return true;
         }
         ProxyApplicationEntity pae = ((ProxyApplicationEntity) asAccepted.getApplicationEntity());
@@ -134,8 +185,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         return false;
     }
 
-    @Override
-    protected File rename(Association as, File file, Attributes attrs)
+    protected File rename(Association as, File file)
             throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5)

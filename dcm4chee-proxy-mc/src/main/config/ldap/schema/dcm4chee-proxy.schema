@@ -124,6 +124,14 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.20
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
   
+attributetype ( 1.2.40.0.13.1.2.15.0.3.21 
+  NAME 'dcmDefaultDestinationAETitle'
+  DESC 'String : fallback AET for sending DICOM files to'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  
 objectclass ( 1.2.40.0.13.1.2.15.0.4.1
   NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
@@ -138,16 +146,14 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.2
   MUST (
     dcmSpoolDirectory $
     dcmAcceptDataOnFailedNegotiation $
-    dcmDestinationAETitle $
     dcmExclusiveUseDefinedTC $
     dcmEnableAuditLog $
     dcmNactionDirectory $
-    dcmNeventDirectory )
+    dcmNeventDirectory $
+    dcmDefaultDestinationAETitle )
   MAY (
     dcmUseCallingAETitle $
     dcmAuditDirectory $
-    dcmForwardScheduleDays $
-    dcmForwardScheduleHours $
     dcmIgnoreScheduleSOPClasses) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.3
@@ -158,4 +164,13 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.3
     dcmRetrySuffix $
     dcmRetryDelay $
     dcmRetryNum ) )
-
+    
+objectclass ( 1.2.40.0.13.1.2.15.0.4.4 
+  NAME 'dcmSchedule'
+  DESC 'Forward Schedule configuration'
+  SUP top
+  STRUCTURAL
+  MUST (
+    dcmForwardScheduleDays $
+    dcmForwardScheduleHours $
+    dcmDestinationAETitle ) )

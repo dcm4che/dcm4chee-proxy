@@ -38,46 +38,63 @@
 
 package org.dcm4chee.proxy.mc.net;
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import org.dcm4che.net.ApplicationEntity;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Gunter Zeilinger <gunterze@gmail.com>
- * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Michael Backhaus <michael.backaus@agfa.com>
+ * 
  */
-public class Scheduler {
+public class MultiFileOutputStream extends OutputStream {
 
-    private final ProxyDevice device;
-    private final AuditLog log;
-    private ScheduledFuture<?> timer;
+    private List<FileOutputStream> fosl = new ArrayList<FileOutputStream>();
 
-    public Scheduler(ProxyDevice device, AuditLog log) {
-        this.device = device;
-        this.log = log;
-    }
-
-    public void start() {
-        long period = device.getSchedulerInterval();
-        timer = device.scheduleAtFixedRate(new Runnable(){
-
-            @Override
-            public void run() {
-                for (ApplicationEntity ae : device.getApplicationEntities()) {
-                    if (ae instanceof ProxyApplicationEntity) {
-                        ((ProxyApplicationEntity) ae).forwardFiles();
-                        ((ProxyApplicationEntity) ae).forwardOrphans();
-                        log.writeLog((ProxyApplicationEntity) ae);
-                    }
-                }
-            }}, period, period, TimeUnit.SECONDS);
-    }
-
-    public void stop() {
-        if (timer != null) {
-            timer.cancel(false);
-            timer = null;
+    public MultiFileOutputStream(List<File> files) throws IOException {
+        boolean error = false;
+        String message = null;
+        for (File file : files) {
+            try {
+                FileOutputStream fos = new FileOutputStream(file);
+                fosl.add(fos);
+            } catch (IOException e) {
+                close();
+                error = true;
+                message = e.toString();
+            }
         }
+        if (error)
+            throw new IOException(message);
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        for (FileOutputStream fos : fosl)
+            fos.write(b);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        for (FileOutputStream fos : fosl)
+            fos.write(b, off, len);
+    }
+
+    @Override
+    public void close() throws IOException {
+        boolean error = false;
+        String message = null;
+        for (FileOutputStream fos : fosl) {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                error = true;
+                message = e.toString();
+            }
+        }
+        if (error)
+            throw new IOException(message);
     }
 }

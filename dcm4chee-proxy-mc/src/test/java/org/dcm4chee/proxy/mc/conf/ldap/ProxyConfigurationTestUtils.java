@@ -283,7 +283,6 @@ public class ProxyConfigurationTestUtils {
         ae.setAssociationInitiator(true);
         ae.setSpoolDirectory("proxy");
         ae.setAcceptDataOnFailedNegotiation(false);
-        ae.setDestinationAETitle("STORESCP");
         ae.setExclusiveUseDefinedTC(false);
         ae.setEnableAuditLog(true);
         ae.setAuditDirectory("audit");
@@ -300,10 +299,19 @@ public class ProxyConfigurationTestUtils {
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));
-        Schedule schedule = new Schedule();
-        schedule.setDays("Mon-Fri");
-        schedule.setHours("8-18");
-        ae.setForwardSchedule(schedule);
+        ae.setDefaultDestinationAET("DCM4CHEE");
+        List<Schedule> schedules = new ArrayList<Schedule>();
+        Schedule scheduleA = new Schedule();
+        scheduleA.setDays("Mon-Fri");
+        scheduleA.setHours("8-18");
+        scheduleA.setDestinationAETitle("STORESCP");
+        schedules.add(scheduleA);
+        Schedule scheduleB = new Schedule();
+        scheduleB.setDays("Mon-Fri");
+        scheduleB.setHours("19-7");
+        scheduleB.setDestinationAETitle("DCM4CHEE");
+        schedules.add(scheduleB);
+        ae.setForwardSchedules(schedules);
         List<String> ignoreScheduleSOPClasses = new ArrayList<String>();
         ignoreScheduleSOPClasses.add("1.2.840.10008.1.20.1");
         ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.31");

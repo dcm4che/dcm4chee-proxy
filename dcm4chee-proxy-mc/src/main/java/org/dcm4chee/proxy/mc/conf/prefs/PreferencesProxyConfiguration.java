@@ -88,23 +88,22 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         super.storeTo(device, prefs);
         if (!(device instanceof ProxyDevice))
             return;
-        
+
         ProxyDevice proxyDev = (ProxyDevice) device;
         prefs.putBoolean("dcmProxyDevice", true);
         storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
     }
-    
+
     @Override
     protected void storeTo(ApplicationEntity ae, Preferences prefs, List<Connection> devConns) {
         super.storeTo(ae, prefs, devConns);
         if (!(ae instanceof ProxyApplicationEntity))
             return;
-        
+
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         prefs.putBoolean("dcmProxyNetworkAE", true);
         storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
         storeNotNull(prefs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
-        storeNotNull(prefs, "dcmDestinationAETitle", proxyAE.getDestinationAETitle());
         storeNotNull(prefs, "dcmUseCallingAETitle", proxyAE.getUseCallingAETitle());
         storeNotNull(prefs, "dcmExclusiveUseDefinedTC", proxyAE.isExclusiveUseDefinedTC());
         storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
@@ -112,21 +111,19 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(prefs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
         storeNotNull(prefs, "dcmIgnoreScheduleSOPClasses", proxyAE.getIgnoreScheduleSOPClassesAsString());
-        Schedule schedule = proxyAE.getForwardSchedule();
-        storeNotNull(prefs, "dcmForwardScheduleDays", schedule.getDays());
-        storeNotNull(prefs, "dcmForwardScheduleHours", schedule.getHours());
+        storeNotNull(prefs, "dcmDefaultDestinationAETitle", proxyAE.getDefaultDestinationAET());
     }
-    
+
     @Override
     protected void loadFrom(Device device, Preferences prefs) throws CertificateException {
-            super.loadFrom(device, prefs);
-            if (!(device instanceof ProxyDevice))
-                return;
-            
-            ProxyDevice proxyDev = (ProxyDevice) device;
-            proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", 60));
+        super.loadFrom(device, prefs);
+        if (!(device instanceof ProxyDevice))
+            return;
+
+        ProxyDevice proxyDev = (ProxyDevice) device;
+        proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", 60));
     }
-    
+
     @Override
     protected void loadFrom(ApplicationEntity ae, Preferences prefs) {
         super.loadFrom(ae, prefs);
@@ -135,7 +132,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         proxyAE.setSpoolDirectory(prefs.get("dcmSpoolDirectory", null));
         proxyAE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmAcceptDataOnFailedNegotiation", false));
-        proxyAE.setDestinationAETitle(prefs.get("dcmDestinationAETitle", null));
         proxyAE.setUseCallingAETitle(prefs.get("dcmUseCallingAETitle", null));
         proxyAE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmExclusiveUseDefinedTC", false));
         proxyAE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
@@ -143,32 +139,41 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setNactionDirectory(prefs.get("dcmNactionDirectory", null));
         proxyAE.setNeventDirectory(prefs.get("dcmNeventDirectory", null));
         proxyAE.setIgnoreScheduleSOPClasses(prefs.get("dcmIgnoreScheduleSOPClasses", null));
-        Schedule schedule = new Schedule();
-        schedule.setDays(prefs.get("dcmForwardScheduleDays", null));
-        schedule.setHours(prefs.get("dcmForwardScheduleHours", null));
-        proxyAE.setForwardSchedule(schedule);
+        proxyAE.setDefaultDestinationAET(prefs.get("dcmDefaultDestinationAETitle", null));
     }
 
     @Override
-    protected void loadChilds(ApplicationEntity ae, Preferences aeNode)
-            throws BackingStoreException {
+    protected void loadChilds(ApplicationEntity ae, Preferences aeNode) throws BackingStoreException {
         super.loadChilds(ae, aeNode);
         if (!(ae instanceof ProxyApplicationEntity))
             return;
-        
+
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         loadRetries(proxyAE, aeNode);
+        loadSchedules(proxyAE, aeNode);
         load(proxyAE.getAttributeCoercions(), aeNode);
     }
-    
-    private void loadRetries(ProxyApplicationEntity proxyAE, Preferences paeNode) 
-    throws BackingStoreException {
+
+    private void loadSchedules(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
+        Preferences schedulesNode = paeNode.node("dcmSchedule");
+        List<Schedule> schedules = new ArrayList<Schedule>();
+        for (String scheduleIndex : schedulesNode.childrenNames()) {
+            Preferences scheduleNode = schedulesNode.node(scheduleIndex);
+            Schedule schedule = new Schedule();
+            schedule.setDays(scheduleNode.get("dcmForwardScheduleDays", null));
+            schedule.setHours(scheduleNode.get("dcmForwardScheduleHours", null));
+            schedule.setDestinationAETitle(scheduleNode.get("dcmDestinationAETitle", null));
+            schedules.add(schedule);
+        }
+        proxyAE.setForwardSchedules(schedules);
+    }
+
+    private void loadRetries(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
         Preferences retriesNode = paeNode.node("dcmRetry");
         List<Retry> retries = new ArrayList<Retry>();
         for (String retryIndex : retriesNode.childrenNames()) {
             Preferences retryNode = retriesNode.node(retryIndex);
-            Retry retry = new Retry(retryNode.get("dcmRetrySuffix", null), 
-                    retryNode.getInt("dcmRetryDelay", 60), 
+            Retry retry = new Retry(retryNode.get("dcmRetrySuffix", null), retryNode.getInt("dcmRetryDelay", 60),
                     retryNode.getInt("dcmRetryNum", 10));
             retries.add(retry);
         }
@@ -180,20 +185,34 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         super.storeChilds(ae, aeNode);
         if (!(ae instanceof ProxyApplicationEntity))
             return;
-        
+
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeNode);
+        storeSchedules(proxyAE.getForwardSchedules(), aeNode);
         store(proxyAE.getAttributeCoercions(), aeNode);
+    }
+
+    private void storeSchedules(List<Schedule> forwardSchedules, Preferences parentNode) {
+        Preferences schedulesNode = parentNode.node("dcmSchedule");
+        int scheduleIndex = 1;
+        for (Schedule schedule : forwardSchedules)
+            storeToSchedule(schedule, schedulesNode.node("" + scheduleIndex++));
+    }
+
+    private void storeToSchedule(Schedule schedule, Preferences prefs) {
+        storeNotNull(prefs, "dcmForwardScheduleDays", schedule.getDays());
+        storeNotNull(prefs, "dcmForwardScheduleHours", schedule.getHours());
+        storeNotNull(prefs, "dcmDestinationAETitle", schedule.getDestinationAETitle());
     }
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
         Preferences retriesNode = parentNode.node("dcmRetry");
         int retryIndex = 1;
-        for(Retry retry : retries)
-            storeTo(retry, retriesNode.node("" + retryIndex++));
+        for (Retry retry : retries)
+            storeToRetry(retry, retriesNode.node("" + retryIndex++));
     }
 
-    private void storeTo(Retry retry, Preferences prefs) {
+    private void storeToRetry(Retry retry, Preferences prefs) {
         storeNotNull(prefs, "dcmRetrySuffix", retry.getSuffix());
         storeNotNull(prefs, "dcmRetryDelay", retry.getDelay());
         storeNotNull(prefs, "dcmRetryNum", retry.getNumberOfRetries());
@@ -204,47 +223,21 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         super.storeDiffs(prefs, a, b);
         if (!(a instanceof ProxyApplicationEntity) || !(b instanceof ProxyApplicationEntity))
             return;
-        
+
         ProxyApplicationEntity pa = (ProxyApplicationEntity) a;
         ProxyApplicationEntity pb = (ProxyApplicationEntity) b;
-        storeDiff(prefs, "dcmSpoolDirectory",
-                pa.getSpoolDirectory(),
-                pb.getSpoolDirectory());
-        storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation",
-                pa.isAcceptDataOnFailedNegotiation(),
+        storeDiff(prefs, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
+        storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
-        storeDiff(prefs, "dcmDestinationAETitle",
-                pa.getDestinationAETitle(),
-                pb.getDestinationAETitle());
-        storeDiff(prefs, "dcmUseCallingAETitle",
-                pa.getUseCallingAETitle(),
-                pb.getUseCallingAETitle());
-        storeDiff(prefs, "dcmExclusiveUseDefinedTC",
-                pa.isExclusiveUseDefinedTC(),
-                pb.isExclusiveUseDefinedTC());
-        storeDiff(prefs, "dcmEnableAuditLog",
-                pa.isEnableAuditLog(),
-                pb.isEnableAuditLog());
-        storeDiff(prefs, "dcmAuditDirectory",
-                pa.getAuditDirectory(),
-                pb.getAuditDirectory());
-        storeDiff(prefs, "dcmNactionDirectory",
-                pa.getNactionDirectory(),
-                pb.getNactionDirectory());
-        storeDiff(prefs, "dcmNeventDirectory",
-                pa.getNeventDirectory(),
-                pb.getNeventDirectory());
-        storeDiff(prefs, "dcmIgnoreScheduleSOPClasses",
-                pa.getIgnoreScheduleSOPClassesAsString(),
+        storeDiff(prefs, "dcmUseCallingAETitle", pa.getUseCallingAETitle(), pb.getUseCallingAETitle());
+        storeDiff(prefs, "dcmExclusiveUseDefinedTC", pa.isExclusiveUseDefinedTC(), pb.isExclusiveUseDefinedTC());
+        storeDiff(prefs, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
+        storeDiff(prefs, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
+        storeDiff(prefs, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
+        storeDiff(prefs, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
+        storeDiff(prefs, "dcmIgnoreScheduleSOPClasses", pa.getIgnoreScheduleSOPClassesAsString(),
                 pb.getIgnoreScheduleSOPClassesAsString());
-        Schedule scheduleA = pa.getForwardSchedule();
-        Schedule scheduleB = pb.getForwardSchedule();
-        storeDiff(prefs, "dcmForwardScheduleDays",
-                scheduleA.getDays(),
-                scheduleB.getDays());
-        storeDiff(prefs, "dcmUseCallingAETitle",
-                scheduleA.getHours(),
-                scheduleB.getHours());
+        storeDiff(prefs, "dcmDefaultDestinationAETitle", pa.getDefaultDestinationAET(), pb.getDefaultDestinationAET());
     }
 
     @Override
@@ -252,12 +245,10 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         super.storeDiffs(prefs, a, b);
         if (!(a instanceof ProxyDevice) || !(b instanceof ProxyDevice))
             return;
-        
+
         ProxyDevice pa = (ProxyDevice) a;
         ProxyDevice pb = (ProxyDevice) b;
-        storeDiff(prefs, "dcmSchedulerInterval",
-                pa.getSchedulerInterval(),
-                pb.getSchedulerInterval());
+        storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
     }
 
     @Override
@@ -266,24 +257,49 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         super.mergeChilds(prev, ae, aeNode);
         if (!(prev instanceof ProxyApplicationEntity) || !(ae instanceof ProxyApplicationEntity))
             return;
-        
+
         ProxyApplicationEntity pprev = (ProxyApplicationEntity) prev;
         ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
         merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeNode);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeNode);
+        mergeSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeNode);
     }
 
-    private void mergeRetries(List<Retry> prevs, List<Retry> retries, Preferences parentNode) 
-    throws BackingStoreException {
+    private void mergeSchedules(List<Schedule> prevs, List<Schedule> schedules, Preferences parentNode)
+            throws BackingStoreException {
+        Preferences schedulesNode = parentNode.node("dcmSchedule");
+        int index = 1;
+        Iterator<Schedule> prevIter = prevs.listIterator();
+        for (Schedule schedule : schedules) {
+            Preferences scheduleNode = schedulesNode.node("" + index++);
+            if (prevIter.hasNext())
+                storeScheduleDiffs(scheduleNode, prevIter.next(), schedule);
+            else
+                storeToSchedule(schedule, scheduleNode);
+        }
+        while (prevIter.hasNext()) {
+            prevIter.next();
+            schedulesNode.node("" + index++).removeNode();
+        }
+    }
+
+    private void storeScheduleDiffs(Preferences prefs, Schedule a, Schedule b) {
+        storeDiff(prefs, "dcmForwardScheduleDays", a.getDays(), b.getDays());
+        storeDiff(prefs, "dcmForwardScheduleHours", a.getHours(), b.getHours());
+        storeDiff(prefs, "dcmDestinationAETitle", a.getDestinationAETitle(), b.getDestinationAETitle());
+    }
+
+    private void mergeRetries(List<Retry> prevs, List<Retry> retries, Preferences parentNode)
+            throws BackingStoreException {
         Preferences retriesNode = parentNode.node("dcmRetry");
         int retryIndex = 1;
         Iterator<Retry> prevIter = prevs.listIterator();
         for (Retry retry : retries) {
-            Preferences retryNode = retriesNode.node(""+ retryIndex++);
+            Preferences retryNode = retriesNode.node("" + retryIndex++);
             if (prevIter.hasNext())
-                storeDiffs(retryNode, prevIter.next(), retry);
+                storeRetryDiffs(retryNode, prevIter.next(), retry);
             else
-                storeTo(retry, retryNode);
+                storeToRetry(retry, retryNode);
         }
         while (prevIter.hasNext()) {
             prevIter.next();
@@ -291,7 +307,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         }
     }
 
-    private void storeDiffs(Preferences prefs, Retry a, Retry b) {
+    private void storeRetryDiffs(Preferences prefs, Retry a, Retry b) {
         storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
         storeDiff(prefs, "dcmRetryNum", a.getNumberOfRetries(), b.getNumberOfRetries());
     }

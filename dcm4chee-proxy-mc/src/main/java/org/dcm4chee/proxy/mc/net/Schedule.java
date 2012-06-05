@@ -55,10 +55,12 @@ public class Schedule {
 
     private final BitSet days = new BitSet(7);
     private final BitSet hours = new BitSet(24);
+    private String destinationAETitle;
 
     public Schedule() {
         days.set(0, 7);
         hours.set(0, 24);
+        destinationAETitle = "";
     }
 
     public void setDays(String dayOfWeek) {
@@ -77,6 +79,14 @@ public class Schedule {
     
     public String getHours() {
         return toString(hours, HOURS);
+    }
+
+    public String getDestinationAETitle() {
+        return destinationAETitle;
+    }
+
+    public void setDestinationAETitle(String destinationAETitle) {
+        this.destinationAETitle = destinationAETitle;
     }
 
     public boolean sendNow(final Calendar now) {
@@ -104,7 +114,6 @@ public class Schedule {
         default:
             throw new IllegalArgumentException(value);
         }
-
     }
 
     private static int indexOf(String s, String[] values, String value) {

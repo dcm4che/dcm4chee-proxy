@@ -66,6 +66,7 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
+import org.dcm4chee.proxy.mc.net.Schedule;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -169,9 +170,11 @@ public class StgCmtSCPImpl extends DicomService {
     }
 
     private boolean isAssociationFromDestinationAET(Association asAccepted) {
-        return asAccepted.getCallingAET().equals(
-                ((ProxyApplicationEntity) asAccepted.getApplicationEntity())
-                        .getDestinationAETitle());
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        for (Schedule schedule : pae.getCurrentForwardSchedules())
+            if (asAccepted.getCallingAET().equals(schedule.getDestinationAETitle()))
+                return true;
+        return false;
     }
 
     private void forwardNEventReportRQFromDestinationAET(Association asAccepted,
@@ -332,9 +335,11 @@ public class StgCmtSCPImpl extends DicomService {
 
     protected File createTransactionUidFile(Association as, Attributes data, String suffix)
             throws DicomServiceException {
-        File file = new File(
+        File dir = new File(
                 ((ProxyApplicationEntity) as.getApplicationEntity()).getNactionDirectoryPath(),
-                data.getString(Tag.TransactionUID) + suffix);
+                as.getCalledAET());
+        dir.mkdir();
+        File file = new File(dir, data.getString(Tag.TransactionUID) + suffix);
         DicomOutputStream stream = null;
         try {
             stream = new DicomOutputStream(file);

@@ -65,8 +65,7 @@ import org.dcm4chee.proxy.mc.net.Schedule;
  */
 public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
-    public LdapProxyConfiguration(Hashtable<String, Object> env,
-            String baseDN) throws NamingException {
+    public LdapProxyConfiguration(Hashtable<String, Object> env, String baseDN) throws NamingException {
         super(env, baseDN);
     }
 
@@ -85,7 +84,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             attr.add("dcmProxyNetworkAE");
         return attr;
     }
-    
+
     @Override
     protected Device newDevice(Attributes attrs) throws NamingException {
         if (!hasObjectClass(attrs, "dcmProxyDevice"))
@@ -121,7 +120,6 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeNotNull(attrs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
         storeNotNull(attrs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
-        storeNotNull(attrs, "dcmDestinationAETitle", proxyAE.getDestinationAETitle());
         storeNotNull(attrs, "dcmUseCallingAETitle", proxyAE.getUseCallingAETitle());
         storeNotNull(attrs, "dcmExclusiveUseDefinedTC", proxyAE.isExclusiveUseDefinedTC());
         storeNotNull(attrs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
@@ -129,15 +127,12 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
         storeNotNull(attrs, "dcmIgnoreScheduleSOPClasses", proxyAE.getIgnoreScheduleSOPClassesAsString());
-        Schedule schedule = proxyAE.getForwardSchedule();
-        storeNotNull(attrs, "dcmForwardScheduleDays", schedule.getDays());
-        storeNotNull(attrs, "dcmForwardScheduleHours", schedule.getHours());
+        storeNotNull(attrs, "dcmDefaultDestinationAETitle", proxyAE.getDefaultDestinationAET());
         return attrs;
     }
 
     @Override
-    protected void loadFrom(Device device, Attributes attrs) throws NamingException, 
-        CertificateException {
+    protected void loadFrom(Device device, Attributes attrs) throws NamingException, CertificateException {
         super.loadFrom(device, attrs);
         if (!(device instanceof ProxyDevice))
             return;
@@ -152,8 +147,8 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         proxyAE.setSpoolDirectory(stringValue(attrs.get("dcmSpoolDirectory")));
-        proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"), Boolean.FALSE));
-        proxyAE.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
+        proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"),
+                Boolean.FALSE));
         proxyAE.setUseCallingAETitle(stringValue(attrs.get("dcmUseCallingAETitle")));
         proxyAE.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
         proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
@@ -161,10 +156,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
         proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
         proxyAE.setIgnoreScheduleSOPClasses(stringValue(attrs.get("dcmIgnoreScheduleSOPClasses")));
-        Schedule schedule = new Schedule();
-        schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
-        schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
-        proxyAE.setForwardSchedule(schedule);
+        proxyAE.setDefaultDestinationAET(stringValue(attrs.get("dcmDefaultDestinationAETitle")));
     }
 
     @Override
@@ -174,26 +166,43 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         loadRetries(proxyAE, aeDN);
+        loadSchedules(proxyAE, aeDN);
         load(proxyAE.getAttributeCoercions(), aeDN);
     }
 
+    private void loadSchedules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
+        NamingEnumeration<SearchResult> ne = search(aeDN, "(objectclass=dcmSchedule)");
+        try {
+            List<Schedule> schedules = new ArrayList<Schedule>();
+            while (ne.hasMore()) {
+                SearchResult sr = ne.next();
+                Attributes attrs = sr.getAttributes();
+                Schedule schedule = new Schedule();
+                schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
+                schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
+                schedule.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
+                schedules.add(schedule);
+            }
+            proxyAE.setForwardSchedules(schedules);
+        } finally {
+            safeClose(ne);
+        }
+    }
+
     private void loadRetries(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
-        NamingEnumeration<SearchResult> ne = 
-            search(aeDN, "(objectclass=dcmRetry)");
+        NamingEnumeration<SearchResult> ne = search(aeDN, "(objectclass=dcmRetry)");
         try {
             List<Retry> retries = new ArrayList<Retry>();
             while (ne.hasMore()) {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
-                Retry retry = new Retry(
-                        stringValue(attrs.get("dcmRetrySuffix")), 
-                        intValue(attrs.get("dcmRetryDelay"), 60),
-                        intValue(attrs.get("dcmRetryNum"), 10));
+                Retry retry = new Retry(stringValue(attrs.get("dcmRetrySuffix")), intValue(attrs.get("dcmRetryDelay"),
+                        60), intValue(attrs.get("dcmRetryNum"), 10));
                 retries.add(retry);
             }
             proxyAE.setRetries(retries);
         } finally {
-           safeClose(ne);
+            safeClose(ne);
         }
     }
 
@@ -204,15 +213,21 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeDN);
+        storeSchedules(proxyAE.getForwardSchedules(), aeDN);
         store(proxyAE.getAttributeCoercions(), aeDN);
     }
 
     private void storeRetries(List<Retry> retries, String parentDN) throws NamingException {
-        for(Retry retry : retries)
-            createSubcontext(dnOf(retry, parentDN), storeTo(retry, new BasicAttributes(true)));
+        for (Retry retry : retries)
+            createSubcontext(dnOfRetry(retry, parentDN), storeToRetry(retry, new BasicAttributes(true)));
     }
 
-    private Attributes storeTo(Retry retry, BasicAttributes attrs) {
+    private void storeSchedules(List<Schedule> forwardSchedules, String parentDN) throws NamingException {
+        for (Schedule schedule : forwardSchedules)
+            createSubcontext(dnOfSchedule(schedule, parentDN), storeToSchedule(schedule, new BasicAttributes(true)));
+    }
+
+    private Attributes storeToRetry(Retry retry, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmRetry");
         storeNotNull(attrs, "dcmRetrySuffix", retry.getSuffix());
         storeNotNull(attrs, "dcmRetryDelay", retry.getDelay());
@@ -220,59 +235,48 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         return attrs;
     }
 
-    private String dnOf(Retry retry, String parentDN) {
+    private Attributes storeToSchedule(Schedule schedule, BasicAttributes attrs) {
+        attrs.put("objectclass", "dcmSchedule");
+        storeNotNull(attrs, "dcmForwardScheduleDays", schedule.getDays());
+        storeNotNull(attrs, "dcmForwardScheduleHours", schedule.getHours());
+        storeNotNull(attrs, "dcmDestinationAETitle", schedule.getDestinationAETitle());
+        return attrs;
+    }
+
+    private String dnOfRetry(Retry retry, String parentDN) {
         StringBuilder sb = new StringBuilder();
         sb.append("dcmRetrySuffix=").append(retry.getSuffix());
         sb.append(',').append(parentDN);
         return sb.toString();
     }
 
+    private String dnOfSchedule(Schedule schedule, String parentDN) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("dcmDestinationAETitle=").append(schedule.getDestinationAETitle());
+        sb.append(',').append(parentDN);
+        return sb.toString();
+    }
+
     @Override
-    protected List<ModificationItem> storeDiffs(ApplicationEntity a, ApplicationEntity b,
-            String deviceDN, List<ModificationItem> mods) {
+    protected List<ModificationItem> storeDiffs(ApplicationEntity a, ApplicationEntity b, String deviceDN,
+            List<ModificationItem> mods) {
         super.storeDiffs(a, b, deviceDN, mods);
         if (!(a instanceof ProxyApplicationEntity) || !(b instanceof ProxyApplicationEntity))
             return mods;
         ProxyApplicationEntity pa = (ProxyApplicationEntity) a;
         ProxyApplicationEntity pb = (ProxyApplicationEntity) b;
-        storeDiff(mods, "dcmSpoolDirectory",
-                pa.getSpoolDirectory(),
-                pb.getSpoolDirectory());
-        storeDiff(mods, "dcmAcceptDataOnFailedNegotiation",
-                pa.isAcceptDataOnFailedNegotiation(),
+        storeDiff(mods, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
+        storeDiff(mods, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
-        storeDiff(mods, "dcmDestinationAETitle",
-                pa.getDestinationAETitle(),
-                pb.getDestinationAETitle());
-        storeDiff(mods, "dcmUseCallingAETitle",
-                pa.getUseCallingAETitle(),
-                pb.getUseCallingAETitle());
-        storeDiff(mods, "dcmExclusiveUseDefinedTC",
-                pa.isExclusiveUseDefinedTC(),
-                pb.isExclusiveUseDefinedTC());
-        storeDiff(mods, "dcmEnableAuditLog",
-                pa.isEnableAuditLog(),
-                pb.isEnableAuditLog());
-        storeDiff(mods, "dcmAuditDirectory",
-                pa.getAuditDirectory(),
-                pb.getAuditDirectory());
-        storeDiff(mods, "dcmNactionDirectory",
-                pa.getNactionDirectory(),
-                pb.getNactionDirectory());
-        storeDiff(mods, "dcmNeventDirectory",
-                pa.getNeventDirectory(),
-                pb.getNeventDirectory());
-        storeDiff(mods, "dcmIgnoreScheduleSOPClasses",
-                pa.getIgnoreScheduleSOPClassesAsString(),
+        storeDiff(mods, "dcmUseCallingAETitle", pa.getUseCallingAETitle(), pb.getUseCallingAETitle());
+        storeDiff(mods, "dcmExclusiveUseDefinedTC", pa.isExclusiveUseDefinedTC(), pb.isExclusiveUseDefinedTC());
+        storeDiff(mods, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
+        storeDiff(mods, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
+        storeDiff(mods, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
+        storeDiff(mods, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
+        storeDiff(mods, "dcmIgnoreScheduleSOPClasses", pa.getIgnoreScheduleSOPClassesAsString(),
                 pb.getIgnoreScheduleSOPClassesAsString());
-        Schedule scheduleA = pa.getForwardSchedule();
-        Schedule scheduleB = pb.getForwardSchedule();
-        storeDiff(mods, "dcmForwardScheduleDays",
-                scheduleA.getDays(),
-                scheduleB.getDays());
-        storeDiff(mods, "dcmUseCallingAETitle",
-                scheduleA.getHours(),
-                scheduleB.getHours());
+        storeDiff(mods, "dcmDefaultDestinationAETitle", pa.getDefaultDestinationAET(), pb.getDefaultDestinationAET());
         return mods;
     }
 
@@ -283,15 +287,12 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return mods;
         ProxyDevice pa = (ProxyDevice) a;
         ProxyDevice pb = (ProxyDevice) b;
-        storeDiff(mods, "dcmSchedulerInterval",
-                pa.getSchedulerInterval(),
-                pb.getSchedulerInterval());
+        storeDiff(mods, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
         return mods;
     }
 
     @Override
-    protected void mergeChilds(ApplicationEntity prev, ApplicationEntity ae, String aeDN)
-            throws NamingException {
+    protected void mergeChilds(ApplicationEntity prev, ApplicationEntity ae, String aeDN) throws NamingException {
         super.mergeChilds(prev, ae, aeDN);
         if (!(prev instanceof ProxyApplicationEntity) || !(ae instanceof ProxyApplicationEntity))
             return;
@@ -299,26 +300,47 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
         merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeDN);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeDN);
+        mergeSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeDN);
     }
 
-    private void mergeRetries(List<Retry> prevs, List<Retry> retries,
-            String parentDN) throws NamingException {
+    private void mergeRetries(List<Retry> prevs, List<Retry> retries, String parentDN) throws NamingException {
         for (Retry prev : prevs)
             if (!retries.contains(prev))
-                destroySubcontext(dnOf(prev, parentDN));
+                destroySubcontext(dnOfRetry(prev, parentDN));
         for (Retry retry : retries) {
-            String dn = dnOf(retry, parentDN);
+            String dn = dnOfRetry(retry, parentDN);
             Integer indexOfPrevRetry = prevs.indexOf(retry);
             if (indexOfPrevRetry == -1)
-                createSubcontext(dn, storeTo(retry, new BasicAttributes(true)));
+                createSubcontext(dn, storeToRetry(retry, new BasicAttributes(true)));
             else
-                modifyAttributes(dn, storeDiffs(prevs.get(indexOfPrevRetry), retry,
-                        new ArrayList<ModificationItem>()));
+                modifyAttributes(dn,
+                        storeRetryDiffs(prevs.get(indexOfPrevRetry), retry, new ArrayList<ModificationItem>()));
         }
-}
+    }
 
-    private List<ModificationItem> storeDiffs(Retry prev, Retry ac,
+    private void mergeSchedules(List<Schedule> prevs, List<Schedule> schedules, String parentDN) throws NamingException {
+        for (Schedule prev : prevs)
+            if (!schedules.contains(prev))
+                destroySubcontext(dnOfSchedule(prev, parentDN));
+        for (Schedule schedule : schedules) {
+            String dn = dnOfSchedule(schedule, parentDN);
+            Integer indexOfPrevRetry = prevs.indexOf(schedule);
+            if (indexOfPrevRetry == -1)
+                createSubcontext(dn, storeToSchedule(schedule, new BasicAttributes(true)));
+            else
+                modifyAttributes(dn,
+                        storeScheduleDiffs(prevs.get(indexOfPrevRetry), schedule, new ArrayList<ModificationItem>()));
+        }
+    }
+
+    private List<ModificationItem> storeScheduleDiffs(Schedule scheduleA, Schedule scheduleB,
             ArrayList<ModificationItem> mods) {
+        storeDiff(mods, "dcmForwardScheduleDays", scheduleA.getDays(), scheduleB.getDays());
+        storeDiff(mods, "dcmUseCallingAETitle", scheduleA.getHours(), scheduleB.getHours());
+        return mods;
+    }
+
+    private List<ModificationItem> storeRetryDiffs(Retry prev, Retry ac, ArrayList<ModificationItem> mods) {
         storeDiff(mods, "dcmRetryDelay", prev.getDelay(), ac.getDelay());
         storeDiff(mods, "dcmRetryNum", prev.getNumberOfRetries(), ac.getNumberOfRetries());
         return mods;

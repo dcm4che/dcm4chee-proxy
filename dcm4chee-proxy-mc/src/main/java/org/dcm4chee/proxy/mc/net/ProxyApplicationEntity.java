@@ -100,11 +100,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public static final String FILE_SUFFIX = ".dcm.part";
 
     private String useCallingAETitle;
-    private String destinationAETitle;
-    private Schedule forwardSchedule;
     private String spoolDirectory;
     private int forwardPriority;
     private List<Retry> retries = new ArrayList<Retry>();
+    private List<Schedule> forwardSchedules = new ArrayList<Schedule>();
+    private String defaultDestinationAET;
     private boolean acceptDataOnFailedNegotiation;
     private boolean exclusiveUseDefinedTC;
     private boolean enableAuditLog;
@@ -168,28 +168,37 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return useCallingAETitle;
     }
 
-    public String getDestinationAETitle() {
-        return destinationAETitle;
-    }
-
-    public void setDestinationAETitle(String destinationAET) {
-        this.destinationAETitle = destinationAET;
-    }
-
-    public final void setForwardSchedule(Schedule schedule) {
-        this.forwardSchedule = schedule;
-    }
-
-    public final Schedule getForwardSchedule() {
-        return forwardSchedule;
-    }
-
     public void setRetries(List<Retry> retries) {
         this.retries = retries;
     }
 
     public List<Retry> getRetries() {
         return retries;
+    }
+
+    public List<Schedule> getForwardSchedules() {
+        return forwardSchedules;
+    }
+    
+    public List<Schedule> getCurrentForwardSchedules() {
+        List<Schedule> schedules = new ArrayList<Schedule>();
+        for (Schedule schedule : getForwardSchedules()) {
+            if (schedule.sendNow(new GregorianCalendar()))
+                schedules.add(schedule);
+        }
+        return schedules;
+    }
+
+    public void setForwardSchedules(List<Schedule> schedules) {
+        this.forwardSchedules = schedules;
+    }
+
+    public String getDefaultDestinationAET() {
+        return defaultDestinationAET;
+    }
+
+    public void setDefaultDestinationAET(String defaultDestinationAET) {
+        this.defaultDestinationAET = defaultDestinationAET;
     }
 
     public void setEnableAuditLog(boolean enableAuditLog) {
@@ -277,37 +286,42 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     @Override
-    protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac)
-            throws IOException {
-        if ((sendNow() || ignoreSchedule(rq.getPresentationContexts())) 
-                && !rq.getCallingAET().equals(destinationAETitle))
-            return forwardAAssociateRQ(as, rq, ac, true);
+    protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac) throws IOException {
+        if ((sendNow() || ignoreSchedule(rq.getPresentationContexts())) && !isRqFromDestinationAETitle(rq)
+                && getCurrentForwardSchedules().size() == 1)
+            return forwardAAssociateRQ(as, rq, ac, true, getCurrentForwardSchedules().get(0).getDestinationAETitle());
         as.setProperty(FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
     }
+    
+    private boolean isRqFromDestinationAETitle(AAssociateRQ rq) {
+        for (Schedule schedule : getCurrentForwardSchedules())
+            if (rq.getCallingAET().equals(schedule.getDestinationAETitle()))
+                return true;
+        return false;
+    }
 
     private boolean ignoreSchedule(List<PresentationContext> pcList) {
-        for (PresentationContext pc : pcList) {
+        for (PresentationContext pc : pcList)
             if (ignoreScheduleSOPClasses.contains(pc.getAbstractSyntax()))
                 return true;
-        }
         return false;
     }
 
     private boolean sendNow() {
-        return (forwardSchedule == null || forwardSchedule.sendNow(new GregorianCalendar()));
+        return (!getCurrentForwardSchedules().isEmpty());
     }
 
-    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac,
-            boolean sendNow) throws IOException {
+    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac, boolean sendNow,
+            String destinationAETitle) throws IOException {
         try {
             if (useCallingAETitle != null)
                 rq.setCallingAET(useCallingAETitle);
             else if (!getAETitle().equals("*"))
                 rq.setCallingAET(getAETitle());
             rq.setCalledAET(destinationAETitle);
-            Association asCalled = connect(getDestinationAE(), rq);
+            Association asCalled = connect(getDestinationAE(destinationAETitle), rq);
             if (sendNow)
                 as.setProperty(FORWARD_ASSOCIATION, asCalled);
             else
@@ -329,35 +343,36 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
-        } catch (ConfigurationException ce) {
-            LOG.warn("Unable to load configuration for destination AET: ", ce);
+        } catch (ConfigurationException e) {
+            LOG.warn("Unable to load configuration for destination AET: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, rj, ".rj-" + rj.getResult() + "-" 
+            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, rj, ".rj-" + rj.getResult() + "-"
                     + rj.getSource() + "-" + rj.getReason(), rj.getReason());
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, aa, ".aa-" + aa.getSource() + "-"
+            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, aa, ".aa-" + aa.getSource() + "-"
                     + aa.getReason(), aa.getReason());
         } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, e, ".conn", 0);
+            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, e, ".conn", 0);
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
-        } catch (IncompatibleConnectionException ic) {
-            return handleNegotiateConnectException(as, rq, ac, ic, ".conf", 0); 
+        } catch (IncompatibleConnectionException e) {
+            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, e, ".conf", 0);
         } catch (GeneralSecurityException e) {
             LOG.warn("Failed to create SSL context: ", e);
-            return handleNegotiateConnectException(as, rq, ac, e, ".ssl", 0);
+            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, e, ".ssl", 0);
         }
     }
 
-    private ApplicationEntity getDestinationAE() throws ConfigurationException {
+    private ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
         ProxyDevice device = (ProxyDevice) getDevice();
         return device.findApplicationEntity(destinationAETitle);
     }
 
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
-            AAssociateAC ac, Exception e, String suffix, int reason) throws IOException, AAbort {
+            AAssociateAC ac, String destinationAETitle, Exception e, String suffix, int reason) 
+                    throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
         LOG.debug(as + ": unable to connect to " + destinationAETitle + ": " + e);
         if (acceptDataOnFailedNegotiation) {
@@ -414,32 +429,49 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             return;
         
         for (String calledAET : getSpoolDirectoryPath().list())
-            startForwardScheduledFiles(calledAET);
+            for (Schedule schedule : getCurrentForwardSchedules())
+                if (calledAET.equals(schedule.getDestinationAETitle()))
+                    startForwardScheduledFiles(calledAET);
         
-        startForwardScheduledNAction(getNactionDirectoryPath().listFiles(fileFilter()));
+        for (String calledAET : getNactionDirectoryPath().list())
+            for (Schedule schedule : getCurrentForwardSchedules())
+                if (calledAET.equals(schedule.getDestinationAETitle()))
+                    startForwardScheduledNAction(getNactionDirectoryPath().listFiles(fileFilter()),
+                            schedule.getDestinationAETitle());
+    }
+    
+    public void forwardOrphans() {
+        for (String calledAET : getSpoolDirectoryPath().list()) {
+            boolean orphan = true;
+            for (Schedule schedule : getCurrentForwardSchedules())
+                if (calledAET.equals(schedule.getDestinationAETitle()))
+                    orphan = false;
+            if (orphan)
+                startForwardScheduledFiles(calledAET);
+        }
     }
 
-    private void startForwardScheduledNAction(final File[] files) {
+    private void startForwardScheduledNAction(final File[] files, final String destinationAETitle) {
         getDevice().execute(new Runnable() {
 
             @Override
             public void run() {
-                forwardScheduledNAction(files);
+                forwardScheduledNAction(files, destinationAETitle);
             }
         });
     }
     
-    private void forwardScheduledNAction(File[] files) {
+    private void forwardScheduledNAction(File[] files, String destinationAETitle) {
         for (File file : files) {
             try {
                 AAssociateRQ rq = new AAssociateRQ();
-                rq.addPresentationContext(new PresentationContext(1,
-                        UID.StorageCommitmentPushModelSOPClass, UID.ImplicitVRLittleEndian));
+                rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
+                        UID.ImplicitVRLittleEndian));
                 Attributes fmi = readFileMetaInformation(file);
                 String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
                 setCallingAET(rq, sourceAET);
-                rq.setCalledAET(getDestinationAETitle());
-                Association as = connect(getDestinationAE(), rq);
+                rq.setCalledAET(destinationAETitle);
+                Association as = connect(getDestinationAE(destinationAETitle), rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(as, file, fmi);
@@ -482,8 +514,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             rq.setCallingAET(sourceAET);
     }
 
-    private void forwardScheduledNAction(final Association as, final File file, Attributes fmi) 
-            throws IOException, InterruptedException {
+    private void forwardScheduledNAction(final Association as, final File file, Attributes fmi) throws IOException,
+            InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
         String tsuid = UID.ImplicitVRLittleEndian;
@@ -500,15 +532,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     File dest = new File(getNeventDirectoryPath(), transactionUID);
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
-                        LOG.debug("{}: RENAME {} to {}", new Object[] {as, file, dest});
-                    }
-                    else
-                        LOG.warn("{}: Failed to RENAME {} to {}", new Object[] {as, file, dest});
+                        LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dest });
+                    } else
+                        LOG.warn("{}: Failed to RENAME {} to {}", new Object[] { as, file, dest });
                     break;
                 }
                 default: {
-                    LOG.warn("{}: Failed to forward N-ACTION file {} with error status {}", new Object[] {
-                            as, file, Integer.toHexString(status) + 'H' });
+                    LOG.warn("{}: Failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
+                            Integer.toHexString(status) + 'H' });
                     as.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     try {
                         rename(as, file);
@@ -559,7 +590,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     return true;
                 String file = path.substring(path.lastIndexOf(separator) + 1);
                 for (Retry retry : retries)
-                    if (path.endsWith(retry.suffix) && numRetry(retry, file) 
+                    if (path.endsWith(retry.suffix) && numRetry(retry, file)
                             && (now > pathname.lastModified() + retryDelay(retry, file)))
                         return true;
                 return false;
@@ -569,9 +600,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 int power = file.split("\\.").length - 2;
                 return retry.delay * 1000 * Math.pow(2, power);
             }
-            
+
             private boolean numRetry(Retry retry, String file) {
-                return file.split(retry.suffix, -1).length -1 < (Integer) retry.numberOfRetries;
+                return file.split(retry.suffix, -1).length - 1 < (Integer) retry.numberOfRetries;
             }
         };
     }
@@ -580,17 +611,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         AAssociateRQ rq = ft.getAAssociateRQ();
         if (getUseCallingAETitle() != null)
             rq.setCallingAET(getUseCallingAETitle());
-        if (!destinationAETitle.equals("*"))
-            rq.setCalledAET(getDestinationAETitle());
         Association asInvoked = null;
         try {
-            asInvoked = connect(getDestinationAE(), rq);
+            asInvoked = connect(getDestinationAE(rq.getCalledAET()), rq);
             for (File file : ft.getFiles()) {
                 try {
-                    if (asInvoked.isReadyForDataTransfer()){
+                    if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledFiles(asInvoked, file);
-                    }
-                    else {
+                    } else {
                         asInvoked.setProperty(FILE_SUFFIX, ".conn");
                         rename(asInvoked, file);
                     }
@@ -598,25 +626,28 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     handleForwardException(asInvoked, file, npc, ".npc");
                 } catch (AssociationStateException ass) {
                     handleForwardException(asInvoked, file, ass, ".ass");
-                } catch (IOException ioe){
+                } catch (IOException ioe) {
                     handleForwardException(asInvoked, file, ioe, ".conn");
                     releaseAS(asInvoked);
                 }
             }
         } catch (ConfigurationException ce) {
-            LOG.warn(asInvoked + ": unable to load configuration: " + ce);
+            LOG.warn("Unable to load configuration: " + ce);
+            if (!ft.getAAssociateRQ().getCalledAET().equals(defaultDestinationAET)) {
+                LOG.warn("Forward orphan files to default destination AET: " + defaultDestinationAET);
+                ft.getAAssociateRQ().setCalledAET(defaultDestinationAET);
+                processForwardTask(ft);
+            }
         } catch (AAssociateRJ rj) {
-            handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" 
-                    + rj.getSource() + "-" + rj.getReason());
+            handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
         } catch (AAbort aa) {
-            handleProcessException(ft, aa, ".aa-" + aa.getSource() + "-"
-                    + aa.getReason());
+            handleProcessException(ft, aa, ".aa-" + aa.getSource() + "-" + aa.getReason());
         } catch (IOException e) {
             handleProcessException(ft, e, ".conn");
         } catch (InterruptedException e) {
-            LOG.warn(asInvoked + ": connection exception: " + e);
+            LOG.warn("Connection exception: " + e);
         } catch (IncompatibleConnectionException e) {
-            LOG.warn(asInvoked + ": incompatible connection: " + e);
+            LOG.warn("Incompatible connection: " + e);
         } catch (GeneralSecurityException e) {
             LOG.warn("Failed to create SSL context: ", e);
         } finally {
@@ -642,7 +673,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.debug(destinationAETitle + " connection error: " + e);
+        LOG.debug("Connection error: " + e);
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));
@@ -658,7 +689,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private void forwardScheduledFiles(final Association asInvoked, final File file) throws IOException,
-    InterruptedException {
+            InterruptedException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -685,8 +716,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                         delete(asInvoked, file);
                         break;
                     default: {
-                        LOG.warn("{}: Failed to forward file {} with error status {}",
-                                new Object[] { asInvoked, file, Integer.toHexString(status) + 'H' });
+                        LOG.warn("{}: Failed to forward file {} with error status {}", new Object[] { asInvoked, file,
+                                Integer.toHexString(status) + 'H' });
                         asInvoked.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                         try {
                             rename(asInvoked, file);
@@ -697,12 +728,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            asInvoked.cstore(cuid, iuid, forwardPriority, 
-                    createDataWriter(in, asInvoked, ds, cuid), tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, forwardPriority, createDataWriter(in, asInvoked, ds, cuid), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }
-
     }
 
     public void createStartLogFile(final Association as, final Attributes attrs)
