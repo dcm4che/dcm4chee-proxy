@@ -194,10 +194,10 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             ProxyApplicationEntity pae, List<ForwardRule> forwardRules) throws TransformerFactoryConfigurationError,
             TransformerConfigurationException {
         for (ForwardRule rule : forwardRules) {
-            if (!(rule.getDimse() != null && Dimse.valueOf(rule.getDimse()) == Dimse.C_STORE_RQ))
+            if (rule.getDimse() != null && Dimse.valueOf(rule.getDimse()) != Dimse.C_STORE_RQ)
                 break;
 
-            if (!(rule.getSopClass() != null && rq.getString(Tag.AffectedSOPClassUID).equals(rule.getSopClass())))
+            if (rule.getSopClass() != null && !rq.getString(Tag.AffectedSOPClassUID).equals(rule.getSopClass()))
                 break;
 
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
