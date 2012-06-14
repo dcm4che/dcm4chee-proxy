@@ -249,9 +249,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private boolean sendNow(AAssociateRQ rq) {
+        List<ForwardRule> matchingForwardRules = getMatchingForwardRules(rq);
         return (!forwardBasedOnTemplates() 
-                && getMatchingForwardRules(rq).size() == 1 
-                && isAvailableDestinationAET(getMatchingForwardRules(rq).get(0).getDestinationURI()));
+                && matchingForwardRules.size() == 1 
+                && matchingForwardRules.get(0).getDimse() == null
+                && matchingForwardRules.get(0).getSopClass() == null
+                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationURI()));
     }
 
     public List<ForwardRule> getMatchingForwardRules(AAssociateRQ rq) {
