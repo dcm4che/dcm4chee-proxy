@@ -53,14 +53,12 @@ public class Schedule {
     private static final String[] HOURS = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
             "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23" };
 
-    private final BitSet days = new BitSet(7);
-    private final BitSet hours = new BitSet(24);
-    private String destinationAETitle;
+    final BitSet days = new BitSet(7);
+    final BitSet hours = new BitSet(24);
 
     public Schedule() {
         days.set(0, 7);
         hours.set(0, 24);
-        destinationAETitle = "";
     }
 
     public void setDays(String dayOfWeek) {
@@ -81,23 +79,15 @@ public class Schedule {
         return toString(hours, HOURS);
     }
 
-    public String getDestinationAETitle() {
-        return destinationAETitle;
-    }
-
-    public void setDestinationAETitle(String destinationAETitle) {
-        this.destinationAETitle = destinationAETitle;
-    }
-
-    public boolean sendNow(final Calendar now) {
+    public boolean isNow(final Calendar now) {
         return days.get(now.get(Calendar.DAY_OF_WEEK) - 1)
                 && hours.get(now.get(Calendar.HOUR_OF_DAY));
     }
 
     private static void set(BitSet bs, String value, String[] a, int incEnd) {
         bs.clear();
-        for (String s : StringUtils.split(value, ','))
-            set(bs, StringUtils.split(s, '-'), value, a, incEnd);
+        for (String s : StringUtils.split(value.trim(), ','))
+            set(bs, StringUtils.split(s.trim(), '-'), value, a, incEnd);
     }
 
     private static void set(BitSet bs, String[] range, String value, String[] values, int incEnd) {
@@ -108,7 +98,8 @@ public class Schedule {
         case 2:
             for (int i = indexOf(range[0], values, value),
                    end = indexOf(range[1], values, value) + incEnd;
-                    i != end; i = (i + 1) % values.length)
+                    i != end; 
+                    i = (i + 1) % (values.length + incEnd))
                 bs.set(i);
             break;
         default:

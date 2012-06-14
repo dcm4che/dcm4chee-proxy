@@ -67,7 +67,6 @@ public class Scheduler {
                 for (ApplicationEntity ae : device.getApplicationEntities()) {
                     if (ae instanceof ProxyApplicationEntity) {
                         ((ProxyApplicationEntity) ae).forwardFiles();
-                        ((ProxyApplicationEntity) ae).forwardOrphans();
                         log.writeLog((ProxyApplicationEntity) ae);
                     }
                 }

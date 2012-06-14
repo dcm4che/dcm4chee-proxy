@@ -42,6 +42,7 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 
 import org.dcm4che.conf.api.AttributeCoercion;
@@ -57,6 +58,7 @@ import org.dcm4che.net.QueryOption;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Retry;
@@ -283,7 +285,6 @@ public class ProxyConfigurationTestUtils {
         ae.setAssociationInitiator(true);
         ae.setSpoolDirectory("proxy");
         ae.setAcceptDataOnFailedNegotiation(false);
-        ae.setExclusiveUseDefinedTC(false);
         ae.setEnableAuditLog(true);
         ae.setAuditDirectory("audit");
         ae.setNactionDirectory("naction");
@@ -293,32 +294,38 @@ public class ProxyConfigurationTestUtils {
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
                 "resource:dcm4chee-proxy-ensure-pid.xsl"));
-        
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));
         ae.setDefaultDestinationAET("DCM4CHEE");
-        List<Schedule> schedules = new ArrayList<Schedule>();
-        Schedule scheduleA = new Schedule();
-        scheduleA.setDays("Mon-Fri");
-        scheduleA.setHours("8-18");
-        scheduleA.setDestinationAETitle("STORESCP");
-        schedules.add(scheduleA);
-        Schedule scheduleB = new Schedule();
-        scheduleB.setDays("Mon-Fri");
-        scheduleB.setHours("19-7");
-        scheduleB.setDestinationAETitle("DCM4CHEE");
-        schedules.add(scheduleB);
+        HashMap<String, Schedule> schedules = new HashMap<String, Schedule>();
+        Schedule forwardScheduleStoreScp = new Schedule();
+        forwardScheduleStoreScp.setDays("Wed");
+        forwardScheduleStoreScp.setHours("8-18");
+        schedules.put("STORESCP", forwardScheduleStoreScp);
+        Schedule forwardScheduleDCM4CHEE = new Schedule();
+        forwardScheduleDCM4CHEE.setDays("Sun-Sat");
+        schedules.put("DCM4CHEE", forwardScheduleDCM4CHEE);
         ae.setForwardSchedules(schedules);
-        List<String> ignoreScheduleSOPClasses = new ArrayList<String>();
-        ignoreScheduleSOPClasses.add("1.2.840.10008.1.20.1");
-        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.31");
-        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.1.2.1.1");
-        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.1.2.2.1");
-        ignoreScheduleSOPClasses.add("1.2.840.10008.5.1.4.1.2.3.1");
-        ae.setIgnoreScheduleSOPClasses(ignoreScheduleSOPClasses);
+        List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
+        ForwardRule forwardRulePublic = new ForwardRule();
+        forwardRulePublic.setCommonName("Public");
+        forwardRulePublic.setDestinationURI("DCM4CHEE");
+        Schedule receiveSchedulePublic = new Schedule();
+        receiveSchedulePublic.setDays("Mon, Tue, Thu, Fri");
+        forwardRulePublic.setReceiveSchedule(receiveSchedulePublic);
+        forwardRules.add(forwardRulePublic);
+        ForwardRule forwardRulePrivate = new ForwardRule();
+        forwardRulePrivate.setCommonName("Private");
+        forwardRulePrivate.setDestinationURI("STORESCP");
+        Schedule receiveSchedulePrivate = new Schedule();
+        receiveSchedulePrivate.setDays("Wed");
+        receiveSchedulePrivate.setHours("9-18");
+        forwardRulePrivate.setReceiveSchedule(receiveSchedulePrivate);
+        forwardRules.add(forwardRulePrivate);
+        ae.setForwardRules(forwardRules);
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(".conn", 60, 5));
         retries.add(new Retry(".ass", 60, 5));
@@ -332,7 +339,7 @@ public class ProxyConfigurationTestUtils {
         addTCs(ae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
         addTCs(ae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
         device.addApplicationEntity(ae);
-        Connection dicom = new Connection("dicom", "localhost", 11112);
+        Connection dicom = new Connection("dicom", "localhost", 22222);
         dicom.setMaxOpsInvoked(0);
         dicom.setMaxOpsPerformed(0);
 //        dicom.setInstalled(true);

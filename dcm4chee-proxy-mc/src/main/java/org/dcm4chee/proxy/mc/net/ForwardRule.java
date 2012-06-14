@@ -38,63 +38,68 @@
 
 package org.dcm4chee.proxy.mc.net;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
  * 
  */
-public class MultiFileOutputStream extends OutputStream {
-
-    private List<FileOutputStream> fosl = new ArrayList<FileOutputStream>();
-
-    public MultiFileOutputStream(List<File> files) throws IOException {
-        boolean error = false;
-        String message = null;
-        for (File file : files) {
-            try {
-                FileOutputStream fos = new FileOutputStream(file);
-                fosl.add(fos);
-            } catch (IOException e) {
-                close();
-                error = true;
-                message = e.toString();
-            }
-        }
-        if (error)
-            throw new IOException(message);
+public class ForwardRule {
+    
+    private String dimse;
+    private String sopClass;
+    private String callingAET;
+    private String destinationURI;
+    private String useCallingAET;
+    private Schedule receiveSchedule;
+    private boolean exclusiveUseDefinedTC;
+    private String commonName;
+    
+    public String getDimse() {
+        return dimse;
     }
-
-    @Override
-    public void write(int b) throws IOException {
-        for (FileOutputStream fos : fosl)
-            fos.write(b);
+    public void setDimse(String dimse) {
+        this.dimse = dimse;
     }
-
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-        for (FileOutputStream fos : fosl)
-            fos.write(b, off, len);
+    public String getSopClass() {
+        return sopClass;
     }
-
-    @Override
-    public void close() throws IOException {
-        boolean error = false;
-        String message = null;
-        for (FileOutputStream fos : fosl) {
-            try {
-                fos.close();
-            } catch (IOException e) {
-                error = true;
-                message = e.toString();
-            }
-        }
-        if (error)
-            throw new IOException(message);
+    public void setSopClass(String sopClass) {
+        this.sopClass = sopClass;
     }
+    public String getCallingAET() {
+        return callingAET;
+    }
+    public void setCallingAET(String callingAET) {
+        this.callingAET = callingAET;
+    }
+    public String getDestinationURI() {
+        return destinationURI;
+    }
+    public void setDestinationURI(String destinationURI) {
+        this.destinationURI = destinationURI;
+    }
+    public String getUseCallingAET() {
+        return useCallingAET;
+    }
+    public void setUseCallingAET(String useCallingAETitle) {
+        this.useCallingAET = useCallingAETitle;
+    }
+    public Schedule getReceiveSchedule() {
+        return receiveSchedule;
+    }
+    public void setReceiveSchedule(Schedule receiveTime) {
+        this.receiveSchedule = receiveTime;
+    }
+    public boolean isExclusiveUseDefinedTC() {
+        return exclusiveUseDefinedTC;
+    }
+    public void setExclusiveUseDefinedTC(boolean exclusiveUseDefinedTC) {
+        this.exclusiveUseDefinedTC = exclusiveUseDefinedTC;
+    }
+    public String getCommonName() {
+        return commonName;
+    }
+    public void setCommonName(String commonName) {
+        this.commonName = commonName;
+    }
+    
 }

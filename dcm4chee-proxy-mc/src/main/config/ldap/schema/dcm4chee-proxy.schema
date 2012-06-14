@@ -65,16 +65,16 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.12
   SINGLE-VALUE )
   
 attributetype ( 1.2.40.0.13.1.2.15.0.3.13
-  NAME 'dcmForwardScheduleDays'
-  DESC 'Comma separated list or range : days for availability of destination AET'
+  NAME 'dcmScheduleDays'
+  DESC 'Comma separated list or range : days for availability of AE'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
 attributetype ( 1.2.40.0.13.1.2.15.0.3.14
-  NAME 'dcmForwardScheduleHours'
-  DESC 'Comma separated list or range : hours for availability of destination AET'
+  NAME 'dcmScheduleHours'
+  DESC 'Comma separated list or range : hours for availability of AE'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
@@ -117,16 +117,17 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.19
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.20
-  NAME 'dcmIgnoreScheduleSOPClasses'
-  DESC 'String Array : SOP Classes to ignore scheduled negotiation'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-  
-attributetype ( 1.2.40.0.13.1.2.15.0.3.21 
+attributetype ( 1.2.40.0.13.1.2.15.0.3.20 
   NAME 'dcmDefaultDestinationAETitle'
   DESC 'String : fallback AET for sending DICOM files to'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  
+attributetype ( 1.2.40.0.13.1.2.15.0.3.21 
+  NAME 'dcmCallingAETitle'
+  DESC 'String : value for Calling AE Title specific Forward Rule'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
@@ -146,15 +147,12 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.2
   MUST (
     dcmSpoolDirectory $
     dcmAcceptDataOnFailedNegotiation $
-    dcmExclusiveUseDefinedTC $
     dcmEnableAuditLog $
     dcmNactionDirectory $
     dcmNeventDirectory $
     dcmDefaultDestinationAETitle )
   MAY (
-    dcmUseCallingAETitle $
-    dcmAuditDirectory $
-    dcmIgnoreScheduleSOPClasses) )
+    dcmAuditDirectory) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.3
   NAME 'dcmRetry'
@@ -166,11 +164,28 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.3
     dcmRetryNum ) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.4 
-  NAME 'dcmSchedule'
+  NAME 'dcmForwardSchedule'
   DESC 'Forward Schedule configuration'
   SUP top
   STRUCTURAL
   MUST (
-    dcmForwardScheduleDays $
-    dcmForwardScheduleHours $
+    dcmScheduleDays $
+    dcmScheduleHours $
     dcmDestinationAETitle ) )
+
+objectclass ( 1.2.40.0.13.1.2.15.0.4.5 
+  NAME 'dcmForwardRule'
+  DESC 'Forward Rule configuration'
+  SUP top
+  STRUCTURAL
+  MUST (
+    labeledURI $
+    commonName )
+  MAY (
+    dcmDIMSE $
+    dicomSOPClass $
+    dcmCallingAETitle $
+    dcmExclusiveUseDefinedTC $
+    dcmUseCallingAETitle $
+    dcmScheduleDays $
+    dcmScheduleHours) )

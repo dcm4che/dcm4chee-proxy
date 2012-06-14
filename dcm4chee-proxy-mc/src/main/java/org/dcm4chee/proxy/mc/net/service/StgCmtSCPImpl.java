@@ -41,7 +41,9 @@ package org.dcm4chee.proxy.mc.net.service;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
@@ -171,8 +173,8 @@ public class StgCmtSCPImpl extends DicomService {
 
     private boolean isAssociationFromDestinationAET(Association asAccepted) {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        for (Schedule schedule : pae.getCurrentForwardSchedules())
-            if (asAccepted.getCallingAET().equals(schedule.getDestinationAETitle()))
+        for (Entry<String, Schedule> schedule : pae.getForwardSchedules().entrySet())
+            if (asAccepted.getCallingAET().equals(schedule.getKey()))
                 return true;
         return false;
     }
@@ -190,9 +192,7 @@ public class StgCmtSCPImpl extends DicomService {
             ApplicationEntity calledAE = device.findApplicationEntity(calledAEString);
             AAssociateRQ rq = asAccepted.getAAssociateRQ();
             rq.setCalledAET(calledAEString);
-            if (ae.getUseCallingAETitle() != null)
-                rq.setCalledAET(ae.getUseCallingAETitle());
-            else if (!ae.getAETitle().equals("*"))
+            if (!ae.getAETitle().equals("*"))
                 rq.setCallingAET(ae.getAETitle());
             Association asInvoked = ae.connect(calledAE, rq);
             onNEventReportRQ(asAccepted, asInvoked, pc, data, eventInfo, file);

@@ -40,8 +40,10 @@ package org.dcm4chee.proxy.mc.conf.ldap;
 
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -54,6 +56,7 @@ import javax.naming.directory.SearchResult;
 import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
+import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Retry;
@@ -120,13 +123,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeNotNull(attrs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
         storeNotNull(attrs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
-        storeNotNull(attrs, "dcmUseCallingAETitle", proxyAE.getUseCallingAETitle());
-        storeNotNull(attrs, "dcmExclusiveUseDefinedTC", proxyAE.isExclusiveUseDefinedTC());
         storeNotNull(attrs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         storeNotNull(attrs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
         storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
-        storeNotNull(attrs, "dcmIgnoreScheduleSOPClasses", proxyAE.getIgnoreScheduleSOPClassesAsString());
         storeNotNull(attrs, "dcmDefaultDestinationAETitle", proxyAE.getDefaultDestinationAET());
         return attrs;
     }
@@ -149,13 +149,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         proxyAE.setSpoolDirectory(stringValue(attrs.get("dcmSpoolDirectory")));
         proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"),
                 Boolean.FALSE));
-        proxyAE.setUseCallingAETitle(stringValue(attrs.get("dcmUseCallingAETitle")));
-        proxyAE.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
         proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
         proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
         proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
         proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
-        proxyAE.setIgnoreScheduleSOPClasses(stringValue(attrs.get("dcmIgnoreScheduleSOPClasses")));
         proxyAE.setDefaultDestinationAET(stringValue(attrs.get("dcmDefaultDestinationAETitle")));
     }
 
@@ -166,24 +163,51 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         loadRetries(proxyAE, aeDN);
-        loadSchedules(proxyAE, aeDN);
+        loadForwardSchedules(proxyAE, aeDN);
+        loadForwardRules(proxyAE, aeDN);
         load(proxyAE.getAttributeCoercions(), aeDN);
     }
 
-    private void loadSchedules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
-        NamingEnumeration<SearchResult> ne = search(aeDN, "(objectclass=dcmSchedule)");
+    private void loadForwardRules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
+        NamingEnumeration<SearchResult> ne = search(aeDN, "(objectclass=dcmForwardRule)");
         try {
-            List<Schedule> schedules = new ArrayList<Schedule>();
+            List<ForwardRule> rules = new ArrayList<ForwardRule>();
+            while (ne.hasMore()) {
+                SearchResult sr = ne.next();
+                Attributes attrs = sr.getAttributes();
+                ForwardRule rule = new ForwardRule();
+                rule.setDimse(stringValue(attrs.get("dcmDIMSE")));
+                rule.setSopClass(stringValue(attrs.get("dicomSOPClass")));
+                rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle")));
+                rule.setDestinationURI(stringValue(attrs.get("labeledURI")));
+                rule.setUseCallingAET(stringValue(attrs.get("dcmUseCallingAETitle")));
+                rule.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
+                rule.setCommonName(stringValue(attrs.get("commonName")));
+                Schedule schedule = new Schedule();
+                schedule.setDays(stringValue(attrs.get("dcmScheduleDays")));
+                schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
+                rule.setReceiveSchedule(schedule);
+                rules.add(rule);
+            }
+            proxyAE.setForwardRules(rules);
+        } finally {
+            safeClose(ne);
+        }
+    }
+
+    private void loadForwardSchedules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
+        NamingEnumeration<SearchResult> ne = search(aeDN, "(objectclass=dcmForwardSchedule)");
+        try {
+            HashMap<String, Schedule> forwardSchedules = new HashMap<String, Schedule>();
             while (ne.hasMore()) {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 Schedule schedule = new Schedule();
-                schedule.setDays(stringValue(attrs.get("dcmForwardScheduleDays")));
-                schedule.setHours(stringValue(attrs.get("dcmForwardScheduleHours")));
-                schedule.setDestinationAETitle(stringValue(attrs.get("dcmDestinationAETitle")));
-                schedules.add(schedule);
+                schedule.setDays(stringValue(attrs.get("dcmScheduleDays")));
+                schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
+                forwardSchedules.put(stringValue(attrs.get("dcmDestinationAETitle")), schedule);
             }
-            proxyAE.setForwardSchedules(schedules);
+            proxyAE.setForwardSchedules(forwardSchedules);
         } finally {
             safeClose(ne);
         }
@@ -213,8 +237,35 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeDN);
-        storeSchedules(proxyAE.getForwardSchedules(), aeDN);
+        storeForwardSchedules(proxyAE.getForwardSchedules(), aeDN);
+        storeForwardRules(proxyAE.getForwardRules(), aeDN);
         store(proxyAE.getAttributeCoercions(), aeDN);
+    }
+
+    private void storeForwardRules(List<ForwardRule> forwardRules, String parentDN) throws NamingException {
+        for (ForwardRule rule : forwardRules)
+            createSubcontext(dnOfForwardRule(rule, parentDN), storeToForwardRule(rule, new BasicAttributes(true)));
+    }
+
+    private String dnOfForwardRule(ForwardRule rule, String parentDN) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("commonName=").append(rule.getCommonName());
+        sb.append(',').append(parentDN);
+        return sb.toString();
+    }
+
+    private Attributes storeToForwardRule(ForwardRule rule, BasicAttributes attrs) {
+        attrs.put("objectclass", "dcmForwardRule");
+        storeNotNull(attrs, "dcmDIMSE", rule.getDimse());
+        storeNotNull(attrs, "dicomSOPClass", rule.getSopClass());
+        storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
+        storeNotNull(attrs, "labeledURI", rule.getDestinationURI());
+        storeNotNull(attrs, "dcmUseCallingAET", rule.getUseCallingAET());
+        storeBoolean(attrs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC());
+        storeNotNull(attrs, "commonName", rule.getCommonName());
+        storeNotNull(attrs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
+        storeNotNull(attrs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
+        return attrs;
     }
 
     private void storeRetries(List<Retry> retries, String parentDN) throws NamingException {
@@ -222,9 +273,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             createSubcontext(dnOfRetry(retry, parentDN), storeToRetry(retry, new BasicAttributes(true)));
     }
 
-    private void storeSchedules(List<Schedule> forwardSchedules, String parentDN) throws NamingException {
-        for (Schedule schedule : forwardSchedules)
-            createSubcontext(dnOfSchedule(schedule, parentDN), storeToSchedule(schedule, new BasicAttributes(true)));
+    private void storeForwardSchedules(HashMap<String, Schedule> forwardSchedules, String parentDN) throws NamingException {
+        for (Entry<String, Schedule> forwardSchedule : forwardSchedules.entrySet())
+            createSubcontext(dnOfForwardSchedule(forwardSchedule.getKey(), parentDN), 
+                    storeToForwardSchedule(forwardSchedule, new BasicAttributes(true)));
     }
 
     private Attributes storeToRetry(Retry retry, BasicAttributes attrs) {
@@ -235,11 +287,11 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         return attrs;
     }
 
-    private Attributes storeToSchedule(Schedule schedule, BasicAttributes attrs) {
-        attrs.put("objectclass", "dcmSchedule");
-        storeNotNull(attrs, "dcmForwardScheduleDays", schedule.getDays());
-        storeNotNull(attrs, "dcmForwardScheduleHours", schedule.getHours());
-        storeNotNull(attrs, "dcmDestinationAETitle", schedule.getDestinationAETitle());
+    private Attributes storeToForwardSchedule(Entry<String, Schedule> forwardSchedule, BasicAttributes attrs) {
+        attrs.put("objectclass", "dcmForwardSchedule");
+        storeNotNull(attrs, "dcmDestinationAETitle", forwardSchedule.getKey());
+        storeNotNull(attrs, "dcmScheduleDays", forwardSchedule.getValue().getDays());
+        storeNotNull(attrs, "dcmScheduleHours", forwardSchedule.getValue().getHours());
         return attrs;
     }
 
@@ -250,9 +302,9 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         return sb.toString();
     }
 
-    private String dnOfSchedule(Schedule schedule, String parentDN) {
+    private String dnOfForwardSchedule(String destinationAET, String parentDN) {
         StringBuilder sb = new StringBuilder();
-        sb.append("dcmDestinationAETitle=").append(schedule.getDestinationAETitle());
+        sb.append("dcmDestinationAETitle=").append(destinationAET);
         sb.append(',').append(parentDN);
         return sb.toString();
     }
@@ -268,14 +320,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
         storeDiff(mods, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
-        storeDiff(mods, "dcmUseCallingAETitle", pa.getUseCallingAETitle(), pb.getUseCallingAETitle());
-        storeDiff(mods, "dcmExclusiveUseDefinedTC", pa.isExclusiveUseDefinedTC(), pb.isExclusiveUseDefinedTC());
         storeDiff(mods, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
         storeDiff(mods, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
         storeDiff(mods, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
         storeDiff(mods, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
-        storeDiff(mods, "dcmIgnoreScheduleSOPClasses", pa.getIgnoreScheduleSOPClassesAsString(),
-                pb.getIgnoreScheduleSOPClassesAsString());
         storeDiff(mods, "dcmDefaultDestinationAETitle", pa.getDefaultDestinationAET(), pb.getDefaultDestinationAET());
         return mods;
     }
@@ -300,7 +348,36 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
         merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeDN);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeDN);
-        mergeSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeDN);
+        mergeForwardSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeDN);
+        mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeDN);
+    }
+
+    private void mergeForwardRules(List<ForwardRule> prevs, List<ForwardRule> rules, String parentDN) throws NamingException {
+        for (ForwardRule prev : prevs)
+            if (!rules.contains(prev))
+                destroySubcontext(dnOfForwardRule(prev, parentDN));
+        for (ForwardRule rule : rules) {
+            String dn = dnOfForwardRule(rule, parentDN);
+            Integer indexOfPrevRule = prevs.indexOf(rule);
+            if (indexOfPrevRule == -1)
+                createSubcontext(dn, storeToForwardRule(rule, new BasicAttributes(true)));
+            else
+                modifyAttributes(dn, storeForwardRuleDiffs(prevs.get(indexOfPrevRule), rule, new ArrayList<ModificationItem>()));
+        }
+    }
+
+    private List<ModificationItem> storeForwardRuleDiffs(ForwardRule ruleA, ForwardRule ruleB,
+            ArrayList<ModificationItem> mods) {
+        storeDiff(mods, "dcmDIMSE", ruleA.getDimse(), ruleB.getDimse());
+        storeDiff(mods, "dicomSOPClass", ruleA.getSopClass(), ruleB.getSopClass());
+        storeDiff(mods, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
+        storeDiff(mods, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
+        storeDiff(mods, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
+        storeDiff(mods, "commonName", ruleA.getCommonName(), ruleB.getCommonName());
+        storeDiff(mods, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
+        storeDiff(mods, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
+        storeDiff(mods, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
+        return mods;
     }
 
     private void mergeRetries(List<Retry> prevs, List<Retry> retries, String parentDN) throws NamingException {
@@ -318,25 +395,24 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         }
     }
 
-    private void mergeSchedules(List<Schedule> prevs, List<Schedule> schedules, String parentDN) throws NamingException {
-        for (Schedule prev : prevs)
-            if (!schedules.contains(prev))
-                destroySubcontext(dnOfSchedule(prev, parentDN));
-        for (Schedule schedule : schedules) {
-            String dn = dnOfSchedule(schedule, parentDN);
-            Integer indexOfPrevRetry = prevs.indexOf(schedule);
-            if (indexOfPrevRetry == -1)
-                createSubcontext(dn, storeToSchedule(schedule, new BasicAttributes(true)));
+    private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules, String parentDN) throws NamingException {
+        for (String destinationAET : prevs.keySet())
+            if (!schedules.containsKey(destinationAET))
+                destroySubcontext(dnOfForwardSchedule(destinationAET, parentDN));
+        for (Entry<String, Schedule> forwardSchedule : schedules.entrySet()) {
+            String dn = dnOfForwardSchedule(forwardSchedule.getKey(), parentDN);
+            if (!prevs.containsKey(forwardSchedule.getKey()))
+                createSubcontext(dn, storeToForwardSchedule(forwardSchedule, new BasicAttributes(true)));
             else
-                modifyAttributes(dn,
-                        storeScheduleDiffs(prevs.get(indexOfPrevRetry), schedule, new ArrayList<ModificationItem>()));
+                modifyAttributes(dn, storeScheduleDiffs(prevs.get(forwardSchedule.getKey()), forwardSchedule.getValue(), 
+                                new ArrayList<ModificationItem>()));
         }
     }
 
     private List<ModificationItem> storeScheduleDiffs(Schedule scheduleA, Schedule scheduleB,
             ArrayList<ModificationItem> mods) {
-        storeDiff(mods, "dcmForwardScheduleDays", scheduleA.getDays(), scheduleB.getDays());
-        storeDiff(mods, "dcmUseCallingAETitle", scheduleA.getHours(), scheduleB.getHours());
+        storeDiff(mods, "dcmScheduleDays", scheduleA.getDays(), scheduleB.getDays());
+        storeDiff(mods, "dcmScheduleHours", scheduleA.getHours(), scheduleB.getHours());
         return mods;
     }
 

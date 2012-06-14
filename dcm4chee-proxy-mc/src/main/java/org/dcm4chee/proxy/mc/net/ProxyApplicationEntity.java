@@ -48,6 +48,7 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.xml.transform.Templates;
@@ -84,7 +85,6 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
-import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -99,20 +99,17 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
 
-    private String useCallingAETitle;
     private String spoolDirectory;
-    private int forwardPriority;
-    private List<Retry> retries = new ArrayList<Retry>();
-    private List<Schedule> forwardSchedules = new ArrayList<Schedule>();
-    private String defaultDestinationAET;
-    private boolean acceptDataOnFailedNegotiation;
-    private boolean exclusiveUseDefinedTC;
-    private boolean enableAuditLog;
     private String auditDirectory;
-    private final AttributeCoercions attributeCoercions = new AttributeCoercions();
     private String nactionDirectory;
     private String neventDirectory;
-    private List<String> ignoreScheduleSOPClasses = new ArrayList<String>();
+    private String defaultDestinationAET;
+    private boolean acceptDataOnFailedNegotiation;
+    private boolean enableAuditLog;
+    private HashMap<String, Schedule> forwardSchedules;
+    private List<Retry> retries = new ArrayList<Retry>();
+    private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
+    private final AttributeCoercions attributeCoercions = new AttributeCoercions();
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -120,14 +117,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void setAcceptDataOnFailedNegotiation(boolean acceptDataOnFailedNegotiation) {
         this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
-    }
-
-    public void setExclusiveUseDefinedTC(boolean exclusiveUseDefinedTC) {
-        this.exclusiveUseDefinedTC = exclusiveUseDefinedTC;
-    }
-
-    public boolean isExclusiveUseDefinedTC() {
-        return exclusiveUseDefinedTC;
     }
 
     public ProxyApplicationEntity(String aeTitle) {
@@ -152,45 +141,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
-    public int getForwardPriority() {
-        return forwardPriority;
-    }
-
-    public void setForwardPriority(int forwardPriority) {
-        this.forwardPriority = forwardPriority;
-    }
-
-    public void setUseCallingAETitle(String useCallingAETitle) {
-        this.useCallingAETitle = useCallingAETitle;
-    }
-
-    public String getUseCallingAETitle() {
-        return useCallingAETitle;
-    }
-
     public void setRetries(List<Retry> retries) {
         this.retries = retries;
     }
 
     public List<Retry> getRetries() {
         return retries;
-    }
-
-    public List<Schedule> getForwardSchedules() {
-        return forwardSchedules;
-    }
-    
-    public List<Schedule> getCurrentForwardSchedules() {
-        List<Schedule> schedules = new ArrayList<Schedule>();
-        for (Schedule schedule : getForwardSchedules()) {
-            if (schedule.sendNow(new GregorianCalendar()))
-                schedules.add(schedule);
-        }
-        return schedules;
-    }
-
-    public void setForwardSchedules(List<Schedule> schedules) {
-        this.forwardSchedules = schedules;
     }
 
     public String getDefaultDestinationAET() {
@@ -207,6 +163,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public boolean isEnableAuditLog() {
         return enableAuditLog;
+    }
+
+    public HashMap<String, Schedule> getForwardSchedules() {
+        return forwardSchedules;
+    }
+
+    public void setForwardSchedules(HashMap<String, Schedule> forwardSchedules) {
+        this.forwardSchedules = forwardSchedules;
     }
 
     public void setAuditDirectory(String auditDirectoryString) {
@@ -263,71 +227,74 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
-    public void setIgnoreScheduleSOPClasses(List<String> ignoreScheduleSOPClassList) {
-        this.ignoreScheduleSOPClasses = ignoreScheduleSOPClassList;
+    public static String getSeparator() {
+        return separator;
     }
 
-    public void setIgnoreScheduleSOPClasses(String value) {
-        ArrayList<String> al = new ArrayList<String>();
-        for (String s : StringUtils.split(value, ','))
-            al.add(s);
-        this.ignoreScheduleSOPClasses = al;
+    public List<ForwardRule> getForwardRules() {
+        return forwardRules;
     }
 
-    public List<String> getIgnoreScheduleSOPClasses() {
-        return ignoreScheduleSOPClasses;
-    }
-
-    public String getIgnoreScheduleSOPClassesAsString() {
-        StringBuffer sb = new StringBuffer();
-        for(String value : ignoreScheduleSOPClasses)
-                sb.append(sb.length()==0 ? value : ",".concat(value));
-        return sb.toString();
+    public void setForwardRules(List<ForwardRule> forwardingRules) {
+        this.forwardRules = forwardingRules;
     }
 
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac) throws IOException {
-        if ((sendNow() || ignoreSchedule(rq.getPresentationContexts())) && !isRqFromDestinationAETitle(rq)
-                && getCurrentForwardSchedules().size() == 1)
-            return forwardAAssociateRQ(as, rq, ac, true, getCurrentForwardSchedules().get(0).getDestinationAETitle());
+        if (sendNow(rq))
+            return forwardAAssociateRQ(as, rq, ac, true, getMatchingForwardRules(rq).get(0));
         as.setProperty(FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
     }
+
+    private boolean sendNow(AAssociateRQ rq) {
+        return (!forwardBasedOnTemplates() 
+                && getMatchingForwardRules(rq).size() == 1 
+                && isAvailableDestinationAET(getMatchingForwardRules(rq).get(0).getDestinationURI()));
+    }
+
+    public List<ForwardRule> getMatchingForwardRules(AAssociateRQ rq) {
+        List<ForwardRule> list = new ArrayList<ForwardRule>();
+        for (ForwardRule rule : getForwardRules()) {
+            String callingAET = rule.getCallingAET();
+            if ((callingAET == null || callingAET.equals(rq.getCallingAET()))
+                    && rule.getReceiveSchedule().isNow(new GregorianCalendar()))
+                list.add(rule);
+        }
+        return list;
+    }
     
-    private boolean isRqFromDestinationAETitle(AAssociateRQ rq) {
-        for (Schedule schedule : getCurrentForwardSchedules())
-            if (rq.getCallingAET().equals(schedule.getDestinationAETitle()))
-                return true;
+    private boolean isAvailableDestinationAET(String destinationAET) {
+        for(Entry<String, Schedule> entry : forwardSchedules.entrySet())
+            if (entry.getKey().equals(destinationAET))
+                return entry.getValue().isNow(new GregorianCalendar());
         return false;
     }
 
-    private boolean ignoreSchedule(List<PresentationContext> pcList) {
-        for (PresentationContext pc : pcList)
-            if (ignoreScheduleSOPClasses.contains(pc.getAbstractSyntax()))
-                return true;
+    public boolean forwardBasedOnTemplates() {
+        for (ForwardRule rule : getForwardRules())
+            if (rule.getReceiveSchedule().isNow(new GregorianCalendar()) || rule.getReceiveSchedule() == null)
+                if (rule.getDestinationURI().startsWith("xsl:"))
+                    return true;
         return false;
-    }
-
-    private boolean sendNow() {
-        return (!getCurrentForwardSchedules().isEmpty());
     }
 
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac, boolean sendNow,
-            String destinationAETitle) throws IOException {
+            ForwardRule forwardingRule) throws IOException {
         try {
-            if (useCallingAETitle != null)
-                rq.setCallingAET(useCallingAETitle);
+            if (forwardingRule.getUseCallingAET() != null)
+                rq.setCallingAET(forwardingRule.getUseCallingAET());
             else if (!getAETitle().equals("*"))
                 rq.setCallingAET(getAETitle());
-            rq.setCalledAET(destinationAETitle);
-            Association asCalled = connect(getDestinationAE(destinationAETitle), rq);
+            rq.setCalledAET(forwardingRule.getDestinationURI());
+            Association asCalled = connect(getDestinationAE(forwardingRule.getDestinationURI()), rq);
             if (sendNow)
                 as.setProperty(FORWARD_ASSOCIATION, asCalled);
             else
                 releaseAS(asCalled);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
-            if (exclusiveUseDefinedTC) {
+            if (forwardingRule.isExclusiveUseDefinedTC()) {
                 AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
@@ -347,21 +314,21 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.warn("Unable to load configuration for destination AET: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, rj, ".rj-" + rj.getResult() + "-"
+            return handleNegotiateConnectException(as, rq, ac, forwardingRule.getDestinationURI(), rj, ".rj-" + rj.getResult() + "-"
                     + rj.getSource() + "-" + rj.getReason(), rj.getReason());
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, aa, ".aa-" + aa.getSource() + "-"
+            return handleNegotiateConnectException(as, rq, ac, forwardingRule.getDestinationURI(), aa, ".aa-" + aa.getSource() + "-"
                     + aa.getReason(), aa.getReason());
         } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, e, ".conn", 0);
+            return handleNegotiateConnectException(as, rq, ac, forwardingRule.getDestinationURI(), e, ".conn", 0);
         } catch (InterruptedException e) {
             LOG.warn("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
-            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, e, ".conf", 0);
+            return handleNegotiateConnectException(as, rq, ac, forwardingRule.getDestinationURI(), e, ".conf", 0);
         } catch (GeneralSecurityException e) {
             LOG.warn("Failed to create SSL context: ", e);
-            return handleNegotiateConnectException(as, rq, ac, destinationAETitle, e, ".ssl", 0);
+            return handleNegotiateConnectException(as, rq, ac, forwardingRule.getDestinationURI(), e, ".ssl", 0);
         }
     }
 
@@ -405,9 +372,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public void coerceDataset(String remoteAET, Attributes attrs) throws IOException {
-        AttributeCoercion ac =
-                getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
-                        Dimse.C_STORE_RQ);
+        AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
+                Dimse.C_STORE_RQ);
         if (ac != null)
             coerceAttributes(attrs, ac);
     }
@@ -425,30 +391,15 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public void forwardFiles() {
-        if (!sendNow())
-            return;
-        
         for (String calledAET : getSpoolDirectoryPath().list())
-            for (Schedule schedule : getCurrentForwardSchedules())
-                if (calledAET.equals(schedule.getDestinationAETitle()))
+            for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                if (calledAET.equals(entry.getKey()))
                     startForwardScheduledFiles(calledAET);
         
         for (String calledAET : getNactionDirectoryPath().list())
-            for (Schedule schedule : getCurrentForwardSchedules())
-                if (calledAET.equals(schedule.getDestinationAETitle()))
-                    startForwardScheduledNAction(getNactionDirectoryPath().listFiles(fileFilter()),
-                            schedule.getDestinationAETitle());
-    }
-    
-    public void forwardOrphans() {
-        for (String calledAET : getSpoolDirectoryPath().list()) {
-            boolean orphan = true;
-            for (Schedule schedule : getCurrentForwardSchedules())
-                if (calledAET.equals(schedule.getDestinationAETitle()))
-                    orphan = false;
-            if (orphan)
-                startForwardScheduledFiles(calledAET);
-        }
+            for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                if (calledAET.equals(entry.getKey()))
+                    startForwardScheduledNAction(getNactionDirectoryPath().listFiles(fileFilter()), entry.getKey());
     }
 
     private void startForwardScheduledNAction(final File[] files, final String destinationAETitle) {
@@ -468,8 +419,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
                         UID.ImplicitVRLittleEndian));
                 Attributes fmi = readFileMetaInformation(file);
-                String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-                setCallingAET(rq, sourceAET);
+                rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
                 rq.setCalledAET(destinationAETitle);
                 Association as = connect(getDestinationAE(destinationAETitle), rq);
                 try {
@@ -503,15 +453,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 LOG.warn("Failed to create SSL context: ", e);
             }
         }
-    }
-
-    private void setCallingAET(AAssociateRQ rq, String sourceAET) {
-        if (getUseCallingAETitle() != null)
-            rq.setCallingAET(getUseCallingAETitle());
-        else if (!getAETitle().equals("*"))
-            rq.setCallingAET(getAETitle());
-        else
-            rq.setCallingAET(sourceAET);
     }
 
     private void forwardScheduledNAction(final Association as, final File file, Attributes fmi) throws IOException,
@@ -588,7 +529,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 String path = pathname.getPath();
                 if (path.endsWith(".dcm"))
                     return true;
-                String file = path.substring(path.lastIndexOf(separator) + 1);
+                String file = path.substring(path.lastIndexOf(getSeparator()) + 1);
                 for (Retry retry : retries)
                     if (path.endsWith(retry.suffix) && numRetry(retry, file)
                             && (now > pathname.lastModified() + retryDelay(retry, file)))
@@ -609,8 +550,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void processForwardTask(ForwardTask ft) throws DicomServiceException {
         AAssociateRQ rq = ft.getAAssociateRQ();
-        if (getUseCallingAETitle() != null)
-            rq.setCallingAET(getUseCallingAETitle());
         Association asInvoked = null;
         try {
             asInvoked = connect(getDestinationAE(rq.getCalledAET()), rq);
@@ -697,6 +636,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             final String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
             final String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
             final String tsuid = fmi.getString(Tag.TransferSyntaxUID);
+            asInvoked.getAAssociateRQ().setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
             final Attributes[] ds = new Attributes[1];
             final long fileSize = file.length();
             DimseRSPHandler rspHandler = new DimseRSPHandler(asInvoked.nextMessageID()) {
@@ -728,7 +668,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             };
-            asInvoked.cstore(cuid, iuid, forwardPriority, createDataWriter(in, asInvoked, ds, cuid), tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, 0, createDataWriter(in, asInvoked, ds, cuid), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }
@@ -829,8 +769,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private File getLogDir(Association as, Attributes attrs) {
-        File logDir = new File(getAuditDirectoryPath().getPath() + separator + as.getCalledAET()
-                + separator + as.getCallingAET() + separator + attrs.getString(Tag.StudyInstanceUID));
+        File logDir = new File(getAuditDirectoryPath().getPath() + getSeparator() + as.getCalledAET()
+                + getSeparator() + as.getCallingAET() + getSeparator() + attrs.getString(Tag.StudyInstanceUID));
         if (!logDir.exists())
             logDir.mkdirs();
         return logDir;
@@ -853,7 +793,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return (ProxyDevice) this.getDevice();
     }
     
-    private Templates getTemplates(String uri) throws TransformerConfigurationException {
+    public Templates getTemplates(String uri) throws TransformerConfigurationException {
         return getProxyDevice().getTemplates(uri);
     }
 }
