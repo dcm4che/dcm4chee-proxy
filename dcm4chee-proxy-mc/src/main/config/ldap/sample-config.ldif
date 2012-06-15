@@ -46,7 +46,6 @@ objectClass:dcmProxyNetworkAE
 objectClass:dcmNetworkAE
 objectClass:dicomNetworkAE
 dcmAcceptDataOnFailedNegotiation:FALSE
-dcmDefaultDestinationAETitle:DCM4CHEE
 dcmEnableAuditLog:TRUE
 dcmNactionDirectory:/tmp/proxy/naction
 dcmNeventDirectory:/tmp/proxy/nevent

@@ -299,7 +299,6 @@ public class ProxyConfigurationTestUtils {
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));
-        ae.setDefaultDestinationAET("DCM4CHEE");
         HashMap<String, Schedule> schedules = new HashMap<String, Schedule>();
         Schedule forwardScheduleStoreScp = new Schedule();
         forwardScheduleStoreScp.setDays("Wed");

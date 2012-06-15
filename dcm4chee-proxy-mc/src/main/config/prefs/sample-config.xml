@@ -30,7 +30,6 @@
                   <map>
                     <entry key="dcmAcceptDataOnFailedNegotiation" value="false"/>
                     <entry key="dcmAuditDirectory" value="audit"/>
-                    <entry key="dcmDefaultDestinationAETitle" value="DCM4CHEE"/>
                     <entry key="dcmEnableAuditLog" value="true"/>
                     <entry key="dcmNactionDirectory" value="naction"/>
                     <entry key="dcmNeventDirectory" value="nevent"/>

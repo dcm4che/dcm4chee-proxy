@@ -167,16 +167,6 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.20, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.20
-m-name: dcmDefaultDestinationAETitle
-m-description: String : fallback AET for sending DICOM files to
-m-singleValue: TRUE
-
-dn: m-oid=1.2.40.0.13.1.2.15.0.3.21, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
- hema
-objectclass: metaAttributeType
-objectclass: metaTop
-objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.3.21
 m-name: dcmCallingAETitle
 m-description: String : value for Calling AE Title specific Forward Rule
@@ -247,7 +237,6 @@ m-must: dcmAcceptDataOnFailedNegotiation
 m-must: dcmEnableAuditLog
 m-must: dcmNactionDirectory
 m-must: dcmNeventDirectory
-m-must: dcmDefaultDestinationAETitle
 m-may: dcmAuditDirectory
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.3, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
@@ -270,9 +259,9 @@ objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.4.4
 m-name: dcmForwardSchedule
 m-description: Forward Schedule configuration
-m-must: dcmScheduleDays
-m-must: dcmScheduleHours
 m-must: dcmDestinationAETitle
+m-may: dcmScheduleDays
+m-may: dcmScheduleHours
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.5, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
  ma
