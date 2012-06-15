@@ -78,8 +78,7 @@ public class MppsSCPImpl extends DicomService {
     
     private void onNCreateRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
             Attributes data) throws IOException {
-        Association asInvoked = (Association) asAccepted
-                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         try {
             forwardNCreateRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
         } catch (InterruptedException e) {
@@ -102,7 +101,7 @@ public class MppsSCPImpl extends DicomService {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn(asAccepted + ": failed to forward DIMSE request: ", e);
+                    LOG.warn(asAccepted + ": error forwarding N-CREATE-RQ", e);
                 }
             }
         };
@@ -135,7 +134,7 @@ public class MppsSCPImpl extends DicomService {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn(asAccepted + ": failed to forward DIMSE request: ", e);
+                    LOG.warn(asAccepted + ": error forwarding N-SET-RQ", e);
                 }
             }
         };

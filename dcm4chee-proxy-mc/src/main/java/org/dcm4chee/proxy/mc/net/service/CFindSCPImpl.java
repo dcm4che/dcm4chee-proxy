@@ -91,7 +91,7 @@ public class CFindSCPImpl extends BasicCFindSCP {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward C-FIND-RSP: " + e);
+                    LOG.warn("Failed to forward C-FIND-RSP", e);
                 }
             }
         };
@@ -102,7 +102,7 @@ public class CFindSCPImpl extends BasicCFindSCP {
                 try {
                     rspHandler.cancel(asInvoked);
                 } catch (IOException e) {
-                    LOG.warn(asAccepted + ": unexpected exception: " + e);
+                    LOG.warn(asAccepted + ": unexpected exception", e);
                 }
             }
         });

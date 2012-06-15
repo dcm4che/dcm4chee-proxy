@@ -100,7 +100,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             try {
                 forward(asAccepted, pc, rq, new InputStreamDataWriter(data), asInvoked);
             } catch (Exception e) {
-                LOG.debug(e.getMessage());
+                LOG.debug(asAccepted + ": error forwarding C-STORE-RQ", e);
                 asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
                 asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
@@ -118,7 +118,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         try {
             keepFile = process(as, pc, rq, rsp, file, digest, fmi);
         } catch (ConfigurationException e) {
-            LOG.error("Error in C-STORE configuration: ", e);
+            LOG.error(as + ": error processing C-STORE-RQ", e);
         } finally {
             if (!keepFile)
                 deleteFile(as, file);
@@ -170,7 +170,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         if (file.delete())
             LOG.info("{}: M-DELETE {}", as, file);
         else
-            LOG.warn("{}: Failed to M-DELETE {}", as, file);
+            LOG.warn("{}: failed to M-DELETE {}", as, file);
     }
 
     protected File createFile(Association as, Attributes rq) throws DicomServiceException {
@@ -180,7 +180,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             dir.mkdir();
             return File.createTempFile("dcm", ".part", dir);
         } catch (Exception e) {
-            LOG.warn(as + ": Failed to create temp file:", e);
+            LOG.warn(as + ": failed to create temp file", e);
             throw new DicomServiceException(Status.OutOfResources, e);
         }
     }
@@ -225,7 +225,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             LOG.info(as + ": M-COPY " + file.getPath() + " to " + dst.getPath());
             out.writeDataset(fmi, in.readDataset(-1, -1));
         } catch (Exception e) {
-            LOG.info(as + ": Failed to M-COPY " + file.getPath() + " to " + dst.getPath());
+            LOG.info(as + ": failed to M-COPY " + file.getPath() + " to " + dst.getPath());
             dst.delete();
             throw new DicomServiceException(Status.OutOfResources, e);
         } finally {
@@ -237,7 +237,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
 
     private File handleForwardException(Association as, PresentationContext pc, Attributes rq, Attributes attrs,
             File file, String suffix, Exception e) throws DicomServiceException, IOException {
-        LOG.debug(e.getMessage());
+        LOG.debug(as + ": error forwarding C-STORE-RQ", e);
         as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
         rename(as, file, attrs);
@@ -261,7 +261,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward C-STORE RSP: " + e);
+                    LOG.warn(asInvoked + ": Failed to forward C-STORE RSP", e);
                 }
             }
         };
@@ -274,10 +274,10 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
                 (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: M-RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
             return dst;
         } else {
-            LOG.warn("{}: Failed to M-RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.warn("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
