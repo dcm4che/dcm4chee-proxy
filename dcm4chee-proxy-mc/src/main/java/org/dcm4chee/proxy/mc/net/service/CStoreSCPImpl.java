@@ -45,19 +45,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
@@ -80,8 +72,6 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -127,6 +117,8 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         boolean keepFile = false;
         try {
             keepFile = process(as, pc, rq, rsp, file, digest, fmi);
+        } catch (ConfigurationException e) {
+            LOG.error("Error in C-STORE configuration: ", e);
         } finally {
             if (!keepFile)
                 deleteFile(as, file);
@@ -151,24 +143,27 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     }
 
     private boolean process(Association as, PresentationContext pc, Attributes rq, Attributes rsp, File file,
-            MessageDigest digest, Attributes fmi) throws IOException, DicomServiceException {
-        try {
-            HashMap<String, String> aets = applyForwardRules(as, rq);
-            for (Entry<String, String> entry : aets.entrySet()) {
-                File copy = createMappedFile(as, file, fmi, entry.getKey(), entry.getValue());
-                boolean keepCopy = true;
-                try {
-                    keepCopy = processFile(as, pc, rq, rsp, copy, digest, fmi, parse(as, copy));
-                } finally {
-                    if (!keepCopy)
-                        deleteFile(as, copy);
-                }
+            MessageDigest digest, Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+        List<ForwardRule> forwardRules = pae.getCurrentForwardRules(as.getAAssociateRQ());
+        HashMap<String, String> aets = pae.getAETsFromForwardRules(as, Dimse.C_STORE_RQ, Tag.AffectedSOPClassUID, rq,
+                forwardRules);
+        if (aets.entrySet().size() == 0)
+            throw new ConfigurationException("no destination");
+
+        boolean keepSpoolFile = false;
+        for (Entry<String, String> entry : aets.entrySet()) {
+            File copy = createMappedFile(as, file, pae.getSpoolDirectoryPath(), fmi, entry.getValue(), entry.getKey());
+            boolean keepCopy = true;
+            try {
+                keepCopy = processFile(pae, as, pc, rq, rsp, copy, digest, fmi, parse(as, copy));
+            } finally {
+                if (!keepCopy)
+                    deleteFile(as, copy);
+                keepSpoolFile = keepSpoolFile && keepCopy;
             }
-            return false;
-        } catch (TransformerConfigurationException e) {
-            LOG.warn("Error parsing XSL: ", e);
-            return true;
         }
+        return keepSpoolFile;
     }
 
     private void deleteFile(Association as, File file) {
@@ -176,58 +171,6 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             LOG.info("{}: M-DELETE {}", as, file);
         else
             LOG.warn("{}: Failed to M-DELETE {}", as, file);
-    }
-
-    private HashMap<String, String> applyForwardRules(Association as, Attributes rq)
-            throws TransformerConfigurationException {
-        final HashMap<String, String> aeList = new HashMap<String, String>();
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.getMatchingForwardRules(as.getAAssociateRQ());
-        if (forwardRules.size() == 0)
-            aeList.put(as.getCallingAET(), pae.getDefaultDestinationAET());
-        else
-            getAETsFromForwardRules(as, rq, aeList, pae, forwardRules);
-        return aeList;
-    }
-
-    private void getAETsFromForwardRules(Association as, Attributes rq, HashMap<String, String> aeList,
-            ProxyApplicationEntity pae, List<ForwardRule> forwardRules) throws TransformerFactoryConfigurationError,
-            TransformerConfigurationException {
-        for (ForwardRule rule : forwardRules) {
-            if (rule.getDimse() != null && Dimse.valueOf(rule.getDimse()) != Dimse.C_STORE_RQ)
-                break;
-
-            if (rule.getSopClass() != null && !rq.getString(Tag.AffectedSOPClassUID).equals(rule.getSopClass()))
-                break;
-
-            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-            List<String> destinationAETs = new ArrayList<String>();
-            if (rule.getDestinationURI().startsWith("xsl:"))
-                destinationAETs = getAETsFromTemplate((Templates) pae.getTemplates(rule.getDestinationURI()));
-            else
-                destinationAETs.add(rule.getDestinationURI());
-            for (String destinationAET : destinationAETs)
-                aeList.put(callingAET, destinationAET);
-        }
-    }
-
-    private List<String> getAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
-            TransformerConfigurationException {
-        SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
-        TransformerHandler handler = transFac.newTransformerHandler(template);
-        final List<String> destinationAETs = new ArrayList<String>();
-        handler.setResult(new SAXResult(new DefaultHandler() {
-
-            @Override
-            public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
-                    throws SAXException {
-                if (qName.equals("Destination")) {
-                    destinationAETs.add(attributes.getValue("aet"));
-                }
-            }
-
-        }));
-        return destinationAETs;
     }
 
     protected File createFile(Association as, Attributes rq) throws DicomServiceException {
@@ -242,14 +185,14 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         }
     }
 
-    protected boolean processFile(Association asAccepted, PresentationContext pc, Attributes rq, Attributes rsp,
-            File file, MessageDigest digest, Attributes fmi, Attributes attrs) throws IOException {
+    protected boolean processFile(ProxyApplicationEntity pae, Association asAccepted, PresentationContext pc,
+            Attributes rq, Attributes rsp, File file, MessageDigest digest, Attributes fmi, Attributes attrs)
+            throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
             rename(asAccepted, file, rq);
             return true;
         }
-        ProxyApplicationEntity pae = ((ProxyApplicationEntity) asAccepted.getApplicationEntity());
         pae.coerceDataset(asInvoked.getRemoteAET(), attrs);
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(asInvoked, attrs);
@@ -265,13 +208,12 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         return false;
     }
 
-    protected File createMappedFile(Association as, File file, Attributes fmi, String callingAET, String calledAET)
-            throws DicomServiceException {
-        ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
+    protected File createMappedFile(Association as, File file, File spoolDir, Attributes fmi, String callingAET,
+            String calledAET) throws DicomServiceException {
         String separator = ProxyApplicationEntity.getSeparator();
         String path = file.getPath();
         String fileName = path.substring(path.lastIndexOf(separator) + 1, path.length());
-        File dir = new File(ae.getSpoolDirectoryPath(), calledAET);
+        File dir = new File(spoolDir, calledAET);
         dir.mkdir();
         File dst = new File(dir, fileName);
         DicomOutputStream out = null;

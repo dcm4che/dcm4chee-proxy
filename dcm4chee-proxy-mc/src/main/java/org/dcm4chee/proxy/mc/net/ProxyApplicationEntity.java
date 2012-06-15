@@ -53,6 +53,12 @@ import java.util.Properties;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.sax.SAXResult;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
 
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.AttributeCoercions;
@@ -85,6 +91,8 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -103,7 +111,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String auditDirectory;
     private String nactionDirectory;
     private String neventDirectory;
-    private String defaultDestinationAET;
     private boolean acceptDataOnFailedNegotiation;
     private boolean enableAuditLog;
     private HashMap<String, Schedule> forwardSchedules;
@@ -147,14 +154,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public List<Retry> getRetries() {
         return retries;
-    }
-
-    public String getDefaultDestinationAET() {
-        return defaultDestinationAET;
-    }
-
-    public void setDefaultDestinationAET(String defaultDestinationAET) {
-        this.defaultDestinationAET = defaultDestinationAET;
     }
 
     public void setEnableAuditLog(boolean enableAuditLog) {
@@ -241,15 +240,15 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac) throws IOException {
-        if (sendNow(rq))
-            return forwardAAssociateRQ(as, rq, ac, true, getMatchingForwardRules(rq).get(0));
+        if (!isAssociationFromDestinationAET(as) && sendNow(rq))
+            return forwardAAssociateRQ(as, rq, ac, true, getCurrentForwardRules(rq).get(0));
         as.setProperty(FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
     }
 
     private boolean sendNow(AAssociateRQ rq) {
-        List<ForwardRule> matchingForwardRules = getMatchingForwardRules(rq);
+        List<ForwardRule> matchingForwardRules = getCurrentForwardRules(rq);
         return (!forwardBasedOnTemplates() 
                 && matchingForwardRules.size() == 1 
                 && matchingForwardRules.get(0).getDimse() == null
@@ -257,7 +256,15 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationURI()));
     }
 
-    public List<ForwardRule> getMatchingForwardRules(AAssociateRQ rq) {
+    private boolean isAssociationFromDestinationAET(Association asAccepted) {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        for (Entry<String, Schedule> schedule : pae.getForwardSchedules().entrySet())
+            if (asAccepted.getCallingAET().equals(schedule.getKey()))
+                return true;
+        return false;
+    }
+
+    public List<ForwardRule> getCurrentForwardRules(AAssociateRQ rq) {
         List<ForwardRule> list = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getForwardRules()) {
             String callingAET = rule.getCallingAET();
@@ -282,7 +289,53 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     return true;
         return false;
     }
+    
+    public HashMap<String, String> getAETsFromForwardRules(Association as, Dimse dimse, Integer sopClass, Attributes rq,
+            List<ForwardRule> forwardRules)
+            throws TransformerFactoryConfigurationError {
+        HashMap<String, String> aeList = new HashMap<String, String>();
+        for (ForwardRule rule : forwardRules) {
+            if (rule.getDimse() != null && Dimse.valueOf(rule.getDimse()) != dimse)
+                break;
 
+            if (rule.getSopClass() != null && !rq.getString(sopClass).equals(rule.getSopClass()))
+                break;
+
+            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
+            List<String> destinationAETs = new ArrayList<String>();
+            if (rule.getDestinationURI().startsWith("xsl:"))
+                try {
+                    destinationAETs = getAETsFromTemplate((Templates) getTemplates(rule.getDestinationURI()));
+                } catch (TransformerException e) {
+                    LOG.warn("Error parsing template: ", e);
+                }
+            else
+                destinationAETs.add(rule.getDestinationURI());
+            for (String destinationAET : destinationAETs)
+                aeList.put(destinationAET, callingAET);
+        }
+        return aeList;
+    }
+
+    public List<String> getAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
+            TransformerConfigurationException {
+        SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
+        TransformerHandler handler = transFac.newTransformerHandler(template);
+        final List<String> destinationAETs = new ArrayList<String>();
+        handler.setResult(new SAXResult(new DefaultHandler() {
+
+            @Override
+            public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
+                    throws SAXException {
+                if (qName.equals("Destination")) {
+                    destinationAETs.add(attributes.getValue("aet"));
+                }
+            }
+
+        }));
+        return destinationAETs;
+    }
+    
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac, boolean sendNow,
             ForwardRule forwardingRule) throws IOException {
         try {
@@ -335,7 +388,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
+    public ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
         ProxyDevice device = (ProxyDevice) getDevice();
         return device.findApplicationEntity(destinationAETitle);
     }
@@ -575,11 +628,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
         } catch (ConfigurationException ce) {
             LOG.warn("Unable to load configuration: " + ce);
-            if (!ft.getAAssociateRQ().getCalledAET().equals(defaultDestinationAET)) {
-                LOG.warn("Forward orphan files to default destination AET: " + defaultDestinationAET);
-                ft.getAAssociateRQ().setCalledAET(defaultDestinationAET);
-                processForwardTask(ft);
-            }
         } catch (AAssociateRJ rj) {
             handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
         } catch (AAbort aa) {
