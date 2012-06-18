@@ -257,8 +257,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private boolean sendNow(Association as) {
         List<ForwardRule> matchingForwardRules = getCurrentForwardRules(as);
-        return (!forwardBasedOnTemplates() 
-                && matchingForwardRules.size() == 1 
+        return (matchingForwardRules.size() == 1 
+                && !forwardBasedOnTemplates(matchingForwardRules)
                 && matchingForwardRules.get(0).getDimse() == null
                 && matchingForwardRules.get(0).getSopClass() == null
                 && (matchingForwardRules.get(0).getCallingAET() == null || 
@@ -317,9 +317,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return false;
     }
 
-    public boolean forwardBasedOnTemplates() {
-        for (ForwardRule rule : getForwardRules())
-            if (rule.getReceiveSchedule().isNow(new GregorianCalendar()) || rule.getReceiveSchedule() == null)
+    public boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
+        for (ForwardRule rule : forwardRules)
+            if (rule.getReceiveSchedule() == null || rule.getReceiveSchedule().isNow(new GregorianCalendar()))
                 if (rule.getDestinationURI().startsWith("xsl:"))
                     return true;
         return false;
