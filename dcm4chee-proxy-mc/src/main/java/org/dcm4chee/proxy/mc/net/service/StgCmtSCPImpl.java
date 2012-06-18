@@ -118,8 +118,8 @@ public class StgCmtSCPImpl extends DicomService {
     private void processNActionRQForwardRules(Association as, PresentationContext pc, Dimse dimse, Attributes rq,
             Attributes data) throws IOException, ConfigurationException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.getCurrentForwardRules(as.getAAssociateRQ());
-        HashMap<String, String> aets = pae.getAETsFromForwardRules(as, dimse, Tag.RequestedSOPClassUID, rq, forwardRules);
+        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, dimse, Tag.RequestedSOPClassUID);
+        HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
         switch (aets.entrySet().size()) {
         case 0:
             throw new ConfigurationException("no destination");

@@ -38,13 +38,15 @@
 
 package org.dcm4chee.proxy.mc.net;
 
+import org.dcm4che.net.Dimse;
+
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
  * 
  */
 public class ForwardRule {
     
-    private String dimse;
+    private Dimse dimse;
     private String sopClass;
     private String callingAET;
     private String destinationURI;
@@ -53,10 +55,10 @@ public class ForwardRule {
     private boolean exclusiveUseDefinedTC;
     private String commonName;
     
-    public String getDimse() {
+    public Dimse getDimse() {
         return dimse;
     }
-    public void setDimse(String dimse) {
+    public void setDimse(Dimse dimse) {
         this.dimse = dimse;
     }
     public String getSopClass() {
@@ -101,5 +103,4 @@ public class ForwardRule {
     public void setCommonName(String commonName) {
         this.commonName = commonName;
     }
-    
 }

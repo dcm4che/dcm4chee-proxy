@@ -56,6 +56,7 @@ import javax.naming.directory.SearchResult;
 import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
+import org.dcm4che.net.Dimse;
 import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
@@ -174,7 +175,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 ForwardRule rule = new ForwardRule();
-                rule.setDimse(stringValue(attrs.get("dcmDIMSE")));
+                rule.setDimse(dimseValue(attrs.get("dcmDIMSE")));
                 rule.setSopClass(stringValue(attrs.get("dicomSOPClass")));
                 rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle")));
                 rule.setDestinationURI(stringValue(attrs.get("labeledURI")));
@@ -191,6 +192,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         } finally {
             safeClose(ne);
         }
+    }
+
+    protected static Dimse dimseValue(Attribute attr) throws NamingException {
+        return attr != null ? Dimse.valueOf(attr.get().toString()) : null;
     }
 
     private void loadForwardSchedules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {

@@ -51,6 +51,7 @@ import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
+import org.dcm4che.net.Dimse;
 import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
@@ -156,7 +157,9 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         for (String ruleIndex : rulesNode.childrenNames()) {
             Preferences ruleNode = rulesNode.node(ruleIndex);
             ForwardRule rule = new ForwardRule();
-            rule.setDimse(ruleNode.get("dcmDIMSE", null));
+            String dimse = ruleNode.get("dcmDIMSE", null);
+            if (dimse != null)
+                rule.setDimse(Dimse.valueOf(dimse));
             rule.setSopClass(ruleNode.get("dicomSOPClass", null));
             rule.setCallingAET(ruleNode.get("dcmCallingAETitle", null));
             rule.setDestinationURI(ruleNode.get("labeledURI", null));
