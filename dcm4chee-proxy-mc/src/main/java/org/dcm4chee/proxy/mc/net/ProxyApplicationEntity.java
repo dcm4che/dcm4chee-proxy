@@ -285,17 +285,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         as.setProperty(FORWARD_RULES, list);
     }
 
-    public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse, Integer sopClass) {
-        List<ForwardRule> rules = new ArrayList<ForwardRule>(getCurrentForwardRules(as));
-        for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
-            ForwardRule rule = iterator.next();
-            if (rule.getDimse() != null && rule.getDimse() != dimse) {
-                iterator.remove();
-                continue;
-            }
-            if (rule.getSopClass() != null && !rq.getString(sopClass).equals(rule.getSopClass()))
-                iterator.remove();
-        }
+    public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
+        List<ForwardRule> rules = new ArrayList<ForwardRule>();
+        for (ForwardRule rule : getCurrentForwardRules(as))
+            if (equals(rule.getDimse(), dimse) && equals(rule.getSopClass(), rq.getString(dimse.tagOfSOPClassUID())))
+                rules.add(rule);
         for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
             for (ForwardRule fwr : rules) {
@@ -308,6 +302,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
         }
         return rules;
+    }
+
+    private boolean equals(Object o1, Object o2) {
+        return o1 == null || o2 == null || o1.equals(o2);
     }
 
     private boolean isAvailableDestinationAET(String destinationAET) {

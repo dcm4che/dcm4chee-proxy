@@ -145,7 +145,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     private boolean process(Association as, PresentationContext pc, Attributes rq, Attributes rsp, File file,
             MessageDigest digest, Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, Dimse.C_STORE_RQ, Tag.AffectedSOPClassUID);
+        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, Dimse.C_STORE_RQ);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
         if (aets.entrySet().size() == 0)
             throw new ConfigurationException("no destination");
