@@ -76,12 +76,16 @@ public class CFindSCPImpl extends BasicCFindSCP {
         if (dimse != Dimse.C_FIND_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
+        asAccepted.setProperty(ProxyApplicationEntity.STATUS, Status.UnableToProcess);
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             processForwardRules(asAccepted, pc, dimse, rq, keys);
         else
             try {
                 forwardCFindRQ(asAccepted, asInvoked, pc, rq, keys);
+                asInvoked.waitForOutstandingRSP();
+                int status = Integer.parseInt(asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString());
+                writeFinalDimseRSP(asAccepted, pc, rq, status);
             } catch (InterruptedException e) {
                 throw new DicomServiceException(Status.UnableToProcess, e);
             }
@@ -92,13 +96,17 @@ public class CFindSCPImpl extends BasicCFindSCP {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
-        asAccepted.setProperty(ProxyApplicationEntity.STATUS, Status.UnableToProcess);
         for (Entry<String, String> entry : aets.entrySet()) {
             String callingAET = entry.getValue();
             String calledAET = entry.getKey();
             startForwardCFindRQ(callingAET, calledAET, pae, asAccepted, pc, rq, keys);
         }
         int status = Integer.parseInt(asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString());
+        writeFinalDimseRSP(asAccepted, pc, rq, (status == Status.Success) ? status : Status.UnableToProcess);
+    }
+
+    private void writeFinalDimseRSP(Association asAccepted, PresentationContext pc, Attributes rq, int status)
+            throws IOException {
         asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
     }
 
@@ -154,6 +162,9 @@ public class CFindSCPImpl extends BasicCFindSCP {
                     break;
 
                 default:
+                    String asStatus = asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString();
+                    if (Integer.parseInt(asStatus) != Status.Success)
+                        asAccepted.setProperty(ProxyApplicationEntity.STATUS, status);
                     break;
                 }
             }
