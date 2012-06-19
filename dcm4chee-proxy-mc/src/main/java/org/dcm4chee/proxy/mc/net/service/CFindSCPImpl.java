@@ -39,46 +39,101 @@
 package org.dcm4chee.proxy.mc.net.service;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
 
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.CancelRQHandler;
+import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
+import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCFindSCP;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class CFindSCPImpl extends BasicCFindSCP {
-    
+
     public CFindSCPImpl(String... sopClasses) {
         super(sopClasses);
     }
 
     @Override
-    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse,
-            Attributes rq, Attributes keys) throws IOException {
+    public void onDimseRQ(final Association asAccepted, final PresentationContext pc, Dimse dimse, Attributes rq,
+            Attributes keys) throws IOException {
         if (dimse != Dimse.C_FIND_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
-        
-        Association asInvoked = (Association) asAccepted
-                .getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null)
+            processForwardRules(asAccepted, pc, dimse, rq, keys);
+        else
+            try {
+                forwardCFindRQ(asAccepted, asInvoked, pc, rq, keys);
+            } catch (InterruptedException e) {
+                throw new DicomServiceException(Status.UnableToProcess, e);
+            }
+    }
+
+    private void processForwardRules(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
+            Attributes keys) throws IOException {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+        HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
+        asAccepted.setProperty(ProxyApplicationEntity.STATUS, Status.UnableToProcess);
+        for (Entry<String, String> entry : aets.entrySet()) {
+            String callingAET = entry.getValue();
+            String calledAET = entry.getKey();
+            startForwardCFindRQ(callingAET, calledAET, pae, asAccepted, pc, rq, keys);
+        }
+        int status = Integer.parseInt(asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString());
+        asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
+    }
+
+    private void startForwardCFindRQ(String callingAET, String calledAET, ProxyApplicationEntity pae,
+            Association asAccepted, PresentationContext pc, Attributes rq, Attributes data) {
+        AAssociateRQ aarq = asAccepted.getAAssociateRQ();
+        aarq.setCallingAET(callingAET);
+        aarq.setCalledAET(calledAET);
+        Association asInvoked = null;
         try {
-            forward(asAccepted, asInvoked, pc, rq, keys);
-        } catch (InterruptedException e) {
-            throw new DicomServiceException(Status.UnableToProcess, e);
+            asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
+            forwardCFindRQ(asAccepted, asInvoked, pc, rq, data);
+        } catch (IncompatibleConnectionException e) {
+            LOG.debug("Unable to connect to " + calledAET, e);
+        } catch (GeneralSecurityException e) {
+            LOG.warn("Failed to create SSL context", e);
+        } catch (ConfigurationException e) {
+            LOG.warn("Unable to load configuration for destination AET", e);
+        } catch (Exception e) {
+            LOG.warn("Unexpected exception", e);
+        } finally {
+            if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
+                try {
+                    asInvoked.waitForOutstandingRSP();
+                    asInvoked.release();
+                } catch (Exception e) {
+                    LOG.warn("Unexpected exception", e);
+                }
+            }
         }
     }
 
-    private void forward(final Association asAccepted, final Association asInvoked,
-            final PresentationContext pc, Attributes rq, Attributes data) throws IOException,
-            InterruptedException {
+    private void forwardCFindRQ(final Association asAccepted, final Association asInvoked,
+            final PresentationContext pc, Attributes rq, Attributes data)
+            throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         int priority = rq.getInt(Tag.Priority, 0);
@@ -88,6 +143,22 @@ public class CFindSCPImpl extends BasicCFindSCP {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
+                int status = cmd.getInt(Tag.Status, -1);
+                switch (status) {
+                case Status.Pending:
+                    writeDimseRSQP(pc, cmd, data);
+                    break;
+
+                case Status.Success:
+                    asAccepted.setProperty(ProxyApplicationEntity.STATUS, status);
+                    break;
+
+                default:
+                    break;
+                }
+            }
+
+            private void writeDimseRSQP(PresentationContext pc, Attributes cmd, Attributes data) {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
@@ -96,7 +167,7 @@ public class CFindSCPImpl extends BasicCFindSCP {
             }
         };
         asAccepted.addCancelRQHandler(msgId, new CancelRQHandler() {
-            
+
             @Override
             public void onCancelRQ(Association association) {
                 try {
