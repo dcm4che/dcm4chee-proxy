@@ -124,9 +124,9 @@ public class AuditLog {
                     callingAET, calledAET, time, (log.totalSize / 1048576F) / time));
             for (File file : logFiles)
                 if (!file.delete())
-                    LOG.warn("Failed to delete " + file);
+                    LOG.debug("Failed to delete " + file);
             if (!studyIUIDDir.delete())
-                LOG.warn("Failed to delete " + studyIUIDDir);
+                LOG.debug("Failed to delete " + studyIUIDDir);
         }
     }
 

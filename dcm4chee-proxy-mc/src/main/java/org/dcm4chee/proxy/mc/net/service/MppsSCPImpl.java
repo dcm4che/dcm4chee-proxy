@@ -101,7 +101,7 @@ public class MppsSCPImpl extends DicomService {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn(asAccepted + ": error forwarding N-CREATE-RQ", e);
+                    LOG.debug(asAccepted + ": error forwarding N-CREATE-RQ: " + e.getMessage());
                 }
             }
         };
@@ -134,7 +134,7 @@ public class MppsSCPImpl extends DicomService {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn(asAccepted + ": error forwarding N-SET-RQ", e);
+                    LOG.debug(asAccepted + ": error forwarding N-SET-RQ: ", e.getMessage());
                 }
             }
         };

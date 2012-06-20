@@ -108,7 +108,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
     public static final String FORWARD_RULES = "forward.rules";
-    public static final String STATUS = "forward.status";
 
     private String spoolDirectory;
     private String auditDirectory;
@@ -391,7 +390,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
         } catch (ConfigurationException e) {
-            LOG.warn("Unable to load configuration for destination AET", e);
+            LOG.error("Unable to load configuration for destination AET: " + e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), rj, ".rj-" + rj.getResult() + "-"
@@ -402,12 +401,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } catch (IOException e) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".conn", 0);
         } catch (InterruptedException e) {
-            LOG.warn("Unexpected exception", e);
+            LOG.debug("Unexpected exception", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".conf", 0);
         } catch (GeneralSecurityException e) {
-            LOG.warn("Failed to create SSL context", e);
+            LOG.error("Failed to create SSL context", e);
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".ssl", 0);
         }
     }
@@ -421,7 +420,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             AAssociateAC ac, String destinationAETitle, Exception e, String suffix, int reason) 
                     throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.debug(as + ": unable to connect to " + destinationAETitle, e);
+        LOG.debug(as + ": unable to connect to {} ({})", new Object[]{destinationAETitle, e.getMessage()});
         if (acceptDataOnFailedNegotiation) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
@@ -437,7 +436,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             try {
                 asInvoked.release();
             } catch (IOException e) {
-                LOG.warn("Failed to release " + asInvoked, e);
+                LOG.debug("Failed to release {} ({})", new Object[] {asInvoked, e});
             }
     }
     
@@ -447,7 +446,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             try {
                 asInvoked.release();
             } catch (IOException e) {
-                LOG.warn("Failed to release " + asInvoked, e);
+                LOG.debug("Failed to release {} ({})", new Object[] {asInvoked, e});
             }
     }
 
@@ -522,15 +521,15 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             } catch (InterruptedException e) {
-                LOG.warn("Connection exception", e);
+                LOG.error("Connection exception: " + e.getMessage());
             } catch (IncompatibleConnectionException e) {
-                LOG.warn("Incompatible connection", e);
+                LOG.error("Incompatible connection: " + e.getMessage());
             } catch (ConfigurationException e) {
-                LOG.warn("Unable to load configuration", e);
+                LOG.error("Unable to load configuration: " + e.getMessage());
             } catch (IOException e) {
-                LOG.warn("Unable to read from file", e);
+                LOG.error("Unable to read from file: " + e.getMessage());
             } catch (GeneralSecurityException e) {
-                LOG.warn("Failed to create SSL context", e);
+                LOG.error("Failed to create SSL context: " + e.getMessage());
             }
         }
     }
@@ -555,11 +554,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                         dest.setLastModified(System.currentTimeMillis());
                         LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dest });
                     } else
-                        LOG.warn("{}: failed to RENAME {} to {}", new Object[] { as, file, dest });
+                        LOG.debug("{}: failed to RENAME {} to {}", new Object[] { as, file, dest });
                     break;
                 }
                 default: {
-                    LOG.warn("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
+                    LOG.debug("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
                             Integer.toHexString(status) + 'H' });
                     as.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     try {
@@ -651,7 +650,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 }
             }
         } catch (ConfigurationException ce) {
-            LOG.warn("Unable to load configuration", ce);
+            LOG.error("Unable to load configuration: " + ce.getMessage());
         } catch (AAssociateRJ rj) {
             handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
         } catch (AAbort aa) {
@@ -659,20 +658,20 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         } catch (IOException e) {
             handleProcessException(ft, e, ".conn");
         } catch (InterruptedException e) {
-            LOG.warn("Connection exception", e);
+            LOG.error("Connection exception: " + e.getMessage());
         } catch (IncompatibleConnectionException e) {
-            LOG.warn("Incompatible connection", e);
+            LOG.error("Incompatible connection: " + e.getMessage());
         } catch (GeneralSecurityException e) {
-            LOG.warn("Failed to create SSL context", e);
+            LOG.error("Failed to create SSL context: " + e.getMessage());
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {
                     asInvoked.waitForOutstandingRSP();
                     asInvoked.release();
                 } catch (InterruptedException e) {
-                    LOG.warn(asInvoked + ": unexpected exception", e);
+                    LOG.debug(asInvoked + ": unexpected exception: " + e.getMessage());
                 } catch (IOException e) {
-                    LOG.warn(asInvoked + ": failed to release association", e);
+                    LOG.debug(asInvoked + ": failed to release association: " + e.getMessage());
                 }
             }
         }
@@ -680,14 +679,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     private void handleForwardException(Association as, File file, Exception e, String suffix)
             throws DicomServiceException {
-        LOG.debug(as + ": error processing forward task", e);
+        LOG.debug(as + ": error processing forward task: " + e.getMessage());
         as.setProperty(FILE_SUFFIX, suffix);
         rename(as, file);
     }
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) 
     throws DicomServiceException {
-        LOG.debug("Connection error", e);
+        LOG.error("Connection error: " + e.getMessage());
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));
@@ -696,7 +695,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 LOG.debug("{}: RENAME to {}", new Object[] { file, dst });
             }
             else {
-                LOG.warn("{}: failed to RENAME to {}", new Object[] { file, dst });
+                LOG.debug("{}: failed to RENAME to {}", new Object[] { file, dst });
                 throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
             }
         }
@@ -731,7 +730,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                         delete(asInvoked, file);
                         break;
                     default: {
-                        LOG.warn("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
+                        LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
                                 Integer.toHexString(status) + 'H' });
                         asInvoked.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                         try {
@@ -768,7 +767,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             return dst;
         }
         else {
-            LOG.warn("{}: failed to RENAME {} to {}", new Object[] {as, file, dst});
+            LOG.debug("{}: failed to RENAME {} to {}", new Object[] {as, file, dst});
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
@@ -793,7 +792,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         if (file.delete())
             LOG.debug("{}: M-DELETE {}", as, file);
         else
-            LOG.warn("{}: failed to M-DELETE {}", as, file);
+            LOG.debug("{}: failed to M-DELETE {}", as, file);
     }
 
     private Collection<ForwardTask> scanFiles(String calledAET, File[] files) {
@@ -814,7 +813,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 map.put(callingAET, forwardTask = new ForwardTask(callingAET, calledAET));
             forwardTask.addFile(file, cuid, tsuid);
         } catch (IOException e) {
-            LOG.warn("Failed to read " + file, e);
+            LOG.debug("Failed to read {} ({})", new Object[] { file, e.getMessage() });
         }
     }
 
@@ -838,7 +837,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);
         } catch (Exception e) {
-            LOG.warn(as + ": failed to create log file", e);
+            LOG.debug(as + ": failed to create log file: " + e.getMessage());
             throw new IOException(e);
         }
     }

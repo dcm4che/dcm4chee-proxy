@@ -39,32 +39,32 @@
 package org.dcm4chee.proxy.mc.net.service;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
-import org.dcm4che.net.CancelRQHandler;
-import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.BasicCFindSCP;
+import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.mc.net.ForwardCFindRQ;
 import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Gunter Zeilinger <gunterze@gmail.com>
  */
-public class CFindSCPImpl extends BasicCFindSCP {
+public class CFindSCPImpl extends DicomService {
 
     public CFindSCPImpl(String... sopClasses) {
         super(sopClasses);
@@ -76,119 +76,67 @@ public class CFindSCPImpl extends BasicCFindSCP {
         if (dimse != Dimse.C_FIND_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
-        asAccepted.setProperty(ProxyApplicationEntity.STATUS, Status.UnableToProcess);
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (asInvoked == null)
-            processForwardRules(asAccepted, pc, dimse, rq, keys);
-        else
+        if (asInvoked == null) {
+            Association[] fwdAssocs = openAssociations(asAccepted, rq);
+            if (fwdAssocs.length == 0)
+                    throw new DicomServiceException(Status.UnableToProcess);
+            
             try {
-                forwardCFindRQ(asAccepted, asInvoked, pc, rq, keys);
-                asInvoked.waitForOutstandingRSP();
-                int status = Integer.parseInt(asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString());
-                writeFinalDimseRSP(asAccepted, pc, rq, status);
+                new ForwardCFindRQ(asAccepted, pc, rq, keys, fwdAssocs).execute();
             } catch (InterruptedException e) {
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                LOG.debug("Unexpected exception: " + e.getMessage());
+            } finally {
+                close(fwdAssocs);
+            }
+        } else
+            try {
+                new ForwardCFindRQ(asAccepted, pc, rq, keys, asInvoked).execute();
+            } catch (InterruptedException e) {
+                LOG.debug("Unexpected exception: " + e.getMessage());
             }
     }
 
-    private void processForwardRules(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
-            Attributes keys) throws IOException {
+    private void close(Association... fwdAssocs) {
+        for (Association as : fwdAssocs) {
+            if (as != null && as.isReadyForDataTransfer()) {
+                try {
+                    as.waitForOutstandingRSP();
+                    as.release();
+                } catch (Exception e) {
+                    LOG.debug("Unexpected exception: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private Association[] openAssociations(Association asAccepted, Attributes rq) {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, Dimse.C_STORE_RQ);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
+        List<Association> fwdAssocs = new ArrayList<Association>(aets.size());
         for (Entry<String, String> entry : aets.entrySet()) {
             String callingAET = entry.getValue();
             String calledAET = entry.getKey();
-            startForwardCFindRQ(callingAET, calledAET, pae, asAccepted, pc, rq, keys);
-        }
-        int status = Integer.parseInt(asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString());
-        writeFinalDimseRSP(asAccepted, pc, rq, (status == Status.Success) ? status : Status.UnableToProcess);
-    }
-
-    private void writeFinalDimseRSP(Association asAccepted, PresentationContext pc, Attributes rq, int status)
-            throws IOException {
-        asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
-    }
-
-    private void startForwardCFindRQ(String callingAET, String calledAET, ProxyApplicationEntity pae,
-            Association asAccepted, PresentationContext pc, Attributes rq, Attributes data) {
-        AAssociateRQ aarq = asAccepted.getAAssociateRQ();
-        aarq.setCallingAET(callingAET);
-        aarq.setCalledAET(calledAET);
-        Association asInvoked = null;
-        try {
-            asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
-            forwardCFindRQ(asAccepted, asInvoked, pc, rq, data);
-        } catch (IncompatibleConnectionException e) {
-            LOG.debug("Unable to connect to " + calledAET, e);
-        } catch (GeneralSecurityException e) {
-            LOG.warn("Failed to create SSL context", e);
-        } catch (ConfigurationException e) {
-            LOG.warn("Unable to load configuration for destination AET", e);
-        } catch (Exception e) {
-            LOG.warn("Unexpected exception", e);
-        } finally {
-            if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
-                try {
-                    asInvoked.waitForOutstandingRSP();
-                    asInvoked.release();
-                } catch (Exception e) {
-                    LOG.warn("Unexpected exception", e);
-                }
+            AAssociateRQ aarq = asAccepted.getAAssociateRQ();
+            aarq.setCallingAET(callingAET);
+            aarq.setCalledAET(calledAET);
+            Association asInvoked = null;
+            try {
+                asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
+                fwdAssocs.add(asInvoked);
+            } catch (IncompatibleConnectionException e) {
+                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
+            } catch (GeneralSecurityException e) {
+                LOG.error("Failed to create SSL context ({})", new Object[]{e.getMessage()});
+            } catch (ConfigurationException e) {
+                LOG.error("Unable to load configuration for destination AET ({})", new Object[]{e.getMessage()});
+            } catch (ConnectException e) {
+                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
+            } catch (Exception e) {
+                LOG.debug("Unexpected exception: " + e.getMessage());
             }
         }
+        return fwdAssocs.toArray(new Association[fwdAssocs.size()]);
     }
-
-    private void forwardCFindRQ(final Association asAccepted, final Association asInvoked,
-            final PresentationContext pc, Attributes rq, Attributes data)
-            throws IOException, InterruptedException {
-        String tsuid = pc.getTransferSyntax();
-        String cuid = rq.getString(Tag.AffectedSOPClassUID);
-        int priority = rq.getInt(Tag.Priority, 0);
-        int msgId = rq.getInt(Tag.MessageID, 0);
-        final DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
-
-            @Override
-            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
-                super.onDimseRSP(asInvoked, cmd, data);
-                int status = cmd.getInt(Tag.Status, -1);
-                switch (status) {
-                case Status.Pending:
-                    writeDimseRSQP(pc, cmd, data);
-                    break;
-
-                case Status.Success:
-                    asAccepted.setProperty(ProxyApplicationEntity.STATUS, status);
-                    break;
-
-                default:
-                    String asStatus = asAccepted.getProperty(ProxyApplicationEntity.STATUS).toString();
-                    if (Integer.parseInt(asStatus) != Status.Success)
-                        asAccepted.setProperty(ProxyApplicationEntity.STATUS, status);
-                    break;
-                }
-            }
-
-            private void writeDimseRSQP(PresentationContext pc, Attributes cmd, Attributes data) {
-                try {
-                    asAccepted.writeDimseRSP(pc, cmd, data);
-                } catch (IOException e) {
-                    LOG.warn("Failed to forward C-FIND-RSP", e);
-                }
-            }
-        };
-        asAccepted.addCancelRQHandler(msgId, new CancelRQHandler() {
-
-            @Override
-            public void onCancelRQ(Association association) {
-                try {
-                    rspHandler.cancel(asInvoked);
-                } catch (IOException e) {
-                    LOG.warn(asAccepted + ": unexpected exception", e);
-                }
-            }
-        });
-        asInvoked.cfind(cuid, priority, data, tsuid, rspHandler);
-    }
-
 }

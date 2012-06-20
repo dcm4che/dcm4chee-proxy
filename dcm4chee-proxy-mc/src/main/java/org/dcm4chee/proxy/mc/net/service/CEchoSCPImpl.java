@@ -68,7 +68,7 @@ public class CEchoSCPImpl extends BasicCEchoSCP {
             rsp.next();
             asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
         } catch (Exception e) {
-            LOG.warn("Failed to forward C-ECHO RQ to " + asInvoked, e);
+            LOG.debug("Failed to forward C-ECHO RQ to {} ({})", new Object[] {asInvoked, e.getMessage()} );
             throw new AAbort(AAbort.UL_SERIVE_USER, 0);
         }
     }
