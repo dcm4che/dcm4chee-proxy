@@ -771,10 +771,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds,
-            String cuid) throws IOException {
-        AttributeCoercion ac =
-                getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCU, Dimse.C_STORE_RQ);
+    private DataWriter createDataWriter(DicomInputStream in, Association as, Attributes[] ds, String cuid)
+            throws IOException {
+        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
         if (ac != null || enableAuditLog) {
             in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);

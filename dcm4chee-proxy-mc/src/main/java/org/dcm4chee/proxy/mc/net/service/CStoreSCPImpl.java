@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
@@ -156,7 +157,9 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             File copy = createMappedFile(as, file, pae.getSpoolDirectoryPath(), fmi, entry.getValue(), entry.getKey());
             boolean keepCopy = true;
             try {
-                keepCopy = processFile(pae, as, pc, rq, rsp, copy, digest, fmi, parse(as, copy));
+                Attributes attrs = parse(as, copy);
+                pae.coerceDataset(as.getRemoteAET(), Tag.SOPClassUID, Role.SCU, Dimse.C_STORE_RQ, attrs);
+                keepCopy = processFile(pae, as, pc, rq, rsp, copy, digest, fmi, attrs);
             } finally {
                 if (!keepCopy)
                     deleteFile(as, copy);
@@ -193,7 +196,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             rename(asAccepted, file, rq);
             return true;
         }
-        pae.coerceDataset(asInvoked.getRemoteAET(), Tag.SOPClassUID, Role.SCU, Dimse.C_STORE_RQ, attrs);
+        pae.coerceDataset(asInvoked.getRemoteAET(), Tag.SOPClassUID, Role.SCP, Dimse.C_STORE_RQ, attrs);
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(asInvoked, attrs);
             pae.writeLogFile(asInvoked, attrs, file.length());
