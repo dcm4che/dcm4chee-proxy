@@ -66,6 +66,7 @@ import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.PDVInputStream;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
@@ -192,7 +193,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             rename(asAccepted, file, rq);
             return true;
         }
-        pae.coerceDataset(asInvoked.getRemoteAET(), attrs);
+        pae.coerceDataset(asInvoked.getRemoteAET(), Tag.SOPClassUID, Role.SCU, Dimse.C_STORE_RQ, attrs);
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(asInvoked, attrs);
             pae.writeLogFile(asInvoked, attrs, file.length());

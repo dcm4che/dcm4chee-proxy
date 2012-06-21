@@ -450,9 +450,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
     }
 
-    public void coerceDataset(String remoteAET, Attributes attrs) throws IOException {
-        AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(Tag.SOPClassUID), Role.SCU,
-                Dimse.C_STORE_RQ);
+    public void coerceDataset(String remoteAET, int sopClass, Role role, Dimse dimse, Attributes attrs) throws IOException {
+        AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(sopClass), role, dimse);
         if (ac != null)
             coerceAttributes(attrs, ac);
     }

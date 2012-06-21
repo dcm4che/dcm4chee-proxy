@@ -48,10 +48,12 @@ import java.util.Map.Entry;
 
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
@@ -76,6 +78,8 @@ public class CFindSCPImpl extends DicomService {
         if (dimse != Dimse.C_FIND_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        pae.coerceDataset(asAccepted.getRemoteAET(), Tag.AffectedSOPClassUID, Role.SCU, Dimse.C_FIND_RQ, keys);
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
             Association[] fwdAssocs = openAssociations(asAccepted, rq);

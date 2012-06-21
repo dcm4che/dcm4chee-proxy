@@ -46,8 +46,10 @@ import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.CancelRQHandler;
 import org.dcm4che.net.Commands;
+import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +85,7 @@ public class ForwardCFindRQ {
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         int priority = rq.getInt(Tag.Priority, 0);
         int msgId = rq.getInt(Tag.MessageID, 0);
+        final ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         final DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
 
             @Override
@@ -100,9 +103,10 @@ public class ForwardCFindRQ {
 
             private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes data) {
                 try {
+                    pae.coerceDataset(asAccepted.getRemoteAET(), Tag.AffectedSOPClassUID, Role.SCU, Dimse.C_FIND_RSP, data);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.warn("Failed to forward C-FIND-RSP: " + e.getMessage());
+                    LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
                 }
             }
         };
@@ -113,7 +117,7 @@ public class ForwardCFindRQ {
                 try {
                     rspHandler.cancel(asInvoked);
                 } catch (IOException e) {
-                    LOG.warn(asAccepted + ": unexpected exception: " + e.getMessage());
+                    LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
                 }
             }
         });
@@ -121,11 +125,13 @@ public class ForwardCFindRQ {
     }
 
     public void execute() throws IOException, InterruptedException {
-        for (Association fwdAssoc : fwdAssocs)
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        for (Association fwdAssoc : fwdAssocs) {
+            pae.coerceDataset(fwdAssoc.getRemoteAET(), Tag.AffectedSOPClassUID, Role.SCP, Dimse.C_FIND_RQ, data);
             forwardCFindRQ(fwdAssoc);
+        }
         waitForOutstandingRSP.await();
         asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
-
     }
 
 }
