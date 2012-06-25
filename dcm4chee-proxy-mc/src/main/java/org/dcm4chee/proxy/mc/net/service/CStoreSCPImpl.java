@@ -112,7 +112,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
     @Override
     protected void store(Association as, PresentationContext pc, Attributes rq, PDVInputStream data, Attributes rsp)
             throws IOException {
-        File file = createFile(as, rq);
+        File file = createSpoolFile(as);
         MessageDigest digest = getMessageDigest(as);
         Attributes fmi = processInputStream(as, pc, rq, data, file, digest);
         boolean keepFile = false;
@@ -157,7 +157,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             boolean keepCopy = true;
             try {
                 Attributes attrs = parse(as, copy);
-                pae.coerceDataset(as.getRemoteAET(), Tag.SOPClassUID, Role.SCU, Dimse.C_STORE_RQ, attrs);
+                pae.coerceDataset(as.getRemoteAET(), Role.SCU, Dimse.C_STORE_RQ, attrs);
                 keepCopy = processFile(pae, as, pc, rq, rsp, copy, digest, fmi, attrs);
             } finally {
                 if (!keepCopy)
@@ -175,7 +175,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             LOG.debug("{}: failed to M-DELETE {}", as, file);
     }
 
-    protected File createFile(Association as, Attributes rq) throws DicomServiceException {
+    protected File createSpoolFile(Association as) throws DicomServiceException {
         try {
             ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
             File dir = new File(ae.getSpoolDirectoryPath(), "spool");
@@ -195,7 +195,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
             rename(asAccepted, file, rq);
             return true;
         }
-        pae.coerceDataset(asInvoked.getRemoteAET(), Tag.SOPClassUID, Role.SCP, Dimse.C_STORE_RQ, attrs);
+        pae.coerceDataset(asInvoked.getRemoteAET(), Role.SCP, Dimse.C_STORE_RQ, attrs);
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(asInvoked, attrs);
             pae.writeLogFile(asInvoked, attrs, file.length());

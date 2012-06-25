@@ -223,6 +223,7 @@ public class ProxyConfigurationTestUtils {
         UID.RTIonPlanStorage,
         UID.RTIonBeamsTreatmentRecordStorage,
         UID.StorageCommitmentPushModelSOPClass,
+        UID.ModalityPerformedProcedureStepSOPClass,
     };
 
     private static final String[] QUERY_CUIDS = {
@@ -283,12 +284,13 @@ public class ProxyConfigurationTestUtils {
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
-        ae.setSpoolDirectory("proxy");
+        ae.setSpoolDirectory("/tmp/proxy/proxy");
         ae.setAcceptDataOnFailedNegotiation(false);
         ae.setEnableAuditLog(true);
-        ae.setAuditDirectory("audit");
-        ae.setNactionDirectory("naction");
-        ae.setNeventDirectory("nevent");
+        ae.setAuditDirectory("/tmp/proxy/audit");
+        ae.setNactionDirectory("/tmp/proxy/naction");
+        ae.setNeventDirectory("/tmp/proxy/nevent");
+        ae.setMppsDirectory("/tmp/proxy/mpps");
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,

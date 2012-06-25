@@ -51,6 +51,7 @@ import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che.net.service.DicomServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,31 +59,32 @@ import org.slf4j.LoggerFactory;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  * @author Gunter Zeilinger <gunterze@gmail.com>
  */
-public class ForwardCFindRQ {
+public class ForwardDimseRQ {
 
-    public static final Logger LOG = LoggerFactory.getLogger(ForwardCFindRQ.class);
+    public static final Logger LOG = LoggerFactory.getLogger(ForwardDimseRQ.class);
 
-    int status;
+    int status = -1;
     CountDownLatch waitForOutstandingRSP;
     PresentationContext pc;
     Attributes rq;
     Attributes data;
     Association asAccepted;
+    Dimse dimse;
     private Association[] fwdAssocs;
 
-    public ForwardCFindRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data,
-            Association... fwdAssocs) {
+    public ForwardDimseRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data,
+            Dimse dimse, Association... fwdAssocs) {
         this.asAccepted = asAccepted;
         this.pc = pc;
         this.rq = rq;
         this.data = data;
+        this.dimse = dimse;
         this.fwdAssocs = fwdAssocs;
         waitForOutstandingRSP = new CountDownLatch(fwdAssocs.length);
     }
 
-    private void forwardCFindRQ(final Association asInvoked) throws IOException, InterruptedException {
+    private void forwardDimseRQ(final Association asInvoked) throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
-        String cuid = rq.getString(Tag.AffectedSOPClassUID);
         int priority = rq.getInt(Tag.Priority, 0);
         int msgId = rq.getInt(Tag.MessageID, 0);
         final ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
@@ -103,7 +105,7 @@ public class ForwardCFindRQ {
 
             private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes data) {
                 try {
-                    pae.coerceDataset(asAccepted.getRemoteAET(), Tag.AffectedSOPClassUID, Role.SCU, Dimse.C_FIND_RSP, data);
+                    pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
@@ -121,17 +123,29 @@ public class ForwardCFindRQ {
                 }
             }
         });
-        asInvoked.cfind(cuid, priority, data, tsuid, rspHandler);
+        switch(dimse) {
+        case C_FIND_RQ:
+            asInvoked.cfind(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
+            break;
+        default:
+            throw new DicomServiceException(Status.UnrecognizedOperation);
+        }
     }
 
     public void execute() throws IOException, InterruptedException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         for (Association fwdAssoc : fwdAssocs) {
-            pae.coerceDataset(fwdAssoc.getRemoteAET(), Tag.AffectedSOPClassUID, Role.SCP, Dimse.C_FIND_RQ, data);
-            forwardCFindRQ(fwdAssoc);
+            pae.coerceDataset(fwdAssoc.getRemoteAET(), Role.SCP, dimse, data);
+            forwardDimseRQ(fwdAssoc);
         }
         waitForOutstandingRSP.await();
-        asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
+        switch(dimse) {
+        case C_FIND_RQ:
+            asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
+            break;
+        default:
+            throw new DicomServiceException(Status.UnrecognizedOperation);
+        }
     }
 
 }

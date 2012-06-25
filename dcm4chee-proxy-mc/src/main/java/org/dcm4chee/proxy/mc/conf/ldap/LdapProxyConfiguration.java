@@ -128,6 +128,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
         storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
+        storeNotNull(attrs, "dcmMppsDirectory", proxyAE.getMppsDirectory());
         return attrs;
     }
 
@@ -153,6 +154,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
         proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
         proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
+        proxyAE.setMppsDirectory(stringValue(attrs.get("dcmMppsDirectory")));
     }
 
     @Override
@@ -327,6 +329,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
         storeDiff(mods, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
         storeDiff(mods, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
+        storeDiff(mods, "dcmMppsDirectory", pa.getMppsDirectory(), pb.getMppsDirectory());
         return mods;
     }
 

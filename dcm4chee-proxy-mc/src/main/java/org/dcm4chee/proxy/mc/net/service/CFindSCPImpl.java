@@ -39,27 +39,16 @@
 package org.dcm4chee.proxy.mc.net.service;
 
 import java.io.IOException;
-import java.net.ConnectException;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
 
-import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
-import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.mc.net.ForwardCFindRQ;
-import org.dcm4chee.proxy.mc.net.ForwardRule;
+import org.dcm4chee.proxy.mc.net.ForwardDimseRQ;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
@@ -79,68 +68,25 @@ public class CFindSCPImpl extends DicomService {
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        pae.coerceDataset(asAccepted.getRemoteAET(), Tag.AffectedSOPClassUID, Role.SCU, Dimse.C_FIND_RQ, keys);
+        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, keys);
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            Association[] fwdAssocs = openAssociations(asAccepted, rq);
+            Association[] fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ);
             if (fwdAssocs.length == 0)
                     throw new DicomServiceException(Status.UnableToProcess);
             
             try {
-                new ForwardCFindRQ(asAccepted, pc, rq, keys, fwdAssocs).execute();
+                new ForwardDimseRQ(asAccepted, pc, rq, keys, dimse, fwdAssocs).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             } finally {
-                close(fwdAssocs);
+                pae.close(fwdAssocs);
             }
         } else
             try {
-                new ForwardCFindRQ(asAccepted, pc, rq, keys, asInvoked).execute();
+                new ForwardDimseRQ(asAccepted, pc, rq, keys, dimse, asInvoked).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }
-    }
-
-    private void close(Association... fwdAssocs) {
-        for (Association as : fwdAssocs) {
-            if (as != null && as.isReadyForDataTransfer()) {
-                try {
-                    as.waitForOutstandingRSP();
-                    as.release();
-                } catch (Exception e) {
-                    LOG.debug("Unexpected exception: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    private Association[] openAssociations(Association asAccepted, Attributes rq) {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, Dimse.C_STORE_RQ);
-        HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
-        List<Association> fwdAssocs = new ArrayList<Association>(aets.size());
-        for (Entry<String, String> entry : aets.entrySet()) {
-            String callingAET = entry.getValue();
-            String calledAET = entry.getKey();
-            AAssociateRQ aarq = asAccepted.getAAssociateRQ();
-            aarq.setCallingAET(callingAET);
-            aarq.setCalledAET(calledAET);
-            Association asInvoked = null;
-            try {
-                asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
-                fwdAssocs.add(asInvoked);
-            } catch (IncompatibleConnectionException e) {
-                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
-            } catch (GeneralSecurityException e) {
-                LOG.error("Failed to create SSL context ({})", new Object[]{e.getMessage()});
-            } catch (ConfigurationException e) {
-                LOG.error("Unable to load configuration for destination AET ({})", new Object[]{e.getMessage()});
-            } catch (ConnectException e) {
-                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
-            } catch (Exception e) {
-                LOG.debug("Unexpected exception: " + e.getMessage());
-            }
-        }
-        return fwdAssocs.toArray(new Association[fwdAssocs.size()]);
     }
 }

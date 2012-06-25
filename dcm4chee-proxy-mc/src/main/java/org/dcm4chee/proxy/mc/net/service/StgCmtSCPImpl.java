@@ -164,7 +164,7 @@ public class StgCmtSCPImpl extends DicomService {
         }
 
         if (pendingFileForwarding(asAccepted, data)) {
-            LOG.debug("Pending file forwading before sending NEventReportRQ for TransactionUID: "
+            LOG.debug("Waiting for pending file forwarding before sending NEventReportRQ for TransactionUID: "
                     + data.getString(Tag.TransactionUID));
             return;
         }
@@ -189,6 +189,7 @@ public class StgCmtSCPImpl extends DicomService {
                 as.getCalledAET());
         if (!dir.exists())
             return false;
+        
         String[] files = dir.list();
         Sequence referencedSOPSequence = eventInfo.getSequence(Tag.ReferencedSOPSequence);
         Iterator<Attributes> it = referencedSOPSequence.iterator();
@@ -367,7 +368,7 @@ public class StgCmtSCPImpl extends DicomService {
             stream = new DicomOutputStream(file);
             String iuid = UID.StorageCommitmentPushModelSOPInstance;
             String cuid = UID.StorageCommitmentPushModelSOPClass;
-            String tsuid = UID.ImplicitVRLittleEndian;
+            String tsuid = UID.ExplicitVRLittleEndian;
             Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
             fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, as.getCallingAET());
             stream.writeDataset(fmi, data);

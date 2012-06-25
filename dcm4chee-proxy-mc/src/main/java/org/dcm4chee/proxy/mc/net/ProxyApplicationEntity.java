@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -113,6 +114,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String auditDirectory;
     private String nactionDirectory;
     private String neventDirectory;
+    private String mppsDirectory;
     private boolean acceptDataOnFailedNegotiation;
     private boolean enableAuditLog;
     private HashMap<String, Schedule> forwardSchedules;
@@ -226,6 +228,34 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 : new File(currentWorkingDir, neventDirectory);
         path.mkdirs();
         return path;
+    }
+
+    public String getMppsDirectory() {
+        return mppsDirectory;
+    }
+
+    public void setMppsDirectory(String mppsDirectory) {
+        this.mppsDirectory = mppsDirectory;
+    }
+
+    public File getNCreateDirectoryPath() {
+        File path = new File(mppsDirectory + separator + "ncreate");
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+            ? new File(jbossServerDataDir, mppsDirectory)
+        : new File(currentWorkingDir, mppsDirectory);
+            path.mkdirs();
+            return path;
+    }
+
+    public File getNSetDirectoryPath() {
+        File path = new File(mppsDirectory + separator + "nset");
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+            ? new File(jbossServerDataDir, mppsDirectory)
+        : new File(currentWorkingDir, mppsDirectory);
+            path.mkdirs();
+            return path;
     }
 
     public static String getSeparator() {
@@ -450,8 +480,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             }
     }
 
-    public void coerceDataset(String remoteAET, int sopClass, Role role, Dimse dimse, Attributes attrs) throws IOException {
-        AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(sopClass), role, dimse);
+    public void coerceDataset(String remoteAET, Role role, Dimse dimse, Attributes attrs) throws IOException {
+        AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(dimse.tagOfSOPClassUID()), role, dimse);
         if (ac != null)
             coerceAttributes(attrs, ac);
     }
@@ -478,6 +508,128 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
                 if (calledAET.equals(entry.getKey()))
                     startForwardScheduledNAction(getNactionDirectoryPath().listFiles(fileFilter()), entry.getKey());
+        
+        for (String calledAET : getNCreateDirectoryPath().list())
+            for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                if (calledAET.equals(entry.getKey()))
+                    startForwardScheduledMPPS(new File(getNCreateDirectoryPath(), calledAET).listFiles(fileFilter()), calledAET, "ncreate");
+        
+        for (String calledAET : getNSetDirectoryPath().list())
+            for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                if (calledAET.equals(entry.getKey()))
+                    startForwardScheduledMPPS(new File(getNSetDirectoryPath(), calledAET).listFiles(fileFilter()), calledAET, "nset");
+    }
+
+    private void startForwardScheduledMPPS(final File[] files, final String destinationAETitle, final String protocol) {
+        getDevice().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                forwardScheduledMPPS(files, destinationAETitle, protocol);
+            }
+        });
+    }
+
+    protected void forwardScheduledMPPS(File[] files, String destinationAETitle, String protocol) {
+        for (File file : files) {
+            try {
+                Attributes fmi = readFileMetaInformation(file);
+                if (protocol == "nset" && pendingNCreateForwarding(destinationAETitle, fmi))
+                    return;
+
+                AAssociateRQ rq = new AAssociateRQ();
+                rq.addPresentationContext(new PresentationContext(1, UID.ModalityPerformedProcedureStepSOPClass,
+                        UID.ExplicitVRLittleEndian));
+                rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
+                rq.setCalledAET(destinationAETitle);
+                Association as = connect(getDestinationAE(destinationAETitle), rq);
+                try {
+                    if (as.isReadyForDataTransfer()) {
+                        forwardScheduledMPPS(as, file, fmi, protocol);
+                    } else {
+                        as.setProperty(FILE_SUFFIX, ".conn");
+                        rename(as, file);
+                    }
+                } finally {
+                    if (as != null && as.isReadyForDataTransfer()) {
+                        try {
+                            as.waitForOutstandingRSP();
+                            as.release();
+                        } catch (InterruptedException e) {
+                            LOG.debug(as + ": unexpected exception", e);
+                        } catch (IOException e) {
+                            LOG.debug(as + ": failed to release association", e);
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                LOG.error("Connection exception: " + e.getMessage());
+            } catch (IncompatibleConnectionException e) {
+                LOG.error("Incompatible connection: " + e.getMessage());
+            } catch (ConfigurationException e) {
+                LOG.error("Unable to load configuration: " + e.getMessage());
+            } catch (IOException e) {
+                LOG.error("Unable to read from file: " + e.getMessage());
+            } catch (GeneralSecurityException e) {
+                LOG.error("Failed to create SSL context: " + e.getMessage());
+            }
+        }
+    }
+
+    private boolean pendingNCreateForwarding(String destinationAETitle, Attributes fmi) {
+        File dir = new File(getNCreateDirectoryPath(), destinationAETitle);
+        if (!dir.exists())
+            return false;
+
+        String[] files = dir.list();
+        String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
+        for (String file : files)
+            if (file.startsWith(iuid))
+                return true;
+
+        return false;
+    }
+
+    private void forwardScheduledMPPS(final Association as, final File file, Attributes fmi, String protocol) 
+            throws IOException, InterruptedException {
+        String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
+        String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
+        String tsuid = UID.ExplicitVRLittleEndian;
+        DicomInputStream in = new DicomInputStream(file);
+        Attributes attrs = in.readDataset(-1, -1);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
+
+            @Override
+            public void onDimseRSP(Association as, Attributes cmd, Attributes data) {
+                super.onDimseRSP(as, cmd, data);
+                int status = cmd.getInt(Tag.Status, -1);
+                switch (status) {
+                case Status.Success:
+                    LOG.debug("{}: forwarded file {} with status {}", new Object[] { as, file,
+                            Integer.toHexString(status) + 'H' });
+                    delete(as, file);
+                    break;
+                default: {
+                    LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { as, file,
+                            Integer.toHexString(status) + 'H' });
+                    as.setProperty(FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
+                    try {
+                        rename(as, file);
+                    } catch (DicomServiceException e) {
+                        e.printStackTrace();
+                    }
+                }
+                }
+            }
+        };
+        try {
+            if (protocol == "ncreate")
+                as.ncreate(cuid, iuid, attrs, tsuid, rspHandler);
+            else
+                as.nset(cuid, iuid, attrs, tsuid, rspHandler);
+        } finally {
+            SafeClose.close(in);
+        }
     }
 
     private void startForwardScheduledNAction(final File[] files, final String destinationAETitle) {
@@ -495,7 +647,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             try {
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
-                        UID.ImplicitVRLittleEndian));
+                        UID.ExplicitVRLittleEndian));
                 Attributes fmi = readFileMetaInformation(file);
                 rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
                 rq.setCalledAET(destinationAETitle);
@@ -513,9 +665,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                             as.waitForOutstandingRSP();
                             as.release();
                         } catch (InterruptedException e) {
-                            LOG.warn(as + ": unexpected exception", e);
+                            LOG.debug(as + ": unexpected exception", e);
                         } catch (IOException e) {
-                            LOG.warn(as + ": failed to release association", e);
+                            LOG.debug(as + ": failed to release association", e);
                         }
                     }
                 }
@@ -537,7 +689,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
-        String tsuid = UID.ImplicitVRLittleEndian;
+        String tsuid = UID.ExplicitVRLittleEndian;
         DicomInputStream in = new DicomInputStream(file);
         Attributes attrs = in.readDataset(-1, -1);
         final String transactionUID = attrs.getString(Tag.TransactionUID);
@@ -867,5 +1019,48 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     
     public Templates getTemplates(String uri) throws TransformerConfigurationException {
         return getProxyDevice().getTemplates(uri);
+    }
+    
+    public Association[] openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse) {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+        HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
+        List<Association> fwdAssocs = new ArrayList<Association>(aets.size());
+        for (Entry<String, String> entry : aets.entrySet()) {
+            String callingAET = entry.getValue();
+            String calledAET = entry.getKey();
+            AAssociateRQ aarq = asAccepted.getAAssociateRQ();
+            aarq.setCallingAET(callingAET);
+            aarq.setCalledAET(calledAET);
+            Association asInvoked = null;
+            try {
+                asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
+                fwdAssocs.add(asInvoked);
+            } catch (IncompatibleConnectionException e) {
+                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
+            } catch (GeneralSecurityException e) {
+                LOG.error("Failed to create SSL context ({})", new Object[]{e.getMessage()});
+            } catch (ConfigurationException e) {
+                LOG.error("Unable to load configuration for destination AET ({})", new Object[]{e.getMessage()});
+            } catch (ConnectException e) {
+                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
+            } catch (Exception e) {
+                LOG.debug("Unexpected exception: " + e.getMessage());
+            }
+        }
+        return fwdAssocs.toArray(new Association[fwdAssocs.size()]);
+    }
+    
+    public void close(Association... fwdAssocs) {
+        for (Association as : fwdAssocs) {
+            if (as != null && as.isReadyForDataTransfer()) {
+                try {
+                    as.waitForOutstandingRSP();
+                    as.release();
+                } catch (Exception e) {
+                    LOG.debug("Unexpected exception: " + e.getMessage());
+                }
+            }
+        }
     }
 }

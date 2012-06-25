@@ -112,6 +112,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
         storeNotNull(prefs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(prefs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
+        storeNotNull(prefs, "dcmMppsDirectory", proxyAE.getMppsDirectory());
     }
 
     @Override
@@ -136,6 +137,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setAuditDirectory(prefs.get("dcmAuditDirectory", null));
         proxyAE.setNactionDirectory(prefs.get("dcmNactionDirectory", null));
         proxyAE.setNeventDirectory(prefs.get("dcmNeventDirectory", null));
+        proxyAE.setMppsDirectory(prefs.get("dcmMppsDirectory", null));
     }
 
     @Override
@@ -271,6 +273,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
         storeDiff(prefs, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
         storeDiff(prefs, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
+        storeDiff(prefs, "dcmMppsDirectory", pa.getMppsDirectory(), pb.getMppsDirectory());
     }
 
     @Override
