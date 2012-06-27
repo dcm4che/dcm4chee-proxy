@@ -44,6 +44,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -129,6 +131,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
         storeNotNull(attrs, "dcmMppsDirectory", proxyAE.getMppsDirectory());
+        storeNotNull(attrs, "dcmForwardThreads", proxyAE.getExecutor().getMaximumPoolSize());
         return attrs;
     }
 
@@ -155,6 +158,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
         proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
         proxyAE.setMppsDirectory(stringValue(attrs.get("dcmMppsDirectory")));
+        proxyAE.setExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(intValue(attrs.get("dcmForwardThreads"), 1024)));
     }
 
     @Override
@@ -330,6 +334,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
         storeDiff(mods, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
         storeDiff(mods, "dcmMppsDirectory", pa.getMppsDirectory(), pb.getMppsDirectory());
+        storeDiff(mods, "dcmForwardThreads", pa.getExecutor().getMaximumPoolSize(), pb.getExecutor().getMaximumPoolSize());
         return mods;
     }
 

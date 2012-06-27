@@ -133,6 +133,14 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.21
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
+attributetype ( 1.2.40.0.13.1.2.15.0.3.22 
+  NAME 'dcmForwardThreads'
+  DESC 'Integer : maximum number of concurrent forward threads'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  
 objectclass ( 1.2.40.0.13.1.2.15.0.4.1
   NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
@@ -152,7 +160,8 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.2
     dcmNeventDirectory $
     dcmMppsDirectory )
   MAY (
-    dcmAuditDirectory) )
+    dcmAuditDirectory $
+    dcmForwardThreads ) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.3
   NAME 'dcmRetry'

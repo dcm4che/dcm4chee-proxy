@@ -44,6 +44,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -113,6 +115,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
         storeNotNull(prefs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
         storeNotNull(prefs, "dcmMppsDirectory", proxyAE.getMppsDirectory());
+        storeNotNull(prefs, "dcmForwardThreads", proxyAE.getExecutor().getMaximumPoolSize());
     }
 
     @Override
@@ -138,6 +141,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setNactionDirectory(prefs.get("dcmNactionDirectory", null));
         proxyAE.setNeventDirectory(prefs.get("dcmNeventDirectory", null));
         proxyAE.setMppsDirectory(prefs.get("dcmMppsDirectory", null));
+        proxyAE.setExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(prefs.getInt("dcmForwardThreads", 1024)));
     }
 
     @Override
@@ -274,6 +278,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
         storeDiff(prefs, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
         storeDiff(prefs, "dcmMppsDirectory", pa.getMppsDirectory(), pb.getMppsDirectory());
+        storeDiff(prefs, "dcmForwardThreads", pa.getExecutor().getMaximumPoolSize(), pb.getExecutor().getMaximumPoolSize());
     }
 
     @Override

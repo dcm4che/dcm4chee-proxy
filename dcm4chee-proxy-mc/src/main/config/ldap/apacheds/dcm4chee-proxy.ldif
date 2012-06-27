@@ -182,6 +182,16 @@ m-name: dcmMppsDirectory
 m-description: String : mpps spool directory
 m-singleValue: TRUE
 
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.22, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
+ hema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.22
+m-name: dcmForwardThreads
+m-description: Integer : maximum number of concurrent forward threads
+m-singleValue: TRUE
+
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit
 objectclass: top
@@ -249,6 +259,7 @@ m-must: dcmNactionDirectory
 m-must: dcmNeventDirectory
 m-must: dcmMppsDirectory
 m-may: dcmAuditDirectory
+m-may: dcmForwardThreads
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.3, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
  ma

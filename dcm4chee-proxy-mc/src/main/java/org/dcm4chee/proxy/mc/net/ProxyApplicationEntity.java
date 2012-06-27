@@ -52,6 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
@@ -121,6 +122,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private List<Retry> retries = new ArrayList<Retry>();
     private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
+
+    private ThreadPoolExecutor executor;
+
+    public ThreadPoolExecutor getExecutor() {
+        return executor;
+    }
+
+    public void setExecutor(ThreadPoolExecutor executor) {
+        this.executor = executor;
+    }
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -521,7 +532,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private void startForwardScheduledMPPS(final File[] files, final String destinationAETitle, final String protocol) {
-        getDevice().execute(new Runnable() {
+        executor.execute(new Runnable() {
 
             @Override
             public void run() {
@@ -633,7 +644,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private void startForwardScheduledNAction(final File[] files, final String destinationAETitle) {
-        getDevice().execute(new Runnable() {
+        executor.execute(new Runnable() {
 
             @Override
             public void run() {
@@ -729,7 +740,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     private void startForwardScheduledFiles(final String calledAET) {
-        getDevice().execute(new Runnable() {
+        executor.execute(new Runnable() {
             
             @Override
             public void run() {
