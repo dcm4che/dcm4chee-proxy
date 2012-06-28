@@ -261,13 +261,14 @@ public class CStore extends BasicCStoreSCP {
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
         int priority = rq.getInt(Tag.Priority, 0);
-        int msgId = rq.getInt(Tag.MessageID, 0);
-        DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
+        final int msgId = rq.getInt(Tag.MessageID, 0);
+        DimseRSPHandler rspHandler = new DimseRSPHandler(asAccepted.isRequestor() ? asInvoked.nextMessageID() : msgId) {
 
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
                 try {
+                    cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.debug(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());

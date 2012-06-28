@@ -43,6 +43,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.VR;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.CancelRQHandler;
 import org.dcm4che.net.Commands;
@@ -71,6 +72,9 @@ public class ForwardDimseRQ {
     Association asAccepted;
     Dimse dimse;
     private Association[] fwdAssocs;
+    int NumberOfCompletedSuboperations = 0;
+    int NumberOfFailedSuboperations = 0;
+    int NumberOfWarningSuboperations = 0;
 
     public ForwardDimseRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data,
             Dimse dimse, Association... fwdAssocs) {
@@ -94,27 +98,44 @@ public class ForwardDimseRQ {
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
                 int rspStatus = cmd.getInt(Tag.Status, -1);
-                if (Status.isPending(rspStatus))
+                if (Status.isPending(rspStatus) && dimse == Dimse.C_FIND_RQ)
                     writeDimseRSP(pc, cmd, data);
                 else {
                     if (status != Status.Success)
                         status = rspStatus;
+                    NumberOfCompletedSuboperations = NumberOfCompletedSuboperations + cmd.getInt(Tag.NumberOfCompletedSuboperations, 0);
+                    NumberOfFailedSuboperations = NumberOfFailedSuboperations + cmd.getInt(Tag.NumberOfFailedSuboperations, 0);
+                    NumberOfWarningSuboperations = NumberOfWarningSuboperations + cmd.getInt(Tag.NumberOfWarningSuboperations, 0);
                     waitForOutstandingRSP.countDown();
                     if (waitForOutstandingRSP.getCount() == 0) {
-                        if (dimse == Dimse.C_FIND_RQ)
-                            try {
-                                asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
-                            } catch (IOException e) {
-                                LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
-                            }
-                        if (dimse == Dimse.C_GET_RQ)
-                            try {
-                                asAccepted.writeDimseRSP(pc, Commands.mkCGetRSP(rq, status));
-                            } catch (IOException e) {
-                                LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
-                            }
+                        try {
+                            if (dimse == Dimse.C_FIND_RQ)
+                                try {
+                                    Attributes rsp = Commands.mkCFindRSP(rq, status);
+                                    addNumberOfSuboperations(rsp);
+                                    asAccepted.writeDimseRSP(pc, rsp);
+                                } catch (IOException e) {
+                                    LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
+                                }
+                            if (dimse == Dimse.C_GET_RQ)
+                                try {
+                                    Attributes rsp = Commands.mkCGetRSP(rq, status);
+                                    addNumberOfSuboperations(rsp);
+                                    asAccepted.writeDimseRSP(pc, rsp);
+                                } catch (IOException e) {
+                                    LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
+                                }
+                        } finally {
+                            pae.close(false, fwdAssocs);
+                        }
                     }
                 }
+            }
+
+            private void addNumberOfSuboperations(Attributes rsp) {
+                rsp.setInt(Tag.NumberOfCompletedSuboperations, VR.US, NumberOfCompletedSuboperations);
+                rsp.setInt(Tag.NumberOfFailedSuboperations, VR.US, NumberOfFailedSuboperations);
+                rsp.setInt(Tag.NumberOfWarningSuboperations, VR.US, NumberOfWarningSuboperations);
             }
 
             private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes data) {
