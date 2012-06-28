@@ -78,9 +78,9 @@ import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backaus@agfa.com>
  */
-public class CStoreSCPImpl extends BasicCStoreSCP {
+public class CStore extends BasicCStoreSCP {
 
-    public CStoreSCPImpl(String... sopClasses) {
+    public CStore(String... sopClasses) {
         super(sopClasses);
     }
 
@@ -117,7 +117,14 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         Attributes fmi = processInputStream(as, pc, rq, data, file, digest);
         boolean keepFile = false;
         try {
-            keepFile = process(as, pc, rq, rsp, file, digest, fmi);
+            Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+            if (as2 != null) {
+                ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+                Attributes attrs = parse(as, file);
+                keepFile = processFile(pae, as, pc, rq, rsp, file, digest, fmi, attrs);
+            } 
+            else
+                keepFile = processForwardRules(as, pc, rq, rsp, file, digest, fmi);
         } catch (ConfigurationException e) {
             LOG.error(as + ": error processing C-STORE-RQ: " + e.getMessage());
         } finally {
@@ -143,7 +150,7 @@ public class CStoreSCPImpl extends BasicCStoreSCP {
         return fmi;
     }
 
-    private boolean process(Association as, PresentationContext pc, Attributes rq, Attributes rsp, File file,
+    private boolean processForwardRules(Association as, PresentationContext pc, Attributes rq, Attributes rsp, File file,
             MessageDigest digest, Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, Dimse.C_STORE_RQ);

@@ -70,11 +70,11 @@ import org.dcm4chee.proxy.mc.conf.prefs.PreferencesProxyConfiguration;
 import org.dcm4chee.proxy.mc.net.AuditLog;
 import org.dcm4chee.proxy.mc.net.ProxyDevice;
 import org.dcm4chee.proxy.mc.net.Scheduler;
-import org.dcm4chee.proxy.mc.net.service.CEchoSCPImpl;
-import org.dcm4chee.proxy.mc.net.service.CFindSCPImpl;
-import org.dcm4chee.proxy.mc.net.service.CStoreSCPImpl;
-import org.dcm4chee.proxy.mc.net.service.MppsSCPImpl;
-import org.dcm4chee.proxy.mc.net.service.StgCmtSCPImpl;
+import org.dcm4chee.proxy.mc.net.service.CEcho;
+import org.dcm4chee.proxy.mc.net.service.CFind;
+import org.dcm4chee.proxy.mc.net.service.CStore;
+import org.dcm4chee.proxy.mc.net.service.Mpps;
+import org.dcm4chee.proxy.mc.net.service.StgCmt;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -97,14 +97,14 @@ public class ProxySA {
                 Executors.newSingleThreadScheduledExecutor();
             proxyDevice.setScheduledExecutor(scheduledExecutorService);
             DicomServiceRegistry dcmService = new DicomServiceRegistry();
-            dcmService.addDicomService(new CEchoSCPImpl());
-            dcmService.addDicomService(new CStoreSCPImpl("*"));
-            dcmService.addDicomService(new StgCmtSCPImpl());
-            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.1.1"));
-            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.2.1"));
-            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.1.2.3.1"));
-            dcmService.addDicomService(new CFindSCPImpl("1.2.840.10008.5.1.4.31"));
-            dcmService.addDicomService(new MppsSCPImpl());
+            dcmService.addDicomService(new CEcho());
+            dcmService.addDicomService(new CStore("*"));
+            dcmService.addDicomService(new StgCmt());
+            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.1.1"));
+            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.2.1"));
+            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.3.1"));
+            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.31"));
+            dcmService.addDicomService(new Mpps());
             proxyDevice.setDimseRQHandler(dcmService);
             configureKeyManager(cl, proxyDevice);
             configureScheduler(cl, proxyDevice);

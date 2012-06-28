@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -230,7 +232,10 @@ public class ProxyConfigurationTestUtils {
         UID.PatientRootQueryRetrieveInformationModelFIND,
         UID.StudyRootQueryRetrieveInformationModelFIND,
         UID.PatientStudyOnlyQueryRetrieveInformationModelFINDRetired,
-        UID.ModalityWorklistInformationModelFIND
+        UID.ModalityWorklistInformationModelFIND,
+        UID.PatientRootQueryRetrieveInformationModelGET,
+        UID.StudyRootQueryRetrieveInformationModelGET,
+        UID.PatientStudyOnlyQueryRetrieveInformationModelGETRetired
     };
 
     private static final KeyStore KEYSTORE = loadKeyStore();
@@ -282,6 +287,7 @@ public class ProxyConfigurationTestUtils {
         device.setSchedulerInterval(60);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
+        ae.setExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(1024));
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
         ae.setSpoolDirectory("/tmp/proxy/proxy");

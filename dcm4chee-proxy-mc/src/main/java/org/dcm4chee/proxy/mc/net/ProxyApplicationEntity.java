@@ -413,6 +413,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             rq.setCalledAET(forwardRule.getDestinationURI());
             Association asCalled = connect(getDestinationAE(forwardRule.getDestinationURI()), rq);
             as.setProperty(FORWARD_ASSOCIATION, asCalled);
+            asCalled.setProperty(FORWARD_ASSOCIATION, as);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (forwardRule.isExclusiveUseDefinedTC()) {
                 AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
@@ -473,14 +474,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected void onClose(Association asAccepted) {
         super.onClose(asAccepted);
         Association asInvoked = (Association) asAccepted.getProperty(FORWARD_ASSOCIATION);
-        if (asInvoked != null)
+        if (asInvoked != null && asInvoked.isRequestor())
             try {
                 asInvoked.release();
             } catch (IOException e) {
                 LOG.debug("Failed to release {} ({})", new Object[] {asInvoked, e});
             }
     }
-    
+
     protected void releaseAS(Association asAccepted) {
         Association asInvoked = (Association) asAccepted.clearProperty(FORWARD_ASSOCIATION);
         if (asInvoked != null)
@@ -1046,6 +1047,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             Association asInvoked = null;
             try {
                 asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
+                asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
                 fwdAssocs.add(asInvoked);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
@@ -1062,11 +1064,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return fwdAssocs.toArray(new Association[fwdAssocs.size()]);
     }
     
-    public void close(Association... fwdAssocs) {
+    public void close(boolean waitForOutstandingRSP, Association... fwdAssocs) {
         for (Association as : fwdAssocs) {
             if (as != null && as.isReadyForDataTransfer()) {
                 try {
-                    as.waitForOutstandingRSP();
+                    if (waitForOutstandingRSP)
+                        as.waitForOutstandingRSP();
                     as.release();
                 } catch (Exception e) {
                     LOG.debug("Unexpected exception: " + e.getMessage());

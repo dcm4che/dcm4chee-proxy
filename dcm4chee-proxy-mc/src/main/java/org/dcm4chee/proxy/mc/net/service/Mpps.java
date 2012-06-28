@@ -66,9 +66,9 @@ import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
  */
-public class MppsSCPImpl extends DicomService {
+public class Mpps extends DicomService {
 
-    public MppsSCPImpl() {
+    public Mpps() {
         super(UID.ModalityPerformedProcedureStepSOPClass);
     }
 

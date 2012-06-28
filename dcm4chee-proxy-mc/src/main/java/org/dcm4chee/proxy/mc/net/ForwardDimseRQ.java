@@ -100,15 +100,32 @@ public class ForwardDimseRQ {
                     if (status != Status.Success)
                         status = rspStatus;
                     waitForOutstandingRSP.countDown();
+                    if (waitForOutstandingRSP.getCount() == 0) {
+                        if (dimse == Dimse.C_FIND_RQ)
+                            try {
+                                asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
+                            } catch (IOException e) {
+                                LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
+                            }
+                        if (dimse == Dimse.C_GET_RQ)
+                            try {
+                                asAccepted.writeDimseRSP(pc, Commands.mkCGetRSP(rq, status));
+                            } catch (IOException e) {
+                                LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
+                            }
+                    }
                 }
             }
 
             private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes data) {
                 try {
-                    pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
+                    if (dimse == Dimse.C_FIND_RQ)
+                        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
+                    if (dimse == Dimse.C_GET_RQ)
+                        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_GET_RSP, data);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
+                    LOG.debug(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
                 }
             }
         };
@@ -127,6 +144,9 @@ public class ForwardDimseRQ {
         case C_FIND_RQ:
             asInvoked.cfind(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
             break;
+        case C_GET_RQ:
+            asInvoked.cget(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
+            break;
         default:
             throw new DicomServiceException(Status.UnrecognizedOperation);
         }
@@ -137,14 +157,6 @@ public class ForwardDimseRQ {
         for (Association fwdAssoc : fwdAssocs) {
             pae.coerceDataset(fwdAssoc.getRemoteAET(), Role.SCP, dimse, data);
             forwardDimseRQ(fwdAssoc);
-        }
-        waitForOutstandingRSP.await();
-        switch(dimse) {
-        case C_FIND_RQ:
-            asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
-            break;
-        default:
-            throw new DicomServiceException(Status.UnrecognizedOperation);
         }
     }
 

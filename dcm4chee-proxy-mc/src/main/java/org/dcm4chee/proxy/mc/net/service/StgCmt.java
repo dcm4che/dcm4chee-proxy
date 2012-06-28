@@ -76,9 +76,9 @@ import org.dcm4chee.proxy.mc.net.Schedule;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class StgCmtSCPImpl extends DicomService {
+public class StgCmt extends DicomService {
 
-    public StgCmtSCPImpl() {
+    public StgCmt() {
         super(UID.StorageCommitmentPushModelSOPClass);
     }
 

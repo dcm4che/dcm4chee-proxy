@@ -130,11 +130,11 @@
     <incallback method="addDicomService" />
   </bean>
   
-  <!-- CEchoSCP -->
-  <bean name="CEchoSCP" class="org.dcm4chee.proxy.mc.net.service.CEchoSCPImpl"/>
+  <!-- CEcho -->
+  <bean name="CEcho" class="org.dcm4chee.proxy.mc.net.service.CEcho"/>
 
-  <!-- CStoreSCP -->
-  <bean name="CStoreSCP" class="org.dcm4chee.proxy.mc.net.service.CStoreSCPImpl">
+  <!-- CStore -->
+  <bean name="CStore" class="org.dcm4chee.proxy.mc.net.service.CStore">
     <constructor>
       <parameter>
         <array>
@@ -144,14 +144,14 @@
     </constructor>
   </bean>
   
-  <!-- StgCmtSCP -->
-  <bean name="StgCmtSCP" class="org.dcm4chee.proxy.mc.net.service.StgCmtSCPImpl"/>
+  <!-- StgCmt -->
+  <bean name="StgCmt" class="org.dcm4chee.proxy.mc.net.service.StgCmt"/>
   
   <!--  MppsSCP -->
-  <bean name="MppsSCP" class="org.dcm4chee.proxy.mc.net.service.MppsSCPImpl"/>
+  <bean name="Mpps" class="org.dcm4chee.proxy.mc.net.service.Mpps"/>
   
   <!-- CFindSCP -->
-  <bean name="CFindSCP" class="org.dcm4chee.proxy.mc.net.service.CFindSCPImpl">
+  <bean name="CFind" class="org.dcm4chee.proxy.mc.net.service.CFind">
     <constructor>
       <parameter>
         <array>
@@ -159,6 +159,19 @@
           <value>1.2.840.10008.5.1.4.1.2.2.1</value>
           <value>1.2.840.10008.5.1.4.1.2.3.1</value>
           <value>1.2.840.10008.5.1.4.31</value>
+        </array>
+      </parameter>
+    </constructor>
+  </bean>
+  
+    <!-- CGet -->
+  <bean name="CGet" class="org.dcm4chee.proxy.mc.net.service.CGet">
+    <constructor>
+      <parameter>
+        <array>
+          <value>1.2.840.10008.5.1.4.1.2.1.3</value>
+          <value>1.2.840.10008.5.1.4.1.2.2.3</value>
+          <value>1.2.840.10008.5.1.4.1.2.3.3</value>
         </array>
       </parameter>
     </constructor>

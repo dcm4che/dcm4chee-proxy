@@ -43,50 +43,34 @@ import java.io.IOException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
-import org.dcm4che.net.Status;
-import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4che.net.DimseRSP;
+import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.DicomService;
-import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.mc.net.ForwardDimseRQ;
+import org.dcm4che.net.service.BasicCEchoSCP;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
- * @author Michael Backhaus <michael.backhaus@agfa.com>
  * @author Gunter Zeilinger <gunterze@gmail.com>
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CFindSCPImpl extends DicomService {
-
-    public CFindSCPImpl(String... sopClasses) {
-        super(sopClasses);
-    }
+public class CEcho extends BasicCEchoSCP {
 
     @Override
-    public void onDimseRQ(final Association asAccepted, final PresentationContext pc, Dimse dimse, Attributes rq,
-            Attributes keys) throws IOException {
-        if (dimse != Dimse.C_FIND_RQ)
-            throw new DicomServiceException(Status.UnrecognizedOperation);
-
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, keys);
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
+            Attributes data) throws IOException {
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            Association[] fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ);
-            if (fwdAssocs.length == 0)
-                    throw new DicomServiceException(Status.UnableToProcess);
-            
-            try {
-                new ForwardDimseRQ(asAccepted, pc, rq, keys, dimse, fwdAssocs).execute();
-            } catch (InterruptedException e) {
-                LOG.debug("Unexpected exception: " + e.getMessage());
-            } finally {
-                pae.close(fwdAssocs);
-            }
-        } else
-            try {
-                new ForwardDimseRQ(asAccepted, pc, rq, keys, dimse, asInvoked).execute();
-            } catch (InterruptedException e) {
-                LOG.debug("Unexpected exception: " + e.getMessage());
-            }
+            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
+            return;
+        }
+        try {
+            DimseRSP rsp = asInvoked.cecho();
+            rsp.next();
+            asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
+        } catch (Exception e) {
+            LOG.debug("Failed to forward C-ECHO RQ to {} ({})", new Object[] {asInvoked, e.getMessage()} );
+            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
+        }
     }
+
 }
