@@ -54,16 +54,16 @@ import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CGet extends DicomService {
+public class CMove extends DicomService {
 
-    public CGet(String... sopClasses) {
+    public CMove(String... sopClasses) {
         super(sopClasses);
     }
 
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
             throws IOException {
-        if (dimse != Dimse.C_GET_RQ)
+        if (dimse != Dimse.C_MOVE_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
@@ -85,5 +85,5 @@ public class CGet extends DicomService {
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }
-    }
+    };
 }

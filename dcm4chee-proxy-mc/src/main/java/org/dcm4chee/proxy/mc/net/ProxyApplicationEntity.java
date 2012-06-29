@@ -110,7 +110,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
     public static final String FORWARD_RULES = "forward.rules";
-    public static final String MESSAGEID_MAPPING = "messageid.mapping";
 
     private String spoolDirectory;
     private String auditDirectory;

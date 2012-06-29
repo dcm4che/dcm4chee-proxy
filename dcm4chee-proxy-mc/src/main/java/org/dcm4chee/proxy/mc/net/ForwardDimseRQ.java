@@ -111,9 +111,7 @@ public class ForwardDimseRQ {
                         try {
                             if (dimse == Dimse.C_FIND_RQ)
                                 try {
-                                    Attributes rsp = Commands.mkCFindRSP(rq, status);
-                                    addNumberOfSuboperations(rsp);
-                                    asAccepted.writeDimseRSP(pc, rsp);
+                                    asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
                                 } catch (IOException e) {
                                     LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
                                 }
@@ -124,6 +122,14 @@ public class ForwardDimseRQ {
                                     asAccepted.writeDimseRSP(pc, rsp);
                                 } catch (IOException e) {
                                     LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
+                                }
+                            if (dimse == Dimse.C_MOVE_RQ)
+                                try {
+                                    Attributes rsp = Commands.mkCMoveRSP(rq, status);
+                                    addNumberOfSuboperations(rsp);
+                                    asAccepted.writeDimseRSP(pc, rsp);
+                                } catch (Exception e) {
+                                    LOG.debug(asAccepted + ": failed to forward C-MOVE-RSP: " + e.getMessage());
                                 }
                         } finally {
                             pae.close(false, fwdAssocs);
@@ -144,6 +150,8 @@ public class ForwardDimseRQ {
                         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
                     if (dimse == Dimse.C_GET_RQ)
                         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_GET_RSP, data);
+                    if (dimse == Dimse.C_MOVE_RQ)
+                        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_MOVE_RSP, data);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.debug(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
@@ -167,6 +175,10 @@ public class ForwardDimseRQ {
             break;
         case C_GET_RQ:
             asInvoked.cget(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
+            break;
+        case C_MOVE_RQ:
+            asInvoked.cmove(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid,
+                    rq.getString(Tag.MoveDestination), rspHandler);
             break;
         default:
             throw new DicomServiceException(Status.UnrecognizedOperation);
