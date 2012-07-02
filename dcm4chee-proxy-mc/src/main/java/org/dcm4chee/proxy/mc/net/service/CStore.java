@@ -184,10 +184,8 @@ public class CStore extends BasicCStoreSCP {
 
     protected File createSpoolFile(Association as) throws DicomServiceException {
         try {
-            ProxyApplicationEntity ae = (ProxyApplicationEntity) as.getApplicationEntity();
-            File dir = new File(ae.getSpoolDirectoryPath(), "spool");
-            dir.mkdir();
-            return File.createTempFile("dcm", ".part", dir);
+            ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+            return File.createTempFile("dcm", ".part", pae.getCStoreDirectoryPath());
         } catch (Exception e) {
             LOG.debug(as + ": failed to create temp file: " + e.getMessage());
             throw new DicomServiceException(Status.OutOfResources, e);
@@ -219,10 +217,11 @@ public class CStore extends BasicCStoreSCP {
 
     protected File createMappedFile(Association as, File file, File spoolDir, Attributes fmi, String callingAET,
             String calledAET) throws DicomServiceException {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         String separator = ProxyApplicationEntity.getSeparator();
         String path = file.getPath();
         String fileName = path.substring(path.lastIndexOf(separator) + 1, path.length());
-        File dir = new File(spoolDir, calledAET);
+        File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
         File dst = new File(dir, fileName);
         DicomOutputStream out = null;

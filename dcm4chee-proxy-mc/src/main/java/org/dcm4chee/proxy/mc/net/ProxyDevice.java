@@ -38,6 +38,8 @@
 
 package org.dcm4chee.proxy.mc.net;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
 
@@ -58,6 +60,15 @@ public class ProxyDevice extends Device {
     private Integer schedulerInterval;
     private DicomConfiguration dicomConf;
     private final TemplatesCache templateCache = new TemplatesCache();
+    private ThreadPoolExecutor fileForwardingExecutor;
+
+    public ThreadPoolExecutor getFileForwardingExecutor() {
+        return fileForwardingExecutor;
+    }
+
+    public void setFileForwardingExecutor(ThreadPoolExecutor executor) {
+        this.fileForwardingExecutor = executor;
+    }
     
     public Templates getTemplates(String uri) throws TransformerConfigurationException {
         return templateCache.get(uri);

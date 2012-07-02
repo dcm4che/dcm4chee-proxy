@@ -4,9 +4,10 @@ dn:dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass:pkiUser
 objectClass:dcmProxyDevice
 objectClass:dicomDevice
-dcmSchedulerInterval:60
+dcmSchedulerInterval:30
 dicomDeviceName:dcm4chee-proxy
 dicomInstalled:TRUE
+dcmForwardThreads:1024
 dicomAuthorizedNodeCertificateReference:dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,dc=nodomain
 dicomAuthorizedNodeCertificateReference:dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,dc=nodomain
 dicomThisNodeCertificateReference:dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
@@ -47,17 +48,12 @@ objectClass:dcmNetworkAE
 objectClass:dicomNetworkAE
 dcmAcceptDataOnFailedNegotiation:FALSE
 dcmEnableAuditLog:TRUE
-dcmMppsDirectory:/tmp/proxy/mpps
-dcmNactionDirectory:/tmp/proxy/naction
-dcmNeventDirectory:/tmp/proxy/nevent
-dcmSpoolDirectory:/tmp/proxy/proxy
+dcmSpoolDirectory:/tmp/proxy/
 dicomAETitle:*
 dicomAssociationAcceptor:TRUE
 dicomAssociationInitiator:TRUE
 dicomNetworkConnectionReference:cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 dicomNetworkConnectionReference:cn=dicom-tls,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
-dcmAuditDirectory:/tmp/proxy/audit
-dcmForwardThreads:1024
 
 dn:cn=Standalone VOI LUT Storage (Retired) SCP,dicomAETitle=*,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass:dcmTransferCapability
@@ -3378,7 +3374,7 @@ dcmRetrySuffix:.ass
 dn:dcmDestinationAETitle=STORESCP,dicomAETitle=*,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass:dcmForwardSchedule
 dcmDestinationAETitle:STORESCP
-dcmScheduleDays:Wed
+dcmScheduleDays:Mon,Wed
 dcmScheduleHours:8,9,10,11,12,13,14,15,16,17
 
 dn:dcmDestinationAETitle=DCM4CHEE,dicomAETitle=*,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
@@ -3392,7 +3388,7 @@ objectClass:dcmForwardRule
 cn:Public
 labeledURI:DCM4CHEE
 dcmExclusiveUseDefinedTC:FALSE
-dcmScheduleDays:Mon,Tue,Wed,Thu,Fri
+dcmScheduleDays:Mon,Tue,Thu,Fri
 dcmScheduleHours:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23
 
 dn:cn=Private,dicomAETitle=*,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
@@ -3400,8 +3396,8 @@ objectClass:dcmForwardRule
 cn:Private
 labeledURI:STORESCP
 dcmExclusiveUseDefinedTC:FALSE
-dcmScheduleDays:Wed,Thu
-dcmScheduleHours:9,10,11,12,13,14,15,16,17,18,19,20
+dcmScheduleDays:Mon,Wed
+dcmScheduleHours:9,10,11,12,13,14,15,16,17
 
 dn:dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomAETitle=*,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=nodomain
 objectClass:dcmAttributeCoercion

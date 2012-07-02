@@ -97,6 +97,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return super.newDevice(attrs);
         ProxyDevice device = new ProxyDevice(stringValue(attrs.get("dicomDeviceName")));
         device.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
+        device.setFileForwardingExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(intValue(attrs.get("dcmForwardThreads"), 1024)));
         device.setDicomConf(this);
         return device;
     }
@@ -115,6 +116,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return attrs;
         ProxyDevice proxyDev = (ProxyDevice) device;
         storeNotNull(attrs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
+        storeNotNull(attrs, "dcmForwardThreads", proxyDev.getFileForwardingExecutor().getMaximumPoolSize());
         return attrs;
     }
 
@@ -127,11 +129,6 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
         storeNotNull(attrs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
         storeNotNull(attrs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
-        storeNotNull(attrs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
-        storeNotNull(attrs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
-        storeNotNull(attrs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
-        storeNotNull(attrs, "dcmMppsDirectory", proxyAE.getMppsDirectory());
-        storeNotNull(attrs, "dcmForwardThreads", proxyAE.getExecutor().getMaximumPoolSize());
         return attrs;
     }
 
@@ -154,11 +151,6 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"),
                 Boolean.FALSE));
         proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
-        proxyAE.setAuditDirectory(stringValue(attrs.get("dcmAuditDirectory")));
-        proxyAE.setNactionDirectory(stringValue(attrs.get("dcmNactionDirectory")));
-        proxyAE.setNeventDirectory(stringValue(attrs.get("dcmNeventDirectory")));
-        proxyAE.setMppsDirectory(stringValue(attrs.get("dcmMppsDirectory")));
-        proxyAE.setExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(intValue(attrs.get("dcmForwardThreads"), 1024)));
     }
 
     @Override
@@ -330,11 +322,6 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
         storeDiff(mods, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
-        storeDiff(mods, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
-        storeDiff(mods, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
-        storeDiff(mods, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
-        storeDiff(mods, "dcmMppsDirectory", pa.getMppsDirectory(), pb.getMppsDirectory());
-        storeDiff(mods, "dcmForwardThreads", pa.getExecutor().getMaximumPoolSize(), pb.getExecutor().getMaximumPoolSize());
         return mods;
     }
 
@@ -346,6 +333,8 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyDevice pa = (ProxyDevice) a;
         ProxyDevice pb = (ProxyDevice) b;
         storeDiff(mods, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
+        storeDiff(mods, "dcmForwardThreads", pa.getFileForwardingExecutor().getMaximumPoolSize(), pb
+                .getFileForwardingExecutor().getMaximumPoolSize());
         return mods;
     }
 

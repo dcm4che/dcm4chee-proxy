@@ -8,7 +8,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.1
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
 
-attributetype ( 1.2.40.0.13.1.2.15.0.3.6
+attributetype ( 1.2.40.0.13.1.2.15.0.3.2
   NAME 'dcmSpoolDirectory'
   DESC 'String : directory for temporary DICOM files'
   EQUALITY caseIgnoreMatch
@@ -16,7 +16,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.6
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
 
-attributetype ( 1.2.40.0.13.1.2.15.0.3.7
+attributetype ( 1.2.40.0.13.1.2.15.0.3.3
   NAME 'dcmAcceptDataOnFailedNegotiation'
   DESC 'Boolean : temporary store data on failed negotiation with Called AET'
   EQUALITY caseIgnoreMatch
@@ -24,7 +24,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.7
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
 
-attributetype ( 1.2.40.0.13.1.2.15.0.3.8
+attributetype ( 1.2.40.0.13.1.2.15.0.3.4
   NAME 'dcmDestinationAETitle'
   DESC 'String : send DICOM files to target Called AET'
   EQUALITY caseIgnoreMatch
@@ -32,7 +32,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.8
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
 
-attributetype ( 1.2.40.0.13.1.2.15.0.3.9
+attributetype ( 1.2.40.0.13.1.2.15.0.3.5
   NAME 'dcmUseCallingAETitle'
   DESC 'String : value for Calling AE Title to be used by proxy'
   EQUALITY caseIgnoreMatch
@@ -40,7 +40,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.9
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
 
-attributetype ( 1.2.40.0.13.1.2.15.0.3.10 
+attributetype ( 1.2.40.0.13.1.2.15.0.3.6 
   NAME 'dcmExclusiveUseDefinedTC'
   DESC 'Boolean : only use transfer capabilities defined for proxy'
   EQUALITY caseIgnoreMatch
@@ -48,7 +48,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.10
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.11
+attributetype ( 1.2.40.0.13.1.2.15.0.3.7
   NAME 'dcmEnableAuditLog'
   DESC 'Boolean : enable audit logging'
   EQUALITY caseIgnoreMatch
@@ -56,15 +56,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.11
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.12
-  NAME 'dcmAuditDirectory'
-  DESC 'String : audit log directory'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-  SINGLE-VALUE )
-  
-attributetype ( 1.2.40.0.13.1.2.15.0.3.13
+attributetype ( 1.2.40.0.13.1.2.15.0.3.8
   NAME 'dcmScheduleDays'
   DESC 'Comma separated list or range : days for availability of AE'
   EQUALITY caseIgnoreMatch
@@ -72,7 +64,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.13
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.14
+attributetype ( 1.2.40.0.13.1.2.15.0.3.9
   NAME 'dcmScheduleHours'
   DESC 'Comma separated list or range : hours for availability of AE'
   EQUALITY caseIgnoreMatch
@@ -80,44 +72,28 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.14
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.15
+attributetype ( 1.2.40.0.13.1.2.15.0.3.10
   NAME 'dcmRetrySuffix'
   DESC 'Suffix of retry case'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.16
+attributetype ( 1.2.40.0.13.1.2.15.0.3.11
   NAME 'dcmRetryDelay'
   DESC 'Delay before trying to resend'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.17
+attributetype ( 1.2.40.0.13.1.2.15.0.3.12
   NAME 'dcmRetryNum'
   DESC 'Number of failed retries'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.18
-  NAME 'dcmNactionDirectory'
-  DESC 'String : naction spool directory'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-  SINGLE-VALUE )
-  
-attributetype ( 1.2.40.0.13.1.2.15.0.3.19
-  NAME 'dcmNeventDirectory'
-  DESC 'String : nevent spool directory'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-  SINGLE-VALUE )
-  
-attributetype ( 1.2.40.0.13.1.2.15.0.3.20 
+attributetype ( 1.2.40.0.13.1.2.15.0.3.13 
   NAME 'dcmCallingAETitle'
   DESC 'String : value for Calling AE Title specific Forward Rule'
   EQUALITY caseIgnoreMatch
@@ -125,15 +101,7 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.20
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.21 
-  NAME 'dcmMppsDirectory'
-  DESC 'String : mpps spool directory'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-  SINGLE-VALUE )
-  
-attributetype ( 1.2.40.0.13.1.2.15.0.3.22 
+attributetype ( 1.2.40.0.13.1.2.15.0.3.14 
   NAME 'dcmForwardThreads'
   DESC 'Integer : maximum number of concurrent forward threads'
   EQUALITY caseIgnoreMatch
@@ -146,7 +114,9 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.1
   DESC 'DICOM Proxy Device related information'
   SUP top AUXILIARY
   MUST (
-    dcmSchedulerInterval ) )
+    dcmSchedulerInterval ) 
+  MAY (
+    dcmForwardThreads ) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.2
   NAME 'dcmProxyNetworkAE'
@@ -155,13 +125,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.2
   MUST (
     dcmSpoolDirectory $
     dcmAcceptDataOnFailedNegotiation $
-    dcmEnableAuditLog $
-    dcmNactionDirectory $
-    dcmNeventDirectory $
-    dcmMppsDirectory )
-  MAY (
-    dcmAuditDirectory $
-    dcmForwardThreads ) )
+    dcmEnableAuditLog ) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.3
   NAME 'dcmRetry'

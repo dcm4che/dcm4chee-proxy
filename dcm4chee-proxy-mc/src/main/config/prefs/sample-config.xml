@@ -13,6 +13,7 @@
             <map/>
             <node name="dcm4chee-proxy">
               <map>
+                <entry key="dcmForwardThreads" value="1024"/>
                 <entry key="dcmProxyDevice" value="true"/>
                 <entry key="dcmSchedulerInterval" value="60"/>
                 <entry key="dicomAuthorizedNodeCertificateReference.#" value="2"/>
@@ -29,14 +30,9 @@
                 <node name="DCM4CHEE-PROXY">
                   <map>
                     <entry key="dcmAcceptDataOnFailedNegotiation" value="false"/>
-                    <entry key="dcmAuditDirectory" value="/tmp/proxy/audit"/>
                     <entry key="dcmEnableAuditLog" value="true"/>
-                    <entry key="dcmForwardThreads" value="1024"/>
-                    <entry key="dcmMppsDirectory" value="/tmp/proxy/mpps"/>
-                    <entry key="dcmNactionDirectory" value="/tmp/proxy/naction"/>
-                    <entry key="dcmNeventDirectory" value="/tmp/proxy/nevent"/>
                     <entry key="dcmProxyNetworkAE" value="true"/>
-                    <entry key="dcmSpoolDirectory" value="/tmp/proxy/proxy"/>
+                    <entry key="dcmSpoolDirectory" value="/tmp/proxy/"/>
                     <entry key="dicomAssociationAcceptor" value="true"/>
                     <entry key="dicomAssociationInitiator" value="true"/>
                     <entry key="dicomNetworkConnectionReference.#" value="2"/>

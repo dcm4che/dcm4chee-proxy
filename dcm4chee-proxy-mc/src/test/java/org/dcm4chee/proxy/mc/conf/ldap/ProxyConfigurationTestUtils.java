@@ -285,18 +285,14 @@ public class ProxyConfigurationTestUtils {
             device.setAuthorizedNodeCertificates(config.deviceRef(other),
                     (X509Certificate) KEYSTORE.getCertificate(other));
         device.setSchedulerInterval(60);
+        device.setFileForwardingExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(1024));
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
-        ae.setExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(1024));
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
-        ae.setSpoolDirectory("/tmp/proxy/proxy");
+        ae.setSpoolDirectory("/tmp/proxy/");
         ae.setAcceptDataOnFailedNegotiation(false);
         ae.setEnableAuditLog(true);
-        ae.setAuditDirectory("/tmp/proxy/audit");
-        ae.setNactionDirectory("/tmp/proxy/naction");
-        ae.setNeventDirectory("/tmp/proxy/nevent");
-        ae.setMppsDirectory("/tmp/proxy/mpps");
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,

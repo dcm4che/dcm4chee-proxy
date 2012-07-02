@@ -98,6 +98,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyDevice proxyDev = (ProxyDevice) device;
         prefs.putBoolean("dcmProxyDevice", true);
         storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
+        storeNotNull(prefs, "dcmForwardThreads", proxyDev.getFileForwardingExecutor().getMaximumPoolSize());
     }
 
     @Override
@@ -111,11 +112,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
         storeNotNull(prefs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
         storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
-        storeNotNull(prefs, "dcmAuditDirectory", proxyAE.getAuditDirectory());
-        storeNotNull(prefs, "dcmNactionDirectory", proxyAE.getNactionDirectory());
-        storeNotNull(prefs, "dcmNeventDirectory", proxyAE.getNeventDirectory());
-        storeNotNull(prefs, "dcmMppsDirectory", proxyAE.getMppsDirectory());
-        storeNotNull(prefs, "dcmForwardThreads", proxyAE.getExecutor().getMaximumPoolSize());
     }
 
     @Override
@@ -126,6 +122,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
         ProxyDevice proxyDev = (ProxyDevice) device;
         proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", 60));
+        proxyDev.setFileForwardingExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(prefs.getInt("dcmForwardThreads", 1024)));
     }
 
     @Override
@@ -137,11 +134,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setSpoolDirectory(prefs.get("dcmSpoolDirectory", null));
         proxyAE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmAcceptDataOnFailedNegotiation", false));
         proxyAE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
-        proxyAE.setAuditDirectory(prefs.get("dcmAuditDirectory", null));
-        proxyAE.setNactionDirectory(prefs.get("dcmNactionDirectory", null));
-        proxyAE.setNeventDirectory(prefs.get("dcmNeventDirectory", null));
-        proxyAE.setMppsDirectory(prefs.get("dcmMppsDirectory", null));
-        proxyAE.setExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(prefs.getInt("dcmForwardThreads", 1024)));
     }
 
     @Override
@@ -274,11 +266,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
         storeDiff(prefs, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
-        storeDiff(prefs, "dcmAuditDirectory", pa.getAuditDirectory(), pb.getAuditDirectory());
-        storeDiff(prefs, "dcmNactionDirectory", pa.getNactionDirectory(), pb.getNactionDirectory());
-        storeDiff(prefs, "dcmNeventDirectory", pa.getNeventDirectory(), pb.getNeventDirectory());
-        storeDiff(prefs, "dcmMppsDirectory", pa.getMppsDirectory(), pb.getMppsDirectory());
-        storeDiff(prefs, "dcmForwardThreads", pa.getExecutor().getMaximumPoolSize(), pb.getExecutor().getMaximumPoolSize());
     }
 
     @Override
@@ -290,6 +277,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyDevice pa = (ProxyDevice) a;
         ProxyDevice pb = (ProxyDevice) b;
         storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
+        storeDiff(prefs, "dcmForwardThreads", pa.getFileForwardingExecutor().getMaximumPoolSize(), pb
+                .getFileForwardingExecutor().getMaximumPoolSize());
     }
 
     @Override

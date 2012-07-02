@@ -119,10 +119,10 @@ public class Mpps extends DicomService {
         String cuid = rsp.getString(Tag.AffectedSOPClassUID);
         String tsuid = UID.ExplicitVRLittleEndian;
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
-        String baseDir = pae.getMppsDirectory();
-        String separator = ProxyApplicationEntity.getSeparator();
+        File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
+        dir.mkdir();
         for (Entry<String, String> entry : aets.entrySet()) {
-            File file = createFile(as, dimse, data, iuid, fmi, baseDir, separator, entry);
+            File file = createFile(as, dimse, data, iuid, fmi, dir, entry);
             rename(as, file);
         }
         try {
@@ -133,11 +133,10 @@ public class Mpps extends DicomService {
         }
     }
 
-    protected File createFile(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi, String baseDir,
-            String separator, Entry<String, String> entry) throws DicomServiceException {
-        String subdir = (dimse == Dimse.N_CREATE_RQ) ? "ncreate" : "nset";
-        File dir = new File(baseDir + separator + subdir + separator + entry.getKey());
-        dir.mkdirs();
+    protected File createFile(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi, File baseDir,
+            Entry<String, String> entry) throws DicomServiceException {
+        File dir = new File(baseDir, entry.getKey());
+        dir.mkdir();
         File file = new File(dir, iuid + ".part");
         fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, entry.getValue());
         DicomOutputStream out = null;
