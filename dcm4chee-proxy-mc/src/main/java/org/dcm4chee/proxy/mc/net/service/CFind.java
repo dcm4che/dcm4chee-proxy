@@ -39,6 +39,7 @@
 package org.dcm4chee.proxy.mc.net.service;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.net.Association;
@@ -71,12 +72,14 @@ public class CFind extends DicomService {
         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, data);
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            Association[] fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ);
-            if (fwdAssocs.length == 0)
+            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ);
+            if (fwdAssocs.isEmpty())
                     throw new DicomServiceException(Status.UnableToProcess);
             
             try {
-                new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, fwdAssocs).execute();
+                asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
+                new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, fwdAssocs.values().toArray(
+                        new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }

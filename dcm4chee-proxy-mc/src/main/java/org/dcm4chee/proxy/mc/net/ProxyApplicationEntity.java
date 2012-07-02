@@ -266,7 +266,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return false;
     }
 
-    public void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq) {
+    private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq) {
         List<ForwardRule> list = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getForwardRules()) {
             String callingAET = rule.getCallingAET();
@@ -307,7 +307,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return false;
     }
 
-    public boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
+    private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
         for (ForwardRule rule : forwardRules)
             if (rule.getReceiveSchedule() == null || rule.getReceiveSchedule().isNow(new GregorianCalendar()))
                 if (rule.getDestinationURI().startsWith("xsl:"))
@@ -335,7 +335,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return aeList;
     }
 
-    public List<String> getDestinationAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
+    private List<String> getDestinationAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
             TransformerConfigurationException {
         SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
         TransformerHandler handler = transFac.newTransformerHandler(template);
@@ -424,13 +424,26 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     @Override
     protected void onClose(Association asAccepted) {
         super.onClose(asAccepted);
-        Association asInvoked = (Association) asAccepted.getProperty(FORWARD_ASSOCIATION);
-        if (asInvoked != null && asInvoked.isRequestor())
-            try {
-                asInvoked.release();
-            } catch (IOException e) {
-                LOG.debug("Failed to release {} ({})", new Object[] {asInvoked, e});
-            }
+        Association[] asInvoked;
+        if (asAccepted.getProperty(FORWARD_ASSOCIATION) instanceof Association) {
+            ArrayList<Association> list = new ArrayList<Association>(1);
+            list.add((Association) asAccepted.getProperty(FORWARD_ASSOCIATION));
+            asInvoked = list.toArray(new Association[1]);
+        } else {
+            @SuppressWarnings("unchecked")
+            HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) asAccepted
+                    .getProperty(FORWARD_ASSOCIATION);
+            asInvoked = fwdAssocs.values().toArray(new Association[fwdAssocs.size()]);
+        }
+        asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        for (Association as : asInvoked) {
+            if (as != null && as.isRequestor())
+                try {
+                    as.release();
+                } catch (IOException e) {
+                    LOG.debug("Failed to release {} ({})", new Object[] { as, e });
+                }
+        }
     }
 
     public void coerceDataset(String remoteAET, Role role, Dimse dimse, Attributes attrs) throws IOException {
@@ -506,11 +519,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return getProxyDevice().getTemplates(uri);
     }
     
-    public Association[] openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse) {
+    public HashMap<String, Association> openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse) {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
-        List<Association> fwdAssocs = new ArrayList<Association>(aets.size());
+        HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(aets.size());
         for (Entry<String, String> entry : aets.entrySet()) {
             String callingAET = entry.getValue();
             String calledAET = entry.getKey();
@@ -521,7 +534,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             try {
                 asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
                 asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
-                fwdAssocs.add(asInvoked);
+                fwdAssocs.put(calledAET, asInvoked);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
             } catch (GeneralSecurityException e) {
@@ -534,21 +547,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }
         }
-        return fwdAssocs.toArray(new Association[fwdAssocs.size()]);
-    }
-    
-    public void close(boolean waitForOutstandingRSP, Association... fwdAssocs) {
-        for (Association as : fwdAssocs) {
-            if (as != null && as.isReadyForDataTransfer()) {
-                try {
-                    if (waitForOutstandingRSP)
-                        as.waitForOutstandingRSP();
-                    as.release();
-                    as.clearProperty(FORWARD_ASSOCIATION);
-                } catch (Exception e) {
-                    LOG.debug("Unexpected exception: " + e.getMessage());
-                }
-            }
-        }
+        return fwdAssocs;
     }
 }

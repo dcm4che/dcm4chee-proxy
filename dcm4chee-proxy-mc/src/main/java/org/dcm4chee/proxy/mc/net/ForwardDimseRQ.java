@@ -108,32 +108,28 @@ public class ForwardDimseRQ {
                     NumberOfWarningSuboperations = NumberOfWarningSuboperations + cmd.getInt(Tag.NumberOfWarningSuboperations, 0);
                     waitForOutstandingRSP.countDown();
                     if (waitForOutstandingRSP.getCount() == 0) {
-                        try {
-                            if (dimse == Dimse.C_FIND_RQ)
-                                try {
-                                    asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
-                                } catch (IOException e) {
-                                    LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
-                                }
-                            if (dimse == Dimse.C_GET_RQ)
-                                try {
-                                    Attributes rsp = Commands.mkCGetRSP(rq, status);
-                                    addNumberOfSuboperations(rsp);
-                                    asAccepted.writeDimseRSP(pc, rsp);
-                                } catch (IOException e) {
-                                    LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
-                                }
-                            if (dimse == Dimse.C_MOVE_RQ)
-                                try {
-                                    Attributes rsp = Commands.mkCMoveRSP(rq, status);
-                                    addNumberOfSuboperations(rsp);
-                                    asAccepted.writeDimseRSP(pc, rsp);
-                                } catch (Exception e) {
-                                    LOG.debug(asAccepted + ": failed to forward C-MOVE-RSP: " + e.getMessage());
-                                }
-                        } finally {
-                            pae.close(false, fwdAssocs);
-                        }
+                        if (dimse == Dimse.C_FIND_RQ)
+                            try {
+                                asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
+                            } catch (IOException e) {
+                                LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
+                            }
+                        if (dimse == Dimse.C_GET_RQ)
+                            try {
+                                Attributes rsp = Commands.mkCGetRSP(rq, status);
+                                addNumberOfSuboperations(rsp);
+                                asAccepted.writeDimseRSP(pc, rsp);
+                            } catch (IOException e) {
+                                LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
+                            }
+                        if (dimse == Dimse.C_MOVE_RQ)
+                            try {
+                                Attributes rsp = Commands.mkCMoveRSP(rq, status);
+                                addNumberOfSuboperations(rsp);
+                                asAccepted.writeDimseRSP(pc, rsp);
+                            } catch (Exception e) {
+                                LOG.debug(asAccepted + ": failed to forward C-MOVE-RSP: " + e.getMessage());
+                            }
                     }
                 }
             }

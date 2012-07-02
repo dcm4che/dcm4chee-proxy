@@ -51,6 +51,7 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.dcm4che.util.SafeClose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,7 +141,7 @@ public class AuditLog {
                 log.sopclassuid.add(prop.getProperty("SOPClassUID"));
             }
             long time = Long.parseLong(prop.getProperty("time"));
-            inStream.close();
+            SafeClose.close(inStream);
             log.t1 = (log.t1 == 0 || log.t1 > time) ? time : log.t1;
             log.t2 = (log.t2 == 0 || log.t2 < time) ? time : log.t2;
         } catch (IOException e) {

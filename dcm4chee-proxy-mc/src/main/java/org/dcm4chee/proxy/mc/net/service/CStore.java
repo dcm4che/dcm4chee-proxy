@@ -145,7 +145,7 @@ public class CStore extends BasicCStoreSCP {
         try {
             data.copyTo(out);
         } finally {
-            out.close();
+            SafeClose.close(out);
         }
         return fmi;
     }
