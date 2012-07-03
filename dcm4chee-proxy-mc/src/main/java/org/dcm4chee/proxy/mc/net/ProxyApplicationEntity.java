@@ -425,17 +425,19 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     protected void onClose(Association asAccepted) {
         super.onClose(asAccepted);
         Association[] asInvoked;
-        if (asAccepted.getProperty(FORWARD_ASSOCIATION) instanceof Association) {
+        Object forwardAssociationProperty = asAccepted.getProperty(FORWARD_ASSOCIATION);
+        if (forwardAssociationProperty == null)
+            return;
+
+        if (forwardAssociationProperty instanceof Association) {
             ArrayList<Association> list = new ArrayList<Association>(1);
-            list.add((Association) asAccepted.getProperty(FORWARD_ASSOCIATION));
+            list.add((Association) forwardAssociationProperty);
             asInvoked = list.toArray(new Association[1]);
         } else {
             @SuppressWarnings("unchecked")
-            HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) asAccepted
-                    .getProperty(FORWARD_ASSOCIATION);
+            HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
             asInvoked = fwdAssocs.values().toArray(new Association[fwdAssocs.size()]);
         }
-        asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         for (Association as : asInvoked) {
             if (as != null && as.isRequestor())
                 try {

@@ -76,6 +76,7 @@ public class CGet extends DicomService {
                 throw new DicomServiceException(Status.UnableToProcess);
 
             try {
+                asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
                 new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
