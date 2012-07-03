@@ -44,8 +44,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -98,7 +96,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyDevice proxyDev = (ProxyDevice) device;
         prefs.putBoolean("dcmProxyDevice", true);
         storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
-        storeNotNull(prefs, "dcmForwardThreads", proxyDev.getFileForwardingExecutor().getMaximumPoolSize());
+        storeNotNull(prefs, "dcmForwardThreads", proxyDev.getForwardThreads());
     }
 
     @Override
@@ -122,7 +120,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
         ProxyDevice proxyDev = (ProxyDevice) device;
         proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", 60));
-        proxyDev.setFileForwardingExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(prefs.getInt("dcmForwardThreads", 1024)));
+        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", 256));
     }
 
     @Override
@@ -277,8 +275,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyDevice pa = (ProxyDevice) a;
         ProxyDevice pb = (ProxyDevice) b;
         storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
-        storeDiff(prefs, "dcmForwardThreads", pa.getFileForwardingExecutor().getMaximumPoolSize(), pb
-                .getFileForwardingExecutor().getMaximumPoolSize());
+        storeDiff(prefs, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
     }
 
     @Override

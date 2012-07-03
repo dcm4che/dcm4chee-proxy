@@ -44,8 +44,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -285,7 +283,7 @@ public class ProxyConfigurationTestUtils {
             device.setAuthorizedNodeCertificates(config.deviceRef(other),
                     (X509Certificate) KEYSTORE.getCertificate(other));
         device.setSchedulerInterval(60);
-        device.setFileForwardingExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(1024));
+        device.setForwardThreads(256);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
         ae.setAssociationAcceptor(true);

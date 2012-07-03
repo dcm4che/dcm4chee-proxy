@@ -44,8 +44,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -97,7 +95,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return super.newDevice(attrs);
         ProxyDevice device = new ProxyDevice(stringValue(attrs.get("dicomDeviceName")));
         device.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
-        device.setFileForwardingExecutor((ThreadPoolExecutor) Executors.newFixedThreadPool(intValue(attrs.get("dcmForwardThreads"), 1024)));
+        device.setForwardThreads(intValue(attrs.get("dcmForwardThreads"), 256));
         device.setDicomConf(this);
         return device;
     }
@@ -116,7 +114,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return attrs;
         ProxyDevice proxyDev = (ProxyDevice) device;
         storeNotNull(attrs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
-        storeNotNull(attrs, "dcmForwardThreads", proxyDev.getFileForwardingExecutor().getMaximumPoolSize());
+        storeNotNull(attrs, "dcmForwardThreads", proxyDev.getForwardThreads());
         return attrs;
     }
 
@@ -333,8 +331,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyDevice pa = (ProxyDevice) a;
         ProxyDevice pb = (ProxyDevice) b;
         storeDiff(mods, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
-        storeDiff(mods, "dcmForwardThreads", pa.getFileForwardingExecutor().getMaximumPoolSize(), pb
-                .getFileForwardingExecutor().getMaximumPoolSize());
+        storeDiff(mods, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
         return mods;
     }
 
