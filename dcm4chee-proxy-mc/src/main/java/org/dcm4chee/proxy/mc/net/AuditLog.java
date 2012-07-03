@@ -64,16 +64,6 @@ public class AuditLog {
 
     ProxyApplicationEntity ae;
 
-    private long delay;
-
-    public long getDelay() {
-        return delay;
-    }
-
-    public void setDelay(long delay) {
-        this.delay = delay;
-    }
-
     public void writeLog(ProxyApplicationEntity ae) {
         this.ae = ae;
         for (String calledAET : ae.getAuditDirectoryPath().list()) {
@@ -118,11 +108,17 @@ public class AuditLog {
             String callingAET = path.substring(path.lastIndexOf(separator)+1);
             path = path.substring(0, path.lastIndexOf(separator));
             String calledAET = path.substring(path.lastIndexOf(separator)+1);
-            LOG.info(MessageFormat.format(
-                    "Sent {0} objects (={1}MB) of study {2} with SOPClassUIDs {3} " +
-                    "from {4} to {5} in {6}s (={7}MB/s)",
-                    log.files - 1, mb, studyIUID, Arrays.toString(log.sopclassuid.toArray()), 
-                    callingAET, calledAET, time, (log.totalSize / 1048576F) / time));
+            LOG.info("Sent {} {} (={}MB) of study {} with SOPClassUIDs {} from {} to {} in {}s (={}MB/s)",
+                    new Object[] {
+                            log.files - 1,
+                            ((log.files - 1) > 1) ? "objects" : "object",
+                            mb,
+                            studyIUID, 
+                            Arrays.toString(log.sopclassuid.toArray()), 
+                            callingAET, 
+                            calledAET, 
+                            time, 
+                            (log.totalSize / 1048576F) / time});
             for (File file : logFiles)
                 if (!file.delete())
                     LOG.debug("Failed to delete " + file);
@@ -156,7 +152,7 @@ public class AuditLog {
             @Override
             public boolean accept(File pathname) {
                 String path = pathname.getPath();
-                if (path.endsWith(".log") && now > pathname.lastModified() + getDelay()*1000)
+                if (path.endsWith(".log") && now > pathname.lastModified() + ((ProxyDevice)ae.getDevice()).getSchedulerInterval()*1000)
                     return true;
                 return false;
             }

@@ -149,12 +149,7 @@ public class ProxySA {
     }
     
     private static void configureScheduler(CommandLine cl, ProxyDevice proxyDevice) {
-        AuditLog log = new AuditLog();
-        if(cl.hasOption("audit-log-delay"))
-            log.setDelay(Long.parseLong(cl.getOptionValue("audit-log-delay")));
-        else
-            log.setDelay(60);
-        Scheduler scheduler = new Scheduler(proxyDevice, log);
+        Scheduler scheduler = new Scheduler(proxyDevice, new AuditLog());
         if(cl.hasOption("log-interval"))
             proxyDevice.setSchedulerInterval(Integer.parseInt(cl.getOptionValue("log-interval")));
         scheduler.start();
