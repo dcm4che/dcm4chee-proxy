@@ -65,8 +65,6 @@ public class ProxyDevice extends Device {
     private ThreadPoolExecutor fileForwardingExecutor;
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
-        if (fileForwardingExecutor == null)
-            fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(getForwardThreads());
         return fileForwardingExecutor;
     }
 
@@ -79,6 +77,7 @@ public class ProxyDevice extends Device {
     }
 
     public void setForwardThreads(int forwardThreads) {
+        fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads);
         this.forwardThreads = forwardThreads;
     }
     
