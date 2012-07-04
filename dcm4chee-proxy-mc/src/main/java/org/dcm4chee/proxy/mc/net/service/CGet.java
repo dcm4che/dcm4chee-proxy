@@ -69,8 +69,8 @@ public class CGet extends DicomService {
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, dimse, data);
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (asInvoked == null) {
+        Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (forwardAssociationProperty == null) {
             HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
@@ -84,7 +84,14 @@ public class CGet extends DicomService {
             }
         } else
             try {
-                new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, asInvoked).execute();
+                if (forwardAssociationProperty instanceof Association)
+                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, (Association) forwardAssociationProperty).execute();
+                else {
+                    @SuppressWarnings("unchecked")
+                    HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
+                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, fwdAssocs.values().toArray(
+                            new Association[fwdAssocs.size()])).execute();
+                }
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }

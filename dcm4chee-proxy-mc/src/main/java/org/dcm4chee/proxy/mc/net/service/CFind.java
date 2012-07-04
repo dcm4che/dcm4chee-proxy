@@ -70,8 +70,8 @@ public class CFind extends DicomService {
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, data);
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (asInvoked == null) {
+        Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (forwardAssociationProperty == null) {
             HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ);
             if (fwdAssocs.isEmpty())
                     throw new DicomServiceException(Status.UnableToProcess);
@@ -85,7 +85,14 @@ public class CFind extends DicomService {
             }
         } else
             try {
-                new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, asInvoked).execute();
+                if (forwardAssociationProperty instanceof Association)
+                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, (Association) forwardAssociationProperty).execute();
+                else {
+                    @SuppressWarnings("unchecked")
+                    HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
+                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, fwdAssocs.values().toArray(
+                            new Association[fwdAssocs.size()])).execute();
+                }
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }
