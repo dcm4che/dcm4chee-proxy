@@ -71,7 +71,8 @@ public class CMove extends DicomService {
         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, dimse, data);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse);
+            HashMap<String, String> aets = pae.filterForwardAETs(asAccepted, cmd, dimse);
+            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse, aets);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
 

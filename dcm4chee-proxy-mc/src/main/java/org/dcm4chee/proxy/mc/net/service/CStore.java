@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map.Entry;
 
 import org.dcm4che.conf.api.ConfigurationException;
@@ -67,11 +66,11 @@ import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.PDVInputStream;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
-import org.dcm4chee.proxy.mc.net.ForwardRule;
 import org.dcm4chee.proxy.mc.net.ProxyApplicationEntity;
 
 /**
@@ -90,16 +89,15 @@ public class CStore extends BasicCStoreSCP {
         if (dimse != Dimse.C_STORE_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (asInvoked == null)
-            super.onDimseRQ(asAccepted, pc, dimse, rq, data);
-        else if (!((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getAttributeCoercions().getAll()
-                .isEmpty()
-                || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog())
+        Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (forwardAssociationProperty == null
+                || !((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getAttributeCoercions().getAll().isEmpty()
+                || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog()
+                || (forwardAssociationProperty instanceof HashMap<?, ?>))
             store(asAccepted, pc, rq, data, null);
         else {
             try {
-                forward(asAccepted, pc, rq, new InputStreamDataWriter(data), asInvoked);
+                forward(asAccepted, pc, rq, new InputStreamDataWriter(data), (Association) forwardAssociationProperty);
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
                 asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
@@ -115,21 +113,19 @@ public class CStore extends BasicCStoreSCP {
         File file = createSpoolFile(as);
         MessageDigest digest = getMessageDigest(as);
         Attributes fmi = processInputStream(as, pc, rq, data, file, digest);
-        boolean keepFile = false;
         try {
-            Association as2 = (Association) as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-            if (as2 != null) {
+            Object forwardAssociationProperty = as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+            if (forwardAssociationProperty != null && forwardAssociationProperty instanceof Association) {
                 ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
                 Attributes attrs = parse(as, file);
-                keepFile = processFile(pae, as, pc, rq, rsp, file, digest, fmi, attrs);
+                processFile(pae, as, (Association) forwardAssociationProperty, pc, rq, rsp, file, digest, fmi, attrs);
             } 
             else
-                keepFile = processForwardRules(as, pc, rq, rsp, file, digest, fmi);
+                processForwardRules(as, forwardAssociationProperty, pc, rq, rsp, file, digest, fmi);
         } catch (ConfigurationException e) {
             LOG.error(as + ": error processing C-STORE-RQ: " + e.getMessage());
         } finally {
-            if (!keepFile)
-                deleteFile(as, file);
+            deleteFile(as, file);
         }
     }
 
@@ -150,29 +146,66 @@ public class CStore extends BasicCStoreSCP {
         return fmi;
     }
 
-    private boolean processForwardRules(Association as, PresentationContext pc, Attributes rq, Attributes rsp, File file,
+    private void processForwardRules(Association as, Object forwardAssociationProperty, PresentationContext pc, Attributes rq, Attributes rsp, File file,
             MessageDigest digest, Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, Dimse.C_STORE_RQ);
-        HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
+        Association asInvoked = null;
+        HashMap<String, String> aets = pae.filterForwardAETs(as, rq, Dimse.C_STORE_RQ);
         if (aets.entrySet().size() == 0)
             throw new ConfigurationException("no destination");
 
-        boolean keepSpoolFile = false;
+        if (aets.entrySet().size() == 1) {
+            Entry<String, String> entry = aets.entrySet().iterator().next();
+            asInvoked = getSingleForwardDestination(as, entry.getValue(), entry.getKey(), as.getAAssociateRQ(),
+                    forwardAssociationProperty, pae);
+        }
+        boolean writeDimseRSP = false;
         for (Entry<String, String> entry : aets.entrySet()) {
             File copy = createMappedFile(as, file, pae.getSpoolDirectoryPath(), fmi, entry.getValue(), entry.getKey());
-            boolean keepCopy = true;
+            boolean keepCopy = false;
             try {
                 Attributes attrs = parse(as, copy);
                 pae.coerceDataset(as.getRemoteAET(), Role.SCU, Dimse.C_STORE_RQ, attrs);
-                keepCopy = processFile(pae, as, pc, rq, rsp, copy, digest, fmi, attrs);
+                keepCopy = processFile(pae, as, asInvoked, pc, rq, rsp, copy, digest, fmi, attrs);
             } finally {
                 if (!keepCopy)
                     deleteFile(as, copy);
-                keepSpoolFile = keepSpoolFile && keepCopy;
+                writeDimseRSP = writeDimseRSP || keepCopy;
+            }
+        } if (writeDimseRSP) {
+            rsp = Commands.mkCStoreRSP(rq, Status.Success);
+            try {
+                as.writeDimseRSP(pc, rsp);
+            } catch (AssociationStateException e) {
+                LOG.warn("{} << C-STORE-RSP failed: {}", as, e.getMessage());
             }
         }
-        return keepSpoolFile;
+    }
+
+    private Association getSingleForwardDestination(Association as, String callingAET, String calledAET,
+            AAssociateRQ rq, Object forwardAssociationProperty, ProxyApplicationEntity pae) {
+        return (forwardAssociationProperty == null)
+            ? newForwardAssociation(as, callingAET, calledAET, rq, pae, new HashMap<String, Association>(1))
+            : (forwardAssociationProperty instanceof Association)
+                ? (Association) forwardAssociationProperty
+                : getAssociationFromHashMap(as, callingAET, calledAET, rq, forwardAssociationProperty, pae);
+    }
+
+    private Association getAssociationFromHashMap(Association as, String callingAET, String calledAET,
+            AAssociateRQ rq, Object forwardAssociationProperty, ProxyApplicationEntity pae) {
+        @SuppressWarnings("unchecked")
+        HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
+        return (fwdAssocs.containsKey(calledAET))
+            ? fwdAssocs.get(calledAET)
+            : newForwardAssociation(as, callingAET, calledAET, rq, pae, fwdAssocs);
+    }
+
+    private Association newForwardAssociation(Association as, String callingAET, String calledAET,
+            AAssociateRQ rq, ProxyApplicationEntity pae, HashMap<String, Association> fwdAssocs) {
+        Association asInvoked = pae.openForwardAssociation(as, callingAET, calledAET, rq);
+        fwdAssocs.put(calledAET, asInvoked);
+        as.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
+        return asInvoked;
     }
 
     private void deleteFile(Association as, File file) {
@@ -192,10 +225,9 @@ public class CStore extends BasicCStoreSCP {
         }
     }
 
-    protected boolean processFile(ProxyApplicationEntity pae, Association asAccepted, PresentationContext pc,
-            Attributes rq, Attributes rsp, File file, MessageDigest digest, Attributes fmi, Attributes attrs)
-            throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+    protected boolean processFile(ProxyApplicationEntity pae, Association asAccepted, Association asInvoked,
+            PresentationContext pc, Attributes rq, Attributes rsp, File file, MessageDigest digest, Attributes fmi, 
+            Attributes attrs) throws IOException {
         if (asInvoked == null) {
             rename(asAccepted, file, rq);
             return true;
@@ -267,7 +299,8 @@ public class CStore extends BasicCStoreSCP {
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
                 try {
-                    cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
+                    if (!asInvoked.isRequestor())
+                        cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.debug(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());

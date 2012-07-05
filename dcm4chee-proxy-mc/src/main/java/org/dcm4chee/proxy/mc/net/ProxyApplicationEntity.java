@@ -521,34 +521,42 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return getProxyDevice().getTemplates(uri);
     }
     
-    public HashMap<String, Association> openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse) {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
-        HashMap<String, String> aets = pae.getAETsFromForwardRules(asAccepted, forwardRules);
+    public HashMap<String, String> filterForwardAETs(Association asAccepted, Attributes rq, Dimse dimse) {
+        List<ForwardRule> forwardRules = filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+        return getAETsFromForwardRules(asAccepted, forwardRules);
+    }
+    
+    public HashMap<String, Association> openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse,
+            HashMap<String, String> aets) {
         HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(aets.size());
         for (Entry<String, String> entry : aets.entrySet()) {
             String callingAET = entry.getValue();
             String calledAET = entry.getKey();
-            AAssociateRQ aarq = asAccepted.getAAssociateRQ();
-            aarq.setCallingAET(callingAET);
-            aarq.setCalledAET(calledAET);
-            Association asInvoked = null;
-            try {
-                asInvoked = pae.connect(pae.getDestinationAE(calledAET), aarq);
-                asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
-                fwdAssocs.put(calledAET, asInvoked);
-            } catch (IncompatibleConnectionException e) {
-                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
-            } catch (GeneralSecurityException e) {
-                LOG.error("Failed to create SSL context ({})", new Object[]{e.getMessage()});
-            } catch (ConfigurationException e) {
-                LOG.error("Unable to load configuration for destination AET ({})", new Object[]{e.getMessage()});
-            } catch (ConnectException e) {
-                LOG.error("Unable to connect to {} ({})", new Object[] {calledAET, e.getMessage()} );
-            } catch (Exception e) {
-                LOG.debug("Unexpected exception: " + e.getMessage());
-            }
+            Association asInvoked = openForwardAssociation(asAccepted, callingAET, calledAET, asAccepted.getAAssociateRQ());
+            fwdAssocs.put(calledAET, asInvoked);
         }
         return fwdAssocs;
+    }
+    
+    public Association openForwardAssociation(Association asAccepted, String callingAET, String calledAET, 
+            AAssociateRQ rq) {
+        rq.setCallingAET(callingAET);
+        rq.setCalledAET(calledAET);
+        Association asInvoked = null;
+        try {
+            asInvoked = connect(getDestinationAE(calledAET), rq);
+            asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
+        } catch (IncompatibleConnectionException e) {
+            LOG.error("Unable to connect to {} ({})", new Object[] { calledAET, e.getMessage() });
+        } catch (GeneralSecurityException e) {
+            LOG.error("Failed to create SSL context ({})", new Object[] { e.getMessage() });
+        } catch (ConfigurationException e) {
+            LOG.error("Unable to load configuration for destination AET ({})", new Object[] { e.getMessage() });
+        } catch (ConnectException e) {
+            LOG.error("Unable to connect to {} ({})", new Object[] { calledAET, e.getMessage() });
+        } catch (Exception e) {
+            LOG.debug("Unexpected exception: " + e.getMessage());
+        }
+        return asInvoked;
     }
 }

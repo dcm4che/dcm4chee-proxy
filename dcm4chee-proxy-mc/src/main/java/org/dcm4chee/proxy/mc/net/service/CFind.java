@@ -72,7 +72,8 @@ public class CFind extends DicomService {
         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, data);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ);
+            HashMap<String, String> aets = pae.filterForwardAETs(asAccepted, rq, dimse);
+            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ, aets);
             if (fwdAssocs.isEmpty())
                     throw new DicomServiceException(Status.UnableToProcess);
             
