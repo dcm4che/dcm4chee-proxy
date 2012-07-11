@@ -39,9 +39,6 @@
 package org.dcm4chee.proxy.net;
 
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -88,40 +85,55 @@ public class Proxy extends DeviceService implements ProxyMBean {
     DicomConfiguration dicomConfiguration;
 
     private ObjectInstance mbean;
+    
+    private static Scheduler scheduler;
 
     @PostConstruct
     void init() {
         try {
             ProxyDevice proxyDevice = (ProxyDevice) dicomConfiguration.findDevice(System.getProperty(DEVICE_NAME,
                     "dcm4chee-proxy"));
-            ExecutorService executorService = Executors.newCachedThreadPool();
-            proxyDevice.setExecutor(executorService);
-            ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            proxyDevice.setScheduledExecutor(scheduledExecutorService);
+            super.init(proxyDevice);
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(this,
-                    new ObjectName(System.getProperty(JMX_NAME, "dcm4chee:service=proxy")));
-            DicomServiceRegistry dcmService = new DicomServiceRegistry();
-            dcmService.addDicomService(new CEcho());
-            dcmService.addDicomService(new CStore("*"));
-            dcmService.addDicomService(new StgCmt());
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.1.1"));
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.2.1"));
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.3.1"));
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.31"));
-            dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.1.3"));
-            dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.2.3"));
-            dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.3.3"));
-            dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.1.2"));
-            dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.2.2"));
-            dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.3.2"));
-            dcmService.addDicomService(new Mpps());
-            proxyDevice.setDimseRQHandler(dcmService);
-            proxyDevice.setKeyManager(keyManager());
+                    new ObjectName(System.getProperty(JMX_NAME, "dcm4chee:service=dcm4chee-proxy")));
+            scheduler = new Scheduler((ProxyDevice) device, new AuditLog());
             start();
         } catch (Exception e) {
             destroy();
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void start() throws Exception {
+        super.start();
+        scheduler.start();
+    }
+
+    @Override
+    public void stop() {
+        scheduler.stop();
+        super.stop();
+    }
+
+    @Override
+    protected DicomServiceRegistry serviceRegistry() {
+        DicomServiceRegistry dcmService = new DicomServiceRegistry();
+        dcmService.addDicomService(new CEcho());
+        dcmService.addDicomService(new CStore("*"));
+        dcmService.addDicomService(new StgCmt());
+        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.1.1"));
+        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.2.1"));
+        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.3.1"));
+        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.31"));
+        dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.1.3"));
+        dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.2.3"));
+        dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.3.3"));
+        dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.1.2"));
+        dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.2.2"));
+        dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.3.2"));
+        dcmService.addDicomService(new Mpps());
+        return dcmService;
     }
 
     @PreDestroy
@@ -147,6 +159,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         return device;
     }
 
+    @Override
     protected KeyManager keyManager() throws Exception {
         String url = System.getProperty(KS_URL, "resource:dcm4chee-proxy-key.jks");
         String kstype = System.getProperty(KS_TYPE, "JKS");

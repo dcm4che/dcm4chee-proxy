@@ -114,6 +114,29 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
     }
 
+    @Override
+    public void reconfigure(ApplicationEntity ae) {
+        super.reconfigure(ae);
+        reconfigureForwardSchedules((ProxyApplicationEntity) ae);
+        reconfigureForwardRules((ProxyApplicationEntity) ae);
+        reconfigureRetries((ProxyApplicationEntity) ae);
+    }
+
+    private void reconfigureRetries(ProxyApplicationEntity ae) {
+        retries.clear();
+        retries.addAll(ae.retries);
+    }
+
+    private void reconfigureForwardRules(ProxyApplicationEntity ae) {
+        forwardRules.clear();
+        forwardRules.addAll(ae.forwardRules);
+    }
+
+    private void reconfigureForwardSchedules(ProxyApplicationEntity ae) {
+        forwardSchedules.clear();
+        forwardSchedules.putAll(ae.forwardSchedules);
+    }
+
     public ProxyApplicationEntity(String aeTitle) {
         super(aeTitle);
     }
