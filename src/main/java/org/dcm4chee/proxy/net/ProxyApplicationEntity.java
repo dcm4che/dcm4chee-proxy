@@ -115,11 +115,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     @Override
-    public void reconfigure(ApplicationEntity ae) {
-        super.reconfigure(ae);
-        reconfigureForwardSchedules((ProxyApplicationEntity) ae);
-        reconfigureForwardRules((ProxyApplicationEntity) ae);
-        reconfigureRetries((ProxyApplicationEntity) ae);
+    protected void setApplicationEntityAttributes(ApplicationEntity from) {
+        super.setApplicationEntityAttributes(from);
+        reconfigureForwardRules((ProxyApplicationEntity) from);
+        reconfigureForwardSchedules((ProxyApplicationEntity) from);
+        reconfigureRetries((ProxyApplicationEntity) from);
     }
 
     private void reconfigureRetries(ProxyApplicationEntity ae) {
