@@ -70,6 +70,8 @@ import org.dcm4chee.proxy.net.Schedule;
  */
 public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
+    public LdapProxyConfiguration() throws ConfigurationException {}
+
     public LdapProxyConfiguration(Hashtable<?, ?> env) throws ConfigurationException {
         super(env);
     }
@@ -96,7 +98,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             return super.newDevice(attrs);
         ProxyDevice device = new ProxyDevice(stringValue(attrs.get("dicomDeviceName")));
         device.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
-        device.setForwardThreads(intValue(attrs.get("dcmForwardThreads"), 256));
+        device.setForwardThreads(intValue(attrs.get("dcmForwardThreads"), 1));
         device.setDicomConf(this);
         return device;
     }

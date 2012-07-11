@@ -90,7 +90,7 @@ public class ProxyDevice extends Device {
 
     public ProxyDevice(String name) {
         super(name);
-        setForwardThreads(256);
+        setForwardThreads(1);
     }
 
     public void setSchedulerInterval(Integer schedulerInterval) {

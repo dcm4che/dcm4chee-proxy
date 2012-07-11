@@ -63,6 +63,8 @@ import org.dcm4chee.proxy.net.Schedule;
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
 public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration {
+    
+    public PreferencesProxyConfiguration() {}
 
     public PreferencesProxyConfiguration(Preferences rootPrefs) {
         super(rootPrefs);
@@ -120,7 +122,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
         ProxyDevice proxyDev = (ProxyDevice) device;
         proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", 60));
-        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", 256));
+        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", 1));
     }
 
     @Override
