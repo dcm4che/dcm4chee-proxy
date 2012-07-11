@@ -77,6 +77,9 @@ public class ProxyDevice extends Device {
     }
 
     public void setForwardThreads(int forwardThreads) {
+        if (forwardThreads == 0)
+            throw new IllegalArgumentException("ForwardThreads cannot be 0");
+
         fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads);
         this.forwardThreads = forwardThreads;
     }
@@ -87,6 +90,7 @@ public class ProxyDevice extends Device {
 
     public ProxyDevice(String name) {
         super(name);
+        setForwardThreads(256);
     }
 
     public void setSchedulerInterval(Integer schedulerInterval) {
