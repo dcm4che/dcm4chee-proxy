@@ -170,7 +170,7 @@
     <profile>
       <id>lib-ldap</id>
       <properties>
-        <proxy-conf>org.dcm4chee.proxy.conf.prefs.LdapProxyConfiguration</proxy-conf>
+        <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
       </properties>
