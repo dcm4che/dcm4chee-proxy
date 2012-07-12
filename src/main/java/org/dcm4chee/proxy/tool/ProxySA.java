@@ -38,7 +38,6 @@
 
 package org.dcm4chee.proxy.tool;
 
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
 
@@ -74,13 +73,7 @@ public class ProxySA {
             proxy.setDicomConfiguration(dicomConfig);
             System.setProperty(Proxy.DEVICE_NAME, cl.getOptionValue("device"));
             proxy.init();
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
-            System.exit(2);
-        } catch (NamingException e) {
-            e.printStackTrace();
-            System.exit(2);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(2);
         }
