@@ -38,19 +38,11 @@
 
 package org.dcm4chee.proxy.tool;
 
-import java.io.IOException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
+import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.prefs.Preferences;
 
 import javax.naming.NamingException;
-import javax.net.ssl.KeyManager;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -60,23 +52,11 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.ldap.LdapEnv;
-import org.dcm4che.net.SSLManagerFactory;
-import org.dcm4che.net.service.DicomServiceRegistry;
-import org.dcm4chee.proxy.conf.AuditLog;
-import org.dcm4chee.proxy.conf.ProxyDevice;
-import org.dcm4chee.proxy.conf.Scheduler;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
-import org.dcm4chee.proxy.service.CEcho;
-import org.dcm4chee.proxy.service.CFind;
-import org.dcm4chee.proxy.service.CGet;
-import org.dcm4chee.proxy.service.CMove;
-import org.dcm4chee.proxy.service.CStore;
-import org.dcm4chee.proxy.service.Mpps;
-import org.dcm4chee.proxy.service.StgCmt;
+import org.dcm4chee.proxy.service.Proxy;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -87,40 +67,20 @@ public class ProxySA {
         ResourceBundle.getBundle("org.dcm4chee.proxy.tool.messages");
     
     public static void main(String[] args) {
-        
         try {
             CommandLine cl = parseComandLine(args);
             DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
-            ProxyDevice proxyDevice = 
-                (ProxyDevice) dicomConfig.findDevice(cl.getOptionValue("device"));
-            ExecutorService executorService = Executors.newCachedThreadPool();
-            proxyDevice.setExecutor(executorService);
-            ScheduledExecutorService scheduledExecutorService = 
-                Executors.newSingleThreadScheduledExecutor();
-            proxyDevice.setScheduledExecutor(scheduledExecutorService);
-            DicomServiceRegistry dcmService = new DicomServiceRegistry();
-            dcmService.addDicomService(new CEcho());
-            dcmService.addDicomService(new CStore("*"));
-            dcmService.addDicomService(new StgCmt());
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.1.1"));
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.2.1"));
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.3.1"));
-            dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.31"));
-            dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.1.3"));
-            dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.2.3"));
-            dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.3.3"));
-            dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.1.2"));
-            dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.2.2"));
-            dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.3.2"));
-            dcmService.addDicomService(new Mpps());
-            proxyDevice.setDimseRQHandler(dcmService);
-            configureKeyManager(cl, proxyDevice);
-            configureScheduler(cl, proxyDevice);
-            proxyDevice.bindConnections();
-        } catch (ConfigurationNotFoundException c) {
-            System.err.println("No device configuration found.");
+            Proxy proxy = new Proxy();
+            proxy.setDicomConfiguration(dicomConfig);
+            System.setProperty(Proxy.DEVICE_NAME, cl.getOptionValue("device"));
+            proxy.init();
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
             System.exit(2);
-        } catch (Exception e) {
+        } catch (NamingException e) {
+            e.printStackTrace();
+            System.exit(2);
+        } catch (ParseException e) {
             e.printStackTrace();
             System.exit(2);
         }
@@ -146,42 +106,6 @@ public class ProxySA {
     private static boolean useLdapConfiguration(CommandLine cl) {
         return cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd")
                 && cl.hasOption("ldap-domain");
-    }
-    
-    private static void configureScheduler(CommandLine cl, ProxyDevice proxyDevice) {
-        Scheduler scheduler = new Scheduler(proxyDevice, new AuditLog());
-        if(cl.hasOption("log-interval"))
-            proxyDevice.setSchedulerInterval(Integer.parseInt(cl.getOptionValue("log-interval")));
-        scheduler.start();
-    }
-
-    private static void configureKeyManager(CommandLine cl, ProxyDevice proxyDevice) {
-        try {
-            KeyManager keyMgr;
-            try {
-                keyMgr = SSLManagerFactory.createKeyManager(
-                        cl.getOptionValue("key-store-type", "JKS"), 
-                        cl.getOptionValue("key-store", "resource:dcm4chee-proxy-key.jks"), 
-                        cl.getOptionValue("key-store-pwd", "secret"), 
-                        cl.getOptionValue("key-pwd", "secret"));
-                proxyDevice.setKeyManager(keyMgr);
-            } catch (UnrecoverableKeyException e) {
-                System.err.println("Key for device not found in keystore.");
-                System.exit(2);
-            } catch (IOException e) {
-                System.err.println("Failed to read key-store.");
-                System.exit(2);
-            }
-        } catch (NoSuchAlgorithmException e) {
-            System.err.println("Requested cryptographic algorithm is not available.");
-            System.exit(2);
-        } catch (CertificateException e) {
-            System.err.println("Certificate error.");
-            System.exit(2);
-        } catch (KeyStoreException e) {
-            System.err.println("Key-store error.");
-            System.exit(2);
-        }
     }
     
     private static CommandLine parseComandLine(String[] args) throws ParseException {

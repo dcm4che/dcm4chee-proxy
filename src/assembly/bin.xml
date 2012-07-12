@@ -114,7 +114,7 @@
     <fileSet>
       <directory>target</directory>
       <includes>
-        <include>dcm4chee-proxy-tool-*.jar</include>
+        <include>dcm4chee-proxy-*-tool.jar</include>
       </includes>
       <fileMode>0644</fileMode>
       <outputDirectory>lib</outputDirectory>

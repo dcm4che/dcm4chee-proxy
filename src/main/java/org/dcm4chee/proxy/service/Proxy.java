@@ -80,11 +80,20 @@ public class Proxy extends DeviceService implements ProxyMBean {
     @EJB(name = "DicomConfiguration")
     DicomConfiguration dicomConfiguration;
 
+    public DicomConfiguration getDicomConfiguration() {
+        return dicomConfiguration;
+    }
+
+    public void setDicomConfiguration(DicomConfiguration dicomConfiguration) {
+        this.dicomConfiguration = dicomConfiguration;
+    }
+
     private ObjectInstance mbean;
     
     private static Scheduler scheduler;
 
     @PostConstruct
+    public
     void init() {
         try {
             ProxyDevice proxyDevice = (ProxyDevice) dicomConfiguration.findDevice(System.getProperty(DEVICE_NAME,
