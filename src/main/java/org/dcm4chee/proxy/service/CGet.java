@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net.service;
+package org.dcm4chee.proxy.service;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -49,22 +49,22 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.net.ForwardDimseRQ;
-import org.dcm4chee.proxy.net.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ForwardDimseRQ;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CMove extends DicomService {
+public class CGet extends DicomService {
 
-    public CMove(String... sopClasses) {
+    public CGet(String... sopClasses) {
         super(sopClasses);
     }
 
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
             throws IOException {
-        if (dimse != Dimse.C_MOVE_RQ)
+        if (dimse != Dimse.C_GET_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
@@ -96,5 +96,5 @@ public class CMove extends DicomService {
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }
-    };
+    }
 }

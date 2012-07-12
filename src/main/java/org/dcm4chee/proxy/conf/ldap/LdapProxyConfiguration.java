@@ -58,11 +58,11 @@ import org.dcm4che.conf.ldap.ExtendedLdapDicomConfiguration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
-import org.dcm4chee.proxy.net.ForwardRule;
-import org.dcm4chee.proxy.net.ProxyApplicationEntity;
-import org.dcm4chee.proxy.net.ProxyDevice;
-import org.dcm4chee.proxy.net.Retry;
-import org.dcm4chee.proxy.net.Schedule;
+import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.conf.Schedule;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>

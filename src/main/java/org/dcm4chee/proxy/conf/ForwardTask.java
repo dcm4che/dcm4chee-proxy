@@ -16,7 +16,7 @@
  *
  * The Initial Developer of the Original Code is
  * Agfa Healthcare.
- * Portions created by the Initial Developer are Copyright (C) 2012
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,24 +36,43 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.conf;
 
-import org.dcm4che.net.Device;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.net.pdu.PresentationContext;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- * @author Michael Backhaus <michael.backhaus@agfa.com>
+ *
  */
-public interface ProxyMBean {
+class ForwardTask {
 
-    boolean isRunning();
+    private final AAssociateRQ aarq = new AAssociateRQ();
+    private final ArrayList<File> files = new ArrayList<File>();
 
-    void start() throws Exception;
+    public ForwardTask(String callingAET, String calledAET) {
+        aarq.setCallingAET(callingAET);
+        aarq.setCalledAET(calledAET);
+    }
 
-    void stop();
+    public void addFile(File file, String cuid, String tsuid) {
+        if (!aarq.containsPresentationContextFor(cuid, tsuid))
+            aarq.addPresentationContext(
+                    new PresentationContext(
+                            aarq.getNumberOfPresentationContexts() * 2 + 1,
+                            cuid, tsuid));
+        files.add(file);
+    }
 
-    void reloadConfiguration() throws Exception;
+    public final AAssociateRQ getAAssociateRQ() {
+        return aarq;
+    }
 
-    Device unwrapDevice();
-
+    public final List<File> getFiles() {
+        return files;
+    }
 }

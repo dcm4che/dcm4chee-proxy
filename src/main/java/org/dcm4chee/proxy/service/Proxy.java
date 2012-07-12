@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.service;
 
 import java.lang.management.ManagementFactory;
 
@@ -57,13 +57,9 @@ import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.service.DicomServiceRegistry;
-import org.dcm4chee.proxy.net.service.CEcho;
-import org.dcm4chee.proxy.net.service.CFind;
-import org.dcm4chee.proxy.net.service.CGet;
-import org.dcm4chee.proxy.net.service.CMove;
-import org.dcm4chee.proxy.net.service.CStore;
-import org.dcm4chee.proxy.net.service.Mpps;
-import org.dcm4chee.proxy.net.service.StgCmt;
+import org.dcm4chee.proxy.conf.AuditLog;
+import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.Scheduler;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>

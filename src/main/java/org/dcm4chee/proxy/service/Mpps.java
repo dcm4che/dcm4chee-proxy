@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net.service;
+package org.dcm4chee.proxy.service;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,8 +60,8 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
-import org.dcm4chee.proxy.net.ForwardRule;
-import org.dcm4chee.proxy.net.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>

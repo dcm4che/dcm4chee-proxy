@@ -39,7 +39,7 @@
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.conf;
 
 import java.io.File;
 import java.io.FileFilter;

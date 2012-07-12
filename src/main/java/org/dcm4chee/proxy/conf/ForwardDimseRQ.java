@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.conf;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;

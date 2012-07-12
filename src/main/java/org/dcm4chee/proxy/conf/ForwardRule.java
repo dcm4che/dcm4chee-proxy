@@ -36,47 +36,71 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.conf;
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.net.Dimse;
 
 /**
- * @author Gunter Zeilinger <gunterze@gmail.com>
- * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Michael Backhaus <michael.backaus@agfa.com>
+ * 
  */
-public class Scheduler {
-
-    private final ProxyDevice device;
-    private final AuditLog log;
-    private ScheduledFuture<?> timer;
-
-    public Scheduler(ProxyDevice device, AuditLog log) {
-        this.device = device;
-        this.log = log;
+public class ForwardRule {
+    
+    private Dimse dimse;
+    private String sopClass;
+    private String callingAET;
+    private String destinationURI;
+    private String useCallingAET;
+    private Schedule receiveSchedule;
+    private boolean exclusiveUseDefinedTC;
+    private String commonName;
+    
+    public Dimse getDimse() {
+        return dimse;
     }
-
-    public void start() {
-        long period = device.getSchedulerInterval();
-        timer = device.scheduleAtFixedRate(new Runnable(){
-
-            @Override
-            public void run() {
-                for (ApplicationEntity ae : device.getApplicationEntities()) {
-                    if (ae instanceof ProxyApplicationEntity) {
-                        new ForwardFiles().execute((ProxyApplicationEntity) ae);
-                        log.writeLog((ProxyApplicationEntity) ae);
-                    }
-                }
-            }}, period, period, TimeUnit.SECONDS);
+    public void setDimse(Dimse dimse) {
+        this.dimse = dimse;
     }
-
-    public void stop() {
-        if (timer != null) {
-            timer.cancel(false);
-            timer = null;
-        }
+    public String getSopClass() {
+        return sopClass;
+    }
+    public void setSopClass(String sopClass) {
+        this.sopClass = sopClass;
+    }
+    public String getCallingAET() {
+        return callingAET;
+    }
+    public void setCallingAET(String callingAET) {
+        this.callingAET = callingAET;
+    }
+    public String getDestinationURI() {
+        return destinationURI;
+    }
+    public void setDestinationURI(String destinationURI) {
+        this.destinationURI = destinationURI;
+    }
+    public String getUseCallingAET() {
+        return useCallingAET;
+    }
+    public void setUseCallingAET(String useCallingAETitle) {
+        this.useCallingAET = useCallingAETitle;
+    }
+    public Schedule getReceiveSchedule() {
+        return receiveSchedule;
+    }
+    public void setReceiveSchedule(Schedule receiveTime) {
+        this.receiveSchedule = receiveTime;
+    }
+    public boolean isExclusiveUseDefinedTC() {
+        return exclusiveUseDefinedTC;
+    }
+    public void setExclusiveUseDefinedTC(boolean exclusiveUseDefinedTC) {
+        this.exclusiveUseDefinedTC = exclusiveUseDefinedTC;
+    }
+    public String getCommonName() {
+        return commonName;
+    }
+    public void setCommonName(String commonName) {
+        this.commonName = commonName;
     }
 }

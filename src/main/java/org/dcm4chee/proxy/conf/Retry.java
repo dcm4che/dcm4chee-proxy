@@ -36,71 +36,33 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
-
-import org.dcm4che.net.Dimse;
+package org.dcm4chee.proxy.conf;
 
 /**
- * @author Michael Backhaus <michael.backaus@agfa.com>
- * 
+ * @author Gunter Zeilinger <gunterze@gmail.com>
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class ForwardRule {
+public class Retry {
+
+    public final String suffix;
+    public final int delay;
+    public final int numberOfRetries;
+
+    public Retry(String suffix, int delay, int numberOfRetries) {
+        this.suffix = suffix;
+        this.delay = delay;
+        this.numberOfRetries = numberOfRetries;
+    }
     
-    private Dimse dimse;
-    private String sopClass;
-    private String callingAET;
-    private String destinationURI;
-    private String useCallingAET;
-    private Schedule receiveSchedule;
-    private boolean exclusiveUseDefinedTC;
-    private String commonName;
+    public String getSuffix(){
+        return suffix;
+    }
     
-    public Dimse getDimse() {
-        return dimse;
+    public int getDelay() {
+        return delay;
     }
-    public void setDimse(Dimse dimse) {
-        this.dimse = dimse;
-    }
-    public String getSopClass() {
-        return sopClass;
-    }
-    public void setSopClass(String sopClass) {
-        this.sopClass = sopClass;
-    }
-    public String getCallingAET() {
-        return callingAET;
-    }
-    public void setCallingAET(String callingAET) {
-        this.callingAET = callingAET;
-    }
-    public String getDestinationURI() {
-        return destinationURI;
-    }
-    public void setDestinationURI(String destinationURI) {
-        this.destinationURI = destinationURI;
-    }
-    public String getUseCallingAET() {
-        return useCallingAET;
-    }
-    public void setUseCallingAET(String useCallingAETitle) {
-        this.useCallingAET = useCallingAETitle;
-    }
-    public Schedule getReceiveSchedule() {
-        return receiveSchedule;
-    }
-    public void setReceiveSchedule(Schedule receiveTime) {
-        this.receiveSchedule = receiveTime;
-    }
-    public boolean isExclusiveUseDefinedTC() {
-        return exclusiveUseDefinedTC;
-    }
-    public void setExclusiveUseDefinedTC(boolean exclusiveUseDefinedTC) {
-        this.exclusiveUseDefinedTC = exclusiveUseDefinedTC;
-    }
-    public String getCommonName() {
-        return commonName;
-    }
-    public void setCommonName(String commonName) {
-        this.commonName = commonName;
+    
+    public int getNumberOfRetries() {
+        return numberOfRetries;
     }
 }

@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net.service;
+package org.dcm4chee.proxy.service;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -49,37 +49,36 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.net.ForwardDimseRQ;
-import org.dcm4chee.proxy.net.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ForwardDimseRQ;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
- * @author Gunter Zeilinger <gunterze@gmail.com>
  */
-public class CFind extends DicomService {
+public class CMove extends DicomService {
 
-    public CFind(String... sopClasses) {
+    public CMove(String... sopClasses) {
         super(sopClasses);
     }
 
     @Override
-    public void onDimseRQ(final Association asAccepted, final PresentationContext pc, Dimse dimse, Attributes rq,
-            Attributes data) throws IOException {
-        if (dimse != Dimse.C_FIND_RQ)
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
+            throws IOException {
+        if (dimse != Dimse.C_MOVE_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, data);
+        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, dimse, data);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            HashMap<String, String> aets = pae.filterForwardAETs(asAccepted, rq, dimse);
-            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ, aets);
+            HashMap<String, String> aets = pae.filterForwardAETs(asAccepted, cmd, dimse);
+            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse, aets);
             if (fwdAssocs.isEmpty())
-                    throw new DicomServiceException(Status.UnableToProcess);
-            
+                throw new DicomServiceException(Status.UnableToProcess);
+
             try {
                 asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
-                new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, fwdAssocs.values().toArray(
+                new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
@@ -87,15 +86,15 @@ public class CFind extends DicomService {
         } else
             try {
                 if (forwardAssociationProperty instanceof Association)
-                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, (Association) forwardAssociationProperty).execute();
+                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, (Association) forwardAssociationProperty).execute();
                 else {
                     @SuppressWarnings("unchecked")
                     HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
-                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, fwdAssocs.values().toArray(
+                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, fwdAssocs.values().toArray(
                             new Association[fwdAssocs.size()])).execute();
                 }
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
             }
-    }
+    };
 }

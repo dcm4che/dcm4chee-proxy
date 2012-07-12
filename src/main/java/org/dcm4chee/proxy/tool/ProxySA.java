@@ -65,18 +65,18 @@ import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.service.DicomServiceRegistry;
+import org.dcm4chee.proxy.conf.AuditLog;
+import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.Scheduler;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
-import org.dcm4chee.proxy.net.AuditLog;
-import org.dcm4chee.proxy.net.ProxyDevice;
-import org.dcm4chee.proxy.net.Scheduler;
-import org.dcm4chee.proxy.net.service.CEcho;
-import org.dcm4chee.proxy.net.service.CFind;
-import org.dcm4chee.proxy.net.service.CGet;
-import org.dcm4chee.proxy.net.service.CMove;
-import org.dcm4chee.proxy.net.service.CStore;
-import org.dcm4chee.proxy.net.service.Mpps;
-import org.dcm4chee.proxy.net.service.StgCmt;
+import org.dcm4chee.proxy.service.CEcho;
+import org.dcm4chee.proxy.service.CFind;
+import org.dcm4chee.proxy.service.CGet;
+import org.dcm4chee.proxy.service.CMove;
+import org.dcm4chee.proxy.service.CStore;
+import org.dcm4chee.proxy.service.Mpps;
+import org.dcm4chee.proxy.service.StgCmt;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>

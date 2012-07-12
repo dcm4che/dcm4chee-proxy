@@ -36,33 +36,47 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.conf;
+
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.dcm4che.net.ApplicationEntity;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class Retry {
+public class Scheduler {
 
-    public final String suffix;
-    public final int delay;
-    public final int numberOfRetries;
+    private final ProxyDevice device;
+    private final AuditLog log;
+    private ScheduledFuture<?> timer;
 
-    public Retry(String suffix, int delay, int numberOfRetries) {
-        this.suffix = suffix;
-        this.delay = delay;
-        this.numberOfRetries = numberOfRetries;
+    public Scheduler(ProxyDevice device, AuditLog log) {
+        this.device = device;
+        this.log = log;
     }
-    
-    public String getSuffix(){
-        return suffix;
+
+    public void start() {
+        long period = device.getSchedulerInterval();
+        timer = device.scheduleAtFixedRate(new Runnable(){
+
+            @Override
+            public void run() {
+                for (ApplicationEntity ae : device.getApplicationEntities()) {
+                    if (ae instanceof ProxyApplicationEntity) {
+                        new ForwardFiles().execute((ProxyApplicationEntity) ae);
+                        log.writeLog((ProxyApplicationEntity) ae);
+                    }
+                }
+            }}, period, period, TimeUnit.SECONDS);
     }
-    
-    public int getDelay() {
-        return delay;
-    }
-    
-    public int getNumberOfRetries() {
-        return numberOfRetries;
+
+    public void stop() {
+        if (timer != null) {
+            timer.cancel(false);
+            timer = null;
+        }
     }
 }

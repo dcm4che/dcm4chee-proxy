@@ -36,43 +36,41 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net;
+package org.dcm4chee.proxy.service;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
-import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.net.Association;
+import org.dcm4che.net.Dimse;
+import org.dcm4che.net.DimseRSP;
+import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che.net.service.BasicCEchoSCP;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
+ * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-class ForwardTask {
+public class CEcho extends BasicCEchoSCP {
 
-    private final AAssociateRQ aarq = new AAssociateRQ();
-    private final ArrayList<File> files = new ArrayList<File>();
-
-    public ForwardTask(String callingAET, String calledAET) {
-        aarq.setCallingAET(callingAET);
-        aarq.setCalledAET(calledAET);
+    @Override
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
+            Attributes data) throws IOException {
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null) {
+            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
+            return;
+        }
+        try {
+            DimseRSP rsp = asInvoked.cecho();
+            rsp.next();
+            asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
+        } catch (Exception e) {
+            LOG.debug("Failed to forward C-ECHO RQ to {} ({})", new Object[] {asInvoked, e.getMessage()} );
+            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
+        }
     }
 
-    public void addFile(File file, String cuid, String tsuid) {
-        if (!aarq.containsPresentationContextFor(cuid, tsuid))
-            aarq.addPresentationContext(
-                    new PresentationContext(
-                            aarq.getNumberOfPresentationContexts() * 2 + 1,
-                            cuid, tsuid));
-        files.add(file);
-    }
-
-    public final AAssociateRQ getAAssociateRQ() {
-        return aarq;
-    }
-
-    public final List<File> getFiles() {
-        return files;
-    }
 }

@@ -1,5 +1,24 @@
+Build
+=====
+
+JBoss7 EJB Package
+------------------
+
+* Preferences: mvn install -P prefs
+* LDAP: mvn install -Pldap -D ldap
+
+Standalone Application
+----------------------
+* mvn install -P tool
+
+Library
+-------
+
+* Preferences: mvn install -P lib-prefs
+* LDAP: mvn install -Pldap -D lib-ldap
+
 JBoss Configuration
--------------------
+===================
 
 For all audit log messages to appear in a separate log file (e.g. dcm4chee-proxy-audit.log), add to the according container configuration (e.g. standalone.xml):
 

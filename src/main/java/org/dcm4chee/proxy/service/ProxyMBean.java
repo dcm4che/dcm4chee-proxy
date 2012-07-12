@@ -16,7 +16,7 @@
  *
  * The Initial Developer of the Original Code is
  * Agfa Healthcare.
- * Portions created by the Initial Developer are Copyright (C) 2011
+ * Portions created by the Initial Developer are Copyright (C) 2012
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,41 +36,24 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.net.service;
+package org.dcm4chee.proxy.service;
 
-import java.io.IOException;
-
-import org.dcm4che.data.Attributes;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSP;
-import org.dcm4che.net.pdu.AAbort;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.BasicCEchoSCP;
-import org.dcm4chee.proxy.net.ProxyApplicationEntity;
+import org.dcm4che.net.Device;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CEcho extends BasicCEchoSCP {
+public interface ProxyMBean {
 
-    @Override
-    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
-            Attributes data) throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        if (asInvoked == null) {
-            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
-            return;
-        }
-        try {
-            DimseRSP rsp = asInvoked.cecho();
-            rsp.next();
-            asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
-        } catch (Exception e) {
-            LOG.debug("Failed to forward C-ECHO RQ to {} ({})", new Object[] {asInvoked, e.getMessage()} );
-            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
-        }
-    }
+    boolean isRunning();
+
+    void start() throws Exception;
+
+    void stop();
+
+    void reloadConfiguration() throws Exception;
+
+    Device unwrapDevice();
 
 }
