@@ -175,7 +175,7 @@
         <profile-exclude>**/service/**</profile-exclude>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-lib-prefs-${project.version}</finalName>
+        <finalName>dcm4chee-proxy-lib-ldap-${project.version}</finalName>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
