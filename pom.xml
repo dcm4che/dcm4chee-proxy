@@ -75,8 +75,8 @@
             </manifestEntries>
           </archive>
           <excludes>
-            <exclude>org/dcm4chee/proxy/tool/**</exclude>
             <exclude>${profile-exclude}</exclude>
+            <exclude>${exclude-tool}</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -152,6 +152,7 @@
         <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
+        <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
         <project-classifier>lib-prefs</project-classifier>
       </properties>
       <build>
@@ -177,8 +178,10 @@
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
         <project-classifier>lib-ldap</project-classifier>
+        <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
+        <finalName>dcm4chee-proxy-${project.version}-${ldap}</finalName>
         <filters>
           <filter>src/main/filters/${ldap}.properties</filter>
         </filters>
@@ -200,6 +203,7 @@
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/conf/ldap/**</profile-exclude>
         <project-classifier>prefs</project-classifier>
+        <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
         <resources>
@@ -223,8 +227,10 @@
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/conf/prefs/**</profile-exclude>
         <project-classifier>ldap</project-classifier>
+        <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
+        <finalName>dcm4chee-proxy-${project.version}-${ldap}</finalName>
         <filters>
           <filter>src/main/filters/${ldap}.properties</filter>
         </filters>
@@ -248,8 +254,9 @@
     <profile>
       <id>tool</id>
       <properties>
-        <profile-exclude>nothing</profile-exclude>
+        <profile-exclude>FALSE</profile-exclude>
         <project-classifier>tool</project-classifier>
+        <exclude-tool>FALSE</exclude-tool>
       </properties>
       <build>
         <plugins>
