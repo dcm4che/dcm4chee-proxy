@@ -5,8 +5,8 @@ For all audit log messages to appear in a separate log file (e.g. dcm4chee-proxy
 
 ```xml
 <profile>
-.
-.
+  .
+  .
   <subsystem xmlns="urn:jboss:domain:logging:1.1">
     .
     .
