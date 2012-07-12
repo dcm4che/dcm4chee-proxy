@@ -5,7 +5,7 @@ JBoss7 EJB Package
 ------------------
 
 * Preferences: mvn install -P prefs
-* LDAP: mvn install -Pldap -D ldap
+* LDAP: mvn install -P ldap
 
 Standalone Application
 ----------------------
@@ -15,7 +15,7 @@ Library
 -------
 
 * Preferences: mvn install -P lib-prefs
-* LDAP: mvn install -Pldap -D lib-ldap
+* LDAP: mvn install -P lib-ldap
 
 JBoss Configuration
 ===================
