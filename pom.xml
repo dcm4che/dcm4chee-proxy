@@ -66,6 +66,7 @@
         <artifactId>maven-ejb-plugin</artifactId>
         <version>2.3</version>
         <configuration>
+          <classifier>${project-classifier}</classifier>
           <ejbVersion>3.1</ejbVersion>
           <filterDeploymentDescriptor>true</filterDeploymentDescriptor>
           <archive>
@@ -150,6 +151,7 @@
         <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
+        <project-classifier>lib-prefs</project-classifier>
       </properties>
       <build>
         <finalName>dcm4chee-proxy-lib-prefs-${project.version}</finalName>
@@ -173,6 +175,7 @@
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
+        <project-classifier>lib-ldap</project-classifier>
       </properties>
       <build>
         <finalName>dcm4chee-proxy-lib-ldap-${project.version}</finalName>
@@ -196,6 +199,7 @@
         <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/conf/ldap/**</profile-exclude>
+        <project-classifier>prefs</project-classifier>
       </properties>
       <build>
         <finalName>dcm4chee-proxy-prefs-${project.version}</finalName>
@@ -218,6 +222,7 @@
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/conf/prefs/**</profile-exclude>
+        <project-classifier>ldap</project-classifier>
       </properties>
       <build>
         <finalName>dcm4chee-proxy-ldap-${project.version}</finalName>
@@ -245,6 +250,7 @@
       <id>tool</id>
       <properties>
         <profile-exclude>nothing</profile-exclude>
+        <project-classifier>tool</project-classifier>
       </properties>
       <build>
         <finalName>dcm4chee-proxy-tool-${project.version}</finalName>
