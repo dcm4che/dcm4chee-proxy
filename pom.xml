@@ -148,13 +148,16 @@
     <profile>
       <id>lib-prefs</id>
       <properties>
+        <ldap>opends</ldap>
         <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
         <project-classifier>lib-prefs</project-classifier>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-lib-prefs-${project.version}</finalName>
+        <filters>
+          <filter>src/main/filters/${ldap}.properties</filter>
+        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -162,9 +165,6 @@
           <resource>
             <directory>src/main/resources-ldap</directory>
             <filtering>true</filtering>
-          </resource>
-          <resource>
-            <directory>src/main/filters</directory>
           </resource>
         </resources>
       </build>
@@ -172,13 +172,16 @@
     <profile>
       <id>lib-ldap</id>
       <properties>
+        <ldap>opends</ldap>
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
         <project-classifier>lib-ldap</project-classifier>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-lib-ldap-${project.version}</finalName>
+        <filters>
+          <filter>src/main/filters/${ldap}.properties</filter>
+        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -186,9 +189,6 @@
           <resource>
             <directory>src/main/resources-ldap</directory>
             <filtering>true</filtering>
-          </resource>
-          <resource>
-            <directory>src/main/filters</directory>
           </resource>
         </resources>
       </build>
@@ -202,7 +202,6 @@
         <project-classifier>prefs</project-classifier>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-prefs-${project.version}</finalName>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -219,13 +218,16 @@
     <profile>
       <id>ldap</id>
       <properties>
+        <ldap>slapd</ldap>
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/conf/prefs/**</profile-exclude>
         <project-classifier>ldap</project-classifier>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-ldap-${project.version}</finalName>
+        <filters>
+          <filter>src/main/filters/${ldap}.properties</filter>
+        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -240,9 +242,6 @@
             <directory>src/main/resources-ldap</directory>
             <filtering>true</filtering>
           </resource>
-          <resource>
-            <directory>src/main/filters</directory>
-          </resource>
         </resources>
       </build>
     </profile>
@@ -253,7 +252,6 @@
         <project-classifier>tool</project-classifier>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-tool-${project.version}</finalName>
         <plugins>
           <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
