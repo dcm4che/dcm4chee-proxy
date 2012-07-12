@@ -163,7 +163,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             rule.setDestinationURI(ruleNode.get("labeledURI", null));
             rule.setUseCallingAET(ruleNode.get("dcmUseCallingAETitle", null));
             rule.setExclusiveUseDefinedTC(ruleNode.getBoolean("dcmExclusiveUseDefinedTC", Boolean.FALSE));
-            rule.setCommonName(ruleNode.get("commonName", null));
+            rule.setCommonName(ruleNode.get("cn", null));
             Schedule schedule = new Schedule();
             schedule.setDays(ruleNode.get("dcmScheduleDays", null));
             schedule.setHours(ruleNode.get("dcmScheduleHours", null));
@@ -223,9 +223,9 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dicomSOPClass", rule.getSopClass());
         storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
         storeNotNull(prefs, "labeledURI", rule.getDestinationURI());
-        storeNotNull(prefs, "dcmUseCallingAET", rule.getUseCallingAET());
+        storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         storeNotDef(prefs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC(), Boolean.FALSE);
-        storeNotNull(prefs, "commonName", rule.getCommonName());
+        storeNotNull(prefs, "cn", rule.getCommonName());
         storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
     }
@@ -318,7 +318,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
         storeDiff(prefs, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
         storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
-        storeDiff(prefs, "commonName", ruleA.getCommonName(), ruleB.getCommonName());
+        storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
         storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
         storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());

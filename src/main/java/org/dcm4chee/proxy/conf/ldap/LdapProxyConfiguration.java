@@ -180,7 +180,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 rule.setDestinationURI(stringValue(attrs.get("labeledURI")));
                 rule.setUseCallingAET(stringValue(attrs.get("dcmUseCallingAETitle")));
                 rule.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
-                rule.setCommonName(stringValue(attrs.get("commonName")));
+                rule.setCommonName(stringValue(attrs.get("cn")));
                 Schedule schedule = new Schedule();
                 schedule.setDays(stringValue(attrs.get("dcmScheduleDays")));
                 schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
@@ -251,7 +251,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     private String dnOfForwardRule(ForwardRule rule, String parentDN) {
         StringBuilder sb = new StringBuilder();
-        sb.append("commonName=").append(rule.getCommonName());
+        sb.append("cn=").append(rule.getCommonName());
         sb.append(',').append(parentDN);
         return sb.toString();
     }
@@ -262,9 +262,9 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dicomSOPClass", rule.getSopClass());
         storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
         storeNotNull(attrs, "labeledURI", rule.getDestinationURI());
-        storeNotNull(attrs, "dcmUseCallingAET", rule.getUseCallingAET());
+        storeNotNull(attrs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         storeBoolean(attrs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC());
-        storeNotNull(attrs, "commonName", rule.getCommonName());
+        storeNotNull(attrs, "cn", rule.getCommonName());
         storeNotNull(attrs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         storeNotNull(attrs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         return attrs;
@@ -372,7 +372,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
         storeDiff(mods, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
         storeDiff(mods, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
-        storeDiff(mods, "commonName", ruleA.getCommonName(), ruleB.getCommonName());
+        storeDiff(mods, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         storeDiff(mods, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
         storeDiff(mods, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
         storeDiff(mods, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());

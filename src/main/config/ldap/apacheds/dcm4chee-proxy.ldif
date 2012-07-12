@@ -250,7 +250,7 @@ m-oid: 1.2.40.0.13.1.2.15.0.4.5
 m-name: dcmForwardRule
 m-description: Forward Rule configuration
 m-must: labeledURI
-m-must: commonName
+m-must: cn
 m-may: dcmDIMSE
 m-may: dicomSOPClass
 m-may: dcmCallingAETitle

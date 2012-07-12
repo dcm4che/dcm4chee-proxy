@@ -119,7 +119,7 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
   STRUCTURAL
   MUST (
     labeledURI $
-    commonName )
+    cn )
   MAY (
     dcmDIMSE $
     dicomSOPClass $
