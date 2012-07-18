@@ -122,21 +122,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         reconfigureRetries((ProxyApplicationEntity) from);
     }
 
-    private void reconfigureRetries(ProxyApplicationEntity ae) {
-        retries.clear();
-        retries.addAll(ae.retries);
-    }
-
-    private void reconfigureForwardRules(ProxyApplicationEntity ae) {
-        forwardRules.clear();
-        forwardRules.addAll(ae.forwardRules);
-    }
-
-    private void reconfigureForwardSchedules(ProxyApplicationEntity ae) {
-        forwardSchedules.clear();
-        forwardSchedules.putAll(ae.forwardSchedules);
-    }
-
     public ProxyApplicationEntity(String aeTitle) {
         super(aeTitle);
     }
@@ -260,6 +245,104 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return (List<ForwardRule>) as.getProperty(FORWARD_RULES);
     }
 
+    private File getLogDir(Association as, Attributes attrs) {
+        File path = new File(getAuditDirectoryPath().getPath() + getSeparator() + as.getCalledAET()
+                + getSeparator() + as.getCallingAET() + getSeparator() + attrs.getString(Tag.StudyInstanceUID));
+        path.mkdirs();
+        return path;
+    }
+
+    public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
+            Role role, Dimse cmd) {
+        return attributeCoercions.findMatching(sopClass, cmd, role, aeTitle);
+    }
+
+    public AttributeCoercions getAttributeCoercions() {
+        return attributeCoercions;
+    }
+
+    private ProxyDevice getProxyDevice() {
+        return (ProxyDevice) this.getDevice();
+    }
+
+    public Templates getTemplates(String uri) throws TransformerConfigurationException {
+        return getProxyDevice().getTemplates(uri);
+    }
+
+    public HashMap<String, String> getAETsFromForwardRules(Association as, List<ForwardRule> rules)
+            throws TransformerFactoryConfigurationError {
+        HashMap<String, String> aeList = new HashMap<String, String>();
+        for (ForwardRule rule : rules) {
+            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
+            List<String> destinationAETs = new ArrayList<String>();
+            if (rule.isTemplateURI())
+                try {
+                    destinationAETs = getDestinationAETsFromTemplate((Templates) getTemplates(rule.getDestinationURI()));
+                } catch (TransformerException e) {
+                    LOG.warn("Error parsing template", e);
+                }
+            else
+                destinationAETs.add(rule.getDestinationAETitle());
+            for (String destinationAET : destinationAETs)
+                aeList.put(destinationAET, callingAET);
+        }
+        return aeList;
+    }
+
+    private List<String> getDestinationAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
+            TransformerConfigurationException {
+        SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
+        TransformerHandler handler = transFac.newTransformerHandler(template);
+        final List<String> result = new ArrayList<String>();
+        handler.setResult(new SAXResult(new DefaultHandler() {
+    
+            @Override
+            public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
+                    throws SAXException {
+                if (qName.equals("Destination")) {
+                    result.add(attributes.getValue("aet"));
+                }
+            }
+    
+        }));
+        return result;
+    }
+
+    public ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
+        ProxyDevice device = (ProxyDevice) getDevice();
+        return device.findApplicationEntity(destinationAETitle);
+    }
+
+    private boolean isAssociationFromDestinationAET(Association asAccepted) {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        for (Entry<String, Schedule> schedule : pae.getForwardSchedules().entrySet())
+            if (asAccepted.getCallingAET().equals(schedule.getKey()))
+                return true;
+        return false;
+    }
+
+    private boolean isAvailableDestinationAET(String destinationAET) {
+        for(Entry<String, Schedule> entry : forwardSchedules.entrySet())
+            if (entry.getKey().equals(destinationAET))
+                return entry.getValue().isNow(new GregorianCalendar());
+        return false;
+    }
+
+    private void reconfigureRetries(ProxyApplicationEntity ae) {
+        retries.clear();
+        retries.addAll(ae.retries);
+    }
+
+    private void reconfigureForwardRules(ProxyApplicationEntity ae) {
+        forwardRules.clear();
+        forwardRules.addAll(ae.forwardRules);
+    }
+
+    private void reconfigureForwardSchedules(ProxyApplicationEntity ae) {
+        forwardSchedules.clear();
+        forwardSchedules.putAll(ae.forwardSchedules);
+    }
+
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac) throws IOException {
         filterForwardRulesOnNegotiationRQ(as, rq);
@@ -278,15 +361,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 && matchingForwardRules.get(0).getSopClass() == null
                 && (matchingForwardRules.get(0).getCallingAET() == null || 
                         matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
-                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationURI()));
-    }
-
-    private boolean isAssociationFromDestinationAET(Association asAccepted) {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        for (Entry<String, Schedule> schedule : pae.getForwardSchedules().entrySet())
-            if (asAccepted.getCallingAET().equals(schedule.getKey()))
-                return true;
-        return false;
+                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitle()));
     }
 
     private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq) {
@@ -323,60 +398,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return o1 == null || o2 == null || o1.equals(o2);
     }
 
-    private boolean isAvailableDestinationAET(String destinationAET) {
-        for(Entry<String, Schedule> entry : forwardSchedules.entrySet())
-            if (entry.getKey().equals(destinationAET))
-                return entry.getValue().isNow(new GregorianCalendar());
-        return false;
-    }
-
     private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
         for (ForwardRule rule : forwardRules)
             if (rule.getReceiveSchedule() == null || rule.getReceiveSchedule().isNow(new GregorianCalendar()))
-                if (rule.getDestinationURI().startsWith("xsl:"))
+                if (rule.isTemplateURI())
                     return true;
         return false;
     }
 
-    public HashMap<String, String> getAETsFromForwardRules(Association as, List<ForwardRule> rules)
-            throws TransformerFactoryConfigurationError {
-        HashMap<String, String> aeList = new HashMap<String, String>();
-        for (ForwardRule rule : rules) {
-            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-            List<String> destinationAETs = new ArrayList<String>();
-            if (rule.getDestinationURI().startsWith("xsl:"))
-                try {
-                    destinationAETs = getDestinationAETsFromTemplate((Templates) getTemplates(rule.getDestinationURI()));
-                } catch (TransformerException e) {
-                    LOG.warn("Error parsing template", e);
-                }
-            else
-                destinationAETs.add(rule.getDestinationURI());
-            for (String destinationAET : destinationAETs)
-                aeList.put(destinationAET, callingAET);
-        }
-        return aeList;
-    }
-
-    private List<String> getDestinationAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
-            TransformerConfigurationException {
-        SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
-        TransformerHandler handler = transFac.newTransformerHandler(template);
-        final List<String> result = new ArrayList<String>();
-        handler.setResult(new SAXResult(new DefaultHandler() {
-
-            @Override
-            public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
-                    throws SAXException {
-                if (qName.equals("Destination")) {
-                    result.add(attributes.getValue("aet"));
-                }
-            }
-
-        }));
-        return result;
-    }
-    
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac, ForwardRule forwardRule) 
             throws IOException {
         try {
@@ -384,8 +413,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 rq.setCallingAET(forwardRule.getUseCallingAET());
             else if (!getAETitle().equals("*"))
                 rq.setCallingAET(getAETitle());
-            rq.setCalledAET(forwardRule.getDestinationURI());
-            Association asCalled = connect(getDestinationAE(forwardRule.getDestinationURI()), rq);
+            rq.setCalledAET(forwardRule.getDestinationAETitle());
+            Association asCalled = connect(getDestinationAE(forwardRule.getDestinationAETitle()), rq);
             as.setProperty(FORWARD_ASSOCIATION, asCalled);
             asCalled.setProperty(FORWARD_ASSOCIATION, as);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
@@ -425,11 +454,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.error("Failed to create SSL context", e);
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".ssl", 0);
         }
-    }
-
-    public ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
-        ProxyDevice device = (ProxyDevice) getDevice();
-        return device.findApplicationEntity(destinationAETitle);
     }
 
     private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
@@ -516,34 +540,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    private File getLogDir(Association as, Attributes attrs) {
-        File path = new File(getAuditDirectoryPath().getPath() + getSeparator() + as.getCalledAET()
-                + getSeparator() + as.getCallingAET() + getSeparator() + attrs.getString(Tag.StudyInstanceUID));
-        path.mkdirs();
-        return path;
-    }
-
     public void addAttributeCoercion(AttributeCoercion ac) {
         attributeCoercions.add(ac);
     }
 
-    public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
-            Role role, Dimse cmd) {
-        return attributeCoercions.findMatching(sopClass, cmd, role, aeTitle);
-    }
-
-    public AttributeCoercions getAttributeCoercions() {
-        return attributeCoercions;
-    }
-    
-    private ProxyDevice getProxyDevice() {
-        return (ProxyDevice) this.getDevice();
-    }
-    
-    public Templates getTemplates(String uri) throws TransformerConfigurationException {
-        return getProxyDevice().getTemplates(uri);
-    }
-    
     public HashMap<String, String> filterForwardAETs(Association asAccepted, Attributes rq, Dimse dimse) {
         List<ForwardRule> forwardRules = filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
         return getAETsFromForwardRules(asAccepted, forwardRules);

@@ -76,6 +76,12 @@ public class ForwardRule {
     public String getDestinationURI() {
         return destinationURI;
     }
+    public String getDestinationAETitle() {
+        return destinationURI.substring(4);
+    }
+    public boolean isTemplateURI() {
+        return !destinationURI.startsWith("aet:");
+    }
     public void setDestinationURI(String destinationURI) {
         this.destinationURI = destinationURI;
     }

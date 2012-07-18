@@ -13,7 +13,7 @@
             <map/>
             <node name="dcm4chee-proxy">
               <map>
-                <entry key="dcmForwardThreads" value="1024"/>
+                <entry key="dcmForwardThreads" value="8"/>
                 <entry key="dcmProxyDevice" value="true"/>
                 <entry key="dcmSchedulerInterval" value="60"/>
                 <entry key="dicomAuthorizedNodeCertificateReference.#" value="2"/>
@@ -62,18 +62,18 @@
                     <map/>
                     <node name="1">
                       <map>
-                        <entry key="commonName" value="Public"/>
+                        <entry key="cn" value="Public"/>
                         <entry key="dcmScheduleDays" value="Mon,Tue,Thu,Fri"/>
                         <entry key="dcmScheduleHours" value="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"/>
-                        <entry key="labeledURI" value="DCM4CHEE"/>
+                        <entry key="labeledURI" value="aet:DCM4CHEE"/>
                       </map>
                     </node>
                     <node name="2">
                       <map>
-                        <entry key="commonName" value="Private"/>
+                        <entry key="cn" value="Private"/>
                         <entry key="dcmScheduleDays" value="Wed"/>
                         <entry key="dcmScheduleHours" value="9,10,11,12,13,14,15,16,17"/>
-                        <entry key="labeledURI" value="STORESCP"/>
+                        <entry key="labeledURI" value="aet:STORESCP"/>
                       </map>
                     </node>
                   </node>
