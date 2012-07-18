@@ -239,6 +239,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     private void storeToForwardSchedule(Entry<String, Schedule> forwardSchedule, Preferences prefs) {
         storeNotNull(prefs, "dcmForwardScheduleDays", forwardSchedule.getValue().getDays());
         storeNotNull(prefs, "dcmForwardScheduleHours", forwardSchedule.getValue().getHours());
+        storeNotNull(prefs, "dcmDestinationAETitle", forwardSchedule.getKey());
     }
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
