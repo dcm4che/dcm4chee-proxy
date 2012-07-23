@@ -38,6 +38,7 @@
 
 package org.dcm4chee.proxy.tool;
 
+import java.sql.DriverManager;
 import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
 
@@ -56,6 +57,7 @@ import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
 import org.dcm4chee.proxy.service.Proxy;
+
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -92,8 +94,16 @@ public class ProxySA {
             env.setUserDN(cl.getOptionValue("ldap-userDN"));
             env.setPassword(cl.getOptionValue("ldap-pwd"));
             return new LdapProxyConfiguration(env);
-        } else
-            return (DicomConfiguration) new PreferencesProxyConfiguration(Preferences.userRoot());
+        } else if (cl.hasOption("jdbc-backend-url")) {
+            if (!DriverManager.getDrivers().hasMoreElements())
+                throw new RuntimeException("No jdbc driver in classpath.");
+            
+            System.setProperty("java.util.prefs.PreferencesFactory", "org.dcm4che.jdbc.prefs.PreferencesFactoryImpl");
+            System.setProperty("jdbc.backend.url", cl.getOptionValue("jdbc-backend-url"));
+            System.setProperty("jdbc.user.name", cl.getOptionValue("jdbc-user-name"));
+            System.setProperty("jdbc.user.pwd", cl.getOptionValue("jdbc-user-pwd"));
+        }
+        return (DicomConfiguration) new PreferencesProxyConfiguration(Preferences.userRoot());
     }
 
     private static boolean useLdapConfiguration(CommandLine cl) {
@@ -108,9 +118,32 @@ public class ProxySA {
         addTLSOptions(opts);
         addLDAPOptions(opts);
         addAuditLogOptions(opts);
+        addOracleOptions(opts);
         return parseComandLine(args, opts, rb, ProxySA.class);
     }
     
+    @SuppressWarnings("static-access")
+    private static void addOracleOptions(Options opts) {
+        opts.addOption(OptionBuilder
+                .hasArg()
+                .withArgName("url")
+                .withDescription(rb.getString("jdbc-backend-url"))
+                .withLongOpt("jdbc-backend-url")
+                .create(null));
+        opts.addOption(OptionBuilder
+                .hasArg()
+                .withArgName("name")
+                .withDescription(rb.getString("jdbc-user-name"))
+                .withLongOpt("jdbc-user-name")
+                .create(null));
+        opts.addOption(OptionBuilder
+                .hasArg()
+                .withArgName("password")
+                .withDescription(rb.getString("jdbc-user-pwd"))
+                .withLongOpt("jdbc-user-pwd")
+                .create(null));
+    }
+
     @SuppressWarnings("static-access")
     private static void addDicomConfig(Options opts) {
         opts.addOption(OptionBuilder

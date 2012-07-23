@@ -36,15 +36,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.mc.conf.prefs;
+package org.dcm4chee.proxy.conf.prefs.test;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.prefs.Preferences;
 
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.conf.ldap.test.ProxyConfigurationTestUtils;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
-import org.dcm4chee.proxy.mc.conf.ldap.ProxyConfigurationTestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

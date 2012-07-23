@@ -129,6 +129,7 @@
         <include>org.dcm4che:dcm4che-conf-api</include>
         <include>org.dcm4che:dcm4che-core</include>
         <include>org.dcm4che:dcm4che-net</include>
+        <include>org.dcm4che:dcm4che-jdbc-prefs</include>
         <include>org.slf4j:slf4j-api</include>
         <include>org.slf4j:slf4j-log4j12</include>
         <include>log4j:log4j</include>

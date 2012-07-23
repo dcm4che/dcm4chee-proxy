@@ -1,47 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- ***** BEGIN LICENSE BLOCK *****
-   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
-   -
-   - The contents of this file are subject to the Mozilla Public License Version
-   - 1.1 (the "License"); you may not use this file except in compliance with
-   - the License. You may obtain a copy of the License at
-   - http://www.mozilla.org/MPL/
-   -
-   - Software distributed under the License is distributed on an "AS IS" basis,
-   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-   - for the specific language governing rights and limitations under the
-   - License.
-   -
-   - The Original Code is part of dcm4che, an implementation of DICOM(TM) in
-   - Java(TM), hosted at https://github.com/gunterze/dcm4che.
-   -
-   - The Initial Developer of the Original Code is
-   - Agfa Healthcare.
-   - Portions created by the Initial Developer are Copyright (C) 2011
-   - the Initial Developer. All Rights Reserved.
-   -
-   - Contributor(s):
-   - Michael Backhaus <michael.backhaus@agfa.com>
-   -
-   - Alternatively, the contents of this file may be used under the terms of
-   - either the GNU General Public License Version 2 or later (the "GPL"), or
-   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-   - in which case the provisions of the GPL or the LGPL are applicable instead
-   - of those above. If you wish to allow use of your version of this file only
-   - under the terms of either the GPL or the LGPL, and not to allow others to
-   - use your version of this file under the terms of the MPL, indicate your
-   - decision by deleting the provisions above and replace them with the notice
-   - and other provisions required by the GPL or the LGPL. If you do not delete
-   - the provisions above, a recipient may use your version of this file under
-   - the terms of any one of the MPL, the GPL or the LGPL.
-   -
-   - ***** END LICENSE BLOCK *****  -->
-   
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.dcm4chee.proxy</groupId>
   <artifactId>dcm4chee-proxy</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <description>DICOM J2EE Proxy Application</description>
   <packaging>ejb</packaging>
   <build>
@@ -143,6 +104,12 @@
       <version>1.2</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>dcm4che-jdbc-prefs</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <profiles>
     <profile>
@@ -206,6 +173,30 @@
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+          </resource>
+          <resource>
+            <directory>src/main/config/conf</directory>
+            <includes>
+              <include>dcm4chee-proxy-key.jks</include>
+            </includes>
+          </resource>
+        </resources>
+      </build>
+    </profile>
+    <profile>
+      <id>prefs-jdbc</id>
+      <properties>
+        <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
+        <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.jdbc.prefs</lib-dep>
+        <profile-exclude>**/conf/ldap/**</profile-exclude>
+        <project-classifier>prefs</project-classifier>
+        <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
+      </properties>
+      <build>
+        <finalName>dcm4chee-proxy-${project.version}-jdbc</finalName>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -325,6 +316,11 @@
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
           <version>1.6.4</version>
+        </dependency>
+        <dependency>
+          <groupId>org.dcm4che</groupId>
+          <artifactId>dcm4che-jdbc-prefs</artifactId>
+          <version>1.0.0-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>

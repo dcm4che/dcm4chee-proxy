@@ -48,6 +48,8 @@ CP="$CP:$PROXY_HOME/lib/slf4j-api-1.6.4.jar"
 CP="$CP:$PROXY_HOME/lib/slf4j-log4j12-1.6.4.jar"
 CP="$CP:$PROXY_HOME/lib/log4j-1.2.16.jar"
 CP="$CP:$PROXY_HOME/lib/commons-cli-1.2.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar"
+CP="$CP:$PROXY_HOME/lib/ojdbc6.jar"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.mc.conf.ldap;
+package org.dcm4chee.proxy.conf.ldap.test;
 
 import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;

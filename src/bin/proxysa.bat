@@ -51,5 +51,7 @@ set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-3.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-3.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-api-3.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\commons-cli-1.2.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\ojdbc6.jar
 
 "%JAVA%" %JAVA_OPTS% -cp "%CP%" %MAIN_CLASS% %ARGS%

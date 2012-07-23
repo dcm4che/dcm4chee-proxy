@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.mc.conf.ldap;
+package org.dcm4chee.proxy.conf.ldap.test;
 
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
@@ -73,11 +73,13 @@ import org.junit.Test;
 public class ProxyConfigurationTestUtils {
 
     private static final String[] OTHER_DEVICES = {
+        "dcm4chee-arc",
         "storescp",
-        "storescu"
+        "storescu",
     };
     
     private static final String[] OTHER_AES = {
+        "DCM4CHEE",
         "STORESCP",
         "STORESCU",
     };
@@ -265,7 +267,7 @@ public class ProxyConfigurationTestUtils {
             String aet = OTHER_AES[i];
             config.registerAETitle(aet);
             config.persist(createDevice(config, OTHER_DEVICES[i], aet,
-                    "localhost", 11113 + i, 2763 + i));
+                    "localhost", 11112 + i, 2762 + i));
         }
         for (int i = OTHER_AES.length; i < OTHER_DEVICES.length; i++)
             config.persist(createDevice(config, OTHER_DEVICES[i]));
@@ -313,14 +315,14 @@ public class ProxyConfigurationTestUtils {
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
         ForwardRule forwardRulePublic = new ForwardRule();
         forwardRulePublic.setCommonName("Public");
-        forwardRulePublic.setDestinationURI("DCM4CHEE");
+        forwardRulePublic.setDestinationURI("aet:DCM4CHEE");
         Schedule receiveSchedulePublic = new Schedule();
         receiveSchedulePublic.setDays("Mon, Tue, Thu, Fri");
         forwardRulePublic.setReceiveSchedule(receiveSchedulePublic);
         forwardRules.add(forwardRulePublic);
         ForwardRule forwardRulePrivate = new ForwardRule();
         forwardRulePrivate.setCommonName("Private");
-        forwardRulePrivate.setDestinationURI("STORESCP");
+        forwardRulePrivate.setDestinationURI("aet:STORESCP");
         Schedule receiveSchedulePrivate = new Schedule();
         receiveSchedulePrivate.setDays("Wed");
         receiveSchedulePrivate.setHours("9-18");
@@ -346,7 +348,7 @@ public class ProxyConfigurationTestUtils {
 //        dicom.setInstalled(true);
         device.addConnection(dicom);
         ae.addConnection(dicom);
-        Connection dicomTLS = new Connection("dicom-tls", "localhost", 2762);
+        Connection dicomTLS = new Connection("dicom-tls", "localhost", 22762);
         dicomTLS.setMaxOpsInvoked(0);
         dicomTLS.setMaxOpsPerformed(0);
         dicomTLS.setTlsCipherSuites(

@@ -68,7 +68,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
     public PreferencesProxyConfiguration(Preferences rootPrefs) {
         super(rootPrefs);
-        setConfigurationRoot("org/dcm4chee/proxy");
     }
 
     @Override
