@@ -138,17 +138,41 @@
       </build>
     </profile>
     <profile>
+      <id>lib-prefs-jdbc</id>
+      <properties>
+        <ldap>opends</ldap>
+        <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
+        <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.conf.ldap,org.dcm4che.jdbc.prefs</lib-dep>
+        <profile-exclude>**/service/**</profile-exclude>
+        <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
+        <project-classifier>lib-prefs-jdbc</project-classifier>
+      </properties>
+      <build>
+        <filters>
+          <filter>src/main/filters/${ldap}.properties</filter>
+        </filters>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+          </resource>
+          <resource>
+            <directory>src/main/resources-ldap</directory>
+            <filtering>true</filtering>
+          </resource>
+        </resources>
+      </build>
+    </profile>
+    <profile>
       <id>lib-ldap</id>
       <properties>
         <ldap>opends</ldap>
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
-        <project-classifier>lib-ldap</project-classifier>
+        <project-classifier>lib-ldap-${ldap}</project-classifier>
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-${project.version}-${ldap}</finalName>
         <filters>
           <filter>src/main/filters/${ldap}.properties</filter>
         </filters>
@@ -192,11 +216,10 @@
         <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.jdbc.prefs</lib-dep>
         <profile-exclude>**/conf/ldap/**</profile-exclude>
-        <project-classifier>prefs</project-classifier>
+        <project-classifier>prefs-jdbc</project-classifier>
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-${project.version}-jdbc</finalName>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
@@ -217,11 +240,10 @@
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap</lib-dep>
         <profile-exclude>**/conf/prefs/**</profile-exclude>
-        <project-classifier>ldap</project-classifier>
+        <project-classifier>ldap-${ldap}</project-classifier>
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
-        <finalName>dcm4chee-proxy-${project.version}-${ldap}</finalName>
         <filters>
           <filter>src/main/filters/${ldap}.properties</filter>
         </filters>
