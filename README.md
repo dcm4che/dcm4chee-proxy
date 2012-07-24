@@ -37,7 +37,7 @@ For all audit log messages to appear in a separate log file (e.g. dcm4chee-proxy
       <suffix value=".yyyy-MM-dd"/>
       <append value="true"/>
     </periodic-rotating-file-handler>
-    <logger category="org.dcm4chee.proxy.net.AuditLog">
+    <logger category="org.dcm4chee.proxy.conf.AuditLog">
       <level name="INFO"/>
       <handlers>
         <handler name="PROXYAUDITLOG"/>
