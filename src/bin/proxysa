@@ -4,7 +4,7 @@
 # -------------------------------------------------------------------------
 
 MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
-MAIN_JAR=dcm4chee-proxy-0.0.1-SNAPSHOT-tool.jar
+MAIN_JAR=dcm4chee-proxy-1.0.0-SNAPSHOT-tool.jar
 
 DIRNAME="`dirname "$0"`"
 

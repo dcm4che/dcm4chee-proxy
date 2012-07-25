@@ -7,7 +7,7 @@ if not "%ECHO%" == ""  echo %ECHO%
 if "%OS%" == "Windows_NT"  setlocal
 
 set MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
-set MAIN_JAR=dcm4chee-proxy-0.0.1-SNAPSHOT-tool.jar
+set MAIN_JAR=dcm4chee-proxy-1.0.0-SNAPSHOT-tool.jar
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%
