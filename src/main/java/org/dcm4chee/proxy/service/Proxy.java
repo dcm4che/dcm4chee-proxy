@@ -68,7 +68,7 @@ import org.dcm4chee.proxy.conf.Scheduler;
 @DependsOn("DicomConfiguration")
 @Startup
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-public class Proxy extends DeviceService implements ProxyMBean {
+public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
 
     public static final String DEVICE_NAME = "org.dcm4chee.proxy.net.deviceName";
     public static final String JMX_NAME = "org.dcm4chee.proxy.net.jmxName";
@@ -164,7 +164,6 @@ public class Proxy extends DeviceService implements ProxyMBean {
         return device;
     }
 
-    @Override
     protected KeyManager keyManager() throws Exception {
         String url = System.getProperty(KS_URL, "resource:dcm4chee-proxy-key.jks");
         String kstype = System.getProperty(KS_TYPE, "JKS");
