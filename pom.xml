@@ -123,16 +123,13 @@
         <project-classifier>lib-prefs</project-classifier>
       </properties>
       <build>
-        <filters>
-          <filter>src/main/filters/${ldap}.properties</filter>
-        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
-          </resource>
-          <resource>
-            <directory>src/main/resources-ldap</directory>
             <filtering>true</filtering>
+            <excludes>
+              <exclude>org/*</exclude>
+            </excludes>
           </resource>
         </resources>
       </build>
@@ -148,16 +145,13 @@
         <project-classifier>lib-prefs-jdbc</project-classifier>
       </properties>
       <build>
-        <filters>
-          <filter>src/main/filters/${ldap}.properties</filter>
-        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
-          </resource>
-          <resource>
-            <directory>src/main/resources-ldap</directory>
             <filtering>true</filtering>
+            <excludes>
+              <exclude>org/*</exclude>
+            </excludes>
           </resource>
         </resources>
       </build>
@@ -173,16 +167,13 @@
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
-        <filters>
-          <filter>src/main/filters/${ldap}.properties</filter>
-        </filters>
         <resources>
           <resource>
             <directory>src/main/resources</directory>
-          </resource>
-          <resource>
-            <directory>src/main/resources-ldap</directory>
             <filtering>true</filtering>
+            <excludes>
+              <exclude>org/*</exclude>
+            </excludes>
           </resource>
         </resources>
       </build>
