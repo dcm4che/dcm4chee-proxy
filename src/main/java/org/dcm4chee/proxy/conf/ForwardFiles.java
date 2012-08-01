@@ -392,17 +392,17 @@ public class ForwardFiles {
         } catch (ConfigurationException ce) {
             LOG.error("Unable to load configuration: " + ce.getMessage());
         } catch (AAssociateRJ rj) {
-            handleProcessException(ft, rj, ".rj-" + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
+            handleProcessException(ft, rj, RetryFileSuffix.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
         } catch (AAbort aa) {
-            handleProcessException(ft, aa, ".aa-" + aa.getSource() + "-" + aa.getReason());
+            handleProcessException(ft, aa, RetryFileSuffix.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason());
         } catch (IOException e) {
             handleProcessException(ft, e, RetryFileSuffix.ConnectionException.getSuffix());
         } catch (InterruptedException e) {
-            LOG.error("Connection exception: " + e.getMessage());
+            handleProcessException(ft, e, RetryFileSuffix.ConnectionException.getSuffix());
         } catch (IncompatibleConnectionException e) {
-            LOG.error("Incompatible connection: " + e.getMessage());
+            handleProcessException(ft, e, RetryFileSuffix.IncompatibleConnectionException.getSuffix());
         } catch (GeneralSecurityException e) {
-            LOG.error("Failed to create SSL context: " + e.getMessage());
+            handleProcessException(ft, e, RetryFileSuffix.GeneralSecurityException.getSuffix());
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {

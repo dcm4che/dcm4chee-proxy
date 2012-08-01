@@ -42,6 +42,8 @@ package org.dcm4chee.proxy.conf;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public enum RetryFileSuffix {
+    AAssociateRJ(".rj"),
+    AAbort(".aa"),
     ConfigurationException(".conf"),
     ConnectionException(".conn"),
     GeneralSecurityException(".ssl"),

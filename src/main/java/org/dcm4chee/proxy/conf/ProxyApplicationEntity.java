@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.nio.file.FileStore;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -439,11 +440,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), rj,
-                    ".rj" + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
+                    RetryFileSuffix.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
                     rj.getReason());
         } catch (AAbort aa) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), aa,
-                    ".aa" + aa.getSource() + "-" + aa.getReason(), aa.getReason());
+                    RetryFileSuffix.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason(), aa.getReason());
         } catch (IOException e) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
                     RetryFileSuffix.ConnectionException.getSuffix(), 0);

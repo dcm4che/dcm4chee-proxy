@@ -232,7 +232,7 @@ public class StgCmt extends DicomService {
         } catch (AAssociateRJ rj) {
             LOG.error(asAccepted + ": rejected association to forward AET", rj.getReason());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".rj" 
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.AAssociateRJ.getSuffix() 
                     + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
             rename(asAccepted, file);
         } catch (IOException e) {
