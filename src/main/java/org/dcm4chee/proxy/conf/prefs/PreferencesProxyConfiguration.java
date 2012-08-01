@@ -67,7 +67,6 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     public PreferencesProxyConfiguration() {}
 
     public PreferencesProxyConfiguration(Preferences rootPrefs) {
-        super(rootPrefs);
     }
 
     @Override
