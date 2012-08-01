@@ -107,8 +107,7 @@ public class ProxySA {
     }
 
     private static boolean useLdapConfiguration(CommandLine cl) {
-        return cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd")
-                && cl.hasOption("ldap-domain");
+        return cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd");
     }
     
     private static CommandLine parseComandLine(String[] args) throws ParseException {
@@ -173,12 +172,6 @@ public class ProxySA {
                 .withArgName("password")
                 .withDescription(rb.getString("ldap-pwd"))
                 .withLongOpt("ldap-pwd")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("dc")
-                .withDescription(rb.getString("ldap-domain"))
-                .withLongOpt("ldap-domain")
                 .create(null));
     }
 

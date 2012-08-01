@@ -71,6 +71,7 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.conf.RetryFileSuffix;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
@@ -101,7 +102,7 @@ public class CStore extends BasicCStoreSCP {
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
                 asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-                asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
             }
         }
@@ -240,9 +241,9 @@ public class CStore extends BasicCStoreSCP {
         try {
             forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
         } catch (AssociationStateException ass) {
-            handleForwardException(asAccepted, pc, rq, attrs, file, ".ass", ass);
+            handleForwardException(asAccepted, pc, rq, attrs, file, RetryFileSuffix.AssociationStateException.getSuffix(), ass);
         } catch (Exception e) {
-            handleForwardException(asAccepted, pc, rq, attrs, file, ".conn", e);
+            handleForwardException(asAccepted, pc, rq, attrs, file, RetryFileSuffix.ConnectionException.getSuffix(), e);
         }
         return false;
     }

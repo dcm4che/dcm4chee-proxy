@@ -438,21 +438,25 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.error("Unable to load configuration for destination AET: " + e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), rj, ".rj-" + rj.getResult() + "-"
-                    + rj.getSource() + "-" + rj.getReason(), rj.getReason());
+            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), rj,
+                    ".rj" + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
+                    rj.getReason());
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), aa, ".aa-" + aa.getSource() + "-"
-                    + aa.getReason(), aa.getReason());
+            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), aa,
+                    ".aa" + aa.getSource() + "-" + aa.getReason(), aa.getReason());
         } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".conn", 0);
+            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
+                    RetryFileSuffix.ConnectionException.getSuffix(), 0);
         } catch (InterruptedException e) {
             LOG.debug("Unexpected exception", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".conf", 0);
+            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
+                    RetryFileSuffix.IncompatibleConnectionException.getSuffix(), 0);
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context", e);
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, ".ssl", 0);
+            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
+                    RetryFileSuffix.GeneralSecurityException.getSuffix(), 0);
         }
     }
 

@@ -163,7 +163,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledMPPS(as, file, fmi, protocol);
                     } else {
-                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
                         rename(as, file);
                     }
                 } finally {
@@ -273,7 +273,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(pae, as, file, fmi);
                     } else {
-                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
                         rename(as, file);
                     }
                 } finally {
@@ -377,15 +377,15 @@ public class ForwardFiles {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledCStoreFiles(pae, asInvoked, file);
                     } else {
-                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".conn");
+                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
                         rename(asInvoked, file);
                     }
                 } catch (NoPresentationContextException npc) {
-                    handleForwardException(asInvoked, file, npc, ".npc");
+                    handleForwardException(asInvoked, file, npc, RetryFileSuffix.NoPresentationContextException.getSuffix());
                 } catch (AssociationStateException ass) {
-                    handleForwardException(asInvoked, file, ass, ".ass");
+                    handleForwardException(asInvoked, file, ass, RetryFileSuffix.AssociationStateException.getSuffix());
                 } catch (IOException ioe) {
-                    handleForwardException(asInvoked, file, ioe, ".conn");
+                    handleForwardException(asInvoked, file, ioe, RetryFileSuffix.ConnectionException.getSuffix());
                     releaseAS(asInvoked);
                 }
             }
@@ -396,7 +396,7 @@ public class ForwardFiles {
         } catch (AAbort aa) {
             handleProcessException(ft, aa, ".aa-" + aa.getSource() + "-" + aa.getReason());
         } catch (IOException e) {
-            handleProcessException(ft, e, ".conn");
+            handleProcessException(ft, e, RetryFileSuffix.ConnectionException.getSuffix());
         } catch (InterruptedException e) {
             LOG.error("Connection exception: " + e.getMessage());
         } catch (IncompatibleConnectionException e) {
