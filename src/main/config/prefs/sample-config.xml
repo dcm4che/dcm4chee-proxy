@@ -3,7 +3,7 @@
 <preferences EXTERNAL_XML_VERSION="1.0">
   <root type="user">
     <map/>
-    <node name="org">
+    <node name="com">
       <map/>
       <node name="dcm4che">
         <map/>
@@ -13,7 +13,7 @@
             <map>
               <entry key="dicomInstalled" value="true"/>
               <entry key="dicomThisNodeCertificateReference.#" value="1"/>
-              <entry key="dicomThisNodeCertificateReference.1" value="org/dcm4che/dicomDevicesRoot/dcm4chee-arc"/>
+              <entry key="dicomThisNodeCertificateReference.1" value="com/dcm4che/dicomDevicesRoot/dcm4chee-arc"/>
               <entry key="userCertificate.#" value="1"/>
               <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIETvRlSTANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRUwEwYDVQQDEwxkY200Y2hlZS1hcmMwHhcNMTExMjIzMTEyNjAxWhcNMTIxMjIyMTEyNjAxWjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRUwEwYDVQQDEwxkY200Y2hlZS1hcmMwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIpyZpH077XTZAvXt/TXSlqU/523X01Va4rzw9BOLITD1Yqo3gOQ4TFIO9WjHQaV1cwsAL5emi65ssd/YjrJHWA6QBRHYDBGNldQlSzKduYS5BqaW3yhCBMw9lZLVN1Gh7QUgWknFNHpSH0uV65esBf598KFzRl8eh8l4/njH9wNAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAeFaW8IJ3aitQDDL9chQ5k5YNFtZwNDdnVnnsvGgYINYd2VYW6ql2BvXiH49qG5UPJZhqEIDD9VZd2GiJfI/16/YNZBE+0SgUQXsqED9NmqjZRNz0hO6Qddc9+wlBNmlGKyA+ftzNw0Uq1WqXh2IcrxTBMsDKKZLbqbAK7tiECPo="/>
             </map>
@@ -62,12 +62,12 @@
               <entry key="dcmProxyDevice" value="true"/>
               <entry key="dcmSchedulerInterval" value="60"/>
               <entry key="dicomAuthorizedNodeCertificateReference.#" value="3"/>
-              <entry key="dicomAuthorizedNodeCertificateReference.1" value="org/dcm4che/dicomDevicesRoot/dcm4chee-arc"/>
-              <entry key="dicomAuthorizedNodeCertificateReference.2" value="org/dcm4che/dicomDevicesRoot/storescp"/>
-              <entry key="dicomAuthorizedNodeCertificateReference.3" value="org/dcm4che/dicomDevicesRoot/storescu"/>
+              <entry key="dicomAuthorizedNodeCertificateReference.1" value="com/dcm4che/dicomDevicesRoot/dcm4chee-arc"/>
+              <entry key="dicomAuthorizedNodeCertificateReference.2" value="com/dcm4che/dicomDevicesRoot/storescp"/>
+              <entry key="dicomAuthorizedNodeCertificateReference.3" value="com/dcm4che/dicomDevicesRoot/storescu"/>
               <entry key="dicomInstalled" value="true"/>
               <entry key="dicomThisNodeCertificateReference.#" value="1"/>
-              <entry key="dicomThisNodeCertificateReference.1" value="org/dcm4che/dicomDevicesRoot/dcm4chee-proxy"/>
+              <entry key="dicomThisNodeCertificateReference.1" value="com/dcm4che/dicomDevicesRoot/dcm4chee-proxy"/>
               <entry key="userCertificate.#" value="1"/>
               <entry key="userCertificate.1" value="MIIDVDCCAjygAwIBAgIETwV5ZTANBgkqhkiG9w0BAQUFADBsMRAwDgYDVQQGEwdVbmtub3duMRAwDgYDVQQIEwdVbmtub3duMRAwDgYDVQQHEwdVbmtub3duMRAwDgYDVQQKEwdVbmtub3duMRAwDgYDVQQLEwdVbmtub3duMRAwDgYDVQQDEwdVbmtub3duMB4XDTEyMDEwNTEwMjAyMVoXDTIyMDEwMjEwMjAyMVowbDEQMA4GA1UEBhMHVW5rbm93bjEQMA4GA1UECBMHVW5rbm93bjEQMA4GA1UEBxMHVW5rbm93bjEQMA4GA1UEChMHVW5rbm93bjEQMA4GA1UECxMHVW5rbm93bjEQMA4GA1UEAxMHVW5rbm93bjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAIodS5rhsEXeXf6WdXEvdvah2YViyYBZaHgNujmaxwLZtOSdpdBSIi7FuDoEenIflhG7wu6hpppGOk4me4/bGHcYxAe33OQ0I99+/bDXjEweLZLqvzFK8cY7hBiNNl2pveq9tIsPLRbGDbvnAHrgKud/ykMc6trbMkgjWJ4oqlGXu+WLDBm8Fmr77kdyD7kkZf0NPw+O0tTtSo1Lc9TANsEkf2OrIkCxYlkjeQcA3yMHHNGLIA5WX5ICaZ8OSPohv6XkQ2oqyVprO/vauSClAmYyoynn8xpazhRhSzda6wceG5XQxPO2mYM4zdc7FtnQI4jsQGoCiQaO/PQSj00Yt3cCAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAZwNG2ayIjVsH3N71qef206xcEj/ASzPB4Bd4GM38rTivFJW9vpC8fpJkaiIohpT6ad55UzK+26EphYR8lMSDbWzko1wmbAjfWDGk2Ns8YBPjWTdrNyq1CEUZ+Le6nH+c/hYv7Ov0SYKUrWfteSqh2dnxdFxYW9vLQjN1KAFtxHQfVoP0MXOAoDA2YALCQ22l1183Tl2ugrpTH0FZ8rjex+VHwXM31VgIbtR2QEM/CSvSpX7PcQejgeHOKVYHpo+yuqzFAeiOWL6q1EAUfjxs1eXJkd67Tx2+bDVLDtLitd2A39cv+HhNqiyGLwUxIVMFDPxHQQo5xN+RYly9EKItUg=="/>
             </map>
@@ -3717,7 +3717,7 @@
             <map>
               <entry key="dicomInstalled" value="true"/>
               <entry key="dicomThisNodeCertificateReference.#" value="1"/>
-              <entry key="dicomThisNodeCertificateReference.1" value="org/dcm4che/dicomDevicesRoot/storescp"/>
+              <entry key="dicomThisNodeCertificateReference.1" value="com/dcm4che/dicomDevicesRoot/storescp"/>
               <entry key="userCertificate.#" value="1"/>
               <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIETcfJ0zANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3AwHhcNMTEwNTA5MTEwMjQzWhcNMTIwNTA4MTEwMjQzWjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3AwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIS0bk+A9aBRcko1Hxr11MB+NuQhyORTefh8K0cwyCXZJLuDHrF2A9OJUmlj9pB1QZAvLP6Z5UK6owMFmuwn1pFdcOoy4ffoOfbz57MFp1GtUGQMR9CUcvQ/yakd1tAkT7t69sHWgQIjIdsx2xarMuEy66G5JF8X9F9TbGYkEm67AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAWxbB+7UJzXw7p4+n2RpPMLZWdAUGaGRJzvqY96lZQZuN8SgPb8f6FjXVR3UbVzBc3vQyCiDpfA2xC+Dx6RK3MYsE4M56PwmG6aB1Du93Re8b4LmFJJLPkekmLp9OiZNxyXE+PzQkGf0f/AbXJn8HbGhWIBVjO4XzLFH+dF7Wl5w="/>
             </map>
@@ -3764,7 +3764,7 @@
             <map>
               <entry key="dicomInstalled" value="true"/>
               <entry key="dicomThisNodeCertificateReference.#" value="1"/>
-              <entry key="dicomThisNodeCertificateReference.1" value="org/dcm4che/dicomDevicesRoot/storescu"/>
+              <entry key="dicomThisNodeCertificateReference.1" value="com/dcm4che/dicomDevicesRoot/storescu"/>
               <entry key="userCertificate.#" value="1"/>
               <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIETcfJhjANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwHhcNMTEwNTA5MTEwMTI2WhcNMTIwNTA4MTEwMTI2WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIWXv47tVna0cmqkTIWlyjo30I5xiQn87+pkOFCtpK6lXpuL4eQ4Wsafcv/fBEe564nd+a8lArBmrcHlS7yU/VX1bPHMOdot6R+qF2icohL9e43Wgvcq7aV3gV2Wtvrg7+STMzV+GgULEYBw0T9pTi1mBTr5hEFVuwqK4lSkmF9dAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAENTJn6dkVMnz3qhfBb86nso5pp9+sFExHHQ33yrbbK+m63fQ9gKCJ02VCFW3hBq8IjGAlbZNchHFNE0uJ3GrDXjtXGpNPMmo+2pQ+5quq/6g3bgcFt+Yn8jd/Y4w1mgP0i5Dc2niJA0FhY0qjzjNp/WfsoiwW8yM1+UFY5BZTBI="/>
             </map>
