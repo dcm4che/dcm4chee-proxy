@@ -63,11 +63,6 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
 public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration {
-    
-    public PreferencesProxyConfiguration() {}
-
-    public PreferencesProxyConfiguration(Preferences rootPrefs) {
-    }
 
     @Override
     protected Device newDevice(Preferences deviceNode) {

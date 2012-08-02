@@ -60,7 +60,7 @@ public class PreferencesProxyConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
-        config = new PreferencesProxyConfiguration(Preferences.userRoot());
+        config = new PreferencesProxyConfiguration();
         config.purgeConfiguration();
     }
 

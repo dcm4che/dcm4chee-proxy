@@ -5,6 +5,7 @@ JBoss7 EJB Package
 ------------------
 
 * Preferences: `mvn install -P prefs`
+* Jdbc Preferences: `mvn install -P prefs-jdbc` (requires dcm4che-jdbc-pref as JBoss module)
 * LDAP: `mvn install -P ldap [-D ldap={slapd|opends|apacheds}]`
 
 Standalone Application

@@ -103,7 +103,7 @@ public class ProxySA {
             System.setProperty("jdbc.user.name", cl.getOptionValue("jdbc-user-name"));
             System.setProperty("jdbc.user.pwd", cl.getOptionValue("jdbc-user-pwd"));
         }
-        return (DicomConfiguration) new PreferencesProxyConfiguration(Preferences.userRoot());
+        return (DicomConfiguration) new PreferencesProxyConfiguration();
     }
 
     private static boolean useLdapConfiguration(CommandLine cl) {
