@@ -283,6 +283,10 @@
         <profile-exclude>FALSE</profile-exclude>
         <project-classifier>tool</project-classifier>
         <exclude-tool>FALSE</exclude-tool>
+        <jpa.version>1.0.1.Final</jpa.version>
+        <dcm4che.version>3.0.0-SNAPSHOT</dcm4che.version>
+        <hibernate.version>4.0.1.Final</hibernate.version>
+        <log4j.version>1.2.16</log4j.version>
       </properties>
       <build>
         <plugins>
@@ -356,6 +360,62 @@
           <groupId>org.dcm4che</groupId>
           <artifactId>dcm4che-jdbc-prefs</artifactId>
           <version>1.0.0-SNAPSHOT</version>
+          <classifier>lib</classifier>
+        </dependency>
+        <dependency>
+          <groupId>org.hibernate.javax.persistence</groupId>
+          <artifactId>hibernate-jpa-2.0-api</artifactId>
+          <version>${jpa.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.hibernate</groupId>
+          <artifactId>hibernate-entitymanager</artifactId>
+          <version>${hibernate.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.hibernate</groupId>
+          <artifactId>hibernate-core</artifactId>
+          <version>${hibernate.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.hibernate.common</groupId>
+          <artifactId>hibernate-commons-annotations</artifactId>
+          <version>${hibernate.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging</artifactId>
+          <version>3.1.0.GA</version>
+        </dependency>
+        <dependency>
+          <groupId>javax.transaction</groupId>
+          <artifactId>jta</artifactId>
+          <version>1.1</version>
+        </dependency>
+        <dependency>
+          <groupId>dom4j</groupId>
+          <artifactId>dom4j</artifactId>
+          <version>1.6.1</version>
+        </dependency>
+        <dependency>
+          <groupId>org.javassist</groupId>
+          <artifactId>javassist</artifactId>
+          <version>3.15.0-GA</version>
+        </dependency>
+        <dependency>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
+          <version>3.2.1</version>
+        </dependency>
+        <dependency>
+          <groupId>antlr</groupId>
+          <artifactId>antlr</artifactId>
+          <version>2.7.7</version>
         </dependency>
       </dependencies>
     </profile>

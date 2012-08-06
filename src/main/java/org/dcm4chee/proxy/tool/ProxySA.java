@@ -40,7 +40,6 @@ package org.dcm4chee.proxy.tool;
 
 import java.sql.DriverManager;
 import java.util.ResourceBundle;
-import java.util.prefs.Preferences;
 
 import javax.naming.NamingException;
 
@@ -98,10 +97,10 @@ public class ProxySA {
             if (!DriverManager.getDrivers().hasMoreElements())
                 throw new RuntimeException("No jdbc driver in classpath.");
             
-            System.setProperty("java.util.prefs.PreferencesFactory", "org.dcm4che.jdbc.prefs.PreferencesFactoryImpl");
-            System.setProperty("jdbc.backend.url", cl.getOptionValue("jdbc-backend-url"));
-            System.setProperty("jdbc.user.name", cl.getOptionValue("jdbc-user-name"));
-            System.setProperty("jdbc.user.pwd", cl.getOptionValue("jdbc-user-pwd"));
+            System.setProperty("java.util.prefs.PreferencesFactory", "org.dcm4che.jdbc.prefs.PreferencesFactoryJDBCImpl");
+            System.setProperty("jdbc.prefs.datasource", cl.getOptionValue("jdbc-backend-url"));
+            System.setProperty("jdbc.prefs.connection.username", cl.getOptionValue("jdbc-user-name"));
+            System.setProperty("jdbc.prefs.connection.password", cl.getOptionValue("jdbc-user-pwd"));
         }
         return (DicomConfiguration) new PreferencesProxyConfiguration();
     }
