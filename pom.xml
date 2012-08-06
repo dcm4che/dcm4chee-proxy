@@ -147,7 +147,7 @@
       <properties>
         <ldap>opends</ldap>
         <proxy-conf>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</proxy-conf>
-        <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.conf.ldap,org.dcm4che.jdbc.prefs,dcm4che-jdbc-prefs-1.0.0-SNAPSHOT-jboss.jar</lib-dep>
+        <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,org.dcm4che.conf.ldap,org.dcm4che.jdbc.prefs,deployment.dcm4che-jdbc-prefs-1.0.0-SNAPSHOT-jboss.jar</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
         <project-classifier>lib-prefs-jdbc</project-classifier>
