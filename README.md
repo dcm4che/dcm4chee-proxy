@@ -14,7 +14,7 @@ Standalone Application
 Library
 -------
 
-* Preferences: `mvn install -P {lib-prefs|lib-prefs-jdbc}`
+* Preferences: `mvn install -P lib-prefs`
 * LDAP: `mvn install -P lib-ldap [-D ldap={slapd|opends|apacheds}]`
 
 JBoss Configuration
