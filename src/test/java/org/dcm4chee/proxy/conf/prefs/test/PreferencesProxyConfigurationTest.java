@@ -81,8 +81,7 @@ public class PreferencesProxyConfigurationTest {
 
         OutputStream os = new FileOutputStream(name);
         try {
-            Preferences.userRoot().node(
-                    config.getConfigurationRoot()).exportSubtree(os);
+            Preferences.userRoot().node(config.getDicomConfigurationRoot().toString()).exportSubtree(os);
         } finally {
             SafeClose.close(os);
         }
