@@ -40,7 +40,6 @@ package org.dcm4chee.proxy.conf.prefs.test;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.prefs.Preferences;
 
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.conf.ldap.test.ProxyConfigurationTestUtils;
@@ -81,7 +80,7 @@ public class PreferencesProxyConfigurationTest {
 
         OutputStream os = new FileOutputStream(name);
         try {
-            Preferences.userRoot().node(config.getDicomConfigurationRoot().toString()).exportSubtree(os);
+            ((PreferencesProxyConfiguration) config).getDicomConfigurationRoot().exportSubtree(os);
         } finally {
             SafeClose.close(os);
         }
