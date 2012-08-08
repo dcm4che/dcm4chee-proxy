@@ -48,10 +48,15 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.net.ssl.KeyManager;
 
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
@@ -96,20 +101,31 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public
     void init() {
         try {
-            ProxyDevice proxyDevice = (ProxyDevice) dicomConfiguration.findDevice(System.getProperty(DEVICE_NAME,
-                    "dcm4chee-proxy"));
-            if (proxyDevice == null)
-                throw new RuntimeException("Could not find proxy device: "
-                        + System.getProperty(DEVICE_NAME, "dcm4chee-proxy"));
-
-            super.init(proxyDevice);
+            ProxyDevice proxyDevice = (ProxyDevice) dicomConfiguration.findDevice(System.getProperty(DEVICE_NAME, "dcm4chee-proxy"));
+            try {
+                super.init(proxyDevice);
+            } catch (Exception e) {
+                throw new RuntimeException("Could not init proxy device", e);
+            }
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(this,
                     new ObjectName(System.getProperty(JMX_NAME, "dcm4chee:service=dcm4chee-proxy")));
             scheduler = new Scheduler((ProxyDevice) device, new AuditLog());
-            start();
-        } catch (Exception e) {
-            destroy();
-            throw new RuntimeException(e);
+            try {
+                start();
+            } catch (Exception e) {
+                destroy();
+                throw new RuntimeException("Could not start proxy device", e);
+            }
+        } catch (ConfigurationException e) {
+            throw new RuntimeException("Could not find proxy device: " + System.getProperty(DEVICE_NAME, "dcm4chee-proxy"));
+        } catch (InstanceAlreadyExistsException e) {
+            throw new RuntimeException("Instance already exists", e);
+        } catch (MBeanRegistrationException e) {
+            throw new RuntimeException("Error registering MBean", e);
+        } catch (NotCompliantMBeanException e) {
+            throw new RuntimeException("Incompliant MBean", e);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException("Invalid object name", e);
         }
     }
 
