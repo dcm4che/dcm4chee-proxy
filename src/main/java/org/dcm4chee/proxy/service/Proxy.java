@@ -98,6 +98,10 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
         try {
             ProxyDevice proxyDevice = (ProxyDevice) dicomConfiguration.findDevice(System.getProperty(DEVICE_NAME,
                     "dcm4chee-proxy"));
+            if (proxyDevice == null)
+                throw new RuntimeException("Could not find proxy device: "
+                        + System.getProperty(DEVICE_NAME, "dcm4chee-proxy"));
+
             super.init(proxyDevice);
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(this,
                     new ObjectName(System.getProperty(JMX_NAME, "dcm4chee:service=dcm4chee-proxy")));
