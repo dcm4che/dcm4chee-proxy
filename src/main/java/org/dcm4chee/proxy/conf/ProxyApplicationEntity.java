@@ -101,7 +101,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String spoolDirectory;
     private boolean acceptDataOnFailedNegotiation;
     private boolean enableAuditLog;
-    private HashMap<String, Schedule> forwardSchedules;
+    private HashMap<String, Schedule> forwardSchedules = new HashMap<String, Schedule>();
     private List<Retry> retries = new ArrayList<Retry>();
     private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
