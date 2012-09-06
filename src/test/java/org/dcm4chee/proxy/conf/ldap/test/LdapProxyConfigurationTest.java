@@ -56,13 +56,13 @@ public class LdapProxyConfigurationTest {
     @Before
     public void setUp() throws Exception {
         LdapEnv env = new LdapEnv();
-        env.setUrl("ldap://localhost:389/dc=nodomain"); //slapd
-        env.setUserDN("cn=admin,dc=nodomain"); //slapd
+        env.setUrl("ldap://localhost:389/dc=example,dc=com"); //slapd
+        env.setUserDN("cn=admin,dc=example,dc=com"); //slapd
         env.setPassword("admin");
-//        env.setUrl("ldap://localhost:1389"); //OpenDJ
+//        env.setUrl("ldap://localhost:1389/dc=example,dc=com"); //OpenDJ
 //        env.setUserDN("cn=Directory Manager"); //OpenDJ
 //        env.setPassword("admin"); //OpenDJ
-//        env.setUrl("ldap://localhost:10389"); //ApchedDS
+//        env.setUrl("ldap://localhost:10389/dc=example,dc=com"); //ApchedDS
 //        env.setUserDN("uid=admin,ou=system"); //ApacheDS
 //        env.setPassword("secret"); //ApacheDS
         config = new LdapProxyConfiguration(env);
