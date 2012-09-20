@@ -142,7 +142,7 @@
         <proxy-conf>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</proxy-conf>
         <lib-dep>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.ldap,org.dcm4che.conf.prefs</lib-dep>
         <profile-exclude>**/service/**</profile-exclude>
-        <project-classifier>lib-ldap-${ldap}</project-classifier>
+        <project-classifier>lib-ldap</project-classifier>
         <exclude-tool>org/dcm4chee/proxy/tool/**</exclude-tool>
       </properties>
       <build>
