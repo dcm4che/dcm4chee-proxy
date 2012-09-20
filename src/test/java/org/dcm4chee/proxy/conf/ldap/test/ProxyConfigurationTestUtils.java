@@ -279,11 +279,11 @@ public class ProxyConfigurationTestUtils {
 
     private static ProxyDevice createProxyDevice(DicomConfiguration config, String name) throws Exception {
         ProxyDevice device = new ProxyDevice(name);
-        device.setThisNodeCertificates(config.deviceRef(name),
-                (X509Certificate) KEYSTORE.getCertificate(name));
-        for (String other : OTHER_DEVICES)
-            device.setAuthorizedNodeCertificates(config.deviceRef(other),
-                    (X509Certificate) KEYSTORE.getCertificate(other));
+//        device.setThisNodeCertificates(config.deviceRef(name),
+//                (X509Certificate) KEYSTORE.getCertificate(name));
+//        for (String other : OTHER_DEVICES)
+//            device.setAuthorizedNodeCertificates(config.deviceRef(other),
+//                    (X509Certificate) KEYSTORE.getCertificate(other));
         device.setSchedulerInterval(60);
         device.setForwardThreads(8);
         
@@ -345,25 +345,25 @@ public class ProxyConfigurationTestUtils {
         Connection dicom = new Connection("dicom", "localhost", 22222);
         dicom.setMaxOpsInvoked(0);
         dicom.setMaxOpsPerformed(0);
-//        dicom.setInstalled(true);
+        dicom.setInstalled(true);
         device.addConnection(dicom);
         ae.addConnection(dicom);
-        Connection dicomTLS = new Connection("dicom-tls", "localhost", 22762);
-        dicomTLS.setMaxOpsInvoked(0);
-        dicomTLS.setMaxOpsPerformed(0);
-        dicomTLS.setTlsCipherSuites(
-                Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
-                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
+//        Connection dicomTLS = new Connection("dicom-tls", "localhost", 22762);
+//        dicomTLS.setMaxOpsInvoked(0);
+//        dicomTLS.setMaxOpsPerformed(0);
+//        dicomTLS.setTlsCipherSuites(
+//                Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
+//                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
 //        dicomTLS.setInstalled(false);
-        device.addConnection(dicomTLS);
-        ae.addConnection(dicomTLS);
+//        device.addConnection(dicomTLS);
+//        ae.addConnection(dicomTLS);
         return device;
     }
     
     private static Device createDevice(DicomConfiguration config, String name) throws Exception {
         Device device = new Device(name);
-        device.setThisNodeCertificates(config.deviceRef(name), (X509Certificate) KEYSTORE
-                .getCertificate(name));
+//        device.setThisNodeCertificates(config.deviceRef(name), (X509Certificate) KEYSTORE
+//                .getCertificate(name));
         return device;
     }
 
@@ -376,11 +376,11 @@ public class ProxyConfigurationTestUtils {
         Connection dicom = new Connection("dicom", host, port);
         device.addConnection(dicom);
         ae.addConnection(dicom);
-        Connection dicomTLS = new Connection("dicom-tls", host, tlsPort);
-        dicomTLS.setTlsCipherSuites(Connection.TLS_RSA_WITH_AES_128_CBC_SHA,
-                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
-        device.addConnection(dicomTLS);
-        ae.addConnection(dicomTLS);
+//        Connection dicomTLS = new Connection("dicom-tls", host, tlsPort);
+//        dicomTLS.setTlsCipherSuites(Connection.TLS_RSA_WITH_AES_128_CBC_SHA,
+//                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
+//        device.addConnection(dicomTLS);
+//        ae.addConnection(dicomTLS);
         return device;
     }
 
