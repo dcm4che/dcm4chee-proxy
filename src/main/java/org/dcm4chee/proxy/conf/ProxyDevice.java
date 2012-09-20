@@ -53,6 +53,7 @@ import org.dcm4che.net.Device;
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Robert David <robert.david@agfa.com>
  */
 public class ProxyDevice extends Device {
 
@@ -60,16 +61,14 @@ public class ProxyDevice extends Device {
 
     private Integer schedulerInterval;
     private DicomConfiguration dicomConf;
-    private final TemplatesCache templateCache = new TemplatesCache();
+    private transient TemplatesCache templateCache;
     private int forwardThreads;
-    private ThreadPoolExecutor fileForwardingExecutor;
+    private transient ThreadPoolExecutor fileForwardingExecutor;
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
+        if (fileForwardingExecutor == null)
+        	fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads); 
         return fileForwardingExecutor;
-    }
-
-    public void setFileForwardingExecutor(ThreadPoolExecutor executor) {
-        this.fileForwardingExecutor = executor;
     }
 
     public int getForwardThreads() {
@@ -79,12 +78,12 @@ public class ProxyDevice extends Device {
     public void setForwardThreads(int forwardThreads) {
         if (forwardThreads == 0)
             throw new IllegalArgumentException("ForwardThreads cannot be 0");
-
-        fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads);
         this.forwardThreads = forwardThreads;
     }
     
     public Templates getTemplates(String uri) throws TransformerConfigurationException {
+    	if (templateCache == null)
+    		 templateCache = new TemplatesCache();
         return templateCache.get(uri);
     }
 

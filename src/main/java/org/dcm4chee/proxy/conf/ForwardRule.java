@@ -38,15 +38,19 @@
 
 package org.dcm4chee.proxy.conf;
 
+import java.io.Serializable;
+
 import org.dcm4che.net.Dimse;
 
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
  * 
  */
-public class ForwardRule {
+public class ForwardRule implements Serializable {
     
-    private Dimse dimse;
+	private static final long serialVersionUID = 1L;
+	
+	private Dimse dimse;
     private String sopClass;
     private String callingAET;
     private String destinationURI;

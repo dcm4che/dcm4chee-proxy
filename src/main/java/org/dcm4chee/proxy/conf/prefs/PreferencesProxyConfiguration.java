@@ -38,6 +38,7 @@
 
 package org.dcm4chee.proxy.conf.prefs;
 
+import java.io.Serializable;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,9 +63,11 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
-public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration {
+public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration  implements Serializable{
 
-    @Override
+	private static final long serialVersionUID = 1L;
+
+	@Override
     protected Device newDevice(Preferences deviceNode) {
         if (!deviceNode.getBoolean("dcmProxyDevice", false))
             return super.newDevice(deviceNode);

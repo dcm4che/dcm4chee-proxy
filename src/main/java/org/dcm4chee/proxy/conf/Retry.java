@@ -38,13 +38,17 @@
 
 package org.dcm4chee.proxy.conf;
 
+import java.io.Serializable;
+
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class Retry {
+public class Retry implements Serializable {
 
-    public final String suffix;
+	private static final long serialVersionUID = 1L;
+	
+	public final String suffix;
     public final int delay;
     public final int numberOfRetries;
 
