@@ -111,7 +111,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     }
 
     @Override
-    protected void loadFrom(Device device, Preferences prefs) throws CertificateException {
+    protected void loadFrom(Device device, Preferences prefs) throws CertificateException, BackingStoreException {
         super.loadFrom(device, prefs);
         if (!(device instanceof ProxyDevice))
             return;
