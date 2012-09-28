@@ -23,7 +23,7 @@
   <modules>
     <module>dcm4chee-proxy-conf</module>
     <module>dcm4chee-proxy-service</module>
-    <module>dcm4chee-proxy-servlet</module>
+    <module>dcm4chee-proxy-war</module>
     <module>dcm4chee-proxy-tool</module>
   </modules>
 </project>
