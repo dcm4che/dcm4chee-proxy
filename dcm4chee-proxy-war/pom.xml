@@ -6,8 +6,8 @@
     <artifactId>dcm4chee-proxy-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>dcm4chee-proxy-servlet</artifactId>
-  <name>dcm4chee-proxy-servlet</name>
+  <artifactId>dcm4chee-proxy-war</artifactId>
+  <name>dcm4chee-proxy-war</name>
   <packaging>war</packaging>
   <build>
     <plugins>

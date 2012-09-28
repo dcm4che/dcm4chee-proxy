@@ -6,7 +6,7 @@
     http://java.sun.com/xml/ns/javaee
     http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
   version="2.5">
-  <display-name>dcm4chee-proxy-servlet</display-name>
+  <display-name>dcm4chee-proxy-war</display-name>
   <servlet>
     <servlet-name>dcm4chee-proxy</servlet-name>
     <servlet-class>org.dcm4chee.proxy.service.ProxyServlet</servlet-class>
