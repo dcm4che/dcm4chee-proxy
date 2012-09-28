@@ -38,22 +38,6 @@
 
 package org.dcm4chee.proxy.service;
 
-import java.lang.management.ManagementFactory;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.DependsOn;
-import javax.ejb.EJB;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
 import javax.net.ssl.KeyManager;
 
 import org.dcm4che.conf.api.ConfigurationException;
@@ -69,68 +53,25 @@ import org.dcm4chee.proxy.conf.Scheduler;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-@Singleton
-@DependsOn("DicomConfiguration")
-@Startup
-@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
 
-    public static final String DEVICE_NAME = "org.dcm4chee.proxy.net.deviceName";
-    public static final String JMX_NAME = "org.dcm4chee.proxy.net.jmxName";
     public static final String KS_TYPE = "org.dcm4chee.proxy.net.keyStoreType";
     public static final String KS_URL = "org.dcm4chee.proxy.net.keyStoreURL";
     public static final String KS_PASSWORD = "org.dcm4chee.proxy.net.storePassword";
     public static final String KEY_PASSWORD = "org.dcm4chee.proxy.net.keyPassword";
 
-    @EJB(name = "DicomConfiguration")
-    DicomConfiguration dicomConfiguration;
+    private final DicomConfiguration dicomConfiguration;
 
-    public DicomConfiguration getDicomConfiguration() {
-        return dicomConfiguration;
-    }
-
-    public void setDicomConfiguration(DicomConfiguration dicomConfiguration) {
-        this.dicomConfiguration = dicomConfiguration;
-    }
-
-    private ObjectInstance mbean;
-    
     private static Scheduler scheduler;
 
-    @PostConstruct
-    public
-    void init() {
-        try {
-            ProxyDevice proxyDevice = (ProxyDevice) dicomConfiguration.findDevice(System.getProperty(DEVICE_NAME, "dcm4chee-proxy"));
-            try {
-                super.init(proxyDevice);
-            } catch (Exception e) {
-                throw new RuntimeException("Could not init proxy device", e);
-            }
-            mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(this,
-                    new ObjectName(System.getProperty(JMX_NAME, "dcm4chee:service=dcm4chee-proxy")));
-            scheduler = new Scheduler((ProxyDevice) device, new AuditLog());
-            try {
-                start();
-            } catch (Exception e) {
-                destroy();
-                throw new RuntimeException("Could not start proxy device", e);
-            }
-        } catch (ConfigurationException e) {
-            throw new RuntimeException("Could not find proxy device: " + System.getProperty(DEVICE_NAME, "dcm4chee-proxy"));
-        } catch (InstanceAlreadyExistsException e) {
-            throw new RuntimeException("Instance already exists", e);
-        } catch (MBeanRegistrationException e) {
-            throw new RuntimeException("Error registering MBean", e);
-        } catch (NotCompliantMBeanException e) {
-            throw new RuntimeException("Incompliant MBean", e);
-        } catch (MalformedObjectNameException e) {
-            throw new RuntimeException("Invalid object name", e);
-        }
+    public Proxy(DicomConfiguration dicomConfiguration, String deviceName) throws ConfigurationException, Exception {
+        this.dicomConfiguration = dicomConfiguration;
+        init((ProxyDevice) dicomConfiguration.findDevice(deviceName));
     }
 
     @Override
     public void start() throws Exception {
+        scheduler = new Scheduler((ProxyDevice) device, new AuditLog());
         super.start();
         scheduler.start();
     }
@@ -159,19 +100,6 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
         dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.3.2"));
         dcmService.addDicomService(new Mpps());
         return dcmService;
-    }
-
-    @PreDestroy
-    void destroy() {
-        stop();
-        if (mbean != null)
-            try {
-                ManagementFactory.getPlatformMBeanServer().unregisterMBean(mbean.getObjectName());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        mbean = null;
-        device = null;
     }
 
     @Override

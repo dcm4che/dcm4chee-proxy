@@ -4,7 +4,7 @@
 # -------------------------------------------------------------------------
 
 MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
-MAIN_JAR=dcm4chee-proxy-1.0.0-SNAPSHOT-tool.jar
+MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
 
 DIRNAME="`dirname "$0"`"
 
@@ -44,6 +44,8 @@ CP="$CP:$PROXY_HOME/lib/dcm4che-net-3.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4che-conf-prefs-3.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4che-conf-ldap-3.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4che-conf-api-3.0.0-SNAPSHOT.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/slf4j-api-1.6.4.jar"
 CP="$CP:$PROXY_HOME/lib/slf4j-log4j12-1.6.4.jar"
 CP="$CP:$PROXY_HOME/lib/log4j-1.2.16.jar"

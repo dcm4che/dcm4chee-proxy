@@ -70,10 +70,8 @@ public class ProxySA {
         try {
             CommandLine cl = parseComandLine(args);
             DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
-            Proxy proxy = new Proxy();
-            proxy.setDicomConfiguration(dicomConfig);
-            System.setProperty(Proxy.DEVICE_NAME, cl.getOptionValue("device"));
-            proxy.init();
+            Proxy proxy = new Proxy(dicomConfig, cl.getOptionValue("device"));
+            proxy.start();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(2);

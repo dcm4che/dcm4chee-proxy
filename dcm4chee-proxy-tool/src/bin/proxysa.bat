@@ -7,7 +7,7 @@ if not "%ECHO%" == ""  echo %ECHO%
 if "%OS%" == "Windows_NT"  setlocal
 
 set MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
-set MAIN_JAR=dcm4chee-proxy-1.0.0-SNAPSHOT-tool.jar
+set MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%
@@ -50,6 +50,8 @@ set CP=%CP%;%PROXY_HOME%\lib\log4j-1.2.16.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-3.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-3.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-api-3.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\commons-cli-1.2.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\ojdbc6.jar
