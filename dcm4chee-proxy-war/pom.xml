@@ -44,16 +44,8 @@
       <id>prefs-jdbc</id>
       <properties>
         <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
-        <profile.dependencies>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs</profile.dependencies>
+        <profile.dependencies>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,deployment.dcm4che-jdbc-prefs-jboss-1.0.0-SNAPSHOT.jar</profile.dependencies>
       </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.dcm4che</groupId>
-          <artifactId>dcm4che-jdbc-prefs</artifactId>
-          <version>1.0.0-SNAPSHOT</version>
-          <classifier>jboss</classifier>
-        </dependency>
-      </dependencies>
     </profile>
     <profile>
       <id>ldap</id>

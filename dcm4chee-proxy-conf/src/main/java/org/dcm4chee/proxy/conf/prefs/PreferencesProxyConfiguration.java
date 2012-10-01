@@ -63,11 +63,11 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
-public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration  implements Serializable{
+public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 7295686215722926221L;
 
-	@Override
+    @Override
     protected Device newDevice(Preferences deviceNode) {
         if (!deviceNode.getBoolean("dcmProxyDevice", false))
             return super.newDevice(deviceNode);
@@ -292,7 +292,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeNode);
     }
 
-    private void mergeForwardRules(List<ForwardRule> prevs, List<ForwardRule> rules, Preferences aeNode) throws BackingStoreException {
+    private void mergeForwardRules(List<ForwardRule> prevs, List<ForwardRule> rules, Preferences aeNode)
+            throws BackingStoreException {
         Preferences forwardRulesNode = aeNode.node("dcmForwardRule");
         int retryIndex = 1;
         Iterator<ForwardRule> prevIter = prevs.listIterator();
@@ -318,11 +319,12 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
         storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
-        storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
+        storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule()
+                .getHours());
     }
 
-    private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules, Preferences parentNode)
-            throws BackingStoreException {
+    private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,
+            Preferences parentNode) throws BackingStoreException {
         Preferences schedulesNode = parentNode.node("dcmSchedule");
         for (String aet : prevs.keySet())
             if (!schedules.containsKey(aet))

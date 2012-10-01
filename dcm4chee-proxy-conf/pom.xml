@@ -35,7 +35,9 @@
   <profiles>
     <profile>
       <id>prefs</id>
-      <activation><activeByDefault>true</activeByDefault></activation>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
       </properties>
