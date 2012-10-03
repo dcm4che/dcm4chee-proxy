@@ -34,7 +34,9 @@
   <profiles>
     <profile>
       <id>prefs</id>
-      <activation><activeByDefault>true</activeByDefault></activation>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
         <profile.dependencies>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs</profile.dependencies>
@@ -44,7 +46,7 @@
       <id>prefs-jdbc</id>
       <properties>
         <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
-        <profile.dependencies>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,deployment.dcm4che-jdbc-prefs-jboss-1.0.0-SNAPSHOT.jar</profile.dependencies>
+        <profile.dependencies>org.dcm4che.core,org.dcm4che.net,org.dcm4che.conf.api,org.dcm4che.conf.prefs,deployment.dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar</profile.dependencies>
       </properties>
     </profile>
     <profile>
