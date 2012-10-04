@@ -117,8 +117,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             return;
 
         ProxyDevice proxyDev = (ProxyDevice) device;
-        proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", 60));
-        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", 1));
+        proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", ProxyDevice.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", ProxyDevice.DEFAULT_FORWARD_THREADS));
     }
 
     @Override
@@ -187,8 +187,10 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         List<Retry> retries = new ArrayList<Retry>();
         for (String retryIndex : retriesNode.childrenNames()) {
             Preferences retryNode = retriesNode.node(retryIndex);
-            Retry retry = new Retry(retryNode.get("dcmRetrySuffix", null), retryNode.getInt("dcmRetryDelay", 60),
-                    retryNode.getInt("dcmRetryNum", 10));
+            Retry retry = new Retry(
+                    retryNode.get("dcmRetrySuffix", null),
+                    retryNode.getInt("dcmRetryDelay", Retry.DEFAULT_DELAY),
+                    retryNode.getInt("dcmRetryNum", Retry.DEFAULT_RETRIES));
             retries.add(retry);
         }
         proxyAE.setRetries(retries);

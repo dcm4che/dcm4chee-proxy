@@ -58,6 +58,9 @@ import org.dcm4che.net.Device;
 public class ProxyDevice extends Device {
 
     private static final long serialVersionUID = -7370790158878613899L;
+    
+    public static final int DEFAULT_FORWARD_THREADS = 1;
+    public static final int DEFAULT_SCHEDULER_INTERVAL = 60;
 
     private Integer schedulerInterval;
     private DicomConfiguration dicomConf;

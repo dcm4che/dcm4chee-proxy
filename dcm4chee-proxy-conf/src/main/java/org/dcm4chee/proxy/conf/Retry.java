@@ -46,9 +46,12 @@ import java.io.Serializable;
  */
 public class Retry implements Serializable {
 
-	private static final long serialVersionUID = 1L;
-	
-	public final String suffix;
+    private static final long serialVersionUID = 1L;
+
+    public static final int DEFAULT_DELAY = 60;
+    public static final int DEFAULT_RETRIES = 60;
+
+    public final String suffix;
     public final int delay;
     public final int numberOfRetries;
 
@@ -57,15 +60,15 @@ public class Retry implements Serializable {
         this.delay = delay;
         this.numberOfRetries = numberOfRetries;
     }
-    
-    public String getSuffix(){
+
+    public String getSuffix() {
         return suffix;
     }
-    
+
     public int getDelay() {
         return delay;
     }
-    
+
     public int getNumberOfRetries() {
         return numberOfRetries;
     }
