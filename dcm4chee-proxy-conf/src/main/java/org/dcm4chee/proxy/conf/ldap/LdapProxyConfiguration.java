@@ -62,6 +62,7 @@ import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.Schedule;
 
 /**
@@ -222,8 +223,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
             while (ne.hasMore()) {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
-                Retry retry = new Retry(stringValue(attrs.get("dcmRetrySuffix")), intValue(attrs.get("dcmRetryDelay"),
-                        60), intValue(attrs.get("dcmRetryNum"), 10));
+                Retry retry = new Retry(
+                        RetryObject.valueOf(stringValue(attrs.get("dcmRetryObject"))), 
+                        intValue(attrs.get("dcmRetryDelay"),60), 
+                        intValue(attrs.get("dcmRetryNum"), 10));
                 retries.add(retry);
             }
             proxyAE.setRetries(retries);
@@ -283,7 +286,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     private Attributes storeToRetry(Retry retry, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmRetry");
-        storeNotNull(attrs, "dcmRetrySuffix", retry.getSuffix());
+        storeNotNull(attrs, "dcmRetryObject", retry.getRetryObject().toString());
         storeNotNull(attrs, "dcmRetryDelay", retry.getDelay());
         storeNotNull(attrs, "dcmRetryNum", retry.getNumberOfRetries());
         return attrs;
@@ -299,7 +302,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     private String dnOfRetry(Retry retry, String parentDN) {
         StringBuilder sb = new StringBuilder();
-        sb.append("dcmRetrySuffix=").append(retry.getSuffix());
+        sb.append("dcmRetryObject=").append(retry.getRetryObject().toString());
         sb.append(',').append(parentDN);
         return sb.toString();
     }

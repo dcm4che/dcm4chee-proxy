@@ -62,6 +62,7 @@ import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.Schedule;
 import org.junit.Test;
 
@@ -291,7 +292,7 @@ public class ProxyConfigurationTestUtils {
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
         ae.setSpoolDirectory("/tmp/proxy/");
-        ae.setAcceptDataOnFailedNegotiation(false);
+        ae.setAcceptDataOnFailedNegotiation(true);
         ae.setEnableAuditLog(true);
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
@@ -330,8 +331,8 @@ public class ProxyConfigurationTestUtils {
         forwardRules.add(forwardRulePrivate);
         ae.setForwardRules(forwardRules);
         List<Retry> retries = new ArrayList<Retry>();
-        retries.add(new Retry(".conn", 60, 5));
-        retries.add(new Retry(".ass", 60, 5));
+        retries.add(new Retry(RetryObject.ConfigurationException, 60, 5));
+        retries.add(new Retry(RetryObject.AssociationStateException, 60, 5));
         ae.setRetries(retries);
         addVerificationStorageTransferCapabilities(ae);
         addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);

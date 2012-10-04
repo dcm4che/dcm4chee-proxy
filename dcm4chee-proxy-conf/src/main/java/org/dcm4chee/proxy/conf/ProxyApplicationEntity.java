@@ -439,24 +439,24 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), rj,
-                    RetryFileSuffix.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
+                    RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
                     rj.getReason());
         } catch (AAbort aa) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), aa,
-                    RetryFileSuffix.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason(), aa.getReason());
+                    RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason(), aa.getReason());
         } catch (IOException e) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
-                    RetryFileSuffix.ConnectionException.getSuffix(), 0);
+                    RetryObject.ConnectionException.getSuffix(), 0);
         } catch (InterruptedException e) {
             LOG.debug("Unexpected exception", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
-                    RetryFileSuffix.IncompatibleConnectionException.getSuffix(), 0);
+                    RetryObject.IncompatibleConnectionException.getSuffix(), 0);
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context", e);
             return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
-                    RetryFileSuffix.GeneralSecurityException.getSuffix(), 0);
+                    RetryObject.GeneralSecurityException.getSuffix(), 0);
         }
     }
 

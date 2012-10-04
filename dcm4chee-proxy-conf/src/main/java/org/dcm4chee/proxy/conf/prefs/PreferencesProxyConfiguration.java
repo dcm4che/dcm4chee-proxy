@@ -57,6 +57,7 @@ import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.Schedule;
 
 /**
@@ -188,7 +189,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         for (String retryIndex : retriesNode.childrenNames()) {
             Preferences retryNode = retriesNode.node(retryIndex);
             Retry retry = new Retry(
-                    retryNode.get("dcmRetrySuffix", null),
+                    RetryObject.valueOf(retryNode.get("dcmRetryObject", null)),
                     retryNode.getInt("dcmRetryDelay", Retry.DEFAULT_DELAY),
                     retryNode.getInt("dcmRetryNum", Retry.DEFAULT_RETRIES));
             retries.add(retry);
@@ -248,7 +249,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     }
 
     private void storeToRetry(Retry retry, Preferences prefs) {
-        storeNotNull(prefs, "dcmRetrySuffix", retry.getSuffix());
+        storeNotNull(prefs, "dcmRetryObject", retry.getRetryObject().toString());
         storeNotNull(prefs, "dcmRetryDelay", retry.getDelay());
         storeNotNull(prefs, "dcmRetryNum", retry.getNumberOfRetries());
     }

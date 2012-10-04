@@ -51,18 +51,18 @@ public class Retry implements Serializable {
     public static final int DEFAULT_DELAY = 60;
     public static final int DEFAULT_RETRIES = 60;
 
-    public final String suffix;
+    public final RetryObject retryObject;
     public final int delay;
     public final int numberOfRetries;
 
-    public Retry(String suffix, int delay, int numberOfRetries) {
-        this.suffix = suffix;
+    public Retry(RetryObject retryObject, int delay, int numberOfRetries) {
+        this.retryObject = retryObject;
         this.delay = delay;
         this.numberOfRetries = numberOfRetries;
     }
 
-    public String getSuffix() {
-        return suffix;
+    public RetryObject getRetryObject() {
+        return retryObject;
     }
 
     public int getDelay() {

@@ -117,7 +117,7 @@ public class ForwardFiles {
                     return true;
                 String file = path.substring(path.lastIndexOf(ProxyApplicationEntity.getSeparator()) + 1);
                 for (Retry retry : pae.getRetries())
-                    if (path.endsWith(retry.suffix) && numRetry(retry, file)
+                    if (path.endsWith(retry.getRetryObject().getSuffix()) && numRetry(retry, file)
                             && (now > pathname.lastModified() + retryDelay(retry, file)))
                         return true;
                 return false;
@@ -129,7 +129,7 @@ public class ForwardFiles {
             }
 
             private boolean numRetry(Retry retry, String file) {
-                return file.split(retry.suffix, -1).length - 1 < (Integer) retry.numberOfRetries;
+                return file.split(retry.getRetryObject().getSuffix(), -1).length - 1 < (Integer) retry.numberOfRetries;
             }
         };
     }
@@ -163,7 +163,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledMPPS(as, file, fmi, protocol);
                     } else {
-                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
+                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
                         rename(as, file);
                     }
                 } finally {
@@ -273,7 +273,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(pae, as, file, fmi);
                     } else {
-                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
+                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
                         rename(as, file);
                     }
                 } finally {
@@ -377,32 +377,32 @@ public class ForwardFiles {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledCStoreFiles(pae, asInvoked, file);
                     } else {
-                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryFileSuffix.ConnectionException.getSuffix());
+                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
                         rename(asInvoked, file);
                     }
                 } catch (NoPresentationContextException npc) {
-                    handleForwardException(asInvoked, file, npc, RetryFileSuffix.NoPresentationContextException.getSuffix());
+                    handleForwardException(asInvoked, file, npc, RetryObject.NoPresentationContextException.getSuffix());
                 } catch (AssociationStateException ass) {
-                    handleForwardException(asInvoked, file, ass, RetryFileSuffix.AssociationStateException.getSuffix());
+                    handleForwardException(asInvoked, file, ass, RetryObject.AssociationStateException.getSuffix());
                 } catch (IOException ioe) {
-                    handleForwardException(asInvoked, file, ioe, RetryFileSuffix.ConnectionException.getSuffix());
+                    handleForwardException(asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix());
                     releaseAS(asInvoked);
                 }
             }
         } catch (ConfigurationException ce) {
             LOG.error("Unable to load configuration: " + ce.getMessage());
         } catch (AAssociateRJ rj) {
-            handleProcessException(ft, rj, RetryFileSuffix.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
+            handleProcessException(ft, rj, RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
         } catch (AAbort aa) {
-            handleProcessException(ft, aa, RetryFileSuffix.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason());
+            handleProcessException(ft, aa, RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason());
         } catch (IOException e) {
-            handleProcessException(ft, e, RetryFileSuffix.ConnectionException.getSuffix());
+            handleProcessException(ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (InterruptedException e) {
-            handleProcessException(ft, e, RetryFileSuffix.ConnectionException.getSuffix());
+            handleProcessException(ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (IncompatibleConnectionException e) {
-            handleProcessException(ft, e, RetryFileSuffix.IncompatibleConnectionException.getSuffix());
+            handleProcessException(ft, e, RetryObject.IncompatibleConnectionException.getSuffix());
         } catch (GeneralSecurityException e) {
-            handleProcessException(ft, e, RetryFileSuffix.GeneralSecurityException.getSuffix());
+            handleProcessException(ft, e, RetryObject.GeneralSecurityException.getSuffix());
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {

@@ -41,7 +41,7 @@ package org.dcm4chee.proxy.conf;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public enum RetryFileSuffix {
+public enum RetryObject {
     AAssociateRJ(".rj", "Association Rejected"),
     AAbort(".aa", "Association Aborted"),
     ConfigurationException(".conf", "Configuration Error"),
@@ -61,7 +61,7 @@ public enum RetryFileSuffix {
     public String getRetryNote() {
         return retryNote;
     }
-    private RetryFileSuffix(String suffix, String note) {
+    private RetryObject(String suffix, String note) {
         this.suffix = suffix;
         this.retryNote = note;
     }

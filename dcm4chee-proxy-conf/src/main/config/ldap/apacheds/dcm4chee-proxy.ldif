@@ -108,8 +108,8 @@ objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.3.15
-m-name: dcmRetrySuffix
-m-description: Suffix of retry case
+m-name: dcmRetryObject
+m-description: Retry case
 m-singleValue: TRUE
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.3.11, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
@@ -225,7 +225,7 @@ objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.4.3
 m-name: dcmRetry
 m-description: Retry configuration for specific cases
-m-must: dcmRetrySuffix
+m-must: dcmRetryObject
 m-must: dcmRetryDelay
 m-must: dcmRetryNum
 

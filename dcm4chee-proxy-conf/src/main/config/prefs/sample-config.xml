@@ -47,7 +47,7 @@
             <map/>
             <node name="DCM4CHEE-PROXY">
               <map>
-                <entry key="dcmAcceptDataOnFailedNegotiation" value="false"/>
+                <entry key="dcmAcceptDataOnFailedNegotiation" value="true"/>
                 <entry key="dcmEnableAuditLog" value="true"/>
                 <entry key="dcmProxyNetworkAE" value="true"/>
                 <entry key="dcmSpoolDirectory" value="/tmp/proxy/"/>
@@ -117,14 +117,14 @@
                   <map>
                     <entry key="dcmRetryDelay" value="60"/>
                     <entry key="dcmRetryNum" value="5"/>
-                    <entry key="dcmRetrySuffix" value=".conn"/>
+                    <entry key="dcmRetryObject" value="ConfigurationException"/>
                   </map>
                 </node>
                 <node name="2">
                   <map>
                     <entry key="dcmRetryDelay" value="60"/>
                     <entry key="dcmRetryNum" value="5"/>
-                    <entry key="dcmRetrySuffix" value=".ass"/>
+                    <entry key="dcmRetryObject" value="AssociationStateException"/>
                   </map>
                 </node>
               </node>
