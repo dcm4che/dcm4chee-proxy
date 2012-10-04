@@ -42,22 +42,27 @@ package org.dcm4chee.proxy.conf;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public enum RetryFileSuffix {
-    AAssociateRJ(".rj"),
-    AAbort(".aa"),
-    ConfigurationException(".conf"),
-    ConnectionException(".conn"),
-    GeneralSecurityException(".ssl"),
-    NoPresentationContextException(".npc"),
-    IncompatibleConnectionException(".ic"),
-    AssociationStateException(".as");
+    AAssociateRJ(".rj", "Association Rejected"),
+    AAbort(".aa", "Association Aborted"),
+    ConfigurationException(".conf", "Configuration Error"),
+    ConnectionException(".conn", "Connection Error"),
+    GeneralSecurityException(".ssl", "SSL Error"),
+    NoPresentationContextException(".npc", "No Presentation Context Error"),
+    IncompatibleConnectionException(".ic", "Incompatible Connection Error"),
+    AssociationStateException(".as", "Association I/O Error");
     
     private final String suffix;
+    private final String retryNote;
     
     public String getSuffix() {
         return suffix;
     }
 
-    private RetryFileSuffix(String suffix) {
+    public String getRetryNote() {
+        return retryNote;
+    }
+    private RetryFileSuffix(String suffix, String note) {
         this.suffix = suffix;
+        this.retryNote = note;
     }
 }
