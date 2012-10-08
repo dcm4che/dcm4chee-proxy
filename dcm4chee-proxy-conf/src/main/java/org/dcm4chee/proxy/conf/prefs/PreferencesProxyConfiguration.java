@@ -328,7 +328,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
     private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,
             Preferences parentNode) throws BackingStoreException {
-        Preferences schedulesNode = parentNode.node("dcmSchedule");
+        Preferences schedulesNode = parentNode.node("dcmForwardSchedule");
         for (String aet : prevs.keySet())
             if (!schedules.containsKey(aet))
                 schedulesNode.node(aet).removeNode();
