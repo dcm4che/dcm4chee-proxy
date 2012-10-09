@@ -40,7 +40,7 @@
           <map>
             <entry key="dcmForwardThreads" value="8"/>
             <entry key="dcmProxyDevice" value="true"/>
-            <entry key="dcmSchedulerInterval" value="60"/>
+            <entry key="dcmSchedulerInterval" value="30"/>
             <entry key="dicomInstalled" value="true"/>
           </map>
           <node name="dcmNetworkAE">
@@ -115,15 +115,15 @@
                 <map/>
                 <node name="1">
                   <map>
-                    <entry key="dcmRetryDelay" value="60"/>
-                    <entry key="dcmRetryNum" value="5"/>
-                    <entry key="dcmRetryObject" value="ConfigurationException"/>
+                    <entry key="dcmRetryDelay" value="20"/>
+                    <entry key="dcmRetryNum" value="10"/>
+                    <entry key="dcmRetryObject" value="ConnectionException"/>
                   </map>
                 </node>
                 <node name="2">
                   <map>
-                    <entry key="dcmRetryDelay" value="60"/>
-                    <entry key="dcmRetryNum" value="5"/>
+                    <entry key="dcmRetryDelay" value="20"/>
+                    <entry key="dcmRetryNum" value="10"/>
                     <entry key="dcmRetryObject" value="AssociationStateException"/>
                   </map>
                 </node>

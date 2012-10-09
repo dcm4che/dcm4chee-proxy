@@ -112,7 +112,7 @@ dn: dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
 objectClass: dcmProxyDevice
 objectClass: dcmDevice
 objectClass: dicomDevice
-dcmSchedulerInterval: 60
+dcmSchedulerInterval: 30
 dicomDeviceName: dcm4chee-proxy
 dicomInstalled: TRUE
 dcmForwardThreads: 8
@@ -3820,20 +3820,19 @@ dicomTransferSyntax: 1.2.840.10008.1.2.1.99
 dicomTransferSyntax: 1.2.840.10008.1.2.2
 cn: Encapsulated PDF Storage SCU
 
-dn: dcmRetryObject=ConfigurationException,dicomAETitle=DCM4CHEE-PROXY,dicomD
- eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
- m
+dn: dcmRetryObject=ConnectionException,dicomAETitle=DCM4CHEE-PROXY,dicomDevi
+ ceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmRetry
-dcmRetryDelay: 60
-dcmRetryNum: 5
-dcmRetryObject: ConfigurationException
+dcmRetryDelay: 20
+dcmRetryNum: 10
+dcmRetryObject: ConnectionException
 
 dn: dcmRetryObject=AssociationStateException,dicomAETitle=DCM4CHEE-PROXY,dic
  omDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
 objectClass: dcmRetry
-dcmRetryDelay: 60
-dcmRetryNum: 5
+dcmRetryDelay: 20
+dcmRetryNum: 10
 dcmRetryObject: AssociationStateException
 
 dn: dcmDestinationAETitle=STORESCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa

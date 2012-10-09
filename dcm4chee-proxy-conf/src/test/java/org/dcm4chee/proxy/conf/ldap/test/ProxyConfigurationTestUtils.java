@@ -285,7 +285,7 @@ public class ProxyConfigurationTestUtils {
 //        for (String other : OTHER_DEVICES)
 //            device.setAuthorizedNodeCertificates(config.deviceRef(other),
 //                    (X509Certificate) KEYSTORE.getCertificate(other));
-        device.setSchedulerInterval(60);
+        device.setSchedulerInterval(30);
         device.setForwardThreads(8);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
@@ -331,8 +331,8 @@ public class ProxyConfigurationTestUtils {
         forwardRules.add(forwardRulePrivate);
         ae.setForwardRules(forwardRules);
         List<Retry> retries = new ArrayList<Retry>();
-        retries.add(new Retry(RetryObject.ConfigurationException, 60, 5));
-        retries.add(new Retry(RetryObject.AssociationStateException, 60, 5));
+        retries.add(new Retry(RetryObject.ConnectionException, 20, 10));
+        retries.add(new Retry(RetryObject.AssociationStateException, 20, 10));
         ae.setRetries(retries);
         addVerificationStorageTransferCapabilities(ae);
         addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
