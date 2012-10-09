@@ -175,7 +175,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public File getNCreateDirectoryPath() {
-        File path = new File(getSpoolDirectory() + "mpps" + separator + "ncreate");
+        File path = new File(getSpoolDirectory() + separator + "mpps" + separator + "ncreate");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "mpps" + separator + "ncreate")
@@ -185,7 +185,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public File getNSetDirectoryPath() {
-        File path = new File(getSpoolDirectory() + "mpps" + separator + "nset");
+        File path = new File(getSpoolDirectory() + separator + "mpps" + separator + "nset");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "mpps" + separator + "nset")
@@ -195,7 +195,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
     
     public File getCStoreDirectoryPath() {
-        File path = new File(getSpoolDirectory() + "cstore");
+        File path = new File(getSpoolDirectory(), "cstore");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "cstore")
