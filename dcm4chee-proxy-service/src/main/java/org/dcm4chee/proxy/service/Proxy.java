@@ -105,6 +105,7 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     @Override
     public void reloadConfiguration() throws Exception {
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
+        device.rebindConnections();
     }
 
     @Override
