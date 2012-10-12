@@ -27,7 +27,9 @@ public class ProxyServlet extends HttpServlet {
                     config.getInitParameter("dicomConfigurationClass"), 
                     false,
                     Thread.currentThread().getContextClassLoader()).newInstance();
-            proxy = new Proxy(dicomConfig, config.getInitParameter("deviceName"));
+            String systemPropertyDeviceName = System.getProperty("proxy.device.name");
+            String deviceName = config.getInitParameter("deviceName");
+            proxy = new Proxy(dicomConfig, (systemPropertyDeviceName == null) ? deviceName : systemPropertyDeviceName);
             proxy.start();
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy,
                     new ObjectName(config.getInitParameter("jmxName")));

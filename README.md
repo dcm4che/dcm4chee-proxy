@@ -17,6 +17,11 @@ Library
 * Preferences: `mvn install -P lib-prefs`
 * LDAP: `mvn install -P lib-ldap [-D ldap={slapd|opendj|apacheds}]`
 
+Configuration
+-------------
+
+Set device name in `web.xml` or via system property `proxy.device.name`.
+
 JBoss Configuration
 ===================
 
