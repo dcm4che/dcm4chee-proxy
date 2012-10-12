@@ -43,6 +43,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -82,25 +83,25 @@ public class ForwardFiles {
     public void execute(ProxyApplicationEntity pae) {
         for (String calledAET : pae.getCStoreDirectoryPath().list())
             for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()))
+                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
                     startForwardScheduledCStoreFiles(pae, calledAET);
 
         for (String calledAET : pae.getNactionDirectoryPath().list())
             for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()))
+                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
                     startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)),
                             entry.getKey());
 
         for (String calledAET : pae.getNCreateDirectoryPath().list())
             for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()))
+                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
                     startForwardScheduledMPPS(pae,
                             new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
                             "ncreate");
 
         for (String calledAET : pae.getNSetDirectoryPath().list())
             for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()))
+                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
                     startForwardScheduledMPPS(pae,
                             new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
                             "nset");
@@ -136,7 +137,7 @@ public class ForwardFiles {
 
     private void startForwardScheduledMPPS(final ProxyApplicationEntity pae, final File[] files,
             final String destinationAETitle, final String protocol) {
-        ((ProxyDevice)pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
+        ((ProxyDevice) pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
 
             @Override
             public void run() {
@@ -250,7 +251,7 @@ public class ForwardFiles {
 
     private void startForwardScheduledNAction(final ProxyApplicationEntity pae, final File[] files,
             final String destinationAETitle) {
-        ((ProxyDevice)pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
+        ((ProxyDevice) pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
 
             @Override
             public void run() {
@@ -346,7 +347,7 @@ public class ForwardFiles {
     }
 
     private void startForwardScheduledCStoreFiles(final ProxyApplicationEntity pae, final String calledAET) {
-        ((ProxyDevice)pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
+        ((ProxyDevice) pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
 
             @Override
             public void run() {
@@ -377,7 +378,8 @@ public class ForwardFiles {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledCStoreFiles(pae, asInvoked, file);
                     } else {
-                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
+                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX,
+                                RetryObject.ConnectionException.getSuffix());
                         rename(asInvoked, file);
                     }
                 } catch (NoPresentationContextException npc) {
@@ -392,7 +394,8 @@ public class ForwardFiles {
         } catch (ConfigurationException ce) {
             LOG.error("Unable to load configuration: " + ce.getMessage());
         } catch (AAssociateRJ rj) {
-            handleProcessException(ft, rj, RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
+            handleProcessException(ft, rj, RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource()
+                    + "-" + rj.getReason());
         } catch (AAbort aa) {
             handleProcessException(ft, aa, RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason());
         } catch (IOException e) {
@@ -417,8 +420,8 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledCStoreFiles(final ProxyApplicationEntity pae, final Association asInvoked, final File file)
-            throws IOException, InterruptedException {
+    private void forwardScheduledCStoreFiles(final ProxyApplicationEntity pae, final Association asInvoked,
+            final File file) throws IOException, InterruptedException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -527,7 +530,6 @@ public class ForwardFiles {
             }
         }
     }
-
 
     private File rename(Association as, File file) throws DicomServiceException {
         String path = file.getPath();

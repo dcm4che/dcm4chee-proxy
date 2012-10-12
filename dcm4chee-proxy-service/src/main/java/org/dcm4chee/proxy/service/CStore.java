@@ -45,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -73,6 +74,7 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.Schedule;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -157,8 +159,10 @@ public class CStore extends BasicCStoreSCP {
 
         if (aets.entrySet().size() == 1) {
             Entry<String, String> entry = aets.entrySet().iterator().next();
-            asInvoked = getSingleForwardDestination(as, entry.getValue(), entry.getKey(), as.getAAssociateRQ(),
-                    forwardAssociationProperty, pae);
+            Schedule forwardSchedule = pae.getForwardSchedules().get(entry.getKey());
+            if (forwardSchedule == null || forwardSchedule.isNow(new GregorianCalendar()))
+                asInvoked = getSingleForwardDestination(as, entry.getValue(), entry.getKey(), as.getAAssociateRQ(),
+                        forwardAssociationProperty, pae);
         }
         boolean writeDimseRSP = false;
         for (Entry<String, String> entry : aets.entrySet()) {
