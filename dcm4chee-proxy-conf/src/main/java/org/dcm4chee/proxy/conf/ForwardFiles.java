@@ -81,30 +81,64 @@ public class ForwardFiles {
     protected static final Logger LOG = LoggerFactory.getLogger(ForwardFiles.class);
 
     public void execute(ProxyApplicationEntity pae) {
-        for (String calledAET : pae.getCStoreDirectoryPath().list())
-            for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
-                    startForwardScheduledCStoreFiles(pae, calledAET);
+        HashMap<String, Schedule> forwardSchedules = pae.getForwardSchedules();
 
-        for (String calledAET : pae.getNactionDirectoryPath().list())
-            for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
-                    startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)),
-                            entry.getKey());
+        processCStore(pae, forwardSchedules);
+        processNAction(pae, forwardSchedules);
+        processNCreate(pae, forwardSchedules);
+        processNSet(pae, forwardSchedules);
+    }
 
-        for (String calledAET : pae.getNCreateDirectoryPath().list())
-            for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
-                    startForwardScheduledMPPS(pae,
-                            new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
-                            "ncreate");
+    private void processNSet(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
+        for (String calledAET : pae.getNSetDirectoryPath().list()) {
+            if (!forwardSchedules.keySet().contains(calledAET))
+                startForwardScheduledMPPS(pae,
+                        new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET, "nset");
+            else
+                for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                    if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
+                        startForwardScheduledMPPS(pae,
+                                new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
+                                "nset");
+        }
+    }
 
-        for (String calledAET : pae.getNSetDirectoryPath().list())
-            for (Entry<String, Schedule> entry : pae.getForwardSchedules().entrySet())
-                if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
-                    startForwardScheduledMPPS(pae,
-                            new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
-                            "nset");
+    private void processNCreate(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
+        for (String calledAET : pae.getNCreateDirectoryPath().list()) {
+            if (!forwardSchedules.keySet().contains(calledAET))
+                startForwardScheduledMPPS(pae,
+                        new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
+                        "ncreate");
+            else
+                for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                    if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
+                        startForwardScheduledMPPS(pae,
+                                new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)),
+                                calledAET, "ncreate");
+        }
+    }
+
+    private void processNAction(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
+        for (String calledAET : pae.getNactionDirectoryPath().list()) {
+            if (!forwardSchedules.keySet().contains(calledAET))
+                startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)), calledAET);
+            else
+                for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                    if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
+                        startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)),
+                                calledAET);
+        }
+    }
+
+    private void processCStore(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
+        for (String calledAET : pae.getCStoreDirectoryPath().list()) {
+            if (!forwardSchedules.keySet().contains(calledAET))
+                startForwardScheduledCStoreFiles(pae, calledAET);
+            else
+                for (Entry<String, Schedule> entry : forwardSchedules.entrySet())
+                    if (calledAET.equals(entry.getKey()) && entry.getValue().isNow(new GregorianCalendar()))
+                        startForwardScheduledCStoreFiles(pae, calledAET);
+        }
     }
 
     private FileFilter fileFilter(final ProxyApplicationEntity pae) {
@@ -441,11 +475,8 @@ public class ForwardFiles {
                     switch (status) {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
-                        try {
+                        if (pae.isEnableAuditLog())
                             pae.writeLogFile(asInvoked, ds[0], fileSize);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
                         delete(asInvoked, file);
                         break;
                     default: {

@@ -528,19 +528,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         }
     }
 
-    public void writeLogFile(Association as, Attributes attrs, long size)
-    throws IOException {
+    public void writeLogFile(Association as, Attributes attrs, long size) {
         Properties prop = new Properties();
         try {
-            File file = new File(getLogDir(as, attrs), 
-                    attrs.getString(Tag.SOPInstanceUID).concat(".log"));
+            File file = new File(getLogDir(as, attrs), attrs.getString(Tag.SOPInstanceUID).concat(".log"));
             prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
             prop.setProperty("size", String.valueOf(size));
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);
-        } catch (Exception e) {
-            LOG.debug(as + ": failed to create log file: " + e.getMessage());
-            throw new IOException(e);
+        } catch (IOException e) {
+            LOG.debug(as + ": failed to create log file", e);
         }
     }
 
