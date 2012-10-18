@@ -77,16 +77,7 @@
               </node>
               <node name="dcmForwardRule">
                 <map/>
-                <node name="1">
-                  <map>
-                    <entry key="cn" value="Public"/>
-                    <entry key="dcmScheduleDays" value="Mon,Tue,Thu,Fri"/>
-                    <entry key="dcmScheduleHours" value="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"/>
-                    <entry key="labeledURI.#" value="1"/>
-                    <entry key="labeledURI.1" value="aet:DCM4CHEE"/>
-                  </map>
-                </node>
-                <node name="2">
+                <node name="Private">
                   <map>
                     <entry key="cn" value="Private"/>
                     <entry key="dcmSOPClass.#" value="2"/>
@@ -97,6 +88,15 @@
                     <entry key="labeledURI.#" value="2"/>
                     <entry key="labeledURI.1" value="aet:STORESCP"/>
                     <entry key="labeledURI.2" value="aet:DCM4CHEE"/>
+                  </map>
+                </node>
+                <node name="Public">
+                  <map>
+                    <entry key="cn" value="Public"/>
+                    <entry key="dcmScheduleDays" value="Mon,Tue,Thu,Fri"/>
+                    <entry key="dcmScheduleHours" value="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"/>
+                    <entry key="labeledURI.#" value="1"/>
+                    <entry key="labeledURI.1" value="aet:DCM4CHEE"/>
                   </map>
                 </node>
               </node>
@@ -119,18 +119,18 @@
               </node>
               <node name="dcmRetry">
                 <map/>
-                <node name="1">
-                  <map>
-                    <entry key="dcmRetryDelay" value="20"/>
-                    <entry key="dcmRetryNum" value="10"/>
-                    <entry key="dcmRetryObject" value="ConnectionException"/>
-                  </map>
-                </node>
-                <node name="2">
+                <node name="AssociationStateException">
                   <map>
                     <entry key="dcmRetryDelay" value="20"/>
                     <entry key="dcmRetryNum" value="10"/>
                     <entry key="dcmRetryObject" value="AssociationStateException"/>
+                  </map>
+                </node>
+                <node name="ConnectionException">
+                  <map>
+                    <entry key="dcmRetryDelay" value="20"/>
+                    <entry key="dcmRetryNum" value="10"/>
+                    <entry key="dcmRetryObject" value="ConnectionException"/>
                   </map>
                 </node>
               </node>

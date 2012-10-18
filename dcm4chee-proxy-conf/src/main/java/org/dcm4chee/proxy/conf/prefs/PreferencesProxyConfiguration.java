@@ -213,9 +213,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
     private void storeForwardRules(List<ForwardRule> forwardRules, Preferences paeNode) {
         Preferences rulesNode = paeNode.node("dcmForwardRule");
-        int ruleIndex = 1;
         for (ForwardRule rule : forwardRules)
-            storeToForwardRule(rule, rulesNode.node("" + ruleIndex++));
+            storeToForwardRule(rule, rulesNode.node(rule.getCommonName()));
     }
 
     private void storeToForwardRule(ForwardRule rule, Preferences prefs) {
@@ -244,9 +243,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
         Preferences retriesNode = parentNode.node("dcmRetry");
-        int retryIndex = 1;
         for (Retry retry : retries)
-            storeToRetry(retry, retriesNode.node("" + retryIndex++));
+            storeToRetry(retry, retriesNode.node(retry.getRetryObject().toString()));
     }
 
     private void storeToRetry(Retry retry, Preferences prefs) {
