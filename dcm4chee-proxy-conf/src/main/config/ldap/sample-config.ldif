@@ -3865,6 +3865,7 @@ dn: cn=Private,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn
 objectClass: dcmForwardRule
 cn: Private
 labeledURI: aet:STORESCP
+labeledURI: aet:DCM4CHEE
 dcmExclusiveUseDefinedTC: FALSE
 dcmScheduleDays: Wed
 dcmScheduleHours: 9,10,11,12,13,14,15,16,17

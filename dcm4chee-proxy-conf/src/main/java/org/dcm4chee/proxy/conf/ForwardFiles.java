@@ -548,7 +548,7 @@ public class ForwardFiles {
     }
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) throws DicomServiceException {
-        LOG.error("Connection error: " + e.getMessage());
+        LOG.error("Unable to connect to {}: {}", new Object[] { ft.getAAssociateRQ().getCalledAET(), e.getMessage() });
         for (File file : ft.getFiles()) {
             String path = file.getPath();
             File dst = new File(path.concat(suffix));

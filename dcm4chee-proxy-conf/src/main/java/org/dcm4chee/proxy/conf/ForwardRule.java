@@ -55,7 +55,7 @@ public class ForwardRule implements Serializable {
     private Dimse dimse;
     private List<String> sopClass = new ArrayList<String>();
     private String callingAET;
-    private String destinationURI;
+    private List<String> destinationURI = new ArrayList<String>();
     private String useCallingAET;
     private Schedule receiveSchedule;
     private boolean exclusiveUseDefinedTC;
@@ -85,19 +85,34 @@ public class ForwardRule implements Serializable {
         this.callingAET = callingAET;
     }
 
-    public String getDestinationURI() {
+    public List<String> getDestinationURI() {
         return destinationURI;
     }
 
-    public String getDestinationAETitle() {
-        return destinationURI.substring(4);
+    public List<String> getDestinationTemplates() {
+        List<String> templates = new ArrayList<String>();
+        for (String aet : destinationURI)
+            if (!aet.startsWith("aet:"))
+                templates.add(aet);
+        return templates;
     }
 
-    public boolean isTemplateURI() {
-        return !destinationURI.startsWith("aet:");
+    public List<String> getDestinationAETitles() {
+        List<String> aets = new ArrayList<String>();
+        for (String aet : destinationURI)
+            if (aet.startsWith("aet:"))
+                aets.add(aet.substring(4));
+        return aets;
     }
 
-    public void setDestinationURI(String destinationURI) {
+    public boolean containsTemplateURI() {
+        for (String uri : destinationURI)
+            if (!uri.startsWith("aet:"))
+                return true;
+        return false;
+    }
+
+    public void setDestinationURIs(List<String> destinationURI) {
         this.destinationURI = destinationURI;
     }
 

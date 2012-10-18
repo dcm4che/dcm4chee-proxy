@@ -156,9 +156,9 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             String dimse = ruleNode.get("dcmDIMSE", null);
             if (dimse != null)
                 rule.setDimse(Dimse.valueOf(dimse));
-            rule.setSopClass(Arrays.asList(ruleNode.get("dcmSOPClass", null)));
+            rule.setSopClass(Arrays.asList(stringArray(ruleNode, "dcmSOPClass")));
             rule.setCallingAET(ruleNode.get("dcmCallingAETitle", null));
-            rule.setDestinationURI(ruleNode.get("labeledURI", null));
+            rule.setDestinationURIs(Arrays.asList(stringArray(ruleNode, "labeledURI")));
             rule.setUseCallingAET(ruleNode.get("dcmUseCallingAETitle", null));
             rule.setExclusiveUseDefinedTC(ruleNode.getBoolean("dcmExclusiveUseDefinedTC", Boolean.FALSE));
             rule.setCommonName(ruleNode.get("cn", null));
@@ -222,7 +222,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmDIMSE", rule.getDimse());
         storeNotEmpty(prefs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
-        storeNotNull(prefs, "labeledURI", rule.getDestinationURI());
+        storeNotEmpty(prefs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         storeNotDef(prefs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC(), Boolean.FALSE);
         storeNotNull(prefs, "cn", rule.getCommonName());
@@ -320,7 +320,9 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
                 ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
                 ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
         storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
-        storeDiff(prefs, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
+        storeDiff(prefs, "labeledURI", 
+                ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), 
+                ruleB.getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
         storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
         storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());

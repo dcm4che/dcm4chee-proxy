@@ -179,7 +179,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 rule.setDimse(dimseValue(attrs.get("dcmDIMSE")));
                 rule.setSopClass(Arrays.asList(stringArray(attrs.get("dcmSOPClass"))));
                 rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle")));
-                rule.setDestinationURI(stringValue(attrs.get("labeledURI")));
+                rule.setDestinationURIs(Arrays.asList(stringArray(attrs.get("labeledURI"))));
                 rule.setUseCallingAET(stringValue(attrs.get("dcmUseCallingAETitle")));
                 rule.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
                 rule.setCommonName(stringValue(attrs.get("cn")));
@@ -265,7 +265,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmDIMSE", rule.getDimse());
         storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
-        storeNotNull(attrs, "labeledURI", rule.getDestinationURI());
+        storeNotEmpty(attrs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         storeNotNull(attrs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         storeBoolean(attrs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC());
         storeNotNull(attrs, "cn", rule.getCommonName());
@@ -376,7 +376,9 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
                 ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
         storeDiff(mods, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
-        storeDiff(mods, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
+        storeDiff(mods, "labeledURI", 
+                ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), 
+                ruleB.getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
         storeDiff(mods, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
         storeDiff(mods, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         storeDiff(mods, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());

@@ -275,14 +275,18 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         for (ForwardRule rule : rules) {
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
             List<String> destinationAETs = new ArrayList<String>();
-            if (rule.isTemplateURI())
-                try {
-                    destinationAETs = getDestinationAETsFromTemplate((Templates) getTemplates(rule.getDestinationURI()));
-                } catch (TransformerException e) {
-                    LOG.warn("Error parsing template", e);
+            if (rule.containsTemplateURI())
+                for (String template : rule.getDestinationTemplates()) {
+                    try {
+                        for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template)))
+                            destinationAETs.add(aet);
+                    } catch (TransformerException e) {
+                        LOG.error("Error parsing template", e);
+                    }
                 }
             else
-                destinationAETs.add(rule.getDestinationAETitle());
+                for (String destinationAET : rule.getDestinationAETitles())
+                    destinationAETs.add(destinationAET);
             for (String destinationAET : destinationAETs)
                 aeList.put(destinationAET, callingAET);
         }
@@ -361,7 +365,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 && matchingForwardRules.get(0).getSopClass().isEmpty()
                 && (matchingForwardRules.get(0).getCallingAET() == null || 
                         matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
-                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitle()));
+                && matchingForwardRules.get(0).getDestinationAETitles().size() == 1
+                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitles().get(0)));
     }
 
     private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq) {
@@ -378,7 +383,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
         List<ForwardRule> rules = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getCurrentForwardRules(as))
-            if (equals(rule.getDimse(), dimse) && rule.getSopClass().contains(rq.getString(dimse.tagOfSOPClassUID())))
+            if (equals(rule.getDimse(), dimse) && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rq.getString(dimse.tagOfSOPClassUID()))))
                 rules.add(rule);
         for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
@@ -387,7 +392,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     iterator.remove();
                     continue;
                 }
-                if (rule.getSopClass() == null && fwr.getSopClass() != null)
+                if (rule.getSopClass().isEmpty() && !fwr.getSopClass().isEmpty())
                     iterator.remove();
             }
         }
@@ -401,20 +406,21 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
         for (ForwardRule rule : forwardRules)
             if (rule.getReceiveSchedule() == null || rule.getReceiveSchedule().isNow(new GregorianCalendar()))
-                if (rule.isTemplateURI())
+                if (rule.containsTemplateURI())
                     return true;
         return false;
     }
 
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac, ForwardRule forwardRule) 
             throws IOException {
+        String calledAET = forwardRule.getDestinationAETitles().get(0);
         try {
             if (forwardRule.getUseCallingAET() != null)
                 rq.setCallingAET(forwardRule.getUseCallingAET());
             else if (!getAETitle().equals("*"))
                 rq.setCallingAET(getAETitle());
-            rq.setCalledAET(forwardRule.getDestinationAETitle());
-            Association asCalled = connect(getDestinationAE(forwardRule.getDestinationAETitle()), rq);
+            rq.setCalledAET(calledAET);
+            Association asCalled = connect(getDestinationAE(calledAET), rq);
             as.setProperty(FORWARD_ASSOCIATION, asCalled);
             asCalled.setProperty(FORWARD_ASSOCIATION, as);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
@@ -435,28 +441,36 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 ac.addCommonExtendedNegotiation(extNeg);
             return ac;
         } catch (ConfigurationException e) {
-            LOG.error("Unable to load configuration for destination AET: " + e.getMessage());
+            LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), rj,
+            return handleNegotiateConnectException(
+                    as, rq, ac, calledAET, rj,
                     RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
                     rj.getReason());
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), aa,
-                    RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason(), aa.getReason());
+            return handleNegotiateConnectException(
+                    as, rq, ac, calledAET, aa,
+                    RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason(), 
+                    aa.getReason());
         } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
-                    RetryObject.ConnectionException.getSuffix(), 0);
+            return handleNegotiateConnectException(
+                    as, rq, ac, calledAET, e,
+                    RetryObject.ConnectionException.getSuffix(), 
+                    0);
         } catch (InterruptedException e) {
-            LOG.debug("Unexpected exception", e);
+            LOG.debug("Unexpected exception: ", e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
-                    RetryObject.IncompatibleConnectionException.getSuffix(), 0);
+            return handleNegotiateConnectException(
+                    as, rq, ac, calledAET, e,
+                    RetryObject.IncompatibleConnectionException.getSuffix(), 
+                    0);
         } catch (GeneralSecurityException e) {
-            LOG.error("Failed to create SSL context", e);
-            return handleNegotiateConnectException(as, rq, ac, forwardRule.getDestinationURI(), e, 
-                    RetryObject.GeneralSecurityException.getSuffix(), 0);
+            return handleNegotiateConnectException(
+                    as, rq, ac, calledAET, e,
+                    RetryObject.GeneralSecurityException.getSuffix(), 
+                    0);
         }
     }
 
@@ -464,7 +478,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             AAssociateAC ac, String destinationAETitle, Exception e, String suffix, int reason) 
                     throws IOException, AAbort {
         as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.debug(as + ": unable to connect to {} ({})", new Object[]{destinationAETitle, e.getMessage()});
+        LOG.debug(as + ": unable to connect to {}: {}", new Object[]{destinationAETitle, e.getMessage()});
         if (acceptDataOnFailedNegotiation) {
             as.setProperty(FILE_SUFFIX, suffix);
             return super.negotiate(as, rq, ac);
@@ -571,15 +585,15 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             asInvoked = connect(getDestinationAE(calledAET), rq);
             asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
         } catch (IncompatibleConnectionException e) {
-            LOG.error("Unable to connect to {} ({})", new Object[] { calledAET, e.getMessage() });
+            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
         } catch (GeneralSecurityException e) {
-            LOG.error("Failed to create SSL context ({})", new Object[] { e.getMessage() });
+            LOG.error("Failed to create SSL context: ", e.getMessage() );
         } catch (ConfigurationException e) {
-            LOG.error("Unable to load configuration for destination AET ({})", new Object[] { e.getMessage() });
+            LOG.error("Unable to load configuration for destination AET: ", e.getMessage() );
         } catch (ConnectException e) {
-            LOG.error("Unable to connect to {} ({})", new Object[] { calledAET, e.getMessage() });
+            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
         } catch (Exception e) {
-            LOG.debug("Unexpected exception: " + e.getMessage());
+            LOG.debug("Unexpected exception: ", e.getMessage());
         }
         return asInvoked;
     }
