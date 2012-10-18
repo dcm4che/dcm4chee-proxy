@@ -83,6 +83,10 @@ attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.14 NAME 'dcmForwardThreads'
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.15 NAME 'dcmSOPClass'
+  DESC 'List of SOP Class UIDs'
+  EQUALITY objectIdentifierMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 )
 objectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
   SUP top AUXILIARY
@@ -122,7 +126,7 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
     cn )
   MAY (
     dcmDIMSE $
-    dicomSOPClass $
+    dcmSOPClass $
     dcmCallingAETitle $
     dcmExclusiveUseDefinedTC $
     dcmUseCallingAETitle $

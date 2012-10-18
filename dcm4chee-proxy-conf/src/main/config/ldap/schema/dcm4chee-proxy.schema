@@ -109,6 +109,12 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.14
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
   
+attributetype ( 1.2.40.0.13.1.2.15.0.3.15 
+  NAME 'dcmSOPClass'
+  DESC 'List of SOP Class UIDs'
+  EQUALITY objectIdentifierMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 )
+  
 objectclass ( 1.2.40.0.13.1.2.15.0.4.1
   NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
@@ -157,7 +163,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
     cn )
   MAY (
     dcmDIMSE $
-    dicomSOPClass $
+    dcmSOPClass $
     dcmCallingAETitle $
     dcmExclusiveUseDefinedTC $
     dcmUseCallingAETitle $
