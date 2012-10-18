@@ -3868,6 +3868,8 @@ labeledURI: aet:STORESCP
 dcmExclusiveUseDefinedTC: FALSE
 dcmScheduleDays: Wed
 dcmScheduleHours: 9,10,11,12,13,14,15,16,17
+dcmSOPClass: 1.2.840.10008.5.1.4.1.1.2
+dcmSOPClass: 1.2.840.10008.5.1.4.1.1.4
 
 dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co

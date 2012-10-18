@@ -358,7 +358,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return (matchingForwardRules.size() == 1 
                 && !forwardBasedOnTemplates(matchingForwardRules)
                 && matchingForwardRules.get(0).getDimse() == null
-                && matchingForwardRules.get(0).getSopClass() == null
+                && matchingForwardRules.get(0).getSopClass().isEmpty()
                 && (matchingForwardRules.get(0).getCallingAET() == null || 
                         matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
                 && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitle()));
@@ -378,7 +378,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
         List<ForwardRule> rules = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getCurrentForwardRules(as))
-            if (equals(rule.getDimse(), dimse) && equals(rule.getSopClass(), rq.getString(dimse.tagOfSOPClassUID())))
+            if (equals(rule.getDimse(), dimse) && rule.getSopClass().contains(rq.getString(dimse.tagOfSOPClassUID())))
                 rules.add(rule);
         for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();

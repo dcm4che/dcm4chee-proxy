@@ -39,6 +39,8 @@
 package org.dcm4chee.proxy.conf;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.dcm4che.net.Dimse;
 
@@ -47,69 +49,86 @@ import org.dcm4che.net.Dimse;
  * 
  */
 public class ForwardRule implements Serializable {
-    
-	private static final long serialVersionUID = 1L;
-	
-	private Dimse dimse;
-    private String sopClass;
+
+    private static final long serialVersionUID = 1L;
+
+    private Dimse dimse;
+    private List<String> sopClass = new ArrayList<String>();
     private String callingAET;
     private String destinationURI;
     private String useCallingAET;
     private Schedule receiveSchedule;
     private boolean exclusiveUseDefinedTC;
     private String commonName;
-    
+
     public Dimse getDimse() {
         return dimse;
     }
+
     public void setDimse(Dimse dimse) {
         this.dimse = dimse;
     }
-    public String getSopClass() {
+
+    public List<String> getSopClass() {
         return sopClass;
     }
-    public void setSopClass(String sopClass) {
+
+    public void setSopClass(List<String> sopClass) {
         this.sopClass = sopClass;
     }
+
     public String getCallingAET() {
         return callingAET;
     }
+
     public void setCallingAET(String callingAET) {
         this.callingAET = callingAET;
     }
+
     public String getDestinationURI() {
         return destinationURI;
     }
+
     public String getDestinationAETitle() {
         return destinationURI.substring(4);
     }
+
     public boolean isTemplateURI() {
         return !destinationURI.startsWith("aet:");
     }
+
     public void setDestinationURI(String destinationURI) {
         this.destinationURI = destinationURI;
     }
+
     public String getUseCallingAET() {
         return useCallingAET;
     }
+
     public void setUseCallingAET(String useCallingAETitle) {
         this.useCallingAET = useCallingAETitle;
     }
+
     public Schedule getReceiveSchedule() {
         return receiveSchedule;
     }
+
     public void setReceiveSchedule(Schedule receiveTime) {
         this.receiveSchedule = receiveTime;
     }
+
     public boolean isExclusiveUseDefinedTC() {
         return exclusiveUseDefinedTC;
     }
+
     public void setExclusiveUseDefinedTC(boolean exclusiveUseDefinedTC) {
         this.exclusiveUseDefinedTC = exclusiveUseDefinedTC;
     }
+
     public String getCommonName() {
         return commonName;
     }
+
     public void setCommonName(String commonName) {
         this.commonName = commonName;
     }

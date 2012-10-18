@@ -88,6 +88,9 @@
                 <node name="2">
                   <map>
                     <entry key="cn" value="Private"/>
+                    <entry key="dcmSOPClass.#" value="2"/>
+                    <entry key="dcmSOPClass.1" value="1.2.840.10008.5.1.4.1.1.2"/>
+                    <entry key="dcmSOPClass.2" value="1.2.840.10008.5.1.4.1.1.4"/>
                     <entry key="dcmScheduleDays" value="Wed"/>
                     <entry key="dcmScheduleHours" value="9,10,11,12,13,14,15,16,17"/>
                     <entry key="labeledURI" value="aet:STORESCP"/>

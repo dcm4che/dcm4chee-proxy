@@ -41,6 +41,7 @@ package org.dcm4chee.proxy.conf.prefs;
 import java.io.Serializable;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -155,7 +156,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             String dimse = ruleNode.get("dcmDIMSE", null);
             if (dimse != null)
                 rule.setDimse(Dimse.valueOf(dimse));
-            rule.setSopClass(ruleNode.get("dicomSOPClass", null));
+            rule.setSopClass(Arrays.asList(ruleNode.get("dcmSOPClass", null)));
             rule.setCallingAET(ruleNode.get("dcmCallingAETitle", null));
             rule.setDestinationURI(ruleNode.get("labeledURI", null));
             rule.setUseCallingAET(ruleNode.get("dcmUseCallingAETitle", null));
@@ -219,7 +220,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
 
     private void storeToForwardRule(ForwardRule rule, Preferences prefs) {
         storeNotNull(prefs, "dcmDIMSE", rule.getDimse());
-        storeNotNull(prefs, "dicomSOPClass", rule.getSopClass());
+        storeNotEmpty(prefs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
         storeNotNull(prefs, "labeledURI", rule.getDestinationURI());
         storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
@@ -303,7 +304,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         for (ForwardRule rule : rules) {
             Preferences ruleNode = forwardRulesNode.node("" + retryIndex++);
             if (prevIter.hasNext())
-                storeForwardRuleDiff(ruleNode, prevIter.next(), rule);
+                storeForwardRuleDiffs(ruleNode, prevIter.next(), rule);
             else
                 storeToForwardRule(rule, ruleNode);
         }
@@ -313,9 +314,11 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         }
     }
 
-    private void storeForwardRuleDiff(Preferences prefs, ForwardRule ruleA, ForwardRule ruleB) {
+    private void storeForwardRuleDiffs(Preferences prefs, ForwardRule ruleA, ForwardRule ruleB) {
         storeDiff(prefs, "dcmDIMSE", ruleA.getDimse(), ruleB.getDimse());
-        storeDiff(prefs, "dicomSOPClass", ruleA.getSopClass(), ruleB.getSopClass());
+        storeDiff(prefs, "dcmSOPClass",
+                ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
+                ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
         storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
         storeDiff(prefs, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
         storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());

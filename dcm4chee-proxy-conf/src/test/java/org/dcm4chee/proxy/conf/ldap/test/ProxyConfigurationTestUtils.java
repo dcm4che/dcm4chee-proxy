@@ -328,6 +328,10 @@ public class ProxyConfigurationTestUtils {
         receiveSchedulePrivate.setDays("Wed");
         receiveSchedulePrivate.setHours("9-18");
         forwardRulePrivate.setReceiveSchedule(receiveSchedulePrivate);
+        List<String> sopClassesList = new ArrayList<String>();
+        sopClassesList.add(UID.CTImageStorage);
+        sopClassesList.add(UID.MRImageStorage);
+        forwardRulePrivate.setSopClass(sopClassesList);
         forwardRules.add(forwardRulePrivate);
         ae.setForwardRules(forwardRules);
         List<Retry> retries = new ArrayList<Retry>();

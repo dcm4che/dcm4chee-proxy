@@ -40,6 +40,7 @@ package org.dcm4chee.proxy.conf.ldap;
 
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -176,7 +177,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 Attributes attrs = sr.getAttributes();
                 ForwardRule rule = new ForwardRule();
                 rule.setDimse(dimseValue(attrs.get("dcmDIMSE")));
-                rule.setSopClass(stringValue(attrs.get("dicomSOPClass")));
+                rule.setSopClass(Arrays.asList(stringArray(attrs.get("dcmSOPClass"))));
                 rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle")));
                 rule.setDestinationURI(stringValue(attrs.get("labeledURI")));
                 rule.setUseCallingAET(stringValue(attrs.get("dcmUseCallingAETitle")));
@@ -262,7 +263,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
     private Attributes storeToForwardRule(ForwardRule rule, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmForwardRule");
         storeNotNull(attrs, "dcmDIMSE", rule.getDimse());
-        storeNotNull(attrs, "dicomSOPClass", rule.getSopClass());
+        storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
         storeNotNull(attrs, "labeledURI", rule.getDestinationURI());
         storeNotNull(attrs, "dcmUseCallingAETitle", rule.getUseCallingAET());
@@ -371,7 +372,9 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
     private List<ModificationItem> storeForwardRuleDiffs(ForwardRule ruleA, ForwardRule ruleB,
             ArrayList<ModificationItem> mods) {
         storeDiff(mods, "dcmDIMSE", ruleA.getDimse(), ruleB.getDimse());
-        storeDiff(mods, "dicomSOPClass", ruleA.getSopClass(), ruleB.getSopClass());
+        storeDiff(mods, "dcmSOPClass", 
+                ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
+                ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
         storeDiff(mods, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
         storeDiff(mods, "labeledURI", ruleA.getDestinationURI(), ruleB.getDestinationURI());
         storeDiff(mods, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
