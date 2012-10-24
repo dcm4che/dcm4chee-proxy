@@ -151,8 +151,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     private void loadForwardRules(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
         Preferences rulesNode = paeNode.node("dcmForwardRule");
         List<ForwardRule> rules = new ArrayList<ForwardRule>();
-        for (String ruleIndex : rulesNode.childrenNames()) {
-            Preferences ruleNode = rulesNode.node(ruleIndex);
+        for (String ruleName : rulesNode.childrenNames()) {
+            Preferences ruleNode = rulesNode.node(ruleName);
             ForwardRule rule = new ForwardRule();
             String dimse = ruleNode.get("dcmDIMSE", null);
             if (dimse != null)
@@ -295,21 +295,24 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeNode);
     }
 
-    private void mergeForwardRules(List<ForwardRule> prevs, List<ForwardRule> rules, Preferences aeNode)
-            throws BackingStoreException {
+    private void mergeForwardRules(List<ForwardRule> prevForwardRules, List<ForwardRule> currForwardRules,
+            Preferences aeNode) throws BackingStoreException {
         Preferences forwardRulesNode = aeNode.node("dcmForwardRule");
-        int retryIndex = 1;
-        Iterator<ForwardRule> prevIter = prevs.listIterator();
-        for (ForwardRule rule : rules) {
-            Preferences ruleNode = forwardRulesNode.node("" + retryIndex++);
+        Iterator<ForwardRule> prevIter = prevForwardRules.listIterator();
+        List<String> currForwardRuleNames = new ArrayList<String>();
+        for (ForwardRule rule : currForwardRules)
+            currForwardRuleNames.add(rule.getCommonName());
+        while (prevIter.hasNext()) {
+            String prevForwardRuleName = prevIter.next().getCommonName();
+            if (!currForwardRuleNames.contains(prevForwardRuleName))
+                forwardRulesNode.node(prevForwardRuleName).removeNode();
+        }
+        for (ForwardRule rule : currForwardRules) {
+            Preferences ruleNode = forwardRulesNode.node(rule.getCommonName());
             if (prevIter.hasNext())
                 storeForwardRuleDiffs(ruleNode, prevIter.next(), rule);
             else
                 storeToForwardRule(rule, ruleNode);
-        }
-        while (prevIter.hasNext()) {
-            prevIter.next();
-            forwardRulesNode.node("" + retryIndex++).removeNode();
         }
     }
 
@@ -359,7 +362,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             currRetryObjects.add(retry.getRetryObject().toString());
         while (prevIter.hasNext()) {
             String prevRetryObject = prevIter.next().getRetryObject().toString();
-            if(!currRetryObjects.contains(prevRetryObject))
+            if (!currRetryObjects.contains(prevRetryObject))
                 retriesNode.node(prevRetryObject).removeNode();
         }
         for (Retry retry : currRetries) {
