@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -349,21 +350,24 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmForwardScheduleHours", a.getHours(), b.getHours());
     }
 
-    private void mergeRetries(List<Retry> prevs, List<Retry> retries, Preferences parentNode)
+    private void mergeRetries(List<Retry> prevRetries, List<Retry> currRetries, Preferences parentNode)
             throws BackingStoreException {
         Preferences retriesNode = parentNode.node("dcmRetry");
-        int retryIndex = 1;
-        Iterator<Retry> prevIter = prevs.listIterator();
-        for (Retry retry : retries) {
-            Preferences retryNode = retriesNode.node("" + retryIndex++);
+        Iterator<Retry> prevIter = prevRetries.listIterator();
+        List<String> currRetryObjects = new ArrayList<String>();
+        for (Retry retry : currRetries)
+            currRetryObjects.add(retry.getRetryObject().toString());
+        while (prevIter.hasNext()) {
+            String prevRetryObject = prevIter.next().getRetryObject().toString();
+            if(!currRetryObjects.contains(prevRetryObject))
+                retriesNode.node(prevRetryObject).removeNode();
+        }
+        for (Retry retry : currRetries) {
+            Preferences retryNode = retriesNode.node(retry.getRetryObject().toString());
             if (prevIter.hasNext())
                 storeRetryDiffs(retryNode, prevIter.next(), retry);
             else
                 storeToRetry(retry, retryNode);
-        }
-        while (prevIter.hasNext()) {
-            prevIter.next();
-            retriesNode.node("" + retryIndex++).removeNode();
         }
     }
 
