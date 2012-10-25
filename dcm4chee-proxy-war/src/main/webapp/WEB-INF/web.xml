@@ -7,6 +7,10 @@
     http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
   version="2.5">
   <display-name>dcm4chee-proxy-war</display-name>
+  <servlet-mapping>
+    <servlet-name>javax.ws.rs.core.Application</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
   <servlet>
     <servlet-name>dcm4chee-proxy</servlet-name>
     <servlet-class>org.dcm4chee.proxy.service.ProxyServlet</servlet-class>
