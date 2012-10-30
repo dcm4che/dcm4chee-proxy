@@ -85,8 +85,8 @@ public class ProxyDevice extends Device {
     }
     
     public Templates getTemplates(String uri) throws TransformerConfigurationException {
-    	if (templateCache == null)
-    		 templateCache = new TemplatesCache();
+        if (templateCache == null)
+            templateCache = new TemplatesCache();
         return templateCache.get(uri);
     }
 

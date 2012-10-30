@@ -172,7 +172,6 @@ public class Mpps extends DicomService {
             }
             data.addAll(ncreateAttrs);
             ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-            pae.coerceDataset(entry.getKey(), Role.SCP, dimse, data);
             AttributeCoercion ac = pae.getAttributeCoercion(entry.getKey(), "1.2.840.10008.5.1.4.1.1.88.67", Role.SCP,
                     Dimse.N_SET_RQ);
             if (ac == null)
