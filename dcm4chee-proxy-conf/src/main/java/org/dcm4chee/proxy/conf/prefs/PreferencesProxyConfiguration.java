@@ -45,7 +45,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -154,9 +153,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         for (String ruleName : rulesNode.childrenNames()) {
             Preferences ruleNode = rulesNode.node(ruleName);
             ForwardRule rule = new ForwardRule();
-            String dimse = ruleNode.get("dcmDIMSE", null);
-            if (dimse != null)
-                rule.setDimse(Dimse.valueOf(dimse));
+            rule.setDimse(Arrays.asList(dimseArray(ruleNode, "dcmForwardRuleDimse")));
             rule.setSopClass(Arrays.asList(stringArray(ruleNode, "dcmSOPClass")));
             rule.setCallingAET(ruleNode.get("dcmCallingAETitle", null));
             rule.setDestinationURIs(Arrays.asList(stringArray(ruleNode, "labeledURI")));
@@ -167,9 +164,23 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             schedule.setDays(ruleNode.get("dcmScheduleDays", null));
             schedule.setHours(ruleNode.get("dcmScheduleHours", null));
             rule.setReceiveSchedule(schedule);
+            String conversion = ruleNode.get("dcmConversion", null);
+            if (conversion != null)
+                rule.setConversion(ForwardRule.conversionType.valueOf(conversion));
             rules.add(rule);
         }
         proxyAE.setForwardRules(rules);
+    }
+
+    private static Dimse[] dimseArray(Preferences prefs, String key) {
+        int n = prefs.getInt(key + ".#", 0);
+        if (n == 0)
+            return new Dimse[] {};
+
+        Dimse[] dimse = new Dimse[n];
+        for (int i = 0; i < n; i++)
+            dimse[i] = Dimse.valueOf(prefs.get(key + '.' + (i + 1), null));
+        return dimse;
     }
 
     private void loadForwardSchedules(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
@@ -219,7 +230,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     }
 
     private void storeToForwardRule(ForwardRule rule, Preferences prefs) {
-        storeNotNull(prefs, "dcmDIMSE", rule.getDimse());
+        storeForwardRuleDimse(rule, prefs);
         storeNotEmpty(prefs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
         storeNotEmpty(prefs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
@@ -228,6 +239,14 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "cn", rule.getCommonName());
         storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
+        storeNotNull(prefs, "dcmConversion", rule.getConversion());
+    }
+
+    private void storeForwardRuleDimse(ForwardRule rule, Preferences prefs) {
+        List<String> dimseList = new ArrayList<String>();
+        for (Dimse dimse : rule.getDimse())
+            dimseList.add(dimse.toString());
+        storeNotEmpty(prefs, "dcmForwardRuleDimse", dimseList.toArray(new String[dimseList.size()]));
     }
 
     private void storeForwardSchedules(HashMap<String, Schedule> forwardSchedules, Preferences parentNode) {
@@ -317,7 +336,15 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
     }
 
     private void storeForwardRuleDiffs(Preferences prefs, ForwardRule ruleA, ForwardRule ruleB) {
-        storeDiff(prefs, "dcmDIMSE", ruleA.getDimse(), ruleB.getDimse());
+        List<String> dimseA = new ArrayList<String>();
+        for (Dimse dimse : ruleA.getDimse())
+            dimseA.add(dimse.toString());
+        List<String> dimseB = new ArrayList<String>();
+        for (Dimse dimse : ruleB.getDimse())
+            dimseB.add(dimse.toString());
+        storeDiff(prefs, "dcmForwardRuleDimse", 
+                dimseA.toArray(new String[dimseA.size()]), 
+                dimseB.toArray(new String[dimseB.size()]));
         storeDiff(prefs, "dcmSOPClass",
                 ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
                 ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
@@ -329,8 +356,8 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
         storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
-        storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule()
-                .getHours());
+        storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
+        storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
     }
 
     private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,

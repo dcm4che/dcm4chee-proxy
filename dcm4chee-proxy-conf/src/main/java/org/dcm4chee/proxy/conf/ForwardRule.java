@@ -52,20 +52,21 @@ public class ForwardRule implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Dimse dimse;
+    private List<Dimse> dimse = new ArrayList<Dimse>();
     private List<String> sopClass = new ArrayList<String>();
     private String callingAET;
     private List<String> destinationURI = new ArrayList<String>();
     private String useCallingAET;
-    private Schedule receiveSchedule;
+    private Schedule receiveSchedule = new Schedule();
     private boolean exclusiveUseDefinedTC;
     private String commonName;
+    private conversionType conversion;
 
-    public Dimse getDimse() {
+    public List<Dimse> getDimse() {
         return dimse;
     }
 
-    public void setDimse(Dimse dimse) {
+    public void setDimse(List<Dimse> dimse) {
         this.dimse = dimse;
     }
 
@@ -146,5 +147,17 @@ public class ForwardRule implements Serializable {
 
     public void setCommonName(String commonName) {
         this.commonName = commonName;
+    }
+
+    public conversionType getConversion() {
+        return conversion;
+    }
+
+    public void setConversion(conversionType conversion) {
+        this.conversion = conversion;
+    }
+
+    public enum conversionType {
+        MPPS2DoseSR;
     }
 }

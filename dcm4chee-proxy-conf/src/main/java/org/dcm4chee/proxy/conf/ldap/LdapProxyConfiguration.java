@@ -50,6 +50,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchResult;
@@ -60,6 +61,7 @@ import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.ForwardRule.conversionType;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.Retry;
@@ -176,7 +178,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 ForwardRule rule = new ForwardRule();
-                rule.setDimse(dimseValue(attrs.get("dcmDIMSE")));
+                rule.setDimse(Arrays.asList(dimseArray(attrs.get("dcmForwardRuleDimse"))));
                 rule.setSopClass(Arrays.asList(stringArray(attrs.get("dcmSOPClass"))));
                 rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle")));
                 rule.setDestinationURIs(Arrays.asList(stringArray(attrs.get("labeledURI"))));
@@ -187,6 +189,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 schedule.setDays(stringValue(attrs.get("dcmScheduleDays")));
                 schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
                 rule.setReceiveSchedule(schedule);
+                rule.setConversion(conversionTypeValue(attrs.get("dcmConversion")));
                 rules.add(rule);
             }
             proxyAE.setForwardRules(rules);
@@ -195,8 +198,18 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         }
     }
 
-    protected static Dimse dimseValue(Attribute attr) throws NamingException {
-        return attr != null ? Dimse.valueOf(attr.get().toString()) : null;
+    protected static conversionType conversionTypeValue(Attribute attr) throws NamingException {
+        return attr != null ? ForwardRule.conversionType.valueOf((String) attr.get()) : null;
+    }
+
+    private Dimse[] dimseArray(Attribute attr) throws NamingException {
+        if (attr == null)
+            return new Dimse[]{};
+
+        Dimse[] dimse = new Dimse[attr.size()];
+        for (int i = 0; i < dimse.length; i++)
+            dimse[i] = Dimse.valueOf((String) attr.get(i));
+        return dimse;
     }
 
     private void loadForwardSchedules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
@@ -262,7 +275,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     private Attributes storeToForwardRule(ForwardRule rule, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmForwardRule");
-        storeNotNull(attrs, "dcmDIMSE", rule.getDimse());
+        storeForwardRuleDimse(attrs, rule.getDimse());
         storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
         storeNotEmpty(attrs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
@@ -271,7 +284,17 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "cn", rule.getCommonName());
         storeNotNull(attrs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         storeNotNull(attrs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
+        storeNotNull(attrs, "dcmConversion", rule.getConversion());
         return attrs;
+    }
+
+    private void storeForwardRuleDimse(BasicAttributes attrs, List<Dimse> dimseList) {
+        if (!dimseList.isEmpty()) {
+            Attribute attr = new BasicAttribute("dcmForwardRuleDimse");
+            for (Dimse dimse : dimseList)
+                attr.add(dimse.toString());
+            attrs.put(attr);
+        }
     }
 
     private void storeRetries(List<Retry> retries, String parentDN) throws NamingException {
@@ -371,7 +394,15 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
 
     private List<ModificationItem> storeForwardRuleDiffs(ForwardRule ruleA, ForwardRule ruleB,
             ArrayList<ModificationItem> mods) {
-        storeDiff(mods, "dcmDIMSE", ruleA.getDimse(), ruleB.getDimse());
+        List<String> dimseA = new ArrayList<String>();
+        for (Dimse dimse : ruleA.getDimse())
+            dimseA.add(dimse.toString());
+        List<String> dimseB = new ArrayList<String>();
+        for (Dimse dimse : ruleB.getDimse())
+            dimseB.add(dimse.toString());
+        storeDiff(mods, "dcmForwardRuleDimse", 
+                dimseA.toArray(new String[dimseA.size()]), 
+                dimseB.toArray(new String[dimseB.size()]));
         storeDiff(mods, "dcmSOPClass", 
                 ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
                 ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
@@ -384,6 +415,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
         storeDiff(mods, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
         storeDiff(mods, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
+        storeDiff(mods, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
         return mods;
     }
 

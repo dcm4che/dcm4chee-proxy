@@ -294,26 +294,34 @@ public class ProxyConfigurationTestUtils {
         ae.setSpoolDirectory("/tmp/proxy/");
         ae.setAcceptDataOnFailedNegotiation(true);
         ae.setEnableAuditLog(true);
+        
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
                 "resource:dcm4chee-proxy-ensure-pid.xsl"));
+        
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
                 "resource:dcm4chee-proxy-nullify-pn.xsl"));
+        
         HashMap<String, Schedule> schedules = new HashMap<String, Schedule>();
+        
         Schedule forwardScheduleStoreScp = new Schedule();
         forwardScheduleStoreScp.setDays("Wed");
         forwardScheduleStoreScp.setHours("8-18");
         schedules.put("STORESCP", forwardScheduleStoreScp);
+        
         Schedule forwardScheduleDCM4CHEE = new Schedule();
         forwardScheduleDCM4CHEE.setDays("Sun-Sat");
         schedules.put("DCM4CHEE", forwardScheduleDCM4CHEE);
+        
         ae.setForwardSchedules(schedules);
+        
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
+        
         ForwardRule forwardRulePublic = new ForwardRule();
         forwardRulePublic.setCommonName("Public");
         List<String> destinationURIPublic = new ArrayList<String>();
@@ -323,6 +331,25 @@ public class ProxyConfigurationTestUtils {
         receiveSchedulePublic.setDays("Mon, Tue, Thu, Fri");
         forwardRulePublic.setReceiveSchedule(receiveSchedulePublic);
         forwardRules.add(forwardRulePublic);
+        
+        ForwardRule forwardRuleMPPS2DoseSR = new ForwardRule();
+        forwardRuleMPPS2DoseSR.setCommonName("MPPS2DoseSR");
+        List<String> destinationURIMPPS2DoseSR = new ArrayList<String>();
+        destinationURIMPPS2DoseSR.add("aet:DCM4CHEE");
+        forwardRuleMPPS2DoseSR.setDestinationURIs(destinationURIMPPS2DoseSR);
+        forwardRuleMPPS2DoseSR.setConversion(ForwardRule.conversionType.MPPS2DoseSR);
+        List<Dimse> dimse = new ArrayList<Dimse>();
+        dimse.add(Dimse.N_CREATE_RQ);
+        dimse.add(Dimse.N_SET_RQ);
+        forwardRuleMPPS2DoseSR.setDimse(dimse);
+        forwardRules.add(forwardRuleMPPS2DoseSR);
+        
+        ae.addAttributeCoercion(new AttributeCoercion(null, 
+                Dimse.N_SET_RQ, 
+                TransferCapability.Role.SCP,
+                "DCM4CHEE",
+                "resource:dcm4chee-proxy-mpps2dosesr.xsl"));
+        
         ForwardRule forwardRulePrivate = new ForwardRule();
         forwardRulePrivate.setCommonName("Private");
         List<String > destinationURIPrivate = new ArrayList<String>();
@@ -338,11 +365,14 @@ public class ProxyConfigurationTestUtils {
         sopClassesList.add(UID.MRImageStorage);
         forwardRulePrivate.setSopClass(sopClassesList);
         forwardRules.add(forwardRulePrivate);
+        
         ae.setForwardRules(forwardRules);
+        
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(RetryObject.ConnectionException, 20, 10));
         retries.add(new Retry(RetryObject.AssociationStateException, 20, 10));
         ae.setRetries(retries);
+        
         addVerificationStorageTransferCapabilities(ae);
         addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
         addTCs(ae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);

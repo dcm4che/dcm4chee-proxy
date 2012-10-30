@@ -91,6 +91,7 @@ public class ForwardFiles {
 
     private void processNSet(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
         for (String calledAET : pae.getNSetDirectoryPath().list()) {
+            //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledMPPS(pae,
                         new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET, "nset");
@@ -105,6 +106,7 @@ public class ForwardFiles {
 
     private void processNCreate(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
         for (String calledAET : pae.getNCreateDirectoryPath().list()) {
+            //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledMPPS(pae,
                         new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
@@ -120,6 +122,7 @@ public class ForwardFiles {
 
     private void processNAction(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
         for (String calledAET : pae.getNactionDirectoryPath().list()) {
+            //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)), calledAET);
             else
@@ -132,6 +135,7 @@ public class ForwardFiles {
 
     private void processCStore(ProxyApplicationEntity pae, HashMap<String, Schedule> forwardSchedules) {
         for (String calledAET : pae.getCStoreDirectoryPath().list()) {
+            //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledCStoreFiles(pae, calledAET);
             else

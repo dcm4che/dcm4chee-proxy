@@ -204,6 +204,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
+    public File getDoseSrPath() {
+        File path = new File(getSpoolDirectory(), "dose");
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, "dose")
+                : new File(currentWorkingDir, "dose");
+        path.mkdirs();
+        return path;
+    }
+
     public void setRetries(List<Retry> retries) {
         this.retries = retries;
     }
@@ -285,8 +295,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     }
                 }
             else
-                for (String destinationAET : rule.getDestinationAETitles())
-                    destinationAETs.add(destinationAET);
+                if (rule.getConversion() == null)
+                    destinationAETs.addAll(rule.getDestinationAETitles());
             for (String destinationAET : destinationAETs)
                 aeList.put(destinationAET, callingAET);
         }
@@ -361,12 +371,13 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         List<ForwardRule> matchingForwardRules = getCurrentForwardRules(as);
         return (matchingForwardRules.size() == 1 
                 && !forwardBasedOnTemplates(matchingForwardRules)
-                && matchingForwardRules.get(0).getDimse() == null
+                && matchingForwardRules.get(0).getDimse().isEmpty()
                 && matchingForwardRules.get(0).getSopClass().isEmpty()
                 && (matchingForwardRules.get(0).getCallingAET() == null || 
                         matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
                 && matchingForwardRules.get(0).getDestinationAETitles().size() == 1
-                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitles().get(0)));
+                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitles().get(0)))
+                && matchingForwardRules.get(0).getConversion() == null;
     }
 
     private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq) {
@@ -383,7 +394,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
         List<ForwardRule> rules = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getCurrentForwardRules(as))
-            if (equals(rule.getDimse(), dimse) && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rq.getString(dimse.tagOfSOPClassUID()))))
+            if (rule.getDimse().contains(dimse) && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rq.getString(dimse.tagOfSOPClassUID()))))
                 rules.add(rule);
         for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
@@ -399,13 +410,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return rules;
     }
 
-    private boolean equals(Object o1, Object o2) {
-        return o1 == null || o2 == null || o1.equals(o2);
-    }
-
     private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
         for (ForwardRule rule : forwardRules)
-            if (rule.getReceiveSchedule() == null || rule.getReceiveSchedule().isNow(new GregorianCalendar()))
+            if (rule.getReceiveSchedule().isNow(new GregorianCalendar()))
                 if (rule.containsTemplateURI())
                     return true;
         return false;

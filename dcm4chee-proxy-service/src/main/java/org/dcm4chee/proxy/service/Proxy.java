@@ -67,6 +67,7 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public Proxy(DicomConfiguration dicomConfiguration, String deviceName) throws ConfigurationException, Exception {
         this.dicomConfiguration = dicomConfiguration;
         init((ProxyDevice) dicomConfiguration.findDevice(deviceName));
+        device.setDimseRQHandler(serviceRegistry());
     }
 
     @Override
@@ -82,7 +83,6 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
         super.stop();
     }
 
-    @Override
     protected DicomServiceRegistry serviceRegistry() {
         DicomServiceRegistry dcmService = new DicomServiceRegistry();
         dcmService.addDicomService(new CEcho());

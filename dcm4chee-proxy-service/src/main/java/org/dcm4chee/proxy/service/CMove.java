@@ -82,6 +82,7 @@ public class CMove extends DicomService {
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
+                throw new DicomServiceException(Status.UnableToProcess, e);
             }
         } else
             try {
@@ -95,6 +96,7 @@ public class CMove extends DicomService {
                 }
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
+                throw new DicomServiceException(Status.UnableToProcess, e);
             }
     };
 }

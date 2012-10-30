@@ -52,7 +52,7 @@ import javax.ws.rs.PathParam;
 import org.dcm4che.conf.api.DicomConfiguration;
 
 @SuppressWarnings("serial")
-@Path("config")
+@Path("servlet")
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */

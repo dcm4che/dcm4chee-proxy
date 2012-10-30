@@ -26,7 +26,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.2, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.6
+m-oid: 1.2.40.0.13.1.2.15.0.3.2
 m-name: dcmSpoolDirectory
 m-description: String : directory for temporary DICOM files
 m-singleValue: TRUE
@@ -36,7 +36,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.3, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.7
+m-oid: 1.2.40.0.13.1.2.15.0.3.3
 m-name: dcmAcceptDataOnFailedNegotiation
 m-description: Boolean : temporary store data on failed negotiation with Called 
  AET
@@ -47,7 +47,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.4, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.8
+m-oid: 1.2.40.0.13.1.2.15.0.3.4
 m-name: dcmDestinationAETitle
 m-description: String : send DICOM files to target Called AET
 m-singleValue: TRUE
@@ -57,7 +57,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.5, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.9
+m-oid: 1.2.40.0.13.1.2.15.0.3.5
 m-name: dcmUseCallingAETitle
 m-description: String : value for Calling AE Title to be used by proxy
 m-singleValue: TRUE
@@ -67,7 +67,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.6, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.10
+m-oid: 1.2.40.0.13.1.2.15.0.3.6
 m-name: dcmExclusiveUseDefinedTC
 m-description: Boolean : only use transfer capabilities defined for proxy
 m-singleValue: TRUE
@@ -77,7 +77,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.7, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.11
+m-oid: 1.2.40.0.13.1.2.15.0.3.7
 m-name: dcmEnableAuditLog
 m-description: Boolean : enable audit logging
 m-singleValue: TRUE
@@ -87,7 +87,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.8, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.13
+m-oid: 1.2.40.0.13.1.2.15.0.3.8
 m-name: dcmScheduleDays
 m-description: Comma separated list or range : days for availability of AE
 m-singleValue: TRUE
@@ -97,7 +97,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.9, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.14
+m-oid: 1.2.40.0.13.1.2.15.0.3.9
 m-name: dcmScheduleHours
 m-description: Comma separated list or range : hours for availability of AE
 m-singleValue: TRUE
@@ -107,7 +107,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.10, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.15
+m-oid: 1.2.40.0.13.1.2.15.0.3.10
 m-name: dcmRetryObject
 m-description: Retry case
 m-singleValue: TRUE
@@ -117,7 +117,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.11, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.16
+m-oid: 1.2.40.0.13.1.2.15.0.3.11
 m-name: dcmRetryDelay
 m-description: Delay before trying to resend
 m-singleValue: TRUE
@@ -127,7 +127,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.12, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.17
+m-oid: 1.2.40.0.13.1.2.15.0.3.12
 m-name: dcmRetryNum
 m-description: Number of failed retries
 m-singleValue: TRUE
@@ -137,7 +137,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.13, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.21
+m-oid: 1.2.40.0.13.1.2.15.0.3.13
 m-name: dcmCallingAETitle
 m-description: String : value for Calling AE Title specific Forward Rule
 m-singleValue: TRUE
@@ -147,7 +147,7 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.14, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.22
+m-oid: 1.2.40.0.13.1.2.15.0.3.14
 m-name: dcmForwardThreads
 m-description: Integer : maximum number of concurrent forward threads
 m-singleValue: TRUE
@@ -156,11 +156,28 @@ dn: m-oid=1.2.40.0.13.1.2.15.0.3.15, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.840.10008.15.0.3.14
+m-oid: 1.2.40.0.13.1.2.15.0.3.15
 m-name: dcmSOPClass
 m-description: SOP Class UID List
-m-equality: objectIdentifierMatch
-m-syntax: 1.3.6.1.4.1.1466.115.121.1.38
+m-length: 0
+
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.16, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
+ ema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.16
+m-name: dcmConversion
+m-description: String : enum value of conversion type to be applied to object matching the forward rule
+m-singleValue: TRUE
+
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.17, ou=attributetypes, cn=dcm4che, ou=schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.17
+m-name: dcmForwardRuleDimse
+m-description: DIMSE: "C_STORE_RQ", "C_FIND_RQ", "C_FIND_RSP"
 m-length: 0
 
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
@@ -262,13 +279,14 @@ m-name: dcmForwardRule
 m-description: Forward Rule configuration
 m-must: labeledURI
 m-must: cn
-m-may: dcmDIMSE
+m-may: dcmForwardRuleDimse
 m-may: dcmSOPClass
 m-may: dcmCallingAETitle
 m-may: dcmExclusiveUseDefinedTC
 m-may: dcmUseCallingAETitle
 m-may: dcmScheduleDays
 m-may: dcmScheduleHours
+m-may: dcmConversion
 
 dn: ou=syntaxCheckers, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit

@@ -3860,6 +3860,19 @@ dcmScheduleDays: Mon,Tue,Thu,Fri
 dcmScheduleHours: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
  ,23
 
+dn: cn=MPPS2DoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-prox
+ y,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
+objectClass: dcmForwardRule
+cn: MPPS2DoseSR
+labeledURI: aet:DCM4CHEE
+dcmConversion: MPPS2DoseSR
+dcmExclusiveUseDefinedTC: FALSE
+dcmForwardRuleDimse: N_CREATE_RQ
+dcmForwardRuleDimse: N_SET_RQ
+dcmScheduleDays: Sun,Mon,Tue,Wed,Thu,Fri,Sat
+dcmScheduleHours: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
+ ,23
+
 dn: cn=Private,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn
  =Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
@@ -3889,4 +3902,13 @@ dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCU
 labeledURI: resource:dcm4chee-proxy-nullify-pn.xsl
 dicomAETitle: WITHOUT_PN
+
+dn: dcmDIMSE=N_SET_RQ+dicomAETitle=DCM4CHEE+dicomTransferRole=SCP,dicomAETit
+ le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
+ uration,dc=example,dc=com
+objectClass: dcmAttributeCoercion
+dcmDIMSE: N_SET_RQ
+dicomTransferRole: SCP
+labeledURI: resource:dcm4chee-proxy-mpps2dosesr.xsl
+dicomAETitle: DCM4CHEE
 

@@ -74,9 +74,30 @@
                     <entry key="labeledURI" value="resource:dcm4chee-proxy-nullify-pn.xsl"/>
                   </map>
                 </node>
+                <node name="3">
+                  <map>
+                    <entry key="dcmDIMSE" value="N_SET_RQ"/>
+                    <entry key="dicomAETitle" value="DCM4CHEE"/>
+                    <entry key="dicomTransferRole" value="SCP"/>
+                    <entry key="labeledURI" value="resource:dcm4chee-proxy-mpps2dosesr.xsl"/>
+                  </map>
+                </node>
               </node>
               <node name="dcmForwardRule">
                 <map/>
+                <node name="MPPS2DoseSR">
+                  <map>
+                    <entry key="cn" value="MPPS2DoseSR"/>
+                    <entry key="dcmConversion" value="MPPS2DoseSR"/>
+                    <entry key="dcmForwardRuleDimse.#" value="2"/>
+                    <entry key="dcmForwardRuleDimse.1" value="N_CREATE_RQ"/>
+                    <entry key="dcmForwardRuleDimse.2" value="N_SET_RQ"/>
+                    <entry key="dcmScheduleDays" value="Sun,Mon,Tue,Wed,Thu,Fri,Sat"/>
+                    <entry key="dcmScheduleHours" value="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"/>
+                    <entry key="labeledURI.#" value="1"/>
+                    <entry key="labeledURI.1" value="aet:DCM4CHEE"/>
+                  </map>
+                </node>
                 <node name="Private">
                   <map>
                     <entry key="cn" value="Private"/>

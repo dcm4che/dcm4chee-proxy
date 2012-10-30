@@ -44,11 +44,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
+import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
@@ -56,6 +58,7 @@ import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
@@ -95,12 +98,14 @@ public class Mpps extends DicomService {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);
             } catch (ConfigurationException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
+                throw new DicomServiceException(Status.ProcessingFailure, e);
             }
         else
             try {
                 forwardNCreateRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
             } catch (InterruptedException e) {
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
+                throw new DicomServiceException(Status.ProcessingFailure, e);
             }
     }
 
@@ -109,7 +114,14 @@ public class Mpps extends DicomService {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, cmd, dimse);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
-        if (aets.entrySet().size() == 0)
+        HashMap<String, String> mpps2DoseSrAETs = new HashMap<String, String>();
+        for (ForwardRule rule : forwardRules)
+            if (rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
+                String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
+                for (String destinationAET : rule.getDestinationAETitles())
+                    mpps2DoseSrAETs.put(destinationAET, callingAET);
+            }
+        if (aets.entrySet().size() == 0 && mpps2DoseSrAETs.size() == 0)
             throw new ConfigurationException("no destination");
 
         Attributes rsp = (dimse == Dimse.N_CREATE_RQ) 
@@ -119,17 +131,58 @@ public class Mpps extends DicomService {
         String cuid = rsp.getString(Tag.AffectedSOPClassUID);
         String tsuid = UID.ExplicitVRLittleEndian;
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
-        File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
-        dir.mkdir();
         for (Entry<String, String> entry : aets.entrySet()) {
+            File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
+            dir.mkdir();
             File file = createFile(as, dimse, data, iuid, fmi, dir, entry);
             rename(as, file);
+        }
+        for (Entry<String, String> entry : mpps2DoseSrAETs.entrySet()) {
+            File dir = pae.getDoseSrPath();
+            dir.mkdir();
+            processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, entry);
         }
         try {
             as.writeDimseRSP(pc, rsp, data);
         } catch (AssociationStateException e) {
             Dimse dimseRSP = (dimse == Dimse.N_CREATE_RQ) ? Dimse.N_CREATE_RSP : Dimse.N_SET_RSP;
             LOG.warn("{} << {} failed: {}", new Object[] { as, dimseRSP.toString(), e.getMessage() });
+        }
+    }
+
+    private void processMpps2DoseSRConversion(Association as, Dimse dimse, Attributes data, String iuid,
+            Attributes fmi, File baseDir, Entry<String, String> entry) throws IOException, ConfigurationException {
+        if (dimse == Dimse.N_CREATE_RQ) {
+            File file = createFile(as, dimse, data, iuid, fmi, baseDir, entry);
+            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ncreate");
+            rename(as, file);
+        } else {
+            File ncreateDir = new File(baseDir, entry.getKey());
+            File ncreateFile = new File(ncreateDir, iuid + ".ncreate");
+            DicomInputStream in = null;
+            Attributes ncreateAttrs = null;
+            try {
+                in = new DicomInputStream(ncreateFile);
+                ncreateAttrs = in.readDataset(-1, -1);
+            } catch (IOException e) {
+                LOG.error("No N-CREATE file for MediaStorageSOPInstanceUID " + iuid, e.getMessage());
+                return;
+            } finally {
+                SafeClose.close(in);
+            }
+            data.addAll(ncreateAttrs);
+            ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+            pae.coerceDataset(entry.getKey(), Role.SCP, dimse, data);
+            AttributeCoercion ac = pae.getAttributeCoercion(entry.getKey(), "1.2.840.10008.5.1.4.1.1.88.67", Role.SCP,
+                    Dimse.N_SET_RQ);
+            if (ac == null)
+                throw new ConfigurationException("No attribute coercion template for MPPS to Dose SR conversion.");
+
+            pae.coerceAttributes(data, ac);
+            File file = createFile(as, dimse, data, iuid, fmi, baseDir, entry);
+            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
+            rename(as, file);
+            delete(as, ncreateFile);
         }
     }
 
