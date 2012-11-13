@@ -42,18 +42,28 @@ set JAVA=%JAVA_HOME%\bin\java
 
 set CP=%PROXY_HOME%\etc\
 set CP=%CP%;%PROXY_HOME%\lib\%MAIN_JAR%
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-core-3.0.0-SNAPSHOT.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-net-3.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-core-3.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-net-3.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-3.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-3.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-api-3.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\slf4j-api-1.6.4.jar
 set CP=%CP%;%PROXY_HOME%\lib\slf4j-log4j12-1.6.4.jar
 set CP=%CP%;%PROXY_HOME%\lib\log4j-1.2.16.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-3.0.0-SNAPSHOT.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-3.0.0-SNAPSHOT.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-api-3.0.0-SNAPSHOT.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\commons-cli-1.2.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\hibernate-jpa-2.0-api-1.0.1.Final.jar
+set CP=%CP%;%PROXY_HOME%\lib\hibernate-entitymanager-4.0.1.Final.jar
+set CP=%CP%;%PROXY_HOME%\lib\hibernate-core-4.0.1.Final.jar
+set CP=%CP%;%PROXY_HOME%\lib\jboss-logging-3.1.0.GA.jar
+set CP=%CP%;%PROXY_HOME%\lib\jta-1.1.jar
+set CP=%CP%;%PROXY_HOME%\lib\dom4j-1.6.1.jar
+set CP=%CP%;%PROXY_HOME%\lib\hibernate-commons-annotations-4.0.1.Final.jar
+set CP=%CP%;%PROXY_HOME%\lib\javassist-3.15.0-GA.jar
+set CP=%CP%;%PROXY_HOME%\lib\commons-collections-3.2.1.jar
+set CP=%CP%;%PROXY_HOME%\lib\antlr-2.7.7.jar
 set CP=%CP%;%PROXY_HOME%\lib\ojdbc6.jar
 
 "%JAVA%" %JAVA_OPTS% -cp "%CP%" %MAIN_CLASS% %ARGS%
