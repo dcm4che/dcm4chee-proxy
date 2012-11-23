@@ -116,7 +116,7 @@ public class Mpps extends DicomService {
         HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
         HashMap<String, String> mpps2DoseSrAETs = new HashMap<String, String>();
         for (ForwardRule rule : forwardRules)
-            if (rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
+            if (rule.getConversion()!=null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
                 String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
                 for (String destinationAET : rule.getDestinationAETitles())
                     mpps2DoseSrAETs.put(destinationAET, callingAET);
