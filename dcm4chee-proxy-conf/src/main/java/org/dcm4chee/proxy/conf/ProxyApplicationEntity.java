@@ -393,9 +393,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
         List<ForwardRule> rules = new ArrayList<ForwardRule>();
-        for (ForwardRule rule : getCurrentForwardRules(as))
-            if (rule.getDimse().contains(dimse) && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rq.getString(dimse.tagOfSOPClassUID()))))
+        for (ForwardRule rule : getCurrentForwardRules(as)) {
+            String rqSopClass = rq.getString(dimse.tagOfSOPClassUID());
+            if (rule.getDimse().isEmpty() && rule.getSopClass().isEmpty()
+                    || rule.getSopClass().contains(rqSopClass) && rule.getDimse().isEmpty()
+                    || rule.getDimse().contains(dimse) 
+                        && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rqSopClass)))
                 rules.add(rule);
+        }
         for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
             for (ForwardRule fwr : rules) {
