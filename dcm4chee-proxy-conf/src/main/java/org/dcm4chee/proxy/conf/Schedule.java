@@ -75,7 +75,7 @@ public class Schedule implements Serializable {
 
     public void setHours(String hour) {
         if(hour!=null)
-            set(hours, hour, HOURS, 0);
+            set(hours, hour, HOURS, 1);
     }
     
     public String getHours() {
@@ -119,10 +119,27 @@ public class Schedule implements Serializable {
     
     private String toString(BitSet bs, String[] values) {
         StringBuffer sb = new StringBuffer();
-        for(int i = 0; i < bs.length(); i++) {
-            if(bs.get(i))
-                sb.append(sb.length()==0 ? values[i] : ",".concat(values[i]));
+        boolean range = false;
+        for (int i = 0; i < bs.length(); i++) {
+            if (bs.get(i)) {
+                if (sb.length() == 0) {
+                    sb.append(values[i]);
+                    if (bs.get(i + 1))
+                        range = true;
+                }
+                else {
+                    if (range == false) {
+                        sb.append(",".concat(values[i]));
+                        if (bs.get(i + 1))
+                            range = true;
+                    } else if (range == true && !bs.get(i + 1)) {
+                        sb.append("-".concat(values[i]));
+                        range = false;
+                    }
+                }
+            }
         }
         return sb.toString();
     }
+
 }

@@ -328,7 +328,7 @@ public class ProxyConfigurationTestUtils {
         destinationURIPublic.add("aet:DCM4CHEE");
         forwardRulePublic.setDestinationURIs(destinationURIPublic);
         Schedule receiveSchedulePublic = new Schedule();
-        receiveSchedulePublic.setDays("Mon, Tue, Thu, Fri");
+        receiveSchedulePublic.setDays("Sun-Tue,Thu-Sat");
         forwardRulePublic.setReceiveSchedule(receiveSchedulePublic);
         forwardRules.add(forwardRulePublic);
         
