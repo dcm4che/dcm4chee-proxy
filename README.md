@@ -1,29 +1,16 @@
 Build
 =====
 
-JBoss7 EJB Package
-------------------
-
 * Preferences: `mvn install -P {prefs|prefs-jdbc}`
 * LDAP: `mvn install -P ldap [-D ldap={slapd|opendj|apacheds}]`
 
-Standalone Application
-----------------------
-* `mvn install -P tool`
-
-Library
--------
-
-* Preferences: `mvn install -P lib-prefs`
-* LDAP: `mvn install -P lib-ldap [-D ldap={slapd|opendj|apacheds}]`
-
 Configuration
--------------
+=============
 
 Set device name in `web.xml` or via system property `proxy.device.name`.
 
-JBoss Configuration
-===================
+JBoss Logging
+-------------
 
 For all audit log messages to appear in a separate log file (e.g. dcm4chee-proxy-audit.log), add to the according container configuration (e.g. standalone.xml):
 
