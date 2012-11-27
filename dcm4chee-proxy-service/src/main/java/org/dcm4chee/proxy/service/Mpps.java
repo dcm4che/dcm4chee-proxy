@@ -121,7 +121,7 @@ public class Mpps extends DicomService {
                 for (String destinationAET : rule.getDestinationAETitles())
                     mpps2DoseSrAETs.put(destinationAET, callingAET);
             }
-        if (aets.entrySet().size() == 0 && mpps2DoseSrAETs.size() == 0)
+        if (aets.size() == 0 && mpps2DoseSrAETs.size() == 0)
             throw new ConfigurationException("no destination");
 
         Attributes rsp = (dimse == Dimse.N_CREATE_RQ) 
@@ -135,6 +135,7 @@ public class Mpps extends DicomService {
             File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
             dir.mkdir();
             File file = createFile(as, dimse, data, iuid, fmi, dir, entry);
+            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
             rename(as, file);
         }
         for (Entry<String, String> entry : mpps2DoseSrAETs.entrySet()) {
@@ -177,7 +178,7 @@ public class Mpps extends DicomService {
             if (ac == null)
                 throw new ConfigurationException("No attribute coercion template for MPPS to Dose SR conversion.");
 
-            pae.coerceAttributes(data, ac);
+            //TODO: apply attribute transformation
             File file = createFile(as, dimse, data, iuid, fmi, baseDir, entry);
             as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
             rename(as, file);
