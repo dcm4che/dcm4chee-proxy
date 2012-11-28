@@ -1,2 +1,0 @@
-/system-property="org.dcm4chee.proxy.net.deviceName":add(value="dcm4chee-proxy")
-/system-property="org.dcm4chee.proxy.net.jmxName":add(value="dcm4chee:service=dcm4chee-proxy")
