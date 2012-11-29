@@ -1,4 +1,0 @@
-<jboss-web>
-    <security-domain>java:/jaas/dcm4chee</security-domain>
-    <context-root>/dcm4chee-proxy</context-root>
-</jboss-web>
