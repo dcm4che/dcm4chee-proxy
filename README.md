@@ -104,6 +104,12 @@ Please check the dcm4che-jdbc-prefs project for further information.
 JBoss Setup
 -----------
 
+**Dependencies**
+
+To run dcm4chee-proxy within JBoss AS7 requires dcm4che-jboss-modules to be installed,
+which can be found in the dcm4che-3.x DICOM Toolkit (https://github.com/dcm4che/dcm4che).
+You need to unpack dcm4che-jboss-modules-<version>.zip into the JBoss AS7 folder.
+
 **Deployment**
 
 To run dcm4chee-proxy in a JBoss AS7 instance, deploy
