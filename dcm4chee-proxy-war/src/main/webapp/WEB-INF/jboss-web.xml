@@ -1,0 +1,3 @@
+<jboss-web>
+    <context-root>/dcm4chee-proxy</context-root>
+</jboss-web>
