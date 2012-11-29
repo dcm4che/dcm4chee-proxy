@@ -1,8 +1,15 @@
 Introduction
 ============
 
-TODO
-Command Line, JBoss, basic proxy info
+The dcm4chee-proxy is a DICOM proxy application, that provides a vehicle for 
+rule based distribution of DICOM data accross a network. Example use-cases are
+i) forwarding of DICOM objects to multiple AETs, ii) forwarding of DICOM objects
+based on receive time schedules, iii) forwarding to target AETs based on send time schedule,
+iv) forwarding based on attribute evaluation, etc.
+The application can be run on JBoss AS7 or as a standalone command line tool.
+
+Tracker: http://www.dcm4che.org/jira/browse/PRX 
+Source: https://github.com/dcm4che/dcm4chee-proxy 
 
 Building
 ========
@@ -24,7 +31,7 @@ To compile the dcm4chee-proxy for use with Java Preferences, run:
 
 `mvn install -P {prefs|prefs-jdbc}`
 
-Note: To store java preferences in a SQL backend utilizing dcm4che-jdbc-prefs 
+*Note:* To store java preferences in a SQL backend utilizing dcm4che-jdbc-prefs 
 (https://github.com/dcm4che/dcm4che-jdbc-prefs), compile with `mvn install -P prefs-jdbc`. 
 This will add a deployment requirement for JBoss AS7 to wait for deployment 
 of dcm4che-jdbc-prefs before deploying dcm4chee-proxy.
@@ -38,10 +45,10 @@ Select one of the supported LDAP servers in the maven build (default slapd):
 
 `mvn install -P ldap [-D ldap={slapd|opendj|apacheds}]`
 
-*Example*: To build the proxy to work with OpenDJ as the configuration backend, run: 
+*Example:* To build the proxy to work with OpenDJ as the configuration backend, run: 
 `mvn install -Pldap -Dldap=opendj`.
 
-Note: the LDAP server is not included in the build - it must be setup independently. 
+*Note:* the LDAP server is not included in the build - it must be setup independently. 
 Please follow the according install descriptions for the LDAP server of your choice.
 
 Configuration
@@ -69,7 +76,7 @@ Sample Config
 
 dcm4chee-proxy provides a sample configuration for LDAP and Java Preferences.
 
-*LDAP*
+**LDAP**
 
 The LDAP sample configuration can be found at `/dcm4chee-proxy/dcm4chee-proxy-conf/src/main/config/ldap`:
 ```
@@ -80,31 +87,31 @@ The LDAP sample configuration can be found at `/dcm4chee-proxy/dcm4chee-proxy-co
 After importing the LDAP specific schema file (see step "LDAP Schema Import"), 
 import the ldif files in the above order into your LDAP server.
 
-*Java Preferences*
+**Java Preferences**
 
 A Java Preferences sample configuration can be found at `dcm4chee-proxy/dcm4chee-proxy-conf/src/main/config/prefs`:
 `./sample-config.xml`
 To import the sample config, use the `xml2prefs` tool provided by the dcm4che 3.0 library (https://github.com/dcm4che/dcm4che).
 
-Note: if you are planing to use the SQL backend for storing configuration data, the dcm4che-jdbc-prefs project 
+*Note:* If you are planing to use the SQL backend for storing configuration data, the dcm4che-jdbc-prefs project 
 provides a tool `xmlPrefs2jdbc` for importing the Java Preferences sample configuration.
 Please check the dcm4che-jdbc-prefs project for further information.
 
 JBoss Setup
 -----------
 
-*Deployment*
+**Deployment**
 
 To run dcm4chee-proxy in a JBoss AS7 instance, deploy
 `dcm4chee-proxy/dcm4chee-proxy-war/target/dcm4chee-proxy-war-<version>.war`
 via the JBoss command line interface or by copying it into e.g. `<jbossDir>/standalone/deployments/`.
 
-Example:
+*Example:* 
 i) make sure the JBoss instance is running
 ii) start the command line interface: `<jbossDir>/bin/jboss-cli.sh -c`
 iii) call the deploy procedure: `deploy <buildPath>/dcm4chee-proxy-war-<version>.war`
 
-*Device Configuration*
+**Device Configuration**
 
 The dcm4chee-proxy is using a LDAP configuration,
 compliant to the DICOM Application Configuration Management Profile,
@@ -117,8 +124,8 @@ from the configuration backend. The device to be loaded can be set via
 
 i) JBoss AS7 system property `proxy.device.name` in the JBoss container configuration 
 
-Example standalone.xml:
-```
+*Example:* Edit `<jbossDir>standalone/configuration/standalone.xml`:
+```xml
 <?xml version='1.0' encoding='UTF-8'?>
 
 <server xmlns="urn:jboss:domain:1.2">
@@ -136,8 +143,8 @@ or
 
 ii) by editing the file `/WEB-INF/web.xml` within the war file
 
-Example:
-```
+*Example:*
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <webapp...>
   ...
@@ -152,18 +159,16 @@ Example:
 </web-app>
 ```
 
-*JBoss Logging*
+**JBoss Logging**
 
 For all audit log messages to appear in a separate log file (e.g. dcm4chee-proxy-audit.log), 
 add to the according container configuration (e.g. standalone.xml):
 
 ```xml
 <profile>
-  .
-  .
+  ...
   <subsystem xmlns="urn:jboss:domain:logging:1.1">
-    .
-    .
+    ...
     <periodic-rotating-file-handler name="PROXYAUDITLOG">
       <formatter>
         <pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
@@ -178,11 +183,9 @@ add to the according container configuration (e.g. standalone.xml):
         <handler name="PROXYAUDITLOG"/>
       </handlers>
     </logger>
-    .
-    .
+    ...
   <subsystem>
-  .
-  .
+  ...
 </profile>
 ```
 
@@ -194,9 +197,11 @@ After building the project, the command line version can be found in
 The standalone app can be started by executing `./bin/proxysa` (or proxysa.bat)
 and specifying the device name to be loaded from the configuration backend (LDAP or Java Preferences).
 
-Example: proxysa --device dcm4chee-proxy --ldap-url
+*Example:*
+`proxysa --device dcm4chee-proxy --ldap-url
 ldap://localhost:1389/dc=example,dc=com --ldap-userDN "cn=Directory
-Manager" --ldap-pwd admin => Starts the proxy with a DICOM configuration
+Manager" --ldap-pwd admin` 
+This will start the proxy with a DICOM configuration
 retrieved from the specified LDAP.
 
 Try `proxysa --help` for more information.
