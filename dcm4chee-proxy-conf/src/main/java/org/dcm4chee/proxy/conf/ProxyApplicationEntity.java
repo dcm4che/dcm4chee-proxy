@@ -60,6 +60,7 @@ import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -324,7 +325,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
         ProxyDevice device = (ProxyDevice) getDevice();
-        return device.findApplicationEntity(destinationAETitle);
+        ApplicationEntityCache aeCache = device.getAeCache();
+        return aeCache.findApplicationEntity(destinationAETitle);
     }
 
     private boolean isAssociationFromDestinationAET(Association asAccepted) {

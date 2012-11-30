@@ -50,6 +50,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4chee.proxy.conf.ProxyDevice;
 
 @SuppressWarnings("serial")
 @Path("servlet")
@@ -70,12 +71,17 @@ public class ProxyServlet extends HttpServlet {
         try {
             dicomConfig = (DicomConfiguration) Class.forName(config.getInitParameter("dicomConfigurationClass"), false,
                     Thread.currentThread().getContextClassLoader()).newInstance();
-            String systemPropertyDeviceName = System.getProperty("proxy.device.name");
-            String deviceName = config.getInitParameter("deviceName");
-            proxy = new Proxy(dicomConfig, (systemPropertyDeviceName == null) ? deviceName : systemPropertyDeviceName);
+            String deviceName = System.getProperty(
+                    "org.dcm4chee.proxy.deviceName",
+                    config.getInitParameter("deviceName"));
+            String jmxName = System.getProperty(
+                    "org.dcm4chee.proxy.jmxName",
+                    config.getInitParameter("jmxName"));
+            ProxyDevice proxyDevice = (ProxyDevice) dicomConfig.findDevice(deviceName);
+            proxy = new Proxy(dicomConfig, proxyDevice);
             proxy.start();
-            mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy,
-                    new ObjectName(config.getInitParameter("jmxName")));
+            mbean = ManagementFactory.getPlatformMBeanServer()
+                    .registerMBean(proxy, new ObjectName(jmxName));
         } catch (Exception e) {
             destroy();
             throw new ServletException(e);

@@ -38,13 +38,11 @@
 
 package org.dcm4chee.proxy.service;
 
-import javax.net.ssl.KeyManager;
-
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
-import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.conf.AuditLog;
 import org.dcm4chee.proxy.conf.ProxyDevice;
@@ -61,12 +59,13 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public static final String KEY_PASSWORD = "org.dcm4chee.proxy.net.keyPassword";
 
     private final DicomConfiguration dicomConfiguration;
-
     private static Scheduler scheduler;
 
-    public Proxy(DicomConfiguration dicomConfiguration, String deviceName) throws ConfigurationException, Exception {
+    public Proxy(DicomConfiguration dicomConfiguration, ProxyDevice proxyDevice) throws ConfigurationException,
+            Exception {
         this.dicomConfiguration = dicomConfiguration;
-        init((ProxyDevice) dicomConfiguration.findDevice(deviceName));
+        init(proxyDevice);
+        device.setAeCache(new ApplicationEntityCache(dicomConfiguration));
         device.setDimseRQHandler(serviceRegistry());
     }
 
@@ -112,13 +111,4 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public Device unwrapDevice() {
         return device;
     }
-
-    protected KeyManager keyManager() throws Exception {
-        String url = System.getProperty(KS_URL, "resource:dcm4chee-proxy-key.jks");
-        String kstype = System.getProperty(KS_TYPE, "JKS");
-        String kspw = System.getProperty(KS_PASSWORD, "secret");
-        String keypw = System.getProperty(KEY_PASSWORD, kspw);
-        return SSLManagerFactory.createKeyManager(kstype, url, kspw, keypw);
-    }
-
 }

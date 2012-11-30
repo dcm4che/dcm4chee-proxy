@@ -44,6 +44,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
 
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.io.TemplatesCache;
@@ -67,6 +68,8 @@ public class ProxyDevice extends Device {
     private transient TemplatesCache templateCache;
     private int forwardThreads;
     private transient ThreadPoolExecutor fileForwardingExecutor;
+    private int configurationStaleTimeout;
+    private ApplicationEntityCache aeCache;
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
         if (fileForwardingExecutor == null)
@@ -109,6 +112,23 @@ public class ProxyDevice extends Device {
 
     public void setDicomConf(DicomConfiguration dicomConf) {
         this.dicomConf = dicomConf;
+    }
+
+    public int getConfigurationStaleTimeout() {
+        return configurationStaleTimeout;
+    }
+
+    public void setConfigurationStaleTimeout(int configurationStaleTimeout) {
+        this.configurationStaleTimeout = configurationStaleTimeout;
+    }
+
+    public ApplicationEntityCache getAeCache() {
+        return aeCache;
+    }
+
+    public void setAeCache(ApplicationEntityCache aeCache) {
+        this.aeCache = aeCache;
+        aeCache.setStaleTimeout(configurationStaleTimeout);
     }
 
     public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {

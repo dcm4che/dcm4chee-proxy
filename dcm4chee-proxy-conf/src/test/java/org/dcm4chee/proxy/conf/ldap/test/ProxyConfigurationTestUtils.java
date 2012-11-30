@@ -285,8 +285,9 @@ public class ProxyConfigurationTestUtils {
 //        for (String other : OTHER_DEVICES)
 //            device.setAuthorizedNodeCertificates(config.deviceRef(other),
 //                    (X509Certificate) KEYSTORE.getCertificate(other));
-        device.setSchedulerInterval(30);
-        device.setForwardThreads(8);
+        device.setSchedulerInterval(10);
+        device.setForwardThreads(1);
+        device.setConfigurationStaleTimeout(60);
         
         ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
         ae.setAssociationAcceptor(true);

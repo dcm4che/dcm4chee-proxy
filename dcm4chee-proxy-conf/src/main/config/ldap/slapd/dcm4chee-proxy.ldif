@@ -95,6 +95,11 @@ olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.17 NAME 'dcmForwardRuleDimse'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.18 NAME 'dcmProxyConfigurationStaleTimeout'
+  DESC 'Stale timeout of cached configuration in s. 0 (=never invalidate cached configuration) if absent'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  SINGLE-VALUE )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
   SUP top 
@@ -102,7 +107,8 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
   MUST (
     dcmSchedulerInterval ) 
   MAY (
-    dcmForwardThreads ) ))
+    dcmForwardThreads $
+    dcmProxyConfigurationStaleTimeout ) )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
   DESC 'DICOM Proxy Network AE related information'
   SUP top 

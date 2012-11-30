@@ -97,6 +97,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         prefs.putBoolean("dcmProxyDevice", true);
         storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
         storeNotNull(prefs, "dcmForwardThreads", proxyDev.getForwardThreads());
+        storeNotDef(prefs, "dcmProxyConfigurationStaleTimeout", proxyDev.getConfigurationStaleTimeout(), 0);
     }
 
     @Override
@@ -121,6 +122,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyDevice proxyDev = (ProxyDevice) device;
         proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", ProxyDevice.DEFAULT_SCHEDULER_INTERVAL));
         proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", ProxyDevice.DEFAULT_FORWARD_THREADS));
+        proxyDev.setConfigurationStaleTimeout(prefs.getInt("dcmProxyConfigurationStaleTimeout", 0));
     }
 
     @Override
@@ -297,6 +299,10 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         ProxyDevice pb = (ProxyDevice) b;
         storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
         storeDiff(prefs, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
+        storeDiff(prefs, "dcmProxyConfigurationStaleTimeout",
+                pa.getConfigurationStaleTimeout(),
+                pb.getConfigurationStaleTimeout(),
+                0);
     }
 
     @Override

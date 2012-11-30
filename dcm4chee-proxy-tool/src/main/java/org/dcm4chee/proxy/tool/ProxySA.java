@@ -53,6 +53,7 @@ import org.apache.commons.cli.PosixParser;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.ldap.LdapEnv;
+import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
 import org.dcm4chee.proxy.service.Proxy;
@@ -70,7 +71,9 @@ public class ProxySA {
         try {
             CommandLine cl = parseComandLine(args);
             DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
-            Proxy proxy = new Proxy(dicomConfig, cl.getOptionValue("device"));
+            String deviceName = cl.getOptionValue("device");
+            ProxyDevice proxyDevice = (ProxyDevice) dicomConfig.findDevice(deviceName);
+            Proxy proxy = new Proxy(dicomConfig, proxyDevice);
             proxy.start();
         } catch (Exception e) {
             e.printStackTrace();

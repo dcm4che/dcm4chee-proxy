@@ -122,6 +122,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyDevice proxyDev = (ProxyDevice) device;
         storeNotNull(attrs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
         storeNotNull(attrs, "dcmForwardThreads", proxyDev.getForwardThreads());
+        storeNotDef(attrs, "dcmProxyConfigurationStaleTimeout", proxyDev.getConfigurationStaleTimeout(), 0);
         return attrs;
     }
 
@@ -143,7 +144,9 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         if (!(device instanceof ProxyDevice))
             return;
         ProxyDevice proxyDev = (ProxyDevice) device;
-        proxyDev.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
+        proxyDev.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), ProxyDevice.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setForwardThreads(intValue(attrs.get("dcmForwardThreads"), ProxyDevice.DEFAULT_FORWARD_THREADS));
+        proxyDev.setConfigurationStaleTimeout(intValue(attrs.get("dcmProxyConfigurationStaleTimeout"), 0));
     }
 
     @Override
@@ -362,6 +365,10 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         ProxyDevice pb = (ProxyDevice) b;
         storeDiff(mods, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
         storeDiff(mods, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
+        storeDiff(mods, "dcmProxyConfigurationStaleTimeout",
+                pa.getConfigurationStaleTimeout(),
+                pb.getConfigurationStaleTimeout(),
+                0);
         return mods;
     }
 
