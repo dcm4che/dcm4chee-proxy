@@ -190,31 +190,31 @@ public class Mpps extends DicomService {
 
     private void processNSetMpps2DoseSR(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi,
             File baseDir, DoseMapping doseMapping) throws DicomServiceException, TransformerFactoryConfigurationError {
+        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         File ncreateDir = new File(baseDir, doseMapping.destinationAET);
         File ncreateFile = new File(ncreateDir, iuid + ".ncreate");
         Attributes ncreateAttrs = readAttributesFromNCreateFile(ncreateFile);
         data.merge(ncreateAttrs);
         Attributes doseSrData = new Attributes();
-        transformMpps2DoseSr(as, data, iuid, doseMapping, doseSrData);
+        transformMpps2DoseSr(as, pae, data, iuid, doseMapping, doseSrData);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
         doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
         doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, baseDir, doseMapping.destinationAET,
+        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, pae.getCStoreDirectoryPath(), doseMapping.destinationAET,
                 doseMapping.callingAET);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
         delete(as, ncreateFile);
     }
 
-    private void transformMpps2DoseSr(Association as, Attributes data, String iuid, DoseMapping doseMapping,
+    private void transformMpps2DoseSr(Association as, ProxyApplicationEntity pae, Attributes data, String iuid, DoseMapping doseMapping,
             Attributes doseSrData) throws TransformerFactoryConfigurationError,
             DicomServiceException {
         String conversionTemplateUri = StringUtils.replaceSystemProperties(doseMapping.conversionUri);
         try {
-            ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
             Templates templates = pae.getTemplates(conversionTemplateUri);
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);

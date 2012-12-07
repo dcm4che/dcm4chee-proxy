@@ -156,7 +156,8 @@ public class ForwardFiles {
                     return true;
                 String file = path.substring(path.lastIndexOf(ProxyApplicationEntity.getSeparator()) + 1);
                 for (Retry retry : pae.getRetries())
-                    if (path.endsWith(retry.getRetryObject().getSuffix()) && numRetry(retry, file)
+                    if (path.endsWith(retry.getRetryObject().getSuffix()) 
+                            && numRetry(retry, file)
                             && (now > pathname.lastModified() + retryDelay(retry, file)))
                         return true;
                 return false;
@@ -164,11 +165,14 @@ public class ForwardFiles {
 
             private double retryDelay(Retry retry, String file) {
                 int power = file.split("\\.").length - 2;
-                return retry.delay * 1000 * Math.pow(2, power);
+                double delay = retry.delay * 1000;
+                return delay;
             }
 
             private boolean numRetry(Retry retry, String file) {
-                return file.split(retry.getRetryObject().getSuffix(), -1).length - 1 < (Integer) retry.numberOfRetries;
+                int currentRetries = file.split(retry.getRetryObject().getSuffix(), -1).length - 1;
+                int numberOfRetries = retry.numberOfRetries;
+                return currentRetries < numberOfRetries;
             }
         };
     }

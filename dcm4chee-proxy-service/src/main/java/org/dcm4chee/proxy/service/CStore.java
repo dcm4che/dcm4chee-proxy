@@ -166,7 +166,7 @@ public class CStore extends BasicCStoreSCP {
         }
         boolean writeDimseRSP = false;
         for (Entry<String, String> entry : aets.entrySet()) {
-            File copy = createMappedFile(as, file, pae.getSpoolDirectoryPath(), fmi, entry.getValue(), entry.getKey());
+            File copy = createMappedFile(as, file, fmi, entry.getValue(), entry.getKey());
             boolean keepCopy = false;
             try {
                 Attributes attrs = parse(as, copy);
@@ -237,7 +237,6 @@ public class CStore extends BasicCStoreSCP {
             rename(asAccepted, file, rq);
             return true;
         }
-        pae.coerceDataset(asInvoked.getRemoteAET(), Role.SCP, Dimse.C_STORE_RQ, attrs);
         if (pae.isEnableAuditLog()) {
             pae.createStartLogFile(asInvoked, attrs);
             pae.writeLogFile(asInvoked, attrs, file.length());
@@ -252,8 +251,8 @@ public class CStore extends BasicCStoreSCP {
         return false;
     }
 
-    protected File createMappedFile(Association as, File file, File spoolDir, Attributes fmi, String callingAET,
-            String calledAET) throws DicomServiceException {
+    protected File createMappedFile(Association as, File file, Attributes fmi, String callingAET, String calledAET)
+            throws DicomServiceException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         String separator = ProxyApplicationEntity.getSeparator();
         String path = file.getPath();
