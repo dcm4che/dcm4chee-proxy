@@ -406,12 +406,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
             for (ForwardRule fwr : rules) {
-                if (rule.getDimse() == null && fwr.getDimse() != null) {
-                    iterator.remove();
+                if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
-                }
-                if (rule.getSopClass().isEmpty() && !fwr.getSopClass().isEmpty())
+                if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
                     iterator.remove();
+                    break;
+                }
+                if (rule.getSopClass().isEmpty() && !fwr.getSopClass().isEmpty()) {
+                    iterator.remove();
+                    break;
+                }
             }
         }
         return rules;

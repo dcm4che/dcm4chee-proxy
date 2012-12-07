@@ -133,6 +133,14 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.18 NAME 'dcmProxyConfigurationStaleTimeou
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
   
+attributetype ( 1.2.40.0.13.1.2.15.0.3.19 
+  NAME 'dcmConversionUri'
+  DESC 'String : URI of conversion template'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  
 objectclass ( 1.2.40.0.13.1.2.15.0.4.1
   NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
@@ -188,4 +196,5 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
     dcmUseCallingAETitle $
     dcmScheduleDays $
     dcmScheduleHours $
-    dcmConversion ) )
+    dcmConversion $
+    dcmConversionUri ) )

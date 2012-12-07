@@ -300,13 +300,13 @@ public class ProxyConfigurationTestUtils {
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
-                "resource:dcm4chee-proxy-ensure-pid.xsl"));
+                "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
         
         ae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
-                "resource:dcm4chee-proxy-nullify-pn.xsl"));
+                "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
         
         HashMap<String, Schedule> schedules = new HashMap<String, Schedule>();
         
@@ -334,23 +334,18 @@ public class ProxyConfigurationTestUtils {
         forwardRules.add(forwardRulePublic);
         
         ForwardRule forwardRuleMPPS2DoseSR = new ForwardRule();
-        forwardRuleMPPS2DoseSR.setCommonName("MPPS2DoseSR");
+        forwardRuleMPPS2DoseSR.setCommonName("MPPS2XrayDoseSR");
+        forwardRuleMPPS2DoseSR.setCallingAET("MPPSSCU");
         List<String> destinationURIMPPS2DoseSR = new ArrayList<String>();
         destinationURIMPPS2DoseSR.add("aet:DCM4CHEE");
         forwardRuleMPPS2DoseSR.setDestinationURIs(destinationURIMPPS2DoseSR);
         forwardRuleMPPS2DoseSR.setConversion(ForwardRule.conversionType.MPPS2DoseSR);
-        List<Dimse> dimse = new ArrayList<Dimse>();
-        dimse.add(Dimse.N_CREATE_RQ);
-        dimse.add(Dimse.N_SET_RQ);
-        forwardRuleMPPS2DoseSR.setDimse(dimse);
+        List<String> sopClass = new ArrayList<String>();
+        sopClass.add("1.2.840.10008.3.1.2.3.3");
+        forwardRuleMPPS2DoseSR.setSopClass(sopClass);
+        forwardRuleMPPS2DoseSR.setConversionUri("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl");
         forwardRules.add(forwardRuleMPPS2DoseSR);
-        
-        ae.addAttributeCoercion(new AttributeCoercion(null, 
-                Dimse.N_SET_RQ, 
-                TransferCapability.Role.SCP,
-                "DCM4CHEE",
-                "resource:dcm4chee-proxy-mpps2dosesr.xsl"));
-        
+
         ForwardRule forwardRulePrivate = new ForwardRule();
         forwardRulePrivate.setCommonName("Private");
         List<String > destinationURIPrivate = new ArrayList<String>();

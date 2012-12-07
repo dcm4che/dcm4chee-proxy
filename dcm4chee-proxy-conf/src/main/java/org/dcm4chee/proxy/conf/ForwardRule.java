@@ -61,6 +61,7 @@ public class ForwardRule implements Serializable {
     private boolean exclusiveUseDefinedTC;
     private String commonName;
     private conversionType conversion;
+    private String conversionUri;
 
     public List<Dimse> getDimse() {
         return dimse;
@@ -155,6 +156,14 @@ public class ForwardRule implements Serializable {
 
     public void setConversion(conversionType conversion) {
         this.conversion = conversion;
+    }
+
+    public String getConversionUri() {
+        return conversionUri;
+    }
+
+    public void setConversionUri(String conversionUri) {
+        this.conversionUri = conversionUri;
     }
 
     public enum conversionType {

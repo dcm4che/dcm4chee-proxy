@@ -169,6 +169,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             String conversion = ruleNode.get("dcmConversion", null);
             if (conversion != null)
                 rule.setConversion(ForwardRule.conversionType.valueOf(conversion));
+            rule.setConversionUri(ruleNode.get("dcmConversionUri", null));
             rules.add(rule);
         }
         proxyAE.setForwardRules(rules);
@@ -242,6 +243,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         storeNotNull(prefs, "dcmConversion", rule.getConversion());
+        storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
     }
 
     private void storeForwardRuleDimse(ForwardRule rule, Preferences prefs) {
@@ -364,6 +366,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
         storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
         storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
+        storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
     }
 
     private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,

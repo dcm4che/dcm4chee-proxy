@@ -3859,17 +3859,19 @@ dcmExclusiveUseDefinedTC: FALSE
 dcmScheduleDays: Sun-Tue,Thu-Sat
 dcmScheduleHours: 0-23
 
-dn: cn=MPPS2DoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-prox
- y,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
+dn: cn=MPPS2XrayDoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-
+ proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
-cn: MPPS2DoseSR
+cn: MPPS2XrayDoseSR
 labeledURI: aet:DCM4CHEE
+dcmCallingAETitle: MPPSSCU
 dcmConversion: MPPS2DoseSR
+dcmConversionUri: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-pr
+ oxy-mpps2xraydosesr.xsl
 dcmExclusiveUseDefinedTC: FALSE
-dcmForwardRuleDimse: N_CREATE_RQ
-dcmForwardRuleDimse: N_SET_RQ
 dcmScheduleDays: Sun-Sat
 dcmScheduleHours: 0-23
+dcmSOPClass: 1.2.840.10008.3.1.2.3.3
 
 dn: cn=Private,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn
  =Devices,cn=DICOM Configuration,dc=example,dc=com
@@ -3889,7 +3891,8 @@ dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCP
-labeledURI: resource:dcm4chee-proxy-ensure-pid.xsl
+labeledURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-en
+ sure-pid.xsl
 dicomAETitle: ENSURE_PID
 
 dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
@@ -3898,15 +3901,7 @@ dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCU
-labeledURI: resource:dcm4chee-proxy-nullify-pn.xsl
+labeledURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nu
+ llify-pn.xsl
 dicomAETitle: WITHOUT_PN
-
-dn: dcmDIMSE=N_SET_RQ+dicomAETitle=DCM4CHEE+dicomTransferRole=SCP,dicomAETit
- le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
- uration,dc=example,dc=com
-objectClass: dcmAttributeCoercion
-dcmDIMSE: N_SET_RQ
-dicomTransferRole: SCP
-labeledURI: resource:dcm4chee-proxy-mpps2dosesr.xsl
-dicomAETitle: DCM4CHEE
 

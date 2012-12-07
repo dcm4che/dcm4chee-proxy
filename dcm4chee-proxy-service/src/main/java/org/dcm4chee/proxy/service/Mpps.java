@@ -40,31 +40,45 @@ package org.dcm4chee.proxy.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.dcm4che.conf.api.AttributeCoercion;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.sax.SAXResult;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
+import org.dcm4che.io.ContentHandlerAdapter;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomOutputStream;
+import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
-import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4che.util.StringUtils;
+import org.dcm4che.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.jboss.resteasy.util.Hex;
 
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
@@ -109,19 +123,30 @@ public class Mpps extends DicomService {
             }
     }
 
+    class DoseMapping {
+        String conversionUri;
+        String callingAET;
+        String destinationAET;
+    }
+
     private void processForwardRules(Association as, PresentationContext pc, Dimse dimse, Attributes cmd,
             Attributes data) throws ConfigurationException, IOException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, cmd, dimse);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
-        HashMap<String, String> mpps2DoseSrAETs = new HashMap<String, String>();
+        List<DoseMapping> mpps2DoseSR = new ArrayList<Mpps.DoseMapping>();
         for (ForwardRule rule : forwardRules)
             if (rule.getConversion()!=null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
                 String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-                for (String destinationAET : rule.getDestinationAETitles())
-                    mpps2DoseSrAETs.put(destinationAET, callingAET);
+                for (String destinationAET : rule.getDestinationAETitles()) {
+                    DoseMapping doseMapping = new DoseMapping();
+                    doseMapping.callingAET = callingAET;
+                    doseMapping.destinationAET = destinationAET;
+                    doseMapping.conversionUri = rule.getConversionUri();
+                    mpps2DoseSR.add(doseMapping);
+                }
             }
-        if (aets.size() == 0 && mpps2DoseSrAETs.size() == 0)
+        if (aets.size() == 0 && mpps2DoseSR.size() == 0)
             throw new ConfigurationException("no destination");
 
         Attributes rsp = (dimse == Dimse.N_CREATE_RQ) 
@@ -134,14 +159,15 @@ public class Mpps extends DicomService {
         for (Entry<String, String> entry : aets.entrySet()) {
             File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
             dir.mkdir();
-            File file = createFile(as, dimse, data, iuid, fmi, dir, entry);
+            File file = createFile(as, dimse, data, iuid, fmi, dir, entry.getKey(), entry.getValue());
             as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
             rename(as, file);
         }
-        for (Entry<String, String> entry : mpps2DoseSrAETs.entrySet()) {
+        Iterator<DoseMapping> doseMappingIterator = mpps2DoseSR.iterator();
+        while (doseMappingIterator.hasNext()) {
             File dir = pae.getDoseSrPath();
             dir.mkdir();
-            processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, entry);
+            processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, doseMappingIterator.next());
         }
         try {
             as.writeDimseRSP(pc, rsp, data);
@@ -152,55 +178,91 @@ public class Mpps extends DicomService {
     }
 
     private void processMpps2DoseSRConversion(Association as, Dimse dimse, Attributes data, String iuid,
-            Attributes fmi, File baseDir, Entry<String, String> entry) throws IOException, ConfigurationException {
+            Attributes fmi, File baseDir, DoseMapping doseMapping) throws DicomServiceException {
         if (dimse == Dimse.N_CREATE_RQ) {
-            File file = createFile(as, dimse, data, iuid, fmi, baseDir, entry);
+            File file = createFile(as, dimse, data, iuid, fmi, baseDir, doseMapping.destinationAET,
+                    doseMapping.callingAET);
             as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ncreate");
             rename(as, file);
-        } else {
-            File ncreateDir = new File(baseDir, entry.getKey());
-            File ncreateFile = new File(ncreateDir, iuid + ".ncreate");
-            DicomInputStream in = null;
-            Attributes ncreateAttrs = null;
-            try {
-                in = new DicomInputStream(ncreateFile);
-                ncreateAttrs = in.readDataset(-1, -1);
-            } catch (IOException e) {
-                LOG.error("No N-CREATE file for MediaStorageSOPInstanceUID " + iuid, e.getMessage());
-                return;
-            } finally {
-                SafeClose.close(in);
-            }
-            data.addAll(ncreateAttrs);
-            ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-            AttributeCoercion ac = pae.getAttributeCoercion(entry.getKey(), "1.2.840.10008.5.1.4.1.1.88.67", Role.SCP,
-                    Dimse.N_SET_RQ);
-            if (ac == null)
-                throw new ConfigurationException("No attribute coercion template for MPPS to Dose SR conversion.");
+        } else
+            processNSetMpps2DoseSR(as, dimse, data, iuid, fmi, baseDir, doseMapping);
+    }
 
-            //TODO: apply attribute transformation
-            File file = createFile(as, dimse, data, iuid, fmi, baseDir, entry);
-            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
-            rename(as, file);
-            delete(as, ncreateFile);
+    private void processNSetMpps2DoseSR(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi,
+            File baseDir, DoseMapping doseMapping) throws DicomServiceException, TransformerFactoryConfigurationError {
+        File ncreateDir = new File(baseDir, doseMapping.destinationAET);
+        File ncreateFile = new File(ncreateDir, iuid + ".ncreate");
+        Attributes ncreateAttrs = readAttributesFromNCreateFile(ncreateFile);
+        data.merge(ncreateAttrs);
+        Attributes doseSrData = new Attributes();
+        transformMpps2DoseSr(as, data, iuid, doseMapping, doseSrData);
+        String doseIuid = UIDUtils.createUID();
+        String cuid = UID.XRayRadiationDoseSRStorage;
+        String tsuid = UID.ImplicitVRLittleEndian;
+        Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
+        doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
+        doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
+        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, baseDir, doseMapping.destinationAET,
+                doseMapping.callingAET);
+        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
+        rename(as, doseSrFile);
+        delete(as, ncreateFile);
+    }
+
+    private void transformMpps2DoseSr(Association as, Attributes data, String iuid, DoseMapping doseMapping,
+            Attributes doseSrData) throws TransformerFactoryConfigurationError,
+            DicomServiceException {
+        String conversionTemplateUri = StringUtils.replaceSystemProperties(doseMapping.conversionUri);
+        try {
+            ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+            Templates templates = pae.getTemplates(conversionTemplateUri);
+            SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
+            TransformerHandler th = factory.newTransformerHandler(templates);
+            Transformer tr = th.getTransformer();
+            String irradiationEventUID = iuid.concat("1");
+            tr.setParameter("IrradiationEventUID", irradiationEventUID);
+            String hex = Hex.encodeHex(as.getCallingAET().getBytes());
+            BigInteger bi = new BigInteger(hex, 16);
+            tr.setParameter("DeviceObserverUID", bi);
+            th.setResult(new SAXResult(new ContentHandlerAdapter(doseSrData)));
+            SAXWriter w = new SAXWriter(th);
+            w.setIncludeKeyword(false);
+            w.write(data);
+        } catch (Exception e) {
+            LOG.error("Error converting MPPS to Dose SR using " + conversionTemplateUri, e);
+            throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+        }
+    }
+
+    private Attributes readAttributesFromNCreateFile(File ncreateFile)
+            throws DicomServiceException {
+        DicomInputStream in = null;
+        try {
+            in = new DicomInputStream(ncreateFile);
+            return in.readDataset(-1, -1);
+        } catch (IOException e) {
+            LOG.error("Error reading N-CREATE file " + ncreateFile.getPath(), e.getMessage());
+            throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+        } finally {
+            SafeClose.close(in);
         }
     }
 
     protected File createFile(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi, File baseDir,
-            Entry<String, String> entry) throws DicomServiceException {
-        File dir = new File(baseDir, entry.getKey());
+            String destinationAET, String callingAET) throws DicomServiceException {
+        File dir = new File(baseDir, destinationAET);
         dir.mkdir();
         File file = new File(dir, iuid + ".part");
-        fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, entry.getValue());
+        fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, callingAET);
         DicomOutputStream out = null;
         try {
             out = new DicomOutputStream(file);
             out.writeDataset(fmi, data);
-            LOG.debug("{}: M-CREATE {}", new Object[] { as, file });
+            LOG.info("{}: M-CREATE {}", new Object[] { as, file });
         } catch (IOException e) {
-            LOG.debug("{}: failed to M-CREATE {}", new Object[] { as, file });
+            LOG.warn("{}: failed to M-CREATE {}", new Object[] { as, file });
             file.delete();
-            throw new DicomServiceException(Status.OutOfResources, e);
+            throw new DicomServiceException(Status.OutOfResources, e.getMessage());
         } finally {
             SafeClose.close(out);
         }
@@ -213,10 +275,10 @@ public class Mpps extends DicomService {
                 (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.info("{}: RENAME {} to {}", new Object[] { as, file, dst });
             return dst;
         } else {
-            LOG.debug("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.warn("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
@@ -235,7 +297,7 @@ public class Mpps extends DicomService {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.debug(asAccepted + ": error forwarding N-CREATE-RQ: " + e.getMessage());
+                    LOG.error(asAccepted + ": error forwarding N-CREATE-RQ: " + e.getMessage());
                 }
             }
         };
@@ -255,7 +317,7 @@ public class Mpps extends DicomService {
             try {
                 forwardNSetRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
             } catch (InterruptedException e) {
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                throw new DicomServiceException(Status.UnableToProcess, e.getMessage());
             }
     }
 
@@ -273,7 +335,7 @@ public class Mpps extends DicomService {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.debug(asAccepted + ": error forwarding N-SET-RQ: ", e.getMessage());
+                    LOG.error(asAccepted + ": error forwarding N-SET-RQ: ", e.getMessage());
                 }
             }
         };

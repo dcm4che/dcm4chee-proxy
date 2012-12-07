@@ -106,14 +106,14 @@ public class StgCmt extends DicomService {
                 processNActionRQForwardRules(asAccepted, pc, dimse, rq, data);
             } catch (ConfigurationException e) {
                 LOG.error(asAccepted + ": error processing N-ACTION-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
             }
         else
             try {
                 onNActionRQ(asAccepted, asInvoked, pc, rq, data);
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding N-ACTION-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
             }
     }
 
@@ -182,7 +182,7 @@ public class StgCmt extends DicomService {
                 onNEventReportRQ(asAccepted, asInvoked, pc, rq, data, transactionUIDFile);
             } catch (InterruptedException e) {
                 LOG.debug(asAccepted + ": error forwarding N-EVENT-REPORT-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
             }
         }
     }

@@ -193,6 +193,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
                 schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
                 rule.setReceiveSchedule(schedule);
                 rule.setConversion(conversionTypeValue(attrs.get("dcmConversion")));
+                rule.setConversionUri(stringValue(attrs.get("dcmConversionUri")));
                 rules.add(rule);
             }
             proxyAE.setForwardRules(rules);
@@ -288,6 +289,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeNotNull(attrs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         storeNotNull(attrs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         storeNotNull(attrs, "dcmConversion", rule.getConversion());
+        storeNotNull(attrs, "dcmConversionUri", rule.getConversionUri());
         return attrs;
     }
 
@@ -423,6 +425,7 @@ public class LdapProxyConfiguration extends ExtendedLdapDicomConfiguration {
         storeDiff(mods, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
         storeDiff(mods, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
         storeDiff(mods, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
+        storeDiff(mods, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
         return mods;
     }
 
