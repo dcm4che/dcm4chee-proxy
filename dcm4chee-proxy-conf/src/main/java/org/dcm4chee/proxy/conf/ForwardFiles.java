@@ -158,21 +158,14 @@ public class ForwardFiles {
                 for (Retry retry : pae.getRetries())
                     if (path.endsWith(retry.getRetryObject().getSuffix()) 
                             && numRetry(retry, file)
-                            && (now > pathname.lastModified() + retryDelay(retry, file)))
+                            && (now > (pathname.lastModified() + (retry.delay * 1000))))
                         return true;
                 return false;
             }
 
-            private double retryDelay(Retry retry, String file) {
-                int power = file.split("\\.").length - 2;
-                double delay = retry.delay * 1000;
-                return delay;
-            }
-
             private boolean numRetry(Retry retry, String file) {
                 int currentRetries = file.split(retry.getRetryObject().getSuffix(), -1).length - 1;
-                int numberOfRetries = retry.numberOfRetries;
-                return currentRetries < numberOfRetries;
+                return currentRetries < retry.numberOfRetries;
             }
         };
     }
