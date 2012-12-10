@@ -306,7 +306,7 @@
               <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
                 <Value number="1">UIDREF</Value>
               </DicomAttribute>
-              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A168" vr="SQ">
                 <Item number="1">
                   <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
                     <Value number="1">121126</Value>
