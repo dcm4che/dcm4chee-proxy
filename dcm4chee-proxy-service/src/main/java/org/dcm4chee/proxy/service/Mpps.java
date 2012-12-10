@@ -196,7 +196,8 @@ public class Mpps extends DicomService {
         Attributes ncreateAttrs = readAttributesFromNCreateFile(ncreateFile);
         data.merge(ncreateAttrs);
         Attributes doseSrData = new Attributes();
-        transformMpps2DoseSr(as, pae, data, iuid, doseMapping, doseSrData);
+        String ppsSOPIUID = fmi.getString(Tag.MediaStorageSOPInstanceUID);
+        transformMpps2DoseSr(as, pae, data, iuid, ppsSOPIUID, doseMapping, doseSrData);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
@@ -210,9 +211,9 @@ public class Mpps extends DicomService {
         delete(as, ncreateFile);
     }
 
-    private void transformMpps2DoseSr(Association as, ProxyApplicationEntity pae, Attributes data, String iuid, DoseMapping doseMapping,
-            Attributes doseSrData) throws TransformerFactoryConfigurationError,
-            DicomServiceException {
+    private void transformMpps2DoseSr(Association as, ProxyApplicationEntity pae, Attributes data, String iuid,
+            String ppsSOPIUID, DoseMapping doseMapping, Attributes doseSrData)
+            throws TransformerFactoryConfigurationError, DicomServiceException {
         String conversionTemplateUri = StringUtils.replaceSystemProperties(doseMapping.conversionUri);
         try {
             Templates templates = pae.getTemplates(conversionTemplateUri);
@@ -224,6 +225,7 @@ public class Mpps extends DicomService {
             String hex = Hex.encodeHex(as.getCallingAET().getBytes());
             BigInteger bi = new BigInteger(hex, 16);
             tr.setParameter("DeviceObserverUID", bi);
+            tr.setParameter("PerfomedProcedureStepSOPInstanceUID", ppsSOPIUID);
             th.setResult(new SAXResult(new ContentHandlerAdapter(doseSrData)));
             SAXWriter w = new SAXWriter(th);
             w.setIncludeKeyword(false);

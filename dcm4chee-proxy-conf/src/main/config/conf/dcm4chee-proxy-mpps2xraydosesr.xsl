@@ -3,8 +3,9 @@
   <!-- Required Parameters -->
   <xsl:param name="IrradiationEventUID" />
   <xsl:param name="DeviceObserverUID" />
+  <xsl:param name="PerfomedProcedureStepSOPInstanceUID" />
   <xsl:template match="/">
-    <!-- Important: Configure 'Irradiation Event Type' and 'Acquisition Plane' according to the Modality -->
+    <!-- Important: Configure 'Procedure Intent', 'Irradiation Event Type' and 'Acquisition Plane' according to Procedure and Modality -->
     <NativeDicomModel xml-space="preserved">
       <DicomAttribute keyword="SOPClassUID" tag="00080016" vr="UI">
         <Value number="1">1.2.840.10008.5.1.4.1.1.88.67</Value>
@@ -204,6 +205,37 @@
                   </DicomAttribute>
                 </Item>
               </DicomAttribute>
+              <!-- Other Procedure Intent -->
+              <!--  
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">R-41531</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">SRT</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Therapeutic Intent</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              -->
+              <!--
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">R-002E9</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">SRT</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Combined Diagnostic and Therapeutic Procedure</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              -->
             </Item>
           </DicomAttribute>
         </Item>
@@ -274,23 +306,23 @@
               <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
                 <Value number="1">UIDREF</Value>
               </DicomAttribute>
-              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                 <Item number="1">
                   <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">110180</Value>
+                    <Value number="1">121126</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
                     <Value number="1">DCM</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                    <Value number="1">Study Instance UID</Value>
+                    <Value number="1">Performed Procedure Step SOP Instance UID</Value>
                   </DicomAttribute>
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="UID" tag="0040A124" vr="UI">
                 <Value number="1">
                   <xsl:value-of
-                    select="/NativeDicomModel/DicomAttribute[@tag='00400270']/Item[1]/DicomAttribute[@tag='0020000D']/Value" />
+                    select="$PerfomedProcedureStepSOPInstanceUID" />
                 </Value>
               </DicomAttribute>
             </Item>
@@ -363,11 +395,8 @@
                   </DicomAttribute>
                 </Item>
               </DicomAttribute>
-                                
               <!-- Other Acquisition Planes -->
-              
               <!--
-              
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                   <Item number="1">
                       <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
@@ -381,7 +410,8 @@
                       </DicomAttribute>
                   </Item>
               </DicomAttribute>
-              
+              -->
+              <!--
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                   <Item number="1">
                       <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
@@ -395,7 +425,8 @@
                       </DicomAttribute>
                   </Item>
               </DicomAttribute>
-              
+              -->
+              <!--
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                   <Item number="1">
                       <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
@@ -409,9 +440,7 @@
                       </DicomAttribute>
                   </Item>
               </DicomAttribute>
-              
               -->
-                                
             </Item>
             <Item number="2">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
@@ -444,7 +473,7 @@
                         <Value number="1">UCUM</Value>
                       </DicomAttribute>
                       <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                        <Value number="1">Gym2</Value>
+                        <Value number="1">Gy.m2</Value>
                       </DicomAttribute>
                     </Item>
                   </DicomAttribute>
@@ -489,7 +518,7 @@
                         <Value number="1">UCUM</Value>
                       </DicomAttribute>
                       <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                        <Value number="1">Gym2</Value>
+                        <Value number="1">Gy.m2</Value>
                       </DicomAttribute>
                     </Item>
                   </DicomAttribute>
@@ -636,7 +665,7 @@
               </DicomAttribute>
               <DicomAttribute keyword="DateTime" tag="0040A120" vr="DT">
                 <Value number="1">
-                  <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400245']/Value" />
+                  <xsl:value-of select="concat(/NativeDicomModel/DicomAttribute[@tag='00400244']/Value, /NativeDicomModel/DicomAttribute[@tag='00400245']/Value)" />
                 </Value>
               </DicomAttribute>
             </Item>
@@ -672,12 +701,9 @@
                     <Value number="1">Stationary Acquisition</Value>
                   </DicomAttribute>
                 </Item>
-              </DicomAttribute>
-                                
+              </DicomAttribute>  
               <!-- Other Irradiation Event Types -->
-              
               <!--
-              
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                   <Item number="1">
                       <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
@@ -691,7 +717,8 @@
                       </DicomAttribute>
                   </Item>
               </DicomAttribute>
-              
+              -->
+              <!--
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                   <Item number="1">
                       <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
@@ -705,7 +732,8 @@
                       </DicomAttribute>
                   </Item>
               </DicomAttribute>
-              
+              -->
+              <!--
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                   <Item number="1">
                       <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
@@ -719,9 +747,7 @@
                       </DicomAttribute>
                   </Item>
               </DicomAttribute>
-              
               -->
-                                
             </Item>
             <Item number="4">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
