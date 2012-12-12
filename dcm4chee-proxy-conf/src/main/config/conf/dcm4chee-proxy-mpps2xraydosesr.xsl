@@ -909,12 +909,12 @@
         <Item number="1">
           <DicomAttribute keyword="ReferencedSOPClassUID" tag="00081150" vr="UI">
             <Value number="1">
-              <xsl:value-of select="/DicomAttribute[@tag='00081140']/Item[1]/DicomAttribute[@tag='00081150']/Value" />
+              <xsl:value-of select="DicomAttribute[@tag='00081140']/Item[1]/DicomAttribute[@tag='00081150']/Value" />
             </Value>
           </DicomAttribute>
           <DicomAttribute keyword="ReferencedSOPInstanceUID" tag="00081155" vr="UI">
             <Value number="1">
-              <xsl:value-of select="/DicomAttribute[@tag='00081140']/Item[1]/DicomAttribute[@tag='00081155']/Value" />
+              <xsl:value-of select="DicomAttribute[@tag='00081140']/Item[1]/DicomAttribute[@tag='00081155']/Value" />
             </Value>
           </DicomAttribute>
         </Item>
