@@ -500,7 +500,7 @@
                     <Value number="1">
                       <xsl:choose>
                         <xsl:when test="/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value">
-                          <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value div 100000"/>
+                          <xsl:value-of select="number(/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value) div 100000"/>
                         </xsl:when>
                         <xsl:when test="/NativeDicomModel/DicomAttribute[@tag='00400302']/Value">
                           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400302']/Value * /NativeDicomModel/DicomAttribute[@tag='00400303']/Value"/>
@@ -960,7 +960,7 @@
                     </Item>
                   </DicomAttribute>
                 </Item>
-                <xsl:apply-templates select="/NativeDicomModel/DicomAttribute[@tag='0040030E']/Item" mode="XRaySourceParameters"/>
+                <xsl:apply-templates select="/NativeDicomModel/DicomAttribute[@tag='0040030E']/Item"/>
               </DicomAttribute>
             </Item>
             <Item number="7">
@@ -1103,7 +1103,7 @@
                         <Value number="1">
                           <xsl:choose>
                             <xsl:when test="/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value">
-                              <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value div 100000"/>
+                              <xsl:value-of select="number(/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value) div 100000"/>
                             </xsl:when>
                             <xsl:when test="/NativeDicomModel/DicomAttribute[@tag='00400302']/Value">
                               <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400302']/Value * /NativeDicomModel/DicomAttribute[@tag='00400303']/Value"/>
@@ -1160,7 +1160,7 @@
     </NativeDicomModel>
   </xsl:template>
   
-  <xsl:template  name="XRaySourceParameters" match="Item" mode="XRaySourceParameters">
+  <xsl:template  name="XRaySourceParameters" match="Item">
     <Item number="{@number + 5}">
       <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
         <Value number="1">CONTAINS</Value>
@@ -1246,7 +1246,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00180060']/Value[1]"/></Value>
+                <Value number="1"><xsl:value-of select="DicomAttribute[@tag='00180060']/Value"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1287,7 +1287,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00188151']/Value[1] div 1000"/></Value>
+                <Value number="1"><xsl:value-of select="number(DicomAttribute[@tag='00188151']/Value) div 1000"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1328,7 +1328,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00188151']/Value[1] div 1000"/></Value>
+                <Value number="1"><xsl:value-of select="number(DicomAttribute[@tag='00188151']/Value) div 1000"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1369,7 +1369,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00181152']/Value[1]"/></Value>
+                <Value number="1"><xsl:value-of select="DicomAttribute[@tag='00181152']/Value"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
