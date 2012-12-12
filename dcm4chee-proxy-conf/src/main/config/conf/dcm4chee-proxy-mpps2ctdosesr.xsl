@@ -7,14 +7,14 @@
   <xsl:template match="/">
     <!-- 
       Configure:
-      *  'Procedure Intent'
-      *  'CT Acquisition Type'
-      *  'Scanning Length'
-      *  'CT Dose Length Product Total'
-      *  'Nominal Single Collimation Width'
-      *  'Nominal Total Collimation Width'
-      *  'Number of X-ray Sources'
-      *  'Identification Number of the X-ray Source'
+      * 'Procedure Intent'
+      * 'CT Acquisition Type'
+      * 'Scanning Length'
+      * 'CT Dose Length Product Total'
+      * 'Nominal Single Collimation Width'
+      * 'Nominal Total Collimation Width'
+      * 'Number of X-ray Sources'
+      * 'Identification Number of the X-ray Source'
       * 'CTDIw Phantom Type'
       according to Procedure, Modality and MPPS content 
     -->
@@ -104,7 +104,7 @@
       </DicomAttribute>
       <DicomAttribute keyword="StudyID" tag="00200010" vr="SH">
         <Value number="1">
-          <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400270']/Item[1]/DicomAttribute[@tag='00200010']/Value" />
+          <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00200010']/Value" />
         </Value>
       </DicomAttribute>
       <!-- SeriesInstanceUID is generated and set in Java method using this xsl -->
@@ -145,7 +145,7 @@
             <Value number="1">DCMR</Value>
           </DicomAttribute>
           <DicomAttribute keyword="TemplateIdentifier" tag="0040DB00" vr="CS">
-            <Value number="1">10001</Value>
+            <Value number="1">10011</Value>
           </DicomAttribute>
         </Item>
       </DicomAttribute>
@@ -506,7 +506,8 @@
                           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400302']/Value * /NativeDicomModel/DicomAttribute[@tag='00400303']/Value"/>
                         </xsl:when>
                         <xsl:otherwise>
-                          <xsl:value-of select="substring-before(substring-after(/NativeDicomModel/DicomAttribute[@tag='00400310']/Value, 'DLP='), ' Cerebrum')"/>
+                          <!-- This fallback method needs to be adjusted to the format of 'CommentsOnRadiationDose' of the particular CT -->
+                          <xsl:value-of select="substring-after(/NativeDicomModel/DicomAttribute[@tag='00400310']/Value[1], 'Total DLP=')"/>
                         </xsl:otherwise>
                       </xsl:choose>
                     </Value>
@@ -607,13 +608,13 @@
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                 <Item number="1">
                   <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">P5-08001</Value>
+                    <Value number="1">113807</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
-                    <Value number="1">SRT</Value>
+                    <Value number="1">DCM</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                    <Value number="1">SPIRAL</Value>
+                    <Value number="1">Free Acquisition</Value>
                   </DicomAttribute>
                 </Item>
               </DicomAttribute>
@@ -622,13 +623,13 @@
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                 <Item number="1">
                   <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">113804</Value>
+                    <Value number="1">P5-08001</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
-                    <Value number="1">DCM</Value>
+                    <Value number="1">SRT</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                    <Value number="1">Sequenced Acquisition</Value>
+                    <Value number="1">SPIRAL</Value>
                   </DicomAttribute>
                 </Item>
               </DicomAttribute>
@@ -667,13 +668,13 @@
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
                 <Item number="1">
                   <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">113807</Value>
+                    <Value number="1">113804</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
                     <Value number="1">DCM</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                    <Value number="1">Free Acquisition</Value>
+                    <Value number="1">Sequenced Acquisition</Value>
                   </DicomAttribute>
                 </Item>
               </DicomAttribute>
@@ -940,7 +941,7 @@
                         <Item number="1">
                           <DicomAttribute keyword="CodeValue" tag="00080100"
                             vr="SH">
-                            <Value number="1">{X-ray sources}</Value>
+                            <Value number="1">{X-Ray sources}</Value>
                           </DicomAttribute>
                           <DicomAttribute keyword="CodingSchemeDesignator"
                             tag="00080102" vr="SH">
@@ -948,7 +949,7 @@
                           </DicomAttribute>
                           <DicomAttribute keyword="CodeMeaning" tag="00080104"
                             vr="LO">
-                            <Value number="1">X-ray sources</Value>
+                            <Value number="1">X-Ray sources</Value>
                           </DicomAttribute>
                         </Item>
                       </DicomAttribute>
@@ -972,7 +973,7 @@
               <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
                 <Item number="1">
                   <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">113831</Value>
+                    <Value number="1">113829</Value>
                   </DicomAttribute>
                   <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
                     <Value number="1">DCM</Value>
@@ -1023,7 +1024,7 @@
                         </Item>
                       </DicomAttribute>
                       <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                        <Value number="1"><xsl:value-of select="avg(/NativeDicomModel/DicomAttribute[@tag='0040030E']/child::*/DicomAttribute[@tag='00189345']/Value)"/></Value>
+                        <Value number="1"><xsl:value-of select="sum(/NativeDicomModel/DicomAttribute[@tag='0040030E']/child::*/DicomAttribute[@tag='00189345']/Value) div count(/NativeDicomModel/DicomAttribute[@tag='0040030E']/Item)"/></Value>
                       </DicomAttribute>
                     </Item>
                   </DicomAttribute>
@@ -1108,7 +1109,8 @@
                               <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400302']/Value * /NativeDicomModel/DicomAttribute[@tag='00400303']/Value"/>
                             </xsl:when>
                             <xsl:otherwise>
-                              <xsl:value-of select="substring-before(substring-after(/NativeDicomModel/DicomAttribute[@tag='00400310']/Value, 'DLP='), ' Cerebrum')"/>
+                              <!-- This fallback method needs to be adjusted to the format of 'CommentsOnRadiationDose' of the particular CT -->
+                              <xsl:value-of select="substring-after(/NativeDicomModel/DicomAttribute[@tag='00400310']/Value[1], 'Total DLP=')"/>
                             </xsl:otherwise>
                           </xsl:choose>
                         </Value>
@@ -1143,13 +1145,13 @@
           <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
             <Item number="1">
               <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                <Value number="1">113858</Value>
+                <Value number="1">113856</Value>
               </DicomAttribute>
               <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
                 <Value number="1">DCM</Value>
               </DicomAttribute>
               <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                <Value number="1">MPPS Content</Value>
+                <Value number="1">Automated Data Collection</Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1205,7 +1207,7 @@
           </DicomAttribute>
           <DicomAttribute keyword="TextValue" tag="0040A160" vr="UT">
             <!-- Edit -->
-            <Value number="1">A</Value>
+            <Value number="1">0</Value>
           </DicomAttribute>
         </Item>
         <Item number="2">
@@ -1244,7 +1246,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00180060']/Value"/> </Value>
+                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00180060']/Value[1]"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1285,7 +1287,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00188151']/Value div 1000"/></Value>
+                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00188151']/Value[1] div 1000"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1326,7 +1328,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00188151']/Value div 1000"/></Value>
+                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00188151']/Value[1] div 1000"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1367,7 +1369,7 @@
                 </Item>
               </DicomAttribute>
               <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00181152']/Value"/></Value>
+                <Value number="1"><xsl:value-of select="/DicomAttribute[@tag='00181152']/Value[1]"/></Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
