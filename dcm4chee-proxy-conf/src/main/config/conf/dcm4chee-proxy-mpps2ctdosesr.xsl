@@ -13,8 +13,8 @@
       * 'CT Dose Length Product Total'
       * 'Nominal Single Collimation Width'
       * 'Nominal Total Collimation Width'
-      * 'Number of X-ray Sources'
-      * 'Identification Number of the X-ray Source'
+      * 'Number of X-Ray Sources'
+      * 'Identification Number of the X-Ray Source'
       * 'CTDIw Phantom Type'
       according to Procedure, Modality and MPPS content 
     -->
@@ -930,7 +930,7 @@
                         <Value number="1">DCM</Value>
                       </DicomAttribute>
                       <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                        <Value number="1">Number of X-ray Sources</Value>
+                        <Value number="1">Number of X-Ray Sources</Value>
                       </DicomAttribute>
                     </Item>
                   </DicomAttribute>
@@ -1177,7 +1177,7 @@
             <Value number="1">DCM</Value>
           </DicomAttribute>
           <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-            <Value number="1">CT X-ray Source Parameters</Value>
+            <Value number="1">CT X-Ray Source Parameters</Value>
           </DicomAttribute>
         </Item>
       </DicomAttribute>
@@ -1201,7 +1201,7 @@
                 <Value number="1">DCM</Value>
               </DicomAttribute>
               <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                <Value number="1">Identification Number of the X-ray Source</Value>
+                <Value number="1">Identification Number of the X-Ray Source</Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
@@ -1267,7 +1267,7 @@
                 <Value number="1">DCM</Value>
               </DicomAttribute>
               <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                <Value number="1">Maximum X-ray Tube Current</Value>
+                <Value number="1">Maximum X-Ray Tube Current</Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
