@@ -62,6 +62,7 @@ public class ForwardRule implements Serializable {
     private String commonName;
     private conversionType conversion;
     private String conversionUri;
+    private String remotePixManager;
 
     public List<Dimse> getDimse() {
         return dimse;
@@ -164,6 +165,14 @@ public class ForwardRule implements Serializable {
 
     public void setConversionUri(String conversionUri) {
         this.conversionUri = conversionUri;
+    }
+
+    public String getRemotePixManager() {
+        return remotePixManager;
+    }
+
+    public void setRemotePixManager(String remotePixManager) {
+        this.remotePixManager = remotePixManager;
     }
 
     public enum conversionType {

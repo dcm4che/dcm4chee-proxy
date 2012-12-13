@@ -39,8 +39,12 @@
 package org.dcm4chee.proxy.conf;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.VR;
@@ -49,6 +53,7 @@ import org.dcm4che.net.CancelRQHandler;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
+import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
@@ -183,10 +188,24 @@ public class ForwardDimseRQ {
 
     public void execute() throws IOException, InterruptedException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
         for (Association fwdAssoc : fwdAssocs) {
+            try {
+                pixQuery(pae, forwardRules, fwdAssoc);
+            } catch (Exception e) {
+                LOG.error("Error executing PIX Query: " + e.getMessage());
+                continue;
+            }
             pae.coerceDataset(fwdAssoc.getRemoteAET(), Role.SCP, dimse, data);
             forwardDimseRQ(fwdAssoc);
         }
+    }
+
+    private void pixQuery(ProxyApplicationEntity pae, List<ForwardRule> forwardRules, Association fwdAssoc)
+            throws ConfigurationException, IncompatibleConnectionException, IOException, GeneralSecurityException {
+        for (ForwardRule fwr : forwardRules)
+            if (fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET()) && fwr.getRemotePixManager() != null)
+                pae.pixQuery(data, fwr.getRemotePixManager());
     }
 
 }

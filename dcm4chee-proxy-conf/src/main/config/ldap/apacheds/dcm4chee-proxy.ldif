@@ -204,6 +204,16 @@ m-name: dcmConversionUri
 m-description: String : URI of conversion template
 m-singleValue: TRUE
 
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.20, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
+ ema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.20
+m-name: dcmRemotePIXManager
+m-description: String : AE title of remote PIX Manager
+m-singleValue: TRUE
+
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit
 objectclass: top
@@ -313,6 +323,7 @@ m-may: dcmScheduleDays
 m-may: dcmScheduleHours
 m-may: dcmConversion
 m-may: dcmConversionUri
+m-may: dcmRemotePIXManager
 
 dn: ou=syntaxCheckers, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit

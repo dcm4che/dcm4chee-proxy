@@ -170,6 +170,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             if (conversion != null)
                 rule.setConversion(ForwardRule.conversionType.valueOf(conversion));
             rule.setConversionUri(ruleNode.get("dcmConversionUri", null));
+            rule.setRemotePixManager(ruleNode.get("dcmRemotePIXManager", null));
             rules.add(rule);
         }
         proxyAE.setForwardRules(rules);
@@ -244,6 +245,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         storeNotNull(prefs, "dcmConversion", rule.getConversion());
         storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
+        storeNotNull(prefs, "dcmRemotePIXManager", rule.getRemotePixManager());
     }
 
     private void storeForwardRuleDimse(ForwardRule rule, Preferences prefs) {
@@ -367,6 +369,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
         storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
         storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
+        storeDiff(prefs, "dcmRemotePIXManager", ruleA.getRemotePixManager(), ruleB.getRemotePixManager());
     }
 
     private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,

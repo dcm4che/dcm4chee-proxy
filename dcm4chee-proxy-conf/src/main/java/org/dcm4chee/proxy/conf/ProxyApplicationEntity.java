@@ -42,6 +42,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.Socket;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -67,10 +69,15 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
+import org.dcm4che.hl7.HL7Message;
+import org.dcm4che.hl7.HL7Segment;
+import org.dcm4che.hl7.MLLPConnection;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
+import org.dcm4che.net.CompatibleConnection;
+import org.dcm4che.net.Connection;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.TransferCapability.Role;
@@ -118,9 +125,10 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     @Override
     protected void setApplicationEntityAttributes(ApplicationEntity from) {
         super.setApplicationEntityAttributes(from);
-        reconfigureForwardRules((ProxyApplicationEntity) from);
-        reconfigureForwardSchedules((ProxyApplicationEntity) from);
-        reconfigureRetries((ProxyApplicationEntity) from);
+        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) from;
+        reconfigureForwardRules(proxyAE.forwardRules);
+        reconfigureForwardSchedules(proxyAE.forwardSchedules);
+        reconfigureRetries(proxyAE.retries);
     }
 
     public ProxyApplicationEntity(String aeTitle) {
@@ -344,19 +352,19 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return false;
     }
 
-    private void reconfigureRetries(ProxyApplicationEntity ae) {
+    private void reconfigureRetries(List<Retry> rty) {
         retries.clear();
-        retries.addAll(ae.retries);
+        retries.addAll(rty);
     }
 
-    private void reconfigureForwardRules(ProxyApplicationEntity ae) {
+    private void reconfigureForwardRules(List<ForwardRule> fwr) {
         forwardRules.clear();
-        forwardRules.addAll(ae.forwardRules);
+        forwardRules.addAll(fwr);
     }
 
-    private void reconfigureForwardSchedules(ProxyApplicationEntity ae) {
+    private void reconfigureForwardSchedules(HashMap<String, Schedule> fws) {
         forwardSchedules.clear();
-        forwardSchedules.putAll(ae.forwardSchedules);
+        forwardSchedules.putAll(fws);
     }
 
     @Override
@@ -614,5 +622,29 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.debug("Unexpected exception: ", e.getMessage());
         }
         return asInvoked;
+    }
+
+    public void pixQuery(Attributes data, String remotePixManager) throws ConfigurationException,
+            IncompatibleConnectionException, IOException, GeneralSecurityException {
+        ApplicationEntity pixManager = getDestinationAE(remotePixManager);
+        CompatibleConnection cc = findCompatibelConnection(pixManager);
+        Socket sock = null;
+        try {
+            sock = cc.getLocalConnection().connect(cc.getRemoteConnection());
+            sock.setSoTimeout(cc.getLocalConnection().getResponseTimeout());
+            MLLPConnection mllp = new MLLPConnection(sock);
+            String domain = "^^^";
+            String pid = data.getString(Tag.PatientID).concat(domain);
+            HL7Message qbp = HL7Message.makePixQuery(pid);
+            HL7Segment msh = qbp.get(0);
+            msh.setSendingApplicationWithFacility("dcm4chee-proxy");
+            msh.setReceivingApplicationWithFacility(remotePixManager);
+            msh.setField(17, Charset.defaultCharset().name());
+            mllp.writeMessage(qbp.getBytes(Charset.defaultCharset().name()));
+            if (mllp.readMessage() == null)
+                throw new IOException("Connection closed by receiver");
+        } finally {
+            sock.close();
+        }
     }
 }
