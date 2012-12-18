@@ -42,8 +42,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.Socket;
-import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -69,15 +67,10 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
-import org.dcm4che.hl7.HL7Message;
-import org.dcm4che.hl7.HL7Segment;
-import org.dcm4che.hl7.MLLPConnection;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
-import org.dcm4che.net.CompatibleConnection;
-import org.dcm4che.net.Connection;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.TransferCapability.Role;
@@ -113,6 +106,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private List<Retry> retries = new ArrayList<Retry>();
     private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
+    private String proxyPIXConsumerApplication;
+    private String remotePIXManagerApplication;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -335,6 +330,22 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         ProxyDevice device = (ProxyDevice) getDevice();
         ApplicationEntityCache aeCache = device.getAeCache();
         return aeCache.findApplicationEntity(destinationAETitle);
+    }
+
+    public String getProxyPIXConsumerApplication() {
+        return proxyPIXConsumerApplication;
+    }
+
+    public void setProxyPIXConsumerApplication(String pixConsumerApplication) {
+        this.proxyPIXConsumerApplication = pixConsumerApplication;
+    }
+
+    public String getRemotePIXManagerApplication() {
+        return remotePIXManagerApplication;
+    }
+
+    public void setRemotePIXManagerApplication(String pixManagerApplication) {
+        this.remotePIXManagerApplication = pixManagerApplication;
     }
 
     private boolean isAssociationFromDestinationAET(Association asAccepted) {
@@ -622,29 +633,5 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.debug("Unexpected exception: ", e.getMessage());
         }
         return asInvoked;
-    }
-
-    public void pixQuery(Attributes data, String remotePixManager) throws ConfigurationException,
-            IncompatibleConnectionException, IOException, GeneralSecurityException {
-        ApplicationEntity pixManager = getDestinationAE(remotePixManager);
-        CompatibleConnection cc = findCompatibelConnection(pixManager);
-        Socket sock = null;
-        try {
-            sock = cc.getLocalConnection().connect(cc.getRemoteConnection());
-            sock.setSoTimeout(cc.getLocalConnection().getResponseTimeout());
-            MLLPConnection mllp = new MLLPConnection(sock);
-            String domain = "^^^";
-            String pid = data.getString(Tag.PatientID).concat(domain);
-            HL7Message qbp = HL7Message.makePixQuery(pid);
-            HL7Segment msh = qbp.get(0);
-            msh.setSendingApplicationWithFacility("dcm4chee-proxy");
-            msh.setReceivingApplicationWithFacility(remotePixManager);
-            msh.setField(17, Charset.defaultCharset().name());
-            mllp.writeMessage(qbp.getBytes(Charset.defaultCharset().name()));
-            if (mllp.readMessage() == null)
-                throw new IOException("Connection closed by receiver");
-        } finally {
-            sock.close();
-        }
     }
 }

@@ -40,11 +40,13 @@ package org.dcm4chee.proxy.service;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
+import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
 import org.dcm4che.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.conf.AuditLog;
+import org.dcm4chee.proxy.conf.PIXConsumer;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.Scheduler;
 
@@ -58,14 +60,16 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public static final String KS_PASSWORD = "org.dcm4chee.proxy.net.storePassword";
     public static final String KEY_PASSWORD = "org.dcm4chee.proxy.net.keyPassword";
 
-    private final DicomConfiguration dicomConfiguration;
+    private final HL7Configuration dicomConfiguration;
     private static Scheduler scheduler;
 
-    public Proxy(DicomConfiguration dicomConfiguration, ProxyDevice proxyDevice) throws ConfigurationException,
+    public Proxy(HL7Configuration dicomConfiguration, ProxyDevice proxyDevice) throws ConfigurationException,
             Exception {
         this.dicomConfiguration = dicomConfiguration;
         init(proxyDevice);
         device.setAeCache(new ApplicationEntityCache(dicomConfiguration));
+        device.setHl7AppCache(new HL7ApplicationCache(dicomConfiguration));
+        device.setPixConsumer(new PIXConsumer(device.getHl7AppCache()));
         device.setDimseRQHandler(serviceRegistry());
     }
 

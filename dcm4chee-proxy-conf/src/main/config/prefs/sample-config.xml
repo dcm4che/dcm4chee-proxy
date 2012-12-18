@@ -56,6 +56,8 @@
                 <entry key="dicomAssociationInitiator" value="true"/>
                 <entry key="dicomNetworkConnectionReference.#" value="1"/>
                 <entry key="dicomNetworkConnectionReference.1" value="1"/>
+                <entry key="hl7ProxyPIXConsumerApplication" value="HL7SND^DCM4CHEE-PROXY"/>
+                <entry key="hl7RemotePIXManagerApplication" value="HL7RCV^DCM4CHEE"/>
               </map>
               <node name="dcmAttributeCoercion">
                 <map/>
@@ -95,6 +97,7 @@
                 <node name="Private">
                   <map>
                     <entry key="cn" value="Private"/>
+                    <entry key="dcmPIXQuery" value="true"/>
                     <entry key="dcmSOPClass.#" value="2"/>
                     <entry key="dcmSOPClass.1" value="1.2.840.10008.5.1.4.1.1.2"/>
                     <entry key="dcmSOPClass.2" value="1.2.840.10008.5.1.4.1.1.4"/>
@@ -3687,6 +3690,65 @@
                 <entry key="dicomHostname" value="localhost"/>
                 <entry key="dicomInstalled" value="true"/>
                 <entry key="dicomPort" value="22222"/>
+              </map>
+            </node>
+            <node name="2">
+              <map>
+                <entry key="cn" value="hl7"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="22575"/>
+              </map>
+            </node>
+          </node>
+          <node name="hl7Application">
+            <map/>
+            <node name="HL7SND^DCM4CHEE-PROXY">
+              <map>
+                <entry key="dcmProxyHL7Application" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="2"/>
+                <entry key="hl7AcceptedMessageType.#" value="7"/>
+                <entry key="hl7AcceptedMessageType.1" value="ADT^A02"/>
+                <entry key="hl7AcceptedMessageType.2" value="ADT^A03"/>
+                <entry key="hl7AcceptedMessageType.3" value="ADT^A06"/>
+                <entry key="hl7AcceptedMessageType.4" value="ADT^A07"/>
+                <entry key="hl7AcceptedMessageType.5" value="ADT^A08"/>
+                <entry key="hl7AcceptedMessageType.6" value="ADT^A40"/>
+                <entry key="hl7AcceptedMessageType.7" value="ORM^O01"/>
+                <entry key="hl7DefaultCharacterSet" value="8859/1"/>
+              </map>
+            </node>
+          </node>
+        </node>
+        <node name="hl7rcv">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="dicomInstitutionCode.#" value="1"/>
+            <entry key="dicomInstitutionCode.1" value="(111.1111 ,99DCM4CHEE ,&quot;Site A&quot;)"/>
+            <entry key="dicomInstitutionName.#" value="1"/>
+            <entry key="dicomInstitutionName.1" value="Site A"/>
+            <entry key="dicomIssuerOfAccessionNumber" value="Site A&amp;1.2.40.0.13.1.1.999.111.1111&amp;ISO"/>
+            <entry key="dicomIssuerOfPatientID" value="Site A&amp;1.2.40.0.13.1.1.999.111.1111&amp;ISO"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="hl7"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="2575"/>
+              </map>
+            </node>
+          </node>
+          <node name="hl7Application">
+            <map/>
+            <node name="HL7RCV^DCM4CHEE">
+              <map>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
               </map>
             </node>
           </node>

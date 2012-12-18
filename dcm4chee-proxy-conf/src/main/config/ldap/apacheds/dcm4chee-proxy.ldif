@@ -210,8 +210,32 @@ objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.3.20
-m-name: dcmRemotePIXManager
-m-description: String : AE title of remote PIX Manager
+m-name: hl7RemotePIXManagerApplication
+m-description: Application^Facility name of remote PIX Manager Application
+m-singleValue: TRUE
+
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.21, ou=attributeTypes, cn=dcm4chee-proxy, ou=
+ schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.21
+m-name: hl7ProxyPIXConsumerApplication
+m-description: Application^Facility name of local PIX Consumer Application
+m-equality: caseExactMatch
+m-substr: caseExactSubstringsMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.15
+m-length: 0
+m-singleValue: TRUE
+
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.22, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
+ hema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.22
+m-name: dcmPIXQuery
+m-description: Boolean : run PIX query
 m-singleValue: TRUE
 
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
@@ -279,6 +303,8 @@ m-typeObjectClass: AUXILIARY
 m-must: dcmSpoolDirectory
 m-must: dcmAcceptDataOnFailedNegotiation
 m-must: dcmEnableAuditLog
+m-may: hl7ProxyPIXConsumerApplication
+m-may: hl7RemotePIXManagerApplication
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.3, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
  ma
@@ -323,7 +349,19 @@ m-may: dcmScheduleDays
 m-may: dcmScheduleHours
 m-may: dcmConversion
 m-may: dcmConversionUri
-m-may: dcmRemotePIXManager
+m-may: dcmPIXQuery
+
+dn: m-oid=1.2.40.0.13.1.2.15.0.4.6, ou=objectClasses, cn=dcm4chee-proxy, ou=s
+ chema
+objectclass: metaObjectClass
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.4.6
+m-name: dcmProxyHL7Application
+m-description: DICOM Proxy HL7 Application related information
+m-supObjectClass: top
+m-typeObjectClass: AUXILIARY
+m-may: labeledURI
 
 dn: ou=syntaxCheckers, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit

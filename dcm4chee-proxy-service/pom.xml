@@ -27,19 +27,13 @@
     </dependency>
     <dependency>
       <groupId>org.dcm4che</groupId>
-      <artifactId>dcm4che-conf-api</artifactId>
-      <version>${dcm4che.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.dcm4che</groupId>
       <artifactId>dcm4che-core</artifactId>
       <version>${dcm4che.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.dcm4che</groupId>
-      <artifactId>dcm4che-net</artifactId>
+      <artifactId>dcm4che-net-hl7</artifactId>
       <version>${dcm4che.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -53,6 +47,12 @@
       <groupId>org.jboss.jbossas</groupId>
       <artifactId>jboss-as-resteasy</artifactId>
       <version>6.1.0.Final</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>dcm4che-conf-api-hl7</artifactId>
+      <version>${dcm4che.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

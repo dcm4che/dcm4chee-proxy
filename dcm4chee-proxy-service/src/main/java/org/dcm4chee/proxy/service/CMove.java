@@ -49,7 +49,6 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.conf.ForwardDimseRQ;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**

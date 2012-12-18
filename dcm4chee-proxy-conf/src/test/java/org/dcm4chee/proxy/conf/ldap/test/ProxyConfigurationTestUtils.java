@@ -49,6 +49,9 @@ import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.conf.api.hl7.HL7Configuration;
+import org.dcm4che.data.Code;
+import org.dcm4che.data.Issuer;
 import org.dcm4che.data.UID;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
@@ -58,9 +61,12 @@ import org.dcm4che.net.QueryOption;
 import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4che.net.hl7.HL7Application;
+import org.dcm4che.net.hl7.HL7Device;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.ProxyHL7Application;
 import org.dcm4chee.proxy.conf.Retry;
 import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.Schedule;
@@ -77,13 +83,24 @@ public class ProxyConfigurationTestUtils {
         "dcm4chee-arc",
         "storescp",
         "storescu",
+        "findscu",
     };
     
     private static final String[] OTHER_AES = {
         "DCM4CHEE",
         "STORESCP",
         "STORESCU",
+        "FINDSCU",
     };
+
+    private static final String PIX_CONSUMER = "HL7SND^DCM4CHEE-PROXY";
+    private static final String PIX_MANAGER = "HL7RCV^DCM4CHEE";
+
+    private static final Issuer SITE_A =
+            new Issuer("Site A", "1.2.40.0.13.1.1.999.111.1111", "ISO");
+
+    private static final Code INST_A =
+            new Code("111.1111", "99DCM4CHEE", null, "Site A");
 
     private static final String[] IMAGE_TSUIDS = {
         UID.ImplicitVRLittleEndian,
@@ -239,7 +256,18 @@ public class ProxyConfigurationTestUtils {
         UID.PatientStudyOnlyQueryRetrieveInformationModelGETRetired
     };
 
+    private static final String[] HL7_MESSAGE_TYPES = {
+        "ADT^A02",
+        "ADT^A03",
+        "ADT^A06",
+        "ADT^A07",
+        "ADT^A08",
+        "ADT^A40",
+        "ORM^O01"
+    };
+
     private static final KeyStore KEYSTORE = loadKeyStore();
+
     private static KeyStore loadKeyStore() {
         try {
             return SSLManagerFactory.loadKeyStore("JKS", "resource:cacerts.jks", "secret");
@@ -256,6 +284,9 @@ public class ProxyConfigurationTestUtils {
         try {
             config.removeDevice("dcm4chee-proxy");
         }  catch (ConfigurationNotFoundException e) {}
+        try {
+            config.removeDevice("hl7rcv");
+        } catch (ConfigurationNotFoundException e) {}
         for (String name : OTHER_DEVICES)
             try {
                 config.removeDevice(name);
@@ -263,22 +294,21 @@ public class ProxyConfigurationTestUtils {
     }
     
     @Test
-    public static void testPersist(DicomConfiguration config) throws Exception {
+    public static void testPersist(HL7Configuration config) throws Exception {
         for (int i = 0; i < OTHER_AES.length; i++) {
             String aet = OTHER_AES[i];
             config.registerAETitle(aet);
-            config.persist(createDevice(config, OTHER_DEVICES[i], aet,
-                    "localhost", 11112 + i, 2762 + i));
+            config.persist(createDevice(config, OTHER_DEVICES[i], aet, "localhost", 11112 + i, 2762 + i));
         }
         for (int i = OTHER_AES.length; i < OTHER_DEVICES.length; i++)
             config.persist(createDevice(config, OTHER_DEVICES[i]));
-
+        config.persist(createHL7Device("hl7rcv", SITE_A, INST_A, PIX_MANAGER, "localhost", 2575, 12575));
         config.registerAETitle("DCM4CHEE-PROXY");
         config.persist(createProxyDevice(config, "dcm4chee-proxy"));
         config.findApplicationEntity("DCM4CHEE-PROXY");
     }
 
-    private static ProxyDevice createProxyDevice(DicomConfiguration config, String name) throws Exception {
+    private static ProxyDevice createProxyDevice(HL7Configuration config, String name) throws Exception {
         ProxyDevice device = new ProxyDevice(name);
 //        device.setThisNodeCertificates(config.deviceRef(name),
 //                (X509Certificate) KEYSTORE.getCertificate(name));
@@ -289,20 +319,20 @@ public class ProxyConfigurationTestUtils {
         device.setForwardThreads(1);
         device.setConfigurationStaleTimeout(60);
         
-        ProxyApplicationEntity ae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
-        ae.setAssociationAcceptor(true);
-        ae.setAssociationInitiator(true);
-        ae.setSpoolDirectory("/tmp/proxy/");
-        ae.setAcceptDataOnFailedNegotiation(true);
-        ae.setEnableAuditLog(true);
+        ProxyApplicationEntity pae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
+        pae.setAssociationAcceptor(true);
+        pae.setAssociationInitiator(true);
+        pae.setSpoolDirectory("/tmp/proxy/");
+        pae.setAcceptDataOnFailedNegotiation(true);
+        pae.setEnableAuditLog(true);
         
-        ae.addAttributeCoercion(new AttributeCoercion(null, 
+        pae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
                 "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
         
-        ae.addAttributeCoercion(new AttributeCoercion(null, 
+        pae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
@@ -319,7 +349,7 @@ public class ProxyConfigurationTestUtils {
         forwardScheduleDCM4CHEE.setDays("Sun-Sat");
         schedules.put("DCM4CHEE", forwardScheduleDCM4CHEE);
         
-        ae.setForwardSchedules(schedules);
+        pae.setForwardSchedules(schedules);
         
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
         
@@ -331,6 +361,7 @@ public class ProxyConfigurationTestUtils {
         Schedule receiveSchedulePublic = new Schedule();
         receiveSchedulePublic.setDays("Sun-Tue,Thu-Sat");
         forwardRulePublic.setReceiveSchedule(receiveSchedulePublic);
+        forwardRulePublic.setRunPIXQuery(Boolean.TRUE);
         forwardRules.add(forwardRulePublic);
         
         ForwardRule forwardRuleMPPS2DoseSR = new ForwardRule();
@@ -360,30 +391,31 @@ public class ProxyConfigurationTestUtils {
         sopClassesList.add(UID.CTImageStorage);
         sopClassesList.add(UID.MRImageStorage);
         forwardRulePrivate.setSopClass(sopClassesList);
+        forwardRulePrivate.setRunPIXQuery(Boolean.TRUE);
         forwardRules.add(forwardRulePrivate);
         
-        ae.setForwardRules(forwardRules);
+        pae.setForwardRules(forwardRules);
         
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(RetryObject.ConnectionException, 20, 10));
         retries.add(new Retry(RetryObject.AssociationStateException, 20, 10));
-        ae.setRetries(retries);
+        pae.setRetries(retries);
         
-        addVerificationStorageTransferCapabilities(ae);
-        addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
-        addTCs(ae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);
-        addTCs(ae, null, Role.SCP, OTHER_CUIDS, OTHER_TSUIDS);
-        addTCs(ae, null, Role.SCU, IMAGE_CUIDS, IMAGE_TSUIDS);
-        addTCs(ae, null, Role.SCU, VIDEO_CUIDS, VIDEO_TSUIDS);
-        addTCs(ae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
-        addTCs(ae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
-        device.addApplicationEntity(ae);
+        addVerificationStorageTransferCapabilities(pae);
+        addTCs(pae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
+        addTCs(pae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);
+        addTCs(pae, null, Role.SCP, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(pae, null, Role.SCU, IMAGE_CUIDS, IMAGE_TSUIDS);
+        addTCs(pae, null, Role.SCU, VIDEO_CUIDS, VIDEO_TSUIDS);
+        addTCs(pae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(pae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
+        device.addApplicationEntity(pae);
         Connection dicom = new Connection("dicom", "localhost", 22222);
         dicom.setMaxOpsInvoked(0);
         dicom.setMaxOpsPerformed(0);
         dicom.setInstalled(true);
         device.addConnection(dicom);
-        ae.addConnection(dicom);
+        pae.addConnection(dicom);
 //        Connection dicomTLS = new Connection("dicom-tls", "localhost", 22762);
 //        dicomTLS.setMaxOpsInvoked(0);
 //        dicomTLS.setMaxOpsPerformed(0);
@@ -393,6 +425,26 @@ public class ProxyConfigurationTestUtils {
 //        dicomTLS.setInstalled(false);
 //        device.addConnection(dicomTLS);
 //        ae.addConnection(dicomTLS);
+
+        ProxyHL7Application hl7App = new ProxyHL7Application("*");
+        hl7App.setApplicationName(PIX_CONSUMER);
+        hl7App.setAcceptedMessageTypes(HL7_MESSAGE_TYPES);
+        hl7App.setHL7DefaultCharacterSet("8859/1");
+        device.addHL7Application(hl7App);
+
+        Connection hl7 = new Connection("hl7", "localhost", 22575);
+        device.addConnection(hl7);
+        hl7App.addConnection(hl7);
+//        Connection hl7TLS = new Connection("hl7-tls", "localhost", 12575);
+//        hl7TLS.setTlsCipherSuites(
+//                Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
+//                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
+//        device.addConnection(hl7TLS);
+//        hl7App.addConnection(hl7TLS);
+
+        pae.setProxyPIXConsumerApplication(PIX_CONSUMER);
+        pae.setRemotePIXManagerApplication(PIX_MANAGER);
+
         return device;
     }
     
@@ -400,6 +452,39 @@ public class ProxyConfigurationTestUtils {
         Device device = new Device(name);
 //        device.setThisNodeCertificates(config.deviceRef(name), (X509Certificate) KEYSTORE
 //                .getCertificate(name));
+        return device;
+    }
+
+    private static HL7Device createHL7Device(String name,
+            Issuer issuer, Code institutionCode, String appName,
+            String host, int port, int tlsPort) throws Exception {
+         HL7Device device = new HL7Device(name);
+         init(device, issuer, institutionCode);
+         HL7Application hl7app = new HL7Application(appName);
+         device.addHL7Application(hl7app);
+         Connection dicom = new Connection("hl7", host, port);
+         device.addConnection(dicom);
+         hl7app.addConnection(dicom);
+//         Connection dicomTLS = new Connection("hl7-tls", host, tlsPort);
+//         dicomTLS.setTlsCipherSuites(
+//                 Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
+//                 Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
+//         device.addConnection(dicomTLS);
+//         hl7app.addConnection(dicomTLS);
+         return device;
+     }
+
+    private static Device init(Device device, Issuer issuer, Code institutionCode)
+            throws Exception {
+//        String name = device.getDeviceName();
+//        device.setThisNodeCertificates(config.deviceRef(name),
+//                (X509Certificate) keystore.getCertificate(name));
+        device.setIssuerOfPatientID(issuer);
+        device.setIssuerOfAccessionNumber(issuer);
+        if (institutionCode != null) {
+            device.setInstitutionNames(institutionCode.getCodeMeaning());
+            device.setInstitutionCodes(institutionCode);
+        }
         return device;
     }
 

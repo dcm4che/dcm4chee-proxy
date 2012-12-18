@@ -39,22 +39,17 @@
   <dependencies>
     <dependency>
       <groupId>org.dcm4che</groupId>
-      <artifactId>dcm4che-conf-api</artifactId>
+      <artifactId>dcm4che-conf-ldap-hl7</artifactId>
       <version>${dcm4che.version}</version>
     </dependency>
     <dependency>
       <groupId>org.dcm4che</groupId>
-      <artifactId>dcm4che-conf-ldap</artifactId>
+      <artifactId>dcm4che-net-hl7</artifactId>
       <version>${dcm4che.version}</version>
     </dependency>
     <dependency>
       <groupId>org.dcm4che</groupId>
-      <artifactId>dcm4che-net</artifactId>
-      <version>${dcm4che.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.dcm4che</groupId>
-      <artifactId>dcm4che-conf-prefs</artifactId>
+      <artifactId>dcm4che-conf-prefs-hl7</artifactId>
       <version>${dcm4che.version}</version>
     </dependency>
     <dependency>
@@ -152,6 +147,11 @@
       <groupId>org.dcm4che.dcm4chee-proxy</groupId>
       <artifactId>dcm4chee-proxy-service</artifactId>
       <version>${dcm4chee-proxy.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>dcm4che-conf-api-hl7</artifactId>
+      <version>${dcm4che.version}</version>
     </dependency>
   </dependencies>
 </project>

@@ -49,7 +49,6 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.conf.ForwardDimseRQ;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
@@ -75,8 +74,8 @@ public class CFind extends DicomService {
             HashMap<String, String> aets = pae.filterForwardAETs(asAccepted, rq, dimse);
             HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, rq, Dimse.C_FIND_RQ, aets);
             if (fwdAssocs.isEmpty())
-                    throw new DicomServiceException(Status.UnableToProcess);
-            
+                throw new DicomServiceException(Status.UnableToProcess);
+
             try {
                 asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
                 new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, fwdAssocs.values().toArray(
@@ -88,7 +87,8 @@ public class CFind extends DicomService {
         } else
             try {
                 if (forwardAssociationProperty instanceof Association)
-                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, (Association) forwardAssociationProperty).execute();
+                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, (Association) forwardAssociationProperty)
+                            .execute();
                 else {
                     @SuppressWarnings("unchecked")
                     HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;

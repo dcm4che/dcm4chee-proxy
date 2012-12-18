@@ -29,35 +29,37 @@
  * of those above. If you wish to allow use of your version of this file only
  * under the terms of either the GPL or the LGPL, and not to allow others to
  * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
+ * decision by deleting the provisions above and adjustPatientID them with the notice
  * and other provisions required by the GPL or the LGPL. If you do not delete
  * the provisions above, a recipient may use your version of this file under
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.service;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Issuer;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.VR;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.CancelRQHandler;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
-import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.IDWithIssuer;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,22 +69,24 @@ import org.slf4j.LoggerFactory;
  */
 public class ForwardDimseRQ {
 
-    public static final Logger LOG = LoggerFactory.getLogger(ForwardDimseRQ.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ForwardDimseRQ.class);
 
-    int status = -1;
-    CountDownLatch waitForOutstandingRSP;
-    PresentationContext pc;
-    Attributes rq;
-    Attributes data;
-    Association asAccepted;
-    Dimse dimse;
+    private int status = -1;
+    private CountDownLatch waitForOutstandingRSP;
+    private PresentationContext pc;
+    private Attributes rq;
+    private Attributes data;
+    private Association asAccepted;
+    private Dimse dimse;
     private Association[] fwdAssocs;
-    int NumberOfCompletedSuboperations = 0;
-    int NumberOfFailedSuboperations = 0;
-    int NumberOfWarningSuboperations = 0;
+    private int NumberOfCompletedSuboperations = 0;
+    private int NumberOfFailedSuboperations = 0;
+    private int NumberOfWarningSuboperations = 0;
+    private IDWithIssuer requestedPatientIDWithIssuer;
+    private boolean adjustPatientID = false;
 
-    public ForwardDimseRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data,
-            Dimse dimse, Association... fwdAssocs) {
+    public ForwardDimseRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data, Dimse dimse,
+            Association... fwdAssocs) {
         this.asAccepted = asAccepted;
         this.pc = pc;
         this.rq = rq;
@@ -95,15 +99,17 @@ public class ForwardDimseRQ {
     private void forwardDimseRQ(final Association asInvoked) throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
         int priority = rq.getInt(Tag.Priority, 0);
-        int msgId = rq.getInt(Tag.MessageID, 0);
         final ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        final DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
+        final int msgId = rq.getInt(Tag.MessageID, 0);
+        final DimseRSPHandler rspHandler = new DimseRSPHandler(adjustPatientID ? asInvoked.nextMessageID() : msgId) {
 
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
+                if (adjustPatientID)
+                    cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                 int rspStatus = cmd.getInt(Tag.Status, -1);
-                if (Status.isPending(rspStatus) && dimse == Dimse.C_FIND_RQ)
+                if (Status.isPending(rspStatus))
                     writeDimseRSP(pc, cmd, data);
                 else {
                     if (status != Status.Success)
@@ -147,6 +153,11 @@ public class ForwardDimseRQ {
 
             private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes data) {
                 try {
+                    if (adjustPatientID) {
+                        data.setString(Tag.PatientID, VR.LO, requestedPatientIDWithIssuer.id);
+                        data.setString(Tag.IssuerOfPatientID, VR.LO,
+                                requestedPatientIDWithIssuer.issuer.getLocalNamespaceEntityID());
+                    }
                     if (dimse == Dimse.C_FIND_RQ)
                         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
                     if (dimse == Dimse.C_GET_RQ)
@@ -188,24 +199,65 @@ public class ForwardDimseRQ {
 
     public void execute() throws IOException, InterruptedException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+        List<ForwardRule> fwdRules = pae.getCurrentForwardRules(asAccepted);
         for (Association fwdAssoc : fwdAssocs) {
-            try {
-                pixQuery(pae, forwardRules, fwdAssoc);
-            } catch (Exception e) {
-                LOG.error("Error executing PIX Query: " + e.getMessage());
-                continue;
-            }
-            pae.coerceDataset(fwdAssoc.getRemoteAET(), Role.SCP, dimse, data);
-            forwardDimseRQ(fwdAssoc);
+            IDWithIssuer[] pids = processPatientIDs(pae, fwdRules, fwdAssoc);
+            if (pids.length == 0)
+                coerceAndForward(pae, fwdAssoc);
+            else
+                forwardDimseRQPerPatientID(pae, fwdAssoc, pids);
         }
     }
 
-    private void pixQuery(ProxyApplicationEntity pae, List<ForwardRule> forwardRules, Association fwdAssoc)
-            throws ConfigurationException, IncompatibleConnectionException, IOException, GeneralSecurityException {
-        for (ForwardRule fwr : forwardRules)
-            if (fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET()) && fwr.getRemotePixManager() != null)
-                pae.pixQuery(data, fwr.getRemotePixManager());
+    private void forwardDimseRQPerPatientID(ProxyApplicationEntity pae, Association fwdAssoc, IDWithIssuer[] pids)
+            throws IOException, InterruptedException {
+        requestedPatientIDWithIssuer = new IDWithIssuer(data.getString(Tag.PatientID),
+                data.getString(Tag.IssuerOfPatientID));
+        adjustPatientID = true;
+        waitForOutstandingRSP = new CountDownLatch((int) waitForOutstandingRSP.getCount() + (pids.length - 1));
+        for (IDWithIssuer pid : pids) {
+            data.setString(Tag.PatientID, VR.LO, pid.id);
+            data.setString(Tag.IssuerOfPatientID, VR.LO, pid.issuer.getLocalNamespaceEntityID());
+            coerceAndForward(pae, fwdAssoc);
+        }
     }
 
+    private void coerceAndForward(ProxyApplicationEntity pae, Association fwdAssoc) throws IOException,
+            InterruptedException {
+        pae.coerceDataset(fwdAssoc.getRemoteAET(), Role.SCP, dimse, data);
+        forwardDimseRQ(fwdAssoc);
+    }
+
+    private IDWithIssuer[] processPatientIDs(ProxyApplicationEntity pae, List<ForwardRule> fwdRules,
+            Association fwdAssoc) {
+        IDWithIssuer[] pids = IDWithIssuer.EMPTY;
+        for (ForwardRule fwr : fwdRules)
+            if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
+                pids = getOtherPatientIDs(pae, data);
+                continue;
+            }
+        return pids;
+    }
+
+    private IDWithIssuer[] getOtherPatientIDs(ProxyApplicationEntity pae, Attributes attrs) {
+        IDWithIssuer[] pids = IDWithIssuer.EMPTY;
+        try {
+            Issuer issuerOfPatientID = null;
+            String requestedIssuer = attrs.getString(Tag.IssuerOfPatientID);
+            ProxyDevice dev = (ProxyDevice) pae.getDevice();
+            if (requestedIssuer == null) {
+                String callingAET = asAccepted.getAAssociateAC().getCallingAET();
+                ApplicationEntity issuerAET = dev.getDicomConf().findApplicationEntity(callingAET);
+                issuerOfPatientID = issuerAET.getDevice().getIssuerOfPatientID();
+            } else {
+                issuerOfPatientID = new Issuer(requestedIssuer);
+            }
+            IDWithIssuer pid = IDWithIssuer.pidWithIssuer(attrs, issuerOfPatientID);
+            if (pid != null)
+                pids = dev.getPixConsumer().pixQuery(pae, pid);
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
+        return pids;
+    }
 }

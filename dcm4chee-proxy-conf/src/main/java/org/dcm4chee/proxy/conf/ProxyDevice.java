@@ -46,17 +46,17 @@ import javax.xml.transform.TransformerConfigurationException;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
+import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.io.TemplatesCache;
 import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Device;
+import org.dcm4che.net.hl7.HL7Device;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
- * @author Robert David <robert.david@agfa.com>
  */
-public class ProxyDevice extends Device {
+public class ProxyDevice extends HL7Device {
 
     private static final long serialVersionUID = -7370790158878613899L;
     
@@ -64,12 +64,14 @@ public class ProxyDevice extends Device {
     public static final int DEFAULT_SCHEDULER_INTERVAL = 60;
 
     private Integer schedulerInterval;
-    private DicomConfiguration dicomConf;
+    private HL7Configuration dicomConf;
     private transient TemplatesCache templateCache;
     private int forwardThreads;
     private transient ThreadPoolExecutor fileForwardingExecutor;
     private int configurationStaleTimeout;
     private ApplicationEntityCache aeCache;
+    private HL7ApplicationCache hl7AppCache;
+    private PIXConsumer pixConsumer;
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
         if (fileForwardingExecutor == null)
@@ -106,11 +108,11 @@ public class ProxyDevice extends Device {
         return schedulerInterval;
     }
 
-    public DicomConfiguration getDicomConf() {
+    public HL7Configuration getDicomConf() {
         return dicomConf;
     }
 
-    public void setDicomConf(DicomConfiguration dicomConf) {
+    public void setDicomConf(HL7Configuration dicomConf) {
         this.dicomConf = dicomConf;
     }
 
@@ -129,6 +131,22 @@ public class ProxyDevice extends Device {
     public void setAeCache(ApplicationEntityCache aeCache) {
         this.aeCache = aeCache;
         aeCache.setStaleTimeout(configurationStaleTimeout);
+    }
+
+    public HL7ApplicationCache getHl7AppCache() {
+        return hl7AppCache;
+    }
+
+    public void setHl7AppCache(HL7ApplicationCache hl7AppCache) {
+        this.hl7AppCache = hl7AppCache;
+    }
+
+    public PIXConsumer getPixConsumer() {
+        return pixConsumer;
+    }
+
+    public void setPixConsumer(PIXConsumer pixConsumer) {
+        this.pixConsumer = pixConsumer;
     }
 
     public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {

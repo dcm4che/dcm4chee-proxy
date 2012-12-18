@@ -6,6 +6,8 @@
 MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
 MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
 
+DCM4CHE_VERSION=3.0.1
+
 DIRNAME="`dirname "$0"`"
 
 # OS specific support (must be 'true' or 'false').
@@ -39,11 +41,11 @@ fi
 # Setup the classpath
 CP="$PROXY_HOME/etc/"
 CP="$CP:$PROXY_HOME/lib/$MAIN_JAR"
-CP="$CP:$PROXY_HOME/lib/dcm4che-core-3.0.0.jar"
-CP="$CP:$PROXY_HOME/lib/dcm4che-net-3.0.0.jar"
-CP="$CP:$PROXY_HOME/lib/dcm4che-conf-prefs-3.0.0.jar"
-CP="$CP:$PROXY_HOME/lib/dcm4che-conf-ldap-3.0.0.jar"
-CP="$CP:$PROXY_HOME/lib/dcm4che-conf-api-3.0.0.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4che-core-$DCM4CHE_VERSION.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4che-net-hl7-$DCM4CHE_VERSION.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4che-conf-api-hl7-$DCM4CHE_VERSION.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4che-conf-prefs-hl7-$DCM4CHE_VERSION.jar"
+CP="$CP:$PROXY_HOME/lib/dcm4che-conf-ldap-hl7-$DCM4CHE_VERSION.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar"
 CP="$CP:$PROXY_HOME/lib/dcm4che-jdbc-prefs-tool-1.0.0-SNAPSHOT.jar"

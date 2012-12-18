@@ -49,14 +49,16 @@ import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
+import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.ProxyHL7Application;
 import org.dcm4chee.proxy.conf.Retry;
 import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.Schedule;
@@ -65,7 +67,7 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
-public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration implements Serializable {
+public class PreferencesProxyConfiguration extends PreferencesHL7Configuration implements Serializable {
 
     private static final long serialVersionUID = 7295686215722926221L;
 
@@ -85,6 +87,14 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             return super.newApplicationEntity(aeNode);
 
         return new ProxyApplicationEntity(aeNode.name());
+    }
+
+    @Override
+    protected HL7Application newHL7Application(Preferences hl7AppNode) {
+        if (!hl7AppNode.getBoolean("dcmArchiveHL7Application", false))
+            return super.newHL7Application(hl7AppNode);
+
+        return new ProxyHL7Application(hl7AppNode.name());
     }
 
     @Override
@@ -111,6 +121,20 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
         storeNotNull(prefs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
         storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
+        storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
+        storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
+    }
+
+    @Override
+    protected void storeTo(HL7Application hl7App, Preferences prefs,
+            List<Connection> devConns) {
+        super.storeTo(hl7App, prefs, devConns);
+        if (!(hl7App instanceof ProxyHL7Application))
+            return;
+
+        ProxyHL7Application prxHL7App = (ProxyHL7Application) hl7App;
+        prefs.putBoolean("dcmProxyHL7Application", true);
+        storeNotEmpty(prefs, "labeledURI", prxHL7App.getTemplatesURIs());
     }
 
     @Override
@@ -134,6 +158,17 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         proxyAE.setSpoolDirectory(prefs.get("dcmSpoolDirectory", null));
         proxyAE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmAcceptDataOnFailedNegotiation", false));
         proxyAE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
+        proxyAE.setProxyPIXConsumerApplication(prefs.get("hl7ProxyPIXConsumerApplication", null));
+        proxyAE.setRemotePIXManagerApplication(prefs.get("hl7RemotePIXManagerApplication", null));
+    }
+
+    @Override
+    protected void loadFrom(HL7Application hl7App, Preferences prefs) {
+        super.loadFrom(hl7App, prefs);
+        if (!(hl7App instanceof ProxyHL7Application))
+            return;
+        ProxyHL7Application arcHL7App = (ProxyHL7Application) hl7App;
+        arcHL7App.setTemplatesURIs(stringArray(prefs, "labeledURI"));
     }
 
     @Override
@@ -170,7 +205,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
             if (conversion != null)
                 rule.setConversion(ForwardRule.conversionType.valueOf(conversion));
             rule.setConversionUri(ruleNode.get("dcmConversionUri", null));
-            rule.setRemotePixManager(ruleNode.get("dcmRemotePIXManager", null));
+            rule.setRunPIXQuery(ruleNode.getBoolean("dcmPIXQuery", Boolean.FALSE));
             rules.add(rule);
         }
         proxyAE.setForwardRules(rules);
@@ -245,7 +280,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         storeNotNull(prefs, "dcmConversion", rule.getConversion());
         storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
-        storeNotNull(prefs, "dcmRemotePIXManager", rule.getRemotePixManager());
+        storeNotDef(prefs, "dcmPIXQuery", rule.isRunPIXQuery(), Boolean.FALSE);
     }
 
     private void storeForwardRuleDimse(ForwardRule rule, Preferences prefs) {
@@ -291,6 +326,10 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
         storeDiff(prefs, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
+        storeDiff(prefs, "hl7ProxyPIXConsumerApplication", pa.getProxyPIXConsumerApplication(),
+                pb.getProxyPIXConsumerApplication());
+        storeDiff(prefs, "hl7RemotePIXManagerApplication", pa.getRemotePIXManagerApplication(),
+                pb.getRemotePIXManagerApplication());
     }
 
     @Override
@@ -322,6 +361,21 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeNode);
         mergeForwardSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeNode);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeNode);
+    }
+
+    @Override
+    protected void storeDiffs(Preferences prefs, HL7Application a,
+            HL7Application b) {
+        super.storeDiffs(prefs, a, b);
+        if (!(a instanceof ProxyHL7Application 
+           && b instanceof ProxyHL7Application))
+                 return;
+
+         ProxyHL7Application aa = (ProxyHL7Application) a;
+         ProxyHL7Application bb = (ProxyHL7Application) b;
+         storeDiff(prefs, "labeledURI",
+                 aa.getTemplatesURIs(),
+                 bb.getTemplatesURIs());
     }
 
     private void mergeForwardRules(List<ForwardRule> prevForwardRules, List<ForwardRule> currForwardRules,
@@ -369,7 +423,7 @@ public class PreferencesProxyConfiguration extends PreferencesDicomConfiguration
         storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
         storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
         storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
-        storeDiff(prefs, "dcmRemotePIXManager", ruleA.getRemotePixManager(), ruleB.getRemotePixManager());
+        storeDiff(prefs, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
     }
 
     private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,

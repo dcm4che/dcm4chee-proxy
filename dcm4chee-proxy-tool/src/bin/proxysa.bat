@@ -9,6 +9,8 @@ if "%OS%" == "Windows_NT"  setlocal
 set MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
 set MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
 
+set DCM4CHE_VERSION=3.0.1
+
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%
 
@@ -42,11 +44,11 @@ set JAVA=%JAVA_HOME%\bin\java
 
 set CP=%PROXY_HOME%\etc\
 set CP=%CP%;%PROXY_HOME%\lib\%MAIN_JAR%
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-core-3.0.0.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-net-3.0.0.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-3.0.0.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-3.0.0.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-api-3.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-core-%DCM4CHE_VERSION%.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-net-hl7-%DCM4CHE_VERSION%.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-api-hl7-%DCM4CHE_VERSION%.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-hl7-%DCM4CHE_VERSION%.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-hl7-%DCM4CHE_VERSION%.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-jdbc-prefs-tool-1.0.0-SNAPSHOT.jar

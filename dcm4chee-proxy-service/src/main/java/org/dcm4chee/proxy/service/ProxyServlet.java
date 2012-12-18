@@ -49,7 +49,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 
 @SuppressWarnings("serial")
@@ -61,7 +61,7 @@ public class ProxyServlet extends HttpServlet {
 
     private ObjectInstance mbean;
 
-    private DicomConfiguration dicomConfig;
+    private HL7Configuration dicomConfig;
 
     private Proxy proxy;
 
@@ -69,7 +69,7 @@ public class ProxyServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         try {
-            dicomConfig = (DicomConfiguration) Class.forName(config.getInitParameter("dicomConfigurationClass"), false,
+            dicomConfig = (HL7Configuration) Class.forName(config.getInitParameter("dicomConfigurationClass"), false,
                     Thread.currentThread().getContextClassLoader()).newInstance();
             String deviceName = System.getProperty(
                     "org.dcm4chee.proxy.deviceName",

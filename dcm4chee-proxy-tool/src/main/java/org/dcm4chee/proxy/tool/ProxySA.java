@@ -51,7 +51,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.conf.ldap.LdapEnv;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
@@ -70,7 +70,7 @@ public class ProxySA {
     public static void main(String[] args) {
         try {
             CommandLine cl = parseComandLine(args);
-            DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
+            HL7Configuration dicomConfig = configureDicomConfiguration(cl);
             String deviceName = cl.getOptionValue("device");
             ProxyDevice proxyDevice = (ProxyDevice) dicomConfig.findDevice(deviceName);
             Proxy proxy = new Proxy(dicomConfig, proxyDevice);
@@ -81,7 +81,7 @@ public class ProxySA {
         }
     }
 
-    private static DicomConfiguration configureDicomConfiguration(CommandLine cl)
+    private static HL7Configuration configureDicomConfiguration(CommandLine cl)
             throws NamingException, ConfigurationException {
         if (!cl.hasOption("device")) {
             System.err.println("Missing device name.");
@@ -103,7 +103,7 @@ public class ProxySA {
             System.setProperty("jdbc.prefs.connection.username", cl.getOptionValue("jdbc-user-name"));
             System.setProperty("jdbc.prefs.connection.password", cl.getOptionValue("jdbc-user-pwd"));
         }
-        return (DicomConfiguration) new PreferencesProxyConfiguration();
+        return (HL7Configuration) new PreferencesProxyConfiguration();
     }
 
     private static boolean useLdapConfiguration(CommandLine cl) {

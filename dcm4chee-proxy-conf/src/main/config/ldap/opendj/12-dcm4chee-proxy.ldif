@@ -106,11 +106,22 @@ attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.19 NAME 'dcmConversionUri'
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.20 NAME 'dcmRemotePIXManager'
-  DESC 'String : AE title of remote PIX Manager'
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.20 NAME 'hl7RemotePIXManagerApplication'
+  DESC 'Application^Facility name of remote PIX Manager Application'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.21 NAME 'hl7ProxyPIXConsumerApplication'
+  DESC 'Application^Facility name of local PIX Consumer Application'
+  EQUALITY caseExactMatch
+  SUBSTR caseExactSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 
+  SINGLE-VALUE )
+attributeTypes: ( 1.2.40.0.13.1.2.15.0.3.22 NAME 'dcmPIXQuery'
+  DESC 'Boolean : run PIX query'
+  EQUALITY booleanMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
   SINGLE-VALUE )
 objectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
@@ -126,7 +137,10 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
   MUST (
     dcmSpoolDirectory $
     dcmAcceptDataOnFailedNegotiation $
-    dcmEnableAuditLog ) )
+    dcmEnableAuditLog )
+  MAY (
+    hl7ProxyPIXConsumerApplication $
+    hl7RemotePIXManagerApplication ) )
 objectClasses: ( 1.2.40.0.13.1.2.15.0.4.3 NAME 'dcmRetry'
   DESC 'Retry configuration for specific cases'
   SUP top STRUCTURAL
@@ -160,6 +174,9 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
     dcmScheduleHours $
     dcmConversion $
     dcmConversionUri $
-    dcmRemotePIXManager ) )
-
- 
+    dcmPIXQuery ) )
+objectClasses: ( 1.2.40.0.13.1.2.15.0.4.6 NAME 'dcmProxyHL7Application'
+  DESC 'DICOM Proxy HL7 Application related information'
+  SUP top AUXILIARY
+  MAY (
+     labeledURI ) )

@@ -580,7 +580,6 @@ public class ForwardFiles {
             Attributes[] ds, String cuid) throws IOException {
         AttributeCoercion ac = pae.getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
         if (ac != null || pae.isEnableAuditLog()) {
-            in.setIncludeBulkDataLocator(true);
             Attributes attrs = in.readDataset(-1, -1);
             pae.coerceAttributes(attrs, ac);
             ds[0] = attrs;

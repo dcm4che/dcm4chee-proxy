@@ -85,11 +85,11 @@
     <dependencySet>
       <outputDirectory>lib</outputDirectory>
       <includes>
-        <include>org.dcm4che:dcm4che-conf-ldap</include>
-        <include>org.dcm4che:dcm4che-conf-prefs</include>
-        <include>org.dcm4che:dcm4che-conf-api</include>
+        <include>org.dcm4che:dcm4che-conf-api-hl7</include>
+        <include>org.dcm4che:dcm4che-conf-ldap-hl7</include>
+        <include>org.dcm4che:dcm4che-conf-prefs-hl7</include>
         <include>org.dcm4che:dcm4che-core</include>
-        <include>org.dcm4che:dcm4che-net</include>
+        <include>org.dcm4che:dcm4che-net-hl7</include>
         <include>org.dcm4che:dcm4che-jdbc-prefs-tool</include>
         <include>org.dcm4che.dcm4chee-proxy:dcm4chee-proxy-conf</include>
         <include>org.dcm4che.dcm4chee-proxy:dcm4chee-proxy-service</include>
