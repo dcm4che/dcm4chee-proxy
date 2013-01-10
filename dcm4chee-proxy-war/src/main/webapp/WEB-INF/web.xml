@@ -13,7 +13,7 @@
   </servlet-mapping>
   <servlet>
     <servlet-name>dcm4chee-proxy</servlet-name>
-    <servlet-class>org.dcm4chee.proxy.service.ProxyServlet</servlet-class>
+    <servlet-class>org.dcm4chee.proxy.ProxyServlet</servlet-class>
     <init-param>
       <param-name>dicomConfigurationClass</param-name>
       <param-value>${config-class}</param-value>
