@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.service;
+package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -49,21 +49,25 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.conf.PIXConsumer;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CMove extends DicomService {
+public class CGet extends DicomService {
 
-    public CMove(String... sopClasses) {
+    private PIXConsumer pixConsumer;
+
+    public CGet(PIXConsumer pixConsumer, String... sopClasses) {
         super(sopClasses);
+        this.pixConsumer = pixConsumer;
     }
 
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
             throws IOException {
-        if (dimse != Dimse.C_MOVE_RQ)
+        if (dimse != Dimse.C_GET_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
@@ -77,7 +81,7 @@ public class CMove extends DicomService {
 
             try {
                 asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
-                new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, fwdAssocs.values().toArray(
+                new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, pixConsumer, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
@@ -86,16 +90,16 @@ public class CMove extends DicomService {
         } else
             try {
                 if (forwardAssociationProperty instanceof Association)
-                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, (Association) forwardAssociationProperty).execute();
+                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, pixConsumer, (Association) forwardAssociationProperty).execute();
                 else {
                     @SuppressWarnings("unchecked")
                     HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
-                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, fwdAssocs.values().toArray(
+                    new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, pixConsumer, fwdAssocs.values().toArray(
                             new Association[fwdAssocs.size()])).execute();
                 }
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
                 throw new DicomServiceException(Status.UnableToProcess, e);
             }
-    };
+    }
 }

@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.service;
+package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
 import java.util.List;
@@ -56,8 +56,9 @@ import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.common.IDWithIssuer;
 import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.IDWithIssuer;
+import org.dcm4chee.proxy.conf.PIXConsumer;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.slf4j.Logger;
@@ -84,15 +85,17 @@ public class ForwardDimseRQ {
     private int NumberOfWarningSuboperations = 0;
     private IDWithIssuer requestedPatientIDWithIssuer;
     private boolean adjustPatientID = false;
+    private PIXConsumer pixConsumer;
 
-    public ForwardDimseRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data, Dimse dimse,
-            Association... fwdAssocs) {
+    public ForwardDimseRQ(Association asAccepted, PresentationContext pc, Attributes rq, Attributes data, Dimse dimse, 
+            PIXConsumer pixConsumer, Association... fwdAssocs) {
         this.asAccepted = asAccepted;
         this.pc = pc;
         this.rq = rq;
         this.data = data;
         this.dimse = dimse;
         this.fwdAssocs = fwdAssocs;
+        this.pixConsumer = pixConsumer;
         waitForOutstandingRSP = new CountDownLatch(fwdAssocs.length);
     }
 
@@ -254,7 +257,7 @@ public class ForwardDimseRQ {
             }
             IDWithIssuer pid = IDWithIssuer.pidWithIssuer(attrs, issuerOfPatientID);
             if (pid != null)
-                pids = dev.getPixConsumer().pixQuery(pae, pid);
+                pids = pixConsumer.pixQuery(pae, pid);
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }

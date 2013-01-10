@@ -36,47 +36,46 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.dimse;
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
 
-import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.data.Attributes;
+import org.dcm4che.net.Association;
+import org.dcm4che.net.Dimse;
+import org.dcm4che.net.DimseRSP;
+import org.dcm4che.net.Status;
+import org.dcm4che.net.pdu.AAbort;
+import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che.net.service.BasicCEchoSCP;
+import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class Scheduler {
+public class CEcho extends BasicCEchoSCP {
 
-    private final ProxyDevice device;
-    private final AuditLog log;
-    private ScheduledFuture<?> timer;
+    @Override
+    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
+            Attributes data) throws IOException {
+        if (dimse != Dimse.C_ECHO_RQ)
+            throw new DicomServiceException(Status.UnrecognizedOperation);
 
-    public Scheduler(ProxyDevice device, AuditLog log) {
-        this.device = device;
-        this.log = log;
-    }
-
-    public void start() {
-        long period = device.getSchedulerInterval();
-        timer = device.scheduleAtFixedRate(new Runnable(){
-
-            @Override
-            public void run() {
-                for (ApplicationEntity ae : device.getApplicationEntities()) {
-                    if (ae instanceof ProxyApplicationEntity) {
-                        new ForwardFiles().execute((ProxyApplicationEntity) ae);
-                        log.writeLog((ProxyApplicationEntity) ae);
-                    }
-                }
-            }}, period, period, TimeUnit.SECONDS);
-    }
-
-    public void stop() {
-        if (timer != null) {
-            timer.cancel(false);
-            timer = null;
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        if (asInvoked == null) {
+            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
+            return;
+        }
+        try {
+            DimseRSP rsp = asInvoked.cecho();
+            rsp.next();
+            asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
+        } catch (Exception e) {
+            LOG.debug("Failed to forward C-ECHO RQ to {} ({})", new Object[] {asInvoked, e.getMessage()} );
+            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
         }
     }
+
 }

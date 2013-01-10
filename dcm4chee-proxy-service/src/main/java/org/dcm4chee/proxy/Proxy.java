@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.service;
+package org.dcm4chee.proxy;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -45,10 +45,17 @@ import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
 import org.dcm4che.net.service.DicomServiceRegistry;
-import org.dcm4chee.proxy.conf.AuditLog;
+import org.dcm4chee.proxy.audit.AuditLog;
 import org.dcm4chee.proxy.conf.PIXConsumer;
 import org.dcm4chee.proxy.conf.ProxyDevice;
-import org.dcm4chee.proxy.conf.Scheduler;
+import org.dcm4chee.proxy.dimse.CEcho;
+import org.dcm4chee.proxy.dimse.CFind;
+import org.dcm4chee.proxy.dimse.CGet;
+import org.dcm4chee.proxy.dimse.CMove;
+import org.dcm4chee.proxy.dimse.CStore;
+import org.dcm4chee.proxy.dimse.Mpps;
+import org.dcm4chee.proxy.dimse.StgCmt;
+import org.dcm4chee.proxy.forward.Scheduler;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -61,6 +68,7 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public static final String KEY_PASSWORD = "org.dcm4chee.proxy.net.keyPassword";
 
     private final HL7Configuration dicomConfiguration;
+    private PIXConsumer pixConsumer;
     private static Scheduler scheduler;
 
     public Proxy(HL7Configuration dicomConfiguration, ProxyDevice proxyDevice) throws ConfigurationException,
@@ -69,8 +77,16 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
         init(proxyDevice);
         device.setAeCache(new ApplicationEntityCache(dicomConfiguration));
         device.setHl7AppCache(new HL7ApplicationCache(dicomConfiguration));
-        device.setPixConsumer(new PIXConsumer(device.getHl7AppCache()));
+        setPixConsumer(new PIXConsumer(device.getHl7AppCache()));
         device.setDimseRQHandler(serviceRegistry());
+    }
+
+    public PIXConsumer getPixConsumer() {
+        return pixConsumer;
+    }
+
+    public void setPixConsumer(PIXConsumer pixConsumer) {
+        this.pixConsumer = pixConsumer;
     }
 
     @Override
@@ -91,16 +107,12 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
         dcmService.addDicomService(new CEcho());
         dcmService.addDicomService(new CStore("*"));
         dcmService.addDicomService(new StgCmt());
-        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.1.1"));
-        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.2.1"));
-        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.1.2.3.1"));
-        dcmService.addDicomService(new CFind("1.2.840.10008.5.1.4.31"));
-        dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.1.3"));
-        dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.2.3"));
-        dcmService.addDicomService(new CGet("1.2.840.10008.5.1.4.1.2.3.3"));
-        dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.1.2"));
-        dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.2.2"));
-        dcmService.addDicomService(new CMove("1.2.840.10008.5.1.4.1.2.3.2"));
+        dcmService.addDicomService(new CFind(pixConsumer, "1.2.840.10008.5.1.4.1.2.1.1", "1.2.840.10008.5.1.4.1.2.2.1",
+                "1.2.840.10008.5.1.4.1.2.3.1", "1.2.840.10008.5.1.4.31"));
+        dcmService.addDicomService(new CGet(pixConsumer, "1.2.840.10008.5.1.4.1.2.1.3", "1.2.840.10008.5.1.4.1.2.2.3",
+                "1.2.840.10008.5.1.4.1.2.3.3"));
+        dcmService.addDicomService(new CMove(pixConsumer, "1.2.840.10008.5.1.4.1.2.1.2", "1.2.840.10008.5.1.4.1.2.2.2",
+                "1.2.840.10008.5.1.4.1.2.3.2"));
         dcmService.addDicomService(new Mpps());
         return dcmService;
     }

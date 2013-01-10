@@ -63,12 +63,12 @@ import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4che.net.hl7.HL7Device;
+import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ProxyHL7Application;
 import org.dcm4chee.proxy.conf.Retry;
-import org.dcm4chee.proxy.conf.RetryObject;
 import org.dcm4chee.proxy.conf.Schedule;
 import org.junit.Test;
 

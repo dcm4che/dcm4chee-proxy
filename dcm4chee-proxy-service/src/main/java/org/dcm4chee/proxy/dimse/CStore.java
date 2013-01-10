@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.service;
+package org.dcm4chee.proxy.dimse;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -72,7 +72,7 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
-import org.dcm4chee.proxy.conf.RetryObject;
+import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.Schedule;
 

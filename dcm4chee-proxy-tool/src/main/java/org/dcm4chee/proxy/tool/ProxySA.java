@@ -53,10 +53,10 @@ import org.apache.commons.cli.PosixParser;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.conf.ldap.LdapEnv;
+import org.dcm4chee.proxy.Proxy;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
-import org.dcm4chee.proxy.service.Proxy;
 
 
 /**

@@ -40,6 +40,8 @@ package org.dcm4chee.proxy.conf;
 
 import java.io.Serializable;
 
+import org.dcm4chee.proxy.common.RetryObject;
+
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>

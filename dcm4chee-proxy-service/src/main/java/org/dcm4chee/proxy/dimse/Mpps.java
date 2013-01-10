@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.service;
+package org.dcm4chee.proxy.dimse;
 
 import java.io.File;
 import java.io.IOException;
@@ -204,8 +204,8 @@ public class Mpps extends DicomService {
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
         doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
         doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, pae.getCStoreDirectoryPath(), doseMapping.destinationAET,
-                doseMapping.callingAET);
+        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, pae.getCStoreDirectoryPath(),
+                doseMapping.destinationAET, doseMapping.callingAET);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
         delete(as, ncreateFile);

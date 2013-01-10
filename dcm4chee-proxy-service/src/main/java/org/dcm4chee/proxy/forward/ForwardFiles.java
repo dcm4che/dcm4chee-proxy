@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.forward;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -70,6 +70,11 @@ import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.common.RetryObject;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.conf.Schedule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

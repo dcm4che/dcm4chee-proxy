@@ -51,6 +51,7 @@ import org.dcm4che.net.CompatibleConnection;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.hl7.HL7Application;
+import org.dcm4chee.proxy.common.IDWithIssuer;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>

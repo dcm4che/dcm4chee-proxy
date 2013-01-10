@@ -16,7 +16,7 @@
  *
  * The Initial Developer of the Original Code is
  * Agfa Healthcare.
- * Portions created by the Initial Developer are Copyright (C) 2012
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,24 +36,50 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.service;
+package org.dcm4chee.proxy.forward;
 
-import org.dcm4che.net.Device;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.dcm4che.net.ApplicationEntity;
+import org.dcm4chee.proxy.audit.AuditLog;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyDevice;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public interface ProxyMBean {
+public class Scheduler {
 
-    boolean isRunning();
+    private final ProxyDevice device;
+    private final AuditLog log;
+    private ScheduledFuture<?> timer;
 
-    void start() throws Exception;
+    public Scheduler(ProxyDevice device, AuditLog log) {
+        this.device = device;
+        this.log = log;
+    }
 
-    void stop();
+    public void start() {
+        long period = device.getSchedulerInterval();
+        timer = device.scheduleAtFixedRate(new Runnable(){
 
-    void reloadConfiguration() throws Exception;
+            @Override
+            public void run() {
+                for (ApplicationEntity ae : device.getApplicationEntities()) {
+                    if (ae instanceof ProxyApplicationEntity) {
+                        new ForwardFiles().execute((ProxyApplicationEntity) ae);
+                        log.writeLog((ProxyApplicationEntity) ae);
+                    }
+                }
+            }}, period, period, TimeUnit.SECONDS);
+    }
 
-    Device unwrapDevice();
-
+    public void stop() {
+        if (timer != null) {
+            timer.cancel(false);
+            timer = null;
+        }
+    }
 }

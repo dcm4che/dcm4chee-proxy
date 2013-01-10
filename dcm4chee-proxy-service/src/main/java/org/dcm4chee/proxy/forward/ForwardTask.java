@@ -2,7 +2,7 @@
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License")), you may not use this file except in compliance with
+ * 1.1 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
  * http://www.mozilla.org/MPL/
  *
@@ -16,7 +16,7 @@
  *
  * The Initial Developer of the Original Code is
  * Agfa Healthcare.
- * Portions created by the Initial Developer are Copyright (C) 2012
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -36,33 +36,43 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.forward;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.net.pdu.PresentationContext;
 
 /**
- * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Gunter Zeilinger <gunterze@gmail.com>
+ *
  */
-public enum RetryObject {
-    AAssociateRJ(".rj", "Association Rejected"),
-    AAbort(".aa", "Association Aborted"),
-    ConfigurationException(".conf", "Configuration Error"),
-    ConnectionException(".conn", "Connection Error"),
-    GeneralSecurityException(".ssl", "SSL Error"),
-    NoPresentationContextException(".npc", "No Presentation Context Error"),
-    IncompatibleConnectionException(".ic", "Incompatible Connection Error"),
-    AssociationStateException(".as", "Association I/O Error");
-    
-    private final String suffix;
-    private final String retryNote;
-    
-    public String getSuffix() {
-        return suffix;
+class ForwardTask {
+
+    private final AAssociateRQ aarq = new AAssociateRQ();
+    private final ArrayList<File> files = new ArrayList<File>();
+
+    public ForwardTask(String callingAET, String calledAET) {
+        aarq.setCallingAET(callingAET);
+        aarq.setCalledAET(calledAET);
     }
 
-    public String getRetryNote() {
-        return retryNote;
+    public void addFile(File file, String cuid, String tsuid) {
+        if (!aarq.containsPresentationContextFor(cuid, tsuid))
+            aarq.addPresentationContext(
+                    new PresentationContext(
+                            aarq.getNumberOfPresentationContexts() * 2 + 1,
+                            cuid, tsuid));
+        files.add(file);
     }
-    private RetryObject(String suffix, String note) {
-        this.suffix = suffix;
-        this.retryNote = note;
+
+    public final AAssociateRQ getAAssociateRQ() {
+        return aarq;
+    }
+
+    public final List<File> getFiles() {
+        return files;
     }
 }

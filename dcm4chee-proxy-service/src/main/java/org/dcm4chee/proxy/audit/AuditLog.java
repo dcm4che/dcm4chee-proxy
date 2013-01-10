@@ -39,7 +39,7 @@
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.audit;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -51,6 +51,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

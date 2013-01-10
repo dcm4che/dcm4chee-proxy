@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.common;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Issuer;

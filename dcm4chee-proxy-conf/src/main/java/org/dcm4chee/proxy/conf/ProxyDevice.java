@@ -69,9 +69,8 @@ public class ProxyDevice extends HL7Device {
     private int forwardThreads;
     private transient ThreadPoolExecutor fileForwardingExecutor;
     private int configurationStaleTimeout;
-    private ApplicationEntityCache aeCache;
-    private HL7ApplicationCache hl7AppCache;
-    private PIXConsumer pixConsumer;
+    private transient ApplicationEntityCache aeCache;
+    private transient HL7ApplicationCache hl7AppCache;
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
         if (fileForwardingExecutor == null)
@@ -124,6 +123,10 @@ public class ProxyDevice extends HL7Device {
         this.configurationStaleTimeout = configurationStaleTimeout;
     }
 
+    public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {
+        return dicomConf.findApplicationEntity(aet);
+    }
+
     public ApplicationEntityCache getAeCache() {
         return aeCache;
     }
@@ -140,17 +143,4 @@ public class ProxyDevice extends HL7Device {
     public void setHl7AppCache(HL7ApplicationCache hl7AppCache) {
         this.hl7AppCache = hl7AppCache;
     }
-
-    public PIXConsumer getPixConsumer() {
-        return pixConsumer;
-    }
-
-    public void setPixConsumer(PIXConsumer pixConsumer) {
-        this.pixConsumer = pixConsumer;
-    }
-
-    public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {
-        return dicomConf.findApplicationEntity(aet);
-    }
-
 }

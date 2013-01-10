@@ -82,6 +82,7 @@ import org.dcm4che.net.pdu.CommonExtendedNegotiation;
 import org.dcm4che.net.pdu.ExtendedNegotiation;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
+import org.dcm4chee.proxy.common.RetryObject;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
