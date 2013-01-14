@@ -126,7 +126,7 @@ public class CStore extends BasicCStoreSCP {
             else
                 processForwardRules(as, forwardAssociationProperty, pc, rq, rsp, file, digest, fmi);
         } catch (ConfigurationException e) {
-            LOG.error(as + ": error processing C-STORE-RQ: ", e);
+            LOG.error(as + ": error processing C-STORE-RQ: " + e.getMessage());
             throw new DicomServiceException(Status.UnableToProcess);
         } finally {
             deleteFile(as, file);
