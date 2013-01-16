@@ -111,6 +111,7 @@
                 <node name="Public">
                   <map>
                     <entry key="cn" value="Public"/>
+                    <entry key="dcmPIXQuery" value="true"/>
                     <entry key="dcmScheduleDays" value="Sun-Tue,Thu-Sat"/>
                     <entry key="dcmScheduleHours" value="0-23"/>
                     <entry key="labeledURI.#" value="1"/>
@@ -3695,6 +3696,7 @@
             <node name="2">
               <map>
                 <entry key="cn" value="hl7"/>
+                <entry key="dcmProtocol" value="HL7"/>
                 <entry key="dicomHostname" value="localhost"/>
                 <entry key="dicomPort" value="22575"/>
               </map>
@@ -3720,6 +3722,35 @@
             </node>
           </node>
         </node>
+        <node name="findscu">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+            <node name="FINDSCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+              </node>
+            </node>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11115"/>
+              </map>
+            </node>
+          </node>
+        </node>
         <node name="hl7rcv">
           <map>
             <entry key="dicomInstalled" value="true"/>
@@ -3738,6 +3769,7 @@
             <node name="1">
               <map>
                 <entry key="cn" value="hl7"/>
+                <entry key="dcmProtocol" value="HL7"/>
                 <entry key="dicomHostname" value="localhost"/>
                 <entry key="dicomPort" value="2575"/>
               </map>
@@ -3818,6 +3850,9 @@
           <map/>
         </node>
         <node name="DCM4CHEE-PROXY">
+          <map/>
+        </node>
+        <node name="FINDSCU">
           <map/>
         </node>
         <node name="STORESCP">

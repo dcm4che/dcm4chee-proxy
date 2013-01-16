@@ -110,7 +110,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration {
     protected Device newDevice(Attributes attrs) throws NamingException {
         if (!hasObjectClass(attrs, "dcmProxyDevice"))
             return super.newDevice(attrs);
-        ProxyDevice device = new ProxyDevice(stringValue(attrs.get("dicomDeviceName")));
+        ProxyDevice device = new ProxyDevice(stringValue(attrs.get("dicomDeviceName"), "dcm4chee-proxy"));
         device.setSchedulerInterval(intValue(attrs.get("dcmSchedulerInterval"), 60));
         device.setForwardThreads(intValue(attrs.get("dcmForwardThreads"), 1));
         device.setDicomConf(this);
@@ -121,14 +121,14 @@ public class LdapProxyConfiguration extends LdapHL7Configuration {
     protected ApplicationEntity newApplicationEntity(Attributes attrs) throws NamingException {
         if (!hasObjectClass(attrs, "dcmProxyNetworkAE"))
             return super.newApplicationEntity(attrs);
-        return new ProxyApplicationEntity(stringValue(attrs.get("dicomAETitle")));
+        return new ProxyApplicationEntity(stringValue(attrs.get("dicomAETitle"), "DCM4CHEE-PROXY"));
     }
 
     @Override
     protected HL7Application newHL7Application(Attributes attrs) throws NamingException {
         if (!hasObjectClass(attrs, "dcmProxyHL7Application"))
             return super.newHL7Application(attrs);
-        return new ProxyHL7Application(stringValue(attrs.get("hl7ApplicationName")));
+        return new ProxyHL7Application(stringValue(attrs.get("hl7ApplicationName"), null));
     }
 
     @Override
@@ -185,12 +185,12 @@ public class LdapProxyConfiguration extends LdapHL7Configuration {
         if (!(ae instanceof ProxyApplicationEntity))
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
-        proxyAE.setSpoolDirectory(stringValue(attrs.get("dcmSpoolDirectory")));
+        proxyAE.setSpoolDirectory(stringValue(attrs.get("dcmSpoolDirectory"), null));
         proxyAE.setAcceptDataOnFailedNegotiation(booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"),
                 Boolean.FALSE));
         proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
-        proxyAE.setProxyPIXConsumerApplication(stringValue(attrs.get("hl7ProxyPIXConsumerApplication")));
-        proxyAE.setRemotePIXManagerApplication(stringValue(attrs.get("hl7RemotePIXManagerApplication")));
+        proxyAE.setProxyPIXConsumerApplication(stringValue(attrs.get("hl7ProxyPIXConsumerApplication"), null));
+        proxyAE.setRemotePIXManagerApplication(stringValue(attrs.get("hl7RemotePIXManagerApplication"), null));
     }
 
     @Override
@@ -215,17 +215,17 @@ public class LdapProxyConfiguration extends LdapHL7Configuration {
                 ForwardRule rule = new ForwardRule();
                 rule.setDimse(Arrays.asList(dimseArray(attrs.get("dcmForwardRuleDimse"))));
                 rule.setSopClass(Arrays.asList(stringArray(attrs.get("dcmSOPClass"))));
-                rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle")));
+                rule.setCallingAET(stringValue(attrs.get("dcmCallingAETitle"), null));
                 rule.setDestinationURIs(Arrays.asList(stringArray(attrs.get("labeledURI"))));
-                rule.setUseCallingAET(stringValue(attrs.get("dcmUseCallingAETitle")));
+                rule.setUseCallingAET(stringValue(attrs.get("dcmUseCallingAETitle"), null));
                 rule.setExclusiveUseDefinedTC(booleanValue(attrs.get("dcmExclusiveUseDefinedTC"), Boolean.FALSE));
-                rule.setCommonName(stringValue(attrs.get("cn")));
+                rule.setCommonName(stringValue(attrs.get("cn"), null));
                 Schedule schedule = new Schedule();
-                schedule.setDays(stringValue(attrs.get("dcmScheduleDays")));
-                schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
+                schedule.setDays(stringValue(attrs.get("dcmScheduleDays"), null));
+                schedule.setHours(stringValue(attrs.get("dcmScheduleHours"), null));
                 rule.setReceiveSchedule(schedule);
                 rule.setConversion(conversionTypeValue(attrs.get("dcmConversion")));
-                rule.setConversionUri(stringValue(attrs.get("dcmConversionUri")));
+                rule.setConversionUri(stringValue(attrs.get("dcmConversionUri"), null));
                 rule.setRunPIXQuery(booleanValue(attrs.get("dcmPIXQuery"), Boolean.FALSE));
                 rules.add(rule);
             }
@@ -257,9 +257,9 @@ public class LdapProxyConfiguration extends LdapHL7Configuration {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 Schedule schedule = new Schedule();
-                schedule.setDays(stringValue(attrs.get("dcmScheduleDays")));
-                schedule.setHours(stringValue(attrs.get("dcmScheduleHours")));
-                forwardSchedules.put(stringValue(attrs.get("dcmDestinationAETitle")), schedule);
+                schedule.setDays(stringValue(attrs.get("dcmScheduleDays"), null));
+                schedule.setHours(stringValue(attrs.get("dcmScheduleHours"), null));
+                forwardSchedules.put(stringValue(attrs.get("dcmDestinationAETitle"), null), schedule);
             }
             proxyAE.setForwardSchedules(forwardSchedules);
         } finally {
@@ -275,7 +275,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 Retry retry = new Retry(
-                        RetryObject.valueOf(stringValue(attrs.get("dcmRetryObject"))), 
+                        RetryObject.valueOf(stringValue(attrs.get("dcmRetryObject"), null)), 
                         intValue(attrs.get("dcmRetryDelay"),60), 
                         intValue(attrs.get("dcmRetryNum"), 10));
                 retries.add(retry);

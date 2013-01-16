@@ -74,7 +74,8 @@ public class ProxyDevice extends HL7Device {
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
         if (fileForwardingExecutor == null)
-        	fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads); 
+            fileForwardingExecutor = (ThreadPoolExecutor) Executors
+                    .newFixedThreadPool(forwardThreads);
         return fileForwardingExecutor;
     }
 

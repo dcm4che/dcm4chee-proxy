@@ -55,6 +55,7 @@ import org.dcm4che.data.Issuer;
 import org.dcm4che.data.UID;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Connection;
+import org.dcm4che.net.Connection.Protocol;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.QueryOption;
@@ -433,6 +434,7 @@ public class ProxyConfigurationTestUtils {
         device.addHL7Application(hl7App);
 
         Connection hl7 = new Connection("hl7", "localhost", 22575);
+        hl7.setProtocol(Protocol.HL7);
         device.addConnection(hl7);
         hl7App.addConnection(hl7);
 //        Connection hl7TLS = new Connection("hl7-tls", "localhost", 12575);
@@ -462,9 +464,10 @@ public class ProxyConfigurationTestUtils {
          init(device, issuer, institutionCode);
          HL7Application hl7app = new HL7Application(appName);
          device.addHL7Application(hl7app);
-         Connection dicom = new Connection("hl7", host, port);
-         device.addConnection(dicom);
-         hl7app.addConnection(dicom);
+         Connection hl7Connection = new Connection("hl7", host, port);
+         hl7Connection.setProtocol(Protocol.HL7);
+         device.addConnection(hl7Connection);
+         hl7app.addConnection(hl7Connection);
 //         Connection dicomTLS = new Connection("hl7-tls", host, tlsPort);
 //         dicomTLS.setTlsCipherSuites(
 //                 Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
