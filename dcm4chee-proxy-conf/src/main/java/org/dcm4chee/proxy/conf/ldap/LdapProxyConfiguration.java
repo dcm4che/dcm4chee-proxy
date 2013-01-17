@@ -38,6 +38,7 @@
 
 package org.dcm4chee.proxy.conf.ldap;
 
+import java.io.Serializable;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,9 +75,11 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class LdapProxyConfiguration extends LdapHL7Configuration {
+public class LdapProxyConfiguration extends LdapHL7Configuration implements Serializable {
 
-    public LdapProxyConfiguration() throws ConfigurationException {}
+	private static final long serialVersionUID = 1L;
+
+	public LdapProxyConfiguration() throws ConfigurationException {}
 
     public LdapProxyConfiguration(Hashtable<?, ?> env) throws ConfigurationException {
         super(env);
