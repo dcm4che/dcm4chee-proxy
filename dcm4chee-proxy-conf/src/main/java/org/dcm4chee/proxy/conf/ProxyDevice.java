@@ -51,6 +51,7 @@ import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.io.TemplatesCache;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.hl7.HL7Device;
+import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -92,7 +93,7 @@ public class ProxyDevice extends HL7Device {
     public Templates getTemplates(String uri) throws TransformerConfigurationException {
         if (templateCache == null)
             templateCache = new TemplatesCache();
-        return templateCache.get(uri);
+        return templateCache.get(StringUtils.replaceSystemProperties(uri).replace('\\', '/'));
     }
 
     public ProxyDevice(String name) {

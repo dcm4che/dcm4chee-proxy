@@ -74,7 +74,6 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
-import org.dcm4che.util.StringUtils;
 import org.dcm4che.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
@@ -214,9 +213,8 @@ public class Mpps extends DicomService {
     private void transformMpps2DoseSr(Association as, ProxyApplicationEntity pae, Attributes data, String iuid,
             String ppsSOPIUID, DoseMapping doseMapping, Attributes doseSrData)
             throws TransformerFactoryConfigurationError, DicomServiceException {
-        String conversionTemplateUri = StringUtils.replaceSystemProperties(doseMapping.conversionUri);
         try {
-            Templates templates = pae.getTemplates(conversionTemplateUri);
+            Templates templates = pae.getTemplates(doseMapping.conversionUri);
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);
             Transformer tr = th.getTransformer();
@@ -231,7 +229,7 @@ public class Mpps extends DicomService {
             w.setIncludeKeyword(false);
             w.write(data);
         } catch (Exception e) {
-            LOG.error("Error converting MPPS to Dose SR using " + conversionTemplateUri, e);
+            LOG.error("Error converting MPPS to Dose SR", e);
             throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
         }
     }
