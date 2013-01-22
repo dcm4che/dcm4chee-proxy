@@ -159,5 +159,7 @@ public class ProxyDevice extends HL7Device {
     private void setProxyDeviceAttributes(ProxyDevice from) {
         setForwardThreads(from.forwardThreads);
         setSchedulerInterval(from.schedulerInterval);
+        fileForwardingExecutor = (ThreadPoolExecutor) Executors
+                .newFixedThreadPool(forwardThreads);
     }
 }
