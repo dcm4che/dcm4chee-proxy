@@ -87,7 +87,6 @@ public class ForwardFiles {
 
     public void execute(ProxyApplicationEntity pae) {
         HashMap<String, Schedule> forwardSchedules = pae.getForwardSchedules();
-
         processCStore(pae, forwardSchedules);
         processNAction(pae, forwardSchedules);
         processNCreate(pae, forwardSchedules);
@@ -159,17 +158,20 @@ public class ForwardFiles {
                 String path = pathname.getPath();
                 if (path.endsWith(".dcm"))
                     return true;
-                String file = path.substring(path.lastIndexOf(ProxyApplicationEntity.getSeparator()) + 1);
-                for (Retry retry : pae.getRetries())
-                    if (path.endsWith(retry.getRetryObject().getSuffix()) 
-                            && numRetry(retry, file)
+
+                String suffix = path.substring(path.lastIndexOf('.'));
+                for (Retry retry : pae.getRetries()) {
+                    if (suffix.startsWith(retry.getRetryObject().getSuffix()) 
+                            && numRetry(retry, suffix)
                             && (now > (pathname.lastModified() + (retry.delay * 1000))))
                         return true;
+                }
                 return false;
             }
 
-            private boolean numRetry(Retry retry, String file) {
-                int currentRetries = file.split(retry.getRetryObject().getSuffix(), -1).length - 1;
+            private boolean numRetry(Retry retry, String suffix) {
+                String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
+                int currentRetries = Integer.parseInt(substring);
                 return currentRetries < retry.numberOfRetries;
             }
         };
@@ -556,8 +558,7 @@ public class ForwardFiles {
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) throws DicomServiceException {
         LOG.error("Unable to connect to {}: {}", new Object[] { ft.getAAssociateRQ().getCalledAET(), e.getMessage() });
         for (File file : ft.getFiles()) {
-            String path = file.getPath();
-            File dst = new File(path.concat(suffix));
+            File dst = setFileSuffix(file, suffix);
             if (file.renameTo(dst)) {
                 dst.setLastModified(System.currentTimeMillis());
                 LOG.debug("{}: RENAME to {}", new Object[] { file, dst });
@@ -569,8 +570,7 @@ public class ForwardFiles {
     }
 
     private File rename(Association as, File file) throws DicomServiceException {
-        String path = file.getPath();
-        File dst = new File(path.concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
+        File dst = setFileSuffix(file, (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
@@ -579,6 +579,26 @@ public class ForwardFiles {
             LOG.debug("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
+    }
+
+    private File setFileSuffix(File file, String newSuffix) {
+        String path = file.getPath();
+        int indexOfNewSuffix = path.lastIndexOf(newSuffix);
+        if (indexOfNewSuffix == -1)
+            return new File(path + newSuffix + "1");
+
+        int indexOfNumRetries = indexOfNewSuffix + newSuffix.length();
+        int indexOfNextSuffix = path.indexOf('.', indexOfNewSuffix + 1);
+        if (indexOfNextSuffix == -1) {
+            String substring = path.substring(indexOfNumRetries);
+            int numRetries = Integer.parseInt(substring);
+            return new File(path.substring(0, indexOfNumRetries) + Integer.toString(numRetries + 1));
+        }
+        int previousNumRetries = Integer.parseInt(path.substring(indexOfNumRetries, indexOfNextSuffix));
+        String substringStart = path.substring(0, indexOfNewSuffix);
+        String substringEnd = path.substring(indexOfNextSuffix);
+        String pathname = substringStart + substringEnd + newSuffix + Integer.toString(previousNumRetries + 1);
+        return new File(pathname);
     }
 
     private DataWriter createDataWriter(ProxyApplicationEntity pae, DicomInputStream in, Association as,
