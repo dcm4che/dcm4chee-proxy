@@ -38,6 +38,8 @@
 
 package org.dcm4chee.proxy.conf;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -50,6 +52,7 @@ import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.io.TemplatesCache;
 import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.net.Device;
 import org.dcm4che.net.hl7.HL7Device;
 import org.dcm4che.util.StringUtils;
 
@@ -144,5 +147,17 @@ public class ProxyDevice extends HL7Device {
 
     public void setHl7AppCache(HL7ApplicationCache hl7AppCache) {
         this.hl7AppCache = hl7AppCache;
+    }
+
+    @Override
+    public void reconfigure(Device from) throws IOException,
+            GeneralSecurityException {
+        super.reconfigure(from);
+        setProxyDeviceAttributes((ProxyDevice) from);
+    }
+
+    private void setProxyDeviceAttributes(ProxyDevice from) {
+        setForwardThreads(from.forwardThreads);
+        setSchedulerInterval(from.schedulerInterval);
     }
 }
