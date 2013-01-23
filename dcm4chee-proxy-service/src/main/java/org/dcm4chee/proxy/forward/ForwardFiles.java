@@ -428,7 +428,6 @@ public class ForwardFiles {
 
     private void forwardScheduledCStoreFiles(ProxyApplicationEntity pae, String calledAET) {
         File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
-        dir.mkdir();
         File[] files = dir.listFiles(fileFilter(pae));
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))
