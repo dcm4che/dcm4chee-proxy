@@ -241,9 +241,11 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         for (String retryIndex : retriesNode.childrenNames()) {
             Preferences retryNode = retriesNode.node(retryIndex);
             Retry retry = new Retry(
-                    RetryObject.valueOf(retryNode.get("dcmRetryObject", null)),
-                    retryNode.getInt("dcmRetryDelay", Retry.DEFAULT_DELAY),
-                    retryNode.getInt("dcmRetryNum", Retry.DEFAULT_RETRIES));
+                    RetryObject.valueOf(
+                            retryNode.get("dcmRetryObject", null)),
+                            retryNode.getInt("dcmRetryDelay", Retry.DEFAULT_DELAY),
+                            retryNode.getInt("dcmRetryNum", Retry.DEFAULT_RETRIES),
+                            retryNode.getBoolean("dcmDeleteAfterFinalRetry", false));
             retries.add(retry);
         }
         proxyAE.setRetries(retries);
@@ -312,6 +314,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeNotNull(prefs, "dcmRetryObject", retry.getRetryObject().toString());
         storeNotNull(prefs, "dcmRetryDelay", retry.getDelay());
         storeNotNull(prefs, "dcmRetryNum", retry.getNumberOfRetries());
+        storeNotNull(prefs, "dcmDeleteAfterFinalRetry", retry.isDeleteAfterFinalRetry());
     }
 
     @Override
@@ -470,5 +473,6 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
     private void storeRetryDiffs(Preferences prefs, Retry a, Retry b) {
         storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
         storeDiff(prefs, "dcmRetryNum", a.getNumberOfRetries(), b.getNumberOfRetries());
+        storeDiff(prefs, "dcmDeleteAfterFinalRetry", a.isDeleteAfterFinalRetry(), b.isDeleteAfterFinalRetry());
     }
 }

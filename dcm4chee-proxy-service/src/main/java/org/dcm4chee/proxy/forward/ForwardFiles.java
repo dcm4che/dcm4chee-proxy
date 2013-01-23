@@ -162,19 +162,47 @@ public class ForwardFiles {
                 String suffix = path.substring(path.lastIndexOf('.'));
                 for (Retry retry : pae.getRetries()) {
                     if (suffix.startsWith(retry.getRetryObject().getSuffix()) 
-                            && numRetry(retry, suffix)
+                            && checkNumberOfRetries(pae, retry, suffix, pathname)
                             && (now > (pathname.lastModified() + (retry.delay * 1000))))
                         return true;
                 }
                 return false;
             }
 
-            private boolean numRetry(Retry retry, String suffix) {
+            private boolean checkNumberOfRetries(ProxyApplicationEntity pae, Retry retry, String suffix, File pathname) {
                 String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
                 int currentRetries = Integer.parseInt(substring);
-                return currentRetries < retry.numberOfRetries;
+                boolean send = currentRetries < retry.numberOfRetries;
+                if(!send) {
+                    if(retry.deleteAfterFinalRetry)
+                        deleteFile(pathname, currentRetries);
+                    else
+                        moveToExpiredPath(pae, pathname, currentRetries);
+                }
+                return send;
             }
         };
+    }
+
+    protected void moveToExpiredPath(ProxyApplicationEntity pae, File pathname, int currentRetries) {
+        String path = pathname.getPath();
+        String spoolDirPath = pae.getSpoolDirectoryPath().getPath();
+        String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(),
+                path.indexOf(pathname.getName()));
+        File dstDir = new File(pae.getExpiredForwardingPath().getPath() + subPath);
+        dstDir.mkdirs();
+        File dstFile = new File(dstDir, pathname.getName());
+        if (pathname.renameTo(dstFile))
+            LOG.info("RENAME {} to {} after {} retries", new Object[] { pathname, dstFile, currentRetries });
+        else
+            LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dstFile });
+    }
+
+    private void deleteFile(File file, int retries) {
+        if (file.delete())
+            LOG.info("M-DELETE {} after {} retries", file, retries);
+        else
+            LOG.error("Failed to M-DELETE {}", file);
     }
 
     private void startForwardScheduledMPPS(final ProxyApplicationEntity pae, final File[] files,
@@ -400,6 +428,7 @@ public class ForwardFiles {
 
     private void forwardScheduledCStoreFiles(ProxyApplicationEntity pae, String calledAET) {
         File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
+        dir.mkdir();
         File[] files = dir.listFiles(fileFilter(pae));
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))

@@ -48,19 +48,20 @@ import org.dcm4chee.proxy.common.RetryObject;
  */
 public class Retry implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
+    private static final long serialVersionUID = 6529504420167597188L;
     public static final int DEFAULT_DELAY = 60;
     public static final int DEFAULT_RETRIES = 60;
 
     public final RetryObject retryObject;
     public final int delay;
     public final int numberOfRetries;
+    public final boolean deleteAfterFinalRetry;
 
-    public Retry(RetryObject retryObject, int delay, int numberOfRetries) {
+    public Retry(RetryObject retryObject, int delay, int numberOfRetries, boolean delete) {
         this.retryObject = retryObject;
         this.delay = delay;
         this.numberOfRetries = numberOfRetries;
+        this.deleteAfterFinalRetry = delete;
     }
 
     public RetryObject getRetryObject() {
@@ -73,5 +74,9 @@ public class Retry implements Serializable {
 
     public int getNumberOfRetries() {
         return numberOfRetries;
+    }
+
+    public boolean isDeleteAfterFinalRetry() {
+        return deleteAfterFinalRetry;
     }
 }

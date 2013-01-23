@@ -219,6 +219,16 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
+    public File getExpiredForwardingPath() {
+        File path = new File(getSpoolDirectory(), "expired");
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, "expired")
+                : new File(currentWorkingDir, "expired");
+        path.mkdirs();
+        return path;
+    }
+
     public void setRetries(List<Retry> retries) {
         this.retries = retries;
     }

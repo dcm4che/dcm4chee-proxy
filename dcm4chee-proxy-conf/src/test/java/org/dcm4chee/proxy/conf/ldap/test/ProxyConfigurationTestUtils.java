@@ -398,8 +398,8 @@ public class ProxyConfigurationTestUtils {
         pae.setForwardRules(forwardRules);
         
         List<Retry> retries = new ArrayList<Retry>();
-        retries.add(new Retry(RetryObject.ConnectionException, 20, 10));
-        retries.add(new Retry(RetryObject.AssociationStateException, 20, 10));
+        retries.add(new Retry(RetryObject.ConnectionException, 20, 10, true));
+        retries.add(new Retry(RetryObject.AssociationStateException, 20, 10, true));
         pae.setRetries(retries);
         
         addVerificationStorageTransferCapabilities(pae);

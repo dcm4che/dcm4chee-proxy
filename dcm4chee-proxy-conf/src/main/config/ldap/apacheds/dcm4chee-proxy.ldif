@@ -238,6 +238,16 @@ m-name: dcmPIXQuery
 m-description: Boolean : run PIX query
 m-singleValue: TRUE
 
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.23, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
+ hema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.23
+m-name: dcmDeleteAfterFinalRetry
+m-description: Boolean : delete file after final retry
+m-singleValue: TRUE
+
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit
 objectclass: top

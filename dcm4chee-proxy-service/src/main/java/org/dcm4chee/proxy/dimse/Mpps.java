@@ -157,7 +157,6 @@ public class Mpps extends DicomService {
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
         for (Entry<String, String> entry : aets.entrySet()) {
             File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
-            dir.mkdir();
             File file = createFile(as, dimse, data, iuid, fmi, dir, entry.getKey(), entry.getValue());
             as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
             rename(as, file);
@@ -165,7 +164,6 @@ public class Mpps extends DicomService {
         Iterator<DoseMapping> doseMappingIterator = mpps2DoseSR.iterator();
         while (doseMappingIterator.hasNext()) {
             File dir = pae.getDoseSrPath();
-            dir.mkdir();
             processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, doseMappingIterator.next());
         }
         try {

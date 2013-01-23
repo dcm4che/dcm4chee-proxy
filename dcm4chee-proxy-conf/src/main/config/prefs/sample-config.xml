@@ -140,6 +140,7 @@
                 <map/>
                 <node name="AssociationStateException">
                   <map>
+                    <entry key="dcmDeleteAfterFinalRetry" value="true"/>
                     <entry key="dcmRetryDelay" value="20"/>
                     <entry key="dcmRetryNum" value="10"/>
                     <entry key="dcmRetryObject" value="AssociationStateException"/>
@@ -147,6 +148,7 @@
                 </node>
                 <node name="ConnectionException">
                   <map>
+                    <entry key="dcmDeleteAfterFinalRetry" value="true"/>
                     <entry key="dcmRetryDelay" value="20"/>
                     <entry key="dcmRetryNum" value="10"/>
                     <entry key="dcmRetryObject" value="ConnectionException"/>

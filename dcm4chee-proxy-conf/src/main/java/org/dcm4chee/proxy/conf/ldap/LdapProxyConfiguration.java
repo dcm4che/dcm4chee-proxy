@@ -77,9 +77,9 @@ import org.dcm4chee.proxy.conf.Schedule;
  */
 public class LdapProxyConfiguration extends LdapHL7Configuration implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -2551569291312355663L;
 
-	public LdapProxyConfiguration() throws ConfigurationException {}
+    public LdapProxyConfiguration() throws ConfigurationException {}
 
     public LdapProxyConfiguration(Hashtable<?, ?> env) throws ConfigurationException {
         super(env);
@@ -278,9 +278,11 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 Retry retry = new Retry(
-                        RetryObject.valueOf(stringValue(attrs.get("dcmRetryObject"), null)), 
-                        intValue(attrs.get("dcmRetryDelay"),60), 
-                        intValue(attrs.get("dcmRetryNum"), 10));
+                        RetryObject.valueOf(
+                                stringValue(attrs.get("dcmRetryObject"), null)), 
+                                intValue(attrs.get("dcmRetryDelay"),60), 
+                                intValue(attrs.get("dcmRetryNum"), 10),
+                                booleanValue(attrs.get("dcmDeleteAfterFinalRetry"), false));
                 retries.add(retry);
             }
             proxyAE.setRetries(retries);
@@ -365,6 +367,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeNotNull(attrs, "dcmRetryObject", retry.getRetryObject().toString());
         storeNotNull(attrs, "dcmRetryDelay", retry.getDelay());
         storeNotNull(attrs, "dcmRetryNum", retry.getNumberOfRetries());
+        storeNotNull(attrs, "dcmDeleteAfterFinalRetry", retry.isDeleteAfterFinalRetry());
         return attrs;
     }
 
@@ -538,6 +541,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
     private List<ModificationItem> storeRetryDiffs(Retry prev, Retry ac, ArrayList<ModificationItem> mods) {
         storeDiff(mods, "dcmRetryDelay", prev.getDelay(), ac.getDelay());
         storeDiff(mods, "dcmRetryNum", prev.getNumberOfRetries(), ac.getNumberOfRetries());
+        storeDiff(mods, "dcmDeleteAfterFinalRetry", prev.isDeleteAfterFinalRetry(), ac.isDeleteAfterFinalRetry());
         return mods;
     }
 }
