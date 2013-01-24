@@ -284,7 +284,7 @@ public class CStore extends BasicCStoreSCP {
             File file, String suffix, Exception e) throws DicomServiceException, IOException {
         LOG.debug(as + ": error forwarding C-STORE-RQ: " + e.getMessage());
         as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
+        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix + "1");
         rename(as, file, attrs);
         Attributes rsp = Commands.mkCStoreRSP(rq, Status.Success);
         as.writeDimseRSP(pc, rsp);
@@ -318,7 +318,7 @@ public class CStore extends BasicCStoreSCP {
     protected File rename(Association as, File file, Attributes attrs) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5).concat(
-                (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX) + "1"));
+                (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });

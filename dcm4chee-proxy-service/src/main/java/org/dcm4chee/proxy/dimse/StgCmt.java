@@ -234,35 +234,39 @@ public class StgCmt extends DicomService {
         } catch (AAssociateRJ rj) {
             LOG.error(asAccepted + ": rejected association to forward AET", rj.getReason());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix() + "1");
             rename(asAccepted, file);
         } catch (IOException e) {
             LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
+                    + "1");
             rename(asAccepted, file);
         } catch (ConfigurationException e) {
             LOG.error(asAccepted + ": error loading AET {} from configuration ({})",
                     new Object[] { calledAEString, e.getMessage() });
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
+                    + "1");
             rename(asAccepted, file);
         } catch (InterruptedException e) {
             LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
+                    + "1");
             rename(asAccepted, file);
         } catch (IncompatibleConnectionException e) {
             LOG.error(asAccepted + ": incompatible connection to forward AET {} ({})",
                     new Object[] { calledAEString, e.getMessage() });
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX,
-                    RetryObject.IncompatibleConnectionException.getSuffix());
+                    RetryObject.IncompatibleConnectionException.getSuffix() + "1");
             rename(asAccepted, file);
         } catch (GeneralSecurityException e) {
             LOG.error(asAccepted + ": error creating SSL context: " + e.getMessage());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix()
+                    + "1");
             rename(asAccepted, file);
         } finally {
             SafeClose.close(dis);
@@ -307,7 +311,7 @@ public class StgCmt extends DicomService {
 
     private void rename(Association as, File file) {
         String path = file.getPath();
-        File dst = new File(path.concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX) + "1"));
+        File dst = new File(path.concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
