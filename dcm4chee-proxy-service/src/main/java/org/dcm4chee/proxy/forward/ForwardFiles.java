@@ -159,48 +159,72 @@ public class ForwardFiles {
                 if (path.endsWith(".dcm"))
                     return true;
 
-                String suffix = path.substring(path.lastIndexOf('.'));
-                for (Retry retry : pae.getRetries()) {
-                    if (suffix.startsWith(retry.getRetryObject().getSuffix()) 
-                            && checkNumberOfRetries(pae, retry, suffix, pathname)
-                            && (now > (pathname.lastModified() + (retry.delay * 1000))))
+                try {
+                    String suffix = path.substring(path.lastIndexOf('.'));
+                    Retry matchingRetry = getMatchingRetry(pae, suffix);
+                    if (matchingRetry == null)
+                        if (pae.isDeleteFailedDataWithoutRetryConfiguration())
+                            deleteFile(pathname, ": delete files without retry configuration is ENABLED");
+                        else
+                            moveToExpiredPath(pae, pathname, ": delete files without retry configuration is DISABLED");
+                    else if (checkNumberOfRetries(pae, matchingRetry, suffix, pathname)
+                            && (now > (pathname.lastModified() + (matchingRetry.delay * 1000))))
                         return true;
+                } catch (IndexOutOfBoundsException e) {
+                    LOG.error("Error parsing suffix of " + path);
+                    moveToExpiredPath(pae, pathname, ": error parsing suffix");
                 }
                 return false;
-            }
-
-            private boolean checkNumberOfRetries(ProxyApplicationEntity pae, Retry retry, String suffix, File pathname) {
-                String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
-                int currentRetries = Integer.parseInt(substring);
-                boolean send = currentRetries < retry.numberOfRetries;
-                if(!send) {
-                    if(retry.deleteAfterFinalRetry)
-                        deleteFile(pathname, currentRetries);
-                    else
-                        moveToExpiredPath(pae, pathname, currentRetries);
-                }
-                return send;
             }
         };
     }
 
-    protected void moveToExpiredPath(ProxyApplicationEntity pae, File pathname, int currentRetries) {
+    private boolean checkNumberOfRetries(ProxyApplicationEntity pae, Retry retry, String suffix, File pathname) {
+        String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
+        int currentRetries = 0;
+        if (!substring.isEmpty())
+            try {
+                currentRetries = Integer.parseInt(substring);
+            } catch (NumberFormatException e) {
+                LOG.error("Error parsing number of retries in suffix of file " + pathname.getName());
+                moveToExpiredPath(pae, pathname, ": error parsing suffix");
+                return false;
+            }
+        boolean send = currentRetries < retry.numberOfRetries;
+        if (!send) {
+            String reason = ": max number of retries : " + currentRetries;
+            if (retry.deleteAfterFinalRetry)
+                deleteFile(pathname, reason);
+            else
+                moveToExpiredPath(pae, pathname, reason);
+        }
+        return send;
+    }
+
+    protected Retry getMatchingRetry(ProxyApplicationEntity pae, String suffix) {
+        for (Retry retry : pae.getRetries())
+            if(suffix.startsWith(retry.getRetryObject().getSuffix()))
+                return retry;
+        return null;
+    }
+
+    protected void moveToExpiredPath(ProxyApplicationEntity pae, File pathname, String reason) {
         String path = pathname.getPath();
         String spoolDirPath = pae.getSpoolDirectoryPath().getPath();
         String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(),
                 path.indexOf(pathname.getName()));
-        File dstDir = new File(pae.getExpiredForwardingPath().getPath() + subPath);
+        File dstDir = new File(pae.getNoRetryPath().getPath() + subPath);
         dstDir.mkdirs();
         File dstFile = new File(dstDir, pathname.getName());
         if (pathname.renameTo(dstFile))
-            LOG.info("RENAME {} to {} after {} retries", new Object[] { pathname, dstFile, currentRetries });
+            LOG.info("RENAME {} to {} {}", new Object[] { pathname, dstFile, reason });
         else
             LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dstFile });
     }
 
-    private void deleteFile(File file, int retries) {
+    private void deleteFile(File file, String reason) {
         if (file.delete())
-            LOG.info("M-DELETE {} after {} retries", file, retries);
+            LOG.info("M-DELETE {} {}", file, reason);
         else
             LOG.error("Failed to M-DELETE {}", file);
     }
@@ -234,8 +258,8 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledMPPS(as, file, fmi, protocol);
                     } else {
-                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
-                        rename(as, file);
+                        File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
+                        rename(as, file, dst);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -299,9 +323,9 @@ public class ForwardFiles {
                 default: {
                     LOG.debug("{}: failed to forward file {} with error status {}",
                             new Object[] { as, file, Integer.toHexString(status) + 'H' });
-                    as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     try {
-                        rename(as, file);
+                        File dst = setFileSuffix(file, '.' + Integer.toHexString(status) + 'H');
+                        rename(as, file, dst);
                     } catch (DicomServiceException e) {
                         e.printStackTrace();
                     }
@@ -344,8 +368,8 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(pae, as, file, fmi);
                     } else {
-                        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
-                        rename(as, file);
+                        File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
+                        rename(as, file, dst);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -399,9 +423,9 @@ public class ForwardFiles {
                 default: {
                     LOG.debug("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
                             Integer.toHexString(status) + 'H' });
-                    as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     try {
-                        rename(as, file);
+                        File dst = setFileSuffix(file, '.' + Integer.toHexString(status) + 'H');
+                        rename(as, file, dst);
                     } catch (DicomServiceException e) {
                         e.printStackTrace();
                     }
@@ -448,9 +472,8 @@ public class ForwardFiles {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledCStoreFiles(pae, asInvoked, file);
                     } else {
-                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX,
-                                RetryObject.ConnectionException.getSuffix());
-                        rename(asInvoked, file);
+                        File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
+                        rename(asInvoked, file, dst);
                     }
                 } catch (NoPresentationContextException npc) {
                     handleForwardException(asInvoked, file, npc, RetryObject.NoPresentationContextException.getSuffix());
@@ -464,10 +487,9 @@ public class ForwardFiles {
         } catch (ConfigurationException ce) {
             LOG.error("Unable to load configuration: " + ce.getMessage());
         } catch (AAssociateRJ rj) {
-            handleProcessException(ft, rj, RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource()
-                    + "-" + rj.getReason());
+            handleProcessException(ft, rj, RetryObject.AAssociateRJ.getSuffix());
         } catch (AAbort aa) {
-            handleProcessException(ft, aa, RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason());
+            handleProcessException(ft, aa, RetryObject.AAbort.getSuffix());
         } catch (IOException e) {
             handleProcessException(ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (InterruptedException e) {
@@ -518,10 +540,9 @@ public class ForwardFiles {
                     default: {
                         LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
                                 Integer.toHexString(status) + 'H' });
-                        asInvoked.setProperty(ProxyApplicationEntity.FILE_SUFFIX,
-                                '.' + Integer.toHexString(status) + 'H');
                         try {
-                            rename(asInvoked, file);
+                            File dst = setFileSuffix(file, '.' + Integer.toHexString(status) + 'H');
+                            rename(asInvoked, file, dst);
                         } catch (DicomServiceException e) {
                             e.printStackTrace();
                         }
@@ -580,7 +601,8 @@ public class ForwardFiles {
             throws DicomServiceException {
         LOG.debug(as + ": error processing forward task: " + e.getMessage());
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
-        rename(as, file);
+        File dst = setFileSuffix(file, suffix);
+        rename(as, file, dst);
     }
 
     private void handleProcessException(ForwardTask ft, Exception e, String suffix) throws DicomServiceException {
@@ -597,8 +619,7 @@ public class ForwardFiles {
         }
     }
 
-    private File rename(Association as, File file) throws DicomServiceException {
-        File dst = setFileSuffix(file, (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX));
+    private File rename(Association as, File file, File dst) throws DicomServiceException {
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });

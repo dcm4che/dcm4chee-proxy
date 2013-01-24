@@ -234,8 +234,7 @@ public class StgCmt extends DicomService {
         } catch (AAssociateRJ rj) {
             LOG.error(asAccepted + ": rejected association to forward AET", rj.getReason());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix() 
-                    + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix());
             rename(asAccepted, file);
         } catch (IOException e) {
             LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
@@ -257,7 +256,8 @@ public class StgCmt extends DicomService {
             LOG.error(asAccepted + ": incompatible connection to forward AET {} ({})",
                     new Object[] { calledAEString, e.getMessage() });
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.IncompatibleConnectionException.getSuffix());
+            asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX,
+                    RetryObject.IncompatibleConnectionException.getSuffix());
             rename(asAccepted, file);
         } catch (GeneralSecurityException e) {
             LOG.error(asAccepted + ": error creating SSL context: " + e.getMessage());
@@ -307,7 +307,7 @@ public class StgCmt extends DicomService {
 
     private void rename(Association as, File file) {
         String path = file.getPath();
-        File dst = new File(path.concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
+        File dst = new File(path.concat((String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX) + "1"));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });

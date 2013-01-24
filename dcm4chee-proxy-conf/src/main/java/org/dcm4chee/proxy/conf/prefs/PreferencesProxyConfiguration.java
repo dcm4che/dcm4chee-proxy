@@ -123,6 +123,8 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
         storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
+        storeNotNull(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
+                proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
     }
 
     @Override
@@ -160,6 +162,8 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         proxyAE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
         proxyAE.setProxyPIXConsumerApplication(prefs.get("hl7ProxyPIXConsumerApplication", null));
         proxyAE.setRemotePIXManagerApplication(prefs.get("hl7RemotePIXManagerApplication", null));
+        proxyAE.setDeleteFailedDataWithoutRetryConfiguration(prefs.getBoolean(
+                "dcmDeleteFailedDataWithoutRetryConfiguration", false));
     }
 
     @Override
@@ -333,6 +337,9 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
                 pb.getProxyPIXConsumerApplication());
         storeDiff(prefs, "hl7RemotePIXManagerApplication", pa.getRemotePIXManagerApplication(),
                 pb.getRemotePIXManagerApplication());
+        storeDiff(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration", 
+                pa.isDeleteFailedDataWithoutRetryConfiguration(),
+                pb.isDeleteFailedDataWithoutRetryConfiguration());
     }
 
     @Override

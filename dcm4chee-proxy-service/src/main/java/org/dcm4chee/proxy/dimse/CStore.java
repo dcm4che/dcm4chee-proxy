@@ -318,7 +318,7 @@ public class CStore extends BasicCStoreSCP {
     protected File rename(Association as, File file, Attributes attrs) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5).concat(
-                (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
+                (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX) + "1"));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });

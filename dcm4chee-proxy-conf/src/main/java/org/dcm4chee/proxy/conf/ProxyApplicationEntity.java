@@ -109,6 +109,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
     private String proxyPIXConsumerApplication;
     private String remotePIXManagerApplication;
+    private boolean deleteFailedDataWithoutRetryConfiguration;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -219,12 +220,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return path;
     }
 
-    public File getExpiredForwardingPath() {
-        File path = new File(getSpoolDirectory(), "expired");
+    public File getNoRetryPath() {
+        File path = new File(getSpoolDirectory(), "noRetry");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
-                ? new File(jbossServerDataDir, "expired")
-                : new File(currentWorkingDir, "expired");
+                ? new File(jbossServerDataDir, "noRetry")
+                : new File(currentWorkingDir, "noRetry");
         path.mkdirs();
         return path;
     }
@@ -357,6 +358,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void setRemotePIXManagerApplication(String pixManagerApplication) {
         this.remotePIXManagerApplication = pixManagerApplication;
+    }
+
+    public boolean isDeleteFailedDataWithoutRetryConfiguration() {
+        return deleteFailedDataWithoutRetryConfiguration;
+    }
+
+    public void setDeleteFailedDataWithoutRetryConfiguration(boolean deleteFailedDataWithoutRetryConfiguration) {
+        this.deleteFailedDataWithoutRetryConfiguration = deleteFailedDataWithoutRetryConfiguration;
     }
 
     private boolean isAssociationFromDestinationAET(Association asAccepted) {
@@ -492,33 +501,23 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(
-                    as, rq, ac, calledAET, rj,
-                    RetryObject.AAssociateRJ.getSuffix() + rj.getResult() + "-" + rj.getSource() + "-" + rj.getReason(),
+            return handleNegotiateConnectException(as, rq, ac, calledAET, rj, RetryObject.AAssociateRJ.getSuffix(),
                     rj.getReason());
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(
-                    as, rq, ac, calledAET, aa,
-                    RetryObject.AAbort.getSuffix() + aa.getSource() + "-" + aa.getReason(), 
+            return handleNegotiateConnectException(as, rq, ac, calledAET, aa, RetryObject.AAbort.getSuffix(),
                     aa.getReason());
         } catch (IOException e) {
-            return handleNegotiateConnectException(
-                    as, rq, ac, calledAET, e,
-                    RetryObject.ConnectionException.getSuffix(), 
-                    0);
+            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
+                    RetryObject.ConnectionException.getSuffix(), 0);
         } catch (InterruptedException e) {
             LOG.debug("Unexpected exception: ", e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
-            return handleNegotiateConnectException(
-                    as, rq, ac, calledAET, e,
-                    RetryObject.IncompatibleConnectionException.getSuffix(), 
-                    0);
+            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
+                    RetryObject.IncompatibleConnectionException.getSuffix(), 0);
         } catch (GeneralSecurityException e) {
-            return handleNegotiateConnectException(
-                    as, rq, ac, calledAET, e,
-                    RetryObject.GeneralSecurityException.getSuffix(), 
-                    0);
+            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
+                    RetryObject.GeneralSecurityException.getSuffix(), 0);
         }
     }
 

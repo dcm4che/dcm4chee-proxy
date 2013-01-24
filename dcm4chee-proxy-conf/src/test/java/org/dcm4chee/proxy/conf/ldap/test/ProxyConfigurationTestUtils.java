@@ -326,6 +326,7 @@ public class ProxyConfigurationTestUtils {
         pae.setSpoolDirectory("/tmp/proxy/");
         pae.setAcceptDataOnFailedNegotiation(true);
         pae.setEnableAuditLog(true);
+        pae.setDeleteFailedDataWithoutRetryConfiguration(true);
         
         pae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 

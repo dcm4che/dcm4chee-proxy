@@ -157,6 +157,8 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeNotNull(attrs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         storeNotNull(attrs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
         storeNotNull(attrs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
+        storeNotNull(attrs, "dcmDeleteFailedDataWithoutRetryConfiguration",
+                proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
         return attrs;
     }
 
@@ -194,6 +196,8 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         proxyAE.setEnableAuditLog(booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
         proxyAE.setProxyPIXConsumerApplication(stringValue(attrs.get("hl7ProxyPIXConsumerApplication"), null));
         proxyAE.setRemotePIXManagerApplication(stringValue(attrs.get("hl7RemotePIXManagerApplication"), null));
+        proxyAE.setDeleteFailedDataWithoutRetryConfiguration(booleanValue(
+                attrs.get("dcmDeleteFailedDataWithoutRetryConfiguration"), Boolean.FALSE));
     }
 
     @Override
@@ -411,6 +415,9 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeDiff(mods, "hl7RemotePIXManagerApplication",
                 pa.getRemotePIXManagerApplication(),
                 pb.getRemotePIXManagerApplication());
+        storeDiff(mods, "dcmDeleteFailedDataWithoutRetryConfiguration", 
+                pa.isDeleteFailedDataWithoutRetryConfiguration(),
+                pb.isDeleteFailedDataWithoutRetryConfiguration());
         return mods;
     }
     

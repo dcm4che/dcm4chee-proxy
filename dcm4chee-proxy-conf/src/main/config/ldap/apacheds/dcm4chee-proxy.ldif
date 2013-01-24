@@ -248,6 +248,16 @@ m-name: dcmDeleteAfterFinalRetry
 m-description: Boolean : delete file after final retry
 m-singleValue: TRUE
 
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.24, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
+ hema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.24
+m-name: dcmDeleteFailedDataWithoutRetryConfiguration
+m-description: Boolean : delete files based on error without retry configuration after first failed forwarding
+m-singleValue: TRUE
+
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit
 objectclass: top
@@ -313,6 +323,7 @@ m-typeObjectClass: AUXILIARY
 m-must: dcmSpoolDirectory
 m-must: dcmAcceptDataOnFailedNegotiation
 m-must: dcmEnableAuditLog
+m-must: dcmDeleteFailedDataWithoutRetryConfiguration
 m-may: hl7ProxyPIXConsumerApplication
 m-may: hl7RemotePIXManagerApplication
 
