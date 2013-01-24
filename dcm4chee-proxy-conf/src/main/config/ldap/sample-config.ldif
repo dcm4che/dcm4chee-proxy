@@ -1,8 +1,21 @@
 version: 1
 
+dn: cn=DICOM Configuration,dc=example,dc=com
+objectClass: dicomConfigurationRoot
+cn: DICOM Configuration
+
 dn: cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dicomDevicesRoot
 cn: Devices
+
+dn: cn=Unique AE Titles Registry,cn=DICOM Configuration,dc=example,dc=com
+objectClass: dicomUniqueAETitlesRegistryRoot
+cn: Unique AE Titles Registry
+
+dn: dicomAETitle=DCM4CHEE,cn=Unique AE Titles Registry,cn=DICOM Configuratio
+ n,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: DCM4CHEE
 
 dn: dicomDeviceName=dcm4chee-arc,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
@@ -29,6 +42,11 @@ dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=dcm4chee-arc,cn=De
  vices,cn=DICOM Configuration,dc=example,dc=com
 
+dn: dicomAETitle=STORESCP,cn=Unique AE Titles Registry,cn=DICOM Configuratio
+ n,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: STORESCP
+
 dn: dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
 objectClass: dicomDevice
@@ -54,6 +72,11 @@ dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=storescp,cn=Device
  s,cn=DICOM Configuration,dc=example,dc=com
 
+dn: dicomAETitle=STORESCU,cn=Unique AE Titles Registry,cn=DICOM Configuratio
+ n,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: STORESCU
+
 dn: dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
 objectClass: dicomDevice
@@ -78,6 +101,11 @@ dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=storescu,cn=Device
  s,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=FINDSCU,cn=Unique AE Titles Registry,cn=DICOM Configuration
+ ,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: FINDSCU
 
 dn: dicomDeviceName=findscu,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
@@ -130,6 +158,11 @@ objectClass: hl7Application
 dicomNetworkConnectionReference: cn=hl7,dicomDeviceName=hl7rcv,cn=Devices,cn
  =DICOM Configuration,dc=example,dc=com
 hl7ApplicationName: HL7RCV^DCM4CHEE
+
+dn: dicomAETitle=DCM4CHEE-PROXY,cn=Unique AE Titles Registry,cn=DICOM Config
+ uration,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: DCM4CHEE-PROXY
 
 dn: dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
