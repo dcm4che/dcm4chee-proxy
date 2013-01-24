@@ -3913,13 +3913,7 @@ objectClass: dcmForwardSchedule
 dcmDestinationAETitle: STORESCP
 dcmScheduleDays: Wed
 dcmScheduleHours: 8-18
-
-dn: dcmDestinationAETitle=DCM4CHEE,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa
- me=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dcmForwardSchedule
-dcmDestinationAETitle: DCM4CHEE
-dcmScheduleDays: Sun-Sat
-dcmScheduleHours: 0-23
+dicomDescription: Example ForwardSchedule for STORESCP
 
 dn: cn=Public,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=
  Devices,cn=DICOM Configuration,dc=example,dc=com
@@ -3930,6 +3924,7 @@ dcmExclusiveUseDefinedTC: FALSE
 dcmPIXQuery: TRUE
 dcmScheduleDays: Sun-Tue,Thu-Sat
 dcmScheduleHours: 0-23
+dicomDescription: Example ForwardRule
 
 dn: cn=MPPS2XrayDoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-
  proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
@@ -3945,6 +3940,7 @@ dcmPIXQuery: FALSE
 dcmScheduleDays: Sun-Sat
 dcmScheduleHours: 0-23
 dcmSOPClass: 1.2.840.10008.3.1.2.3.3
+dicomDescription: Example ForwardRule for MPPS to Dose SR conversion
 
 dn: cn=Private,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn
  =Devices,cn=DICOM Configuration,dc=example,dc=com
@@ -3958,6 +3954,7 @@ dcmScheduleDays: Wed
 dcmScheduleHours: 9-18
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.2
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.4
+dicomDescription: Example ForwardRule
 
 dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co

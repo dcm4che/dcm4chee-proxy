@@ -350,6 +350,7 @@ m-description: Forward Schedule configuration
 m-must: dcmDestinationAETitle
 m-may: dcmScheduleDays
 m-may: dcmScheduleHours
+m-may: dicomDescription
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.5, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
  ma
@@ -371,6 +372,7 @@ m-may: dcmScheduleHours
 m-may: dcmConversion
 m-may: dcmConversionUri
 m-may: dcmPIXQuery
+m-may: dicomDescription
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.6, ou=objectClasses, cn=dcm4chee-proxy, ou=s
  chema

@@ -63,6 +63,7 @@ public class ForwardRule implements Serializable {
     private conversionType conversion;
     private String conversionUri;
     private boolean runPIXQuery;
+    private String description;
 
     public List<Dimse> getDimse() {
         return dimse;
@@ -173,6 +174,14 @@ public class ForwardRule implements Serializable {
 
     public void setRunPIXQuery(boolean runPIXQuery) {
         this.runPIXQuery = runPIXQuery;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public enum conversionType {

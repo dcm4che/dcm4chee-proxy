@@ -73,6 +73,7 @@ import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
+import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.Schedule;
 
@@ -160,8 +161,8 @@ public class CStore extends BasicCStoreSCP {
 
         if (aets.entrySet().size() == 1) {
             Entry<String, String> entry = aets.entrySet().iterator().next();
-            Schedule forwardSchedule = pae.getForwardSchedules().get(entry.getKey());
-            if (forwardSchedule == null || forwardSchedule.isNow(new GregorianCalendar()))
+            ForwardSchedule forwardSchedule = pae.getForwardSchedules().get(entry.getKey());
+            if (forwardSchedule == null || forwardSchedule.getSchedule().isNow(new GregorianCalendar()))
                 asInvoked = getSingleForwardDestination(as, entry.getValue(), entry.getKey(), as.getAAssociateRQ(),
                         forwardAssociationProperty, pae);
         }

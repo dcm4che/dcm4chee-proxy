@@ -42,10 +42,10 @@ import java.io.Serializable;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -57,6 +57,7 @@ import org.dcm4che.net.Dimse;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ProxyHL7Application;
@@ -210,6 +211,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
                 rule.setConversion(ForwardRule.conversionType.valueOf(conversion));
             rule.setConversionUri(ruleNode.get("dcmConversionUri", null));
             rule.setRunPIXQuery(ruleNode.getBoolean("dcmPIXQuery", Boolean.FALSE));
+            rule.setDescription(ruleNode.get("dicomDescription", null));
             rules.add(rule);
         }
         proxyAE.setForwardRules(rules);
@@ -228,15 +230,19 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
 
     private void loadForwardSchedules(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
         Preferences schedulesNode = paeNode.node("dcmForwardSchedule");
-        HashMap<String, Schedule> forwardSchedules = new HashMap<String, Schedule>();
+        HashMap<String, ForwardSchedule> fwdSchedules = new HashMap<String, ForwardSchedule>();
         for (String scheduleIndex : schedulesNode.childrenNames()) {
             Preferences scheduleNode = schedulesNode.node(scheduleIndex);
+            ForwardSchedule fwdSchedule = new ForwardSchedule();
+            fwdSchedule.setDestinationAET(scheduleNode.get("dcmDestinationAETitle", null));
             Schedule schedule = new Schedule();
-            schedule.setDays(scheduleNode.get("dcmForwardScheduleDays", null));
-            schedule.setHours(scheduleNode.get("dcmForwardScheduleHours", null));
-            forwardSchedules.put(scheduleNode.get("dcmDestinationAETitle", null), schedule);
+            schedule.setDays(scheduleNode.get("dcmScheduleDays", null));
+            schedule.setHours(scheduleNode.get("dcmScheduleHours", null));
+            fwdSchedule.setSchedule(schedule);
+            fwdSchedule.setDescription(scheduleNode.get("dicomDescription", null));
+            fwdSchedules.put(fwdSchedule.getDestinationAET(), fwdSchedule);
         }
-        proxyAE.setForwardSchedules(forwardSchedules);
+        proxyAE.setForwardSchedules(fwdSchedules);
     }
 
     private void loadRetries(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
@@ -263,7 +269,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
 
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeNode);
-        storeForwardSchedules(proxyAE.getForwardSchedules(), aeNode);
+        storeForwardSchedules(proxyAE.getForwardSchedules().values(), aeNode);
         storeForwardRules(proxyAE.getForwardRules(), aeNode);
         store(proxyAE.getAttributeCoercions(), aeNode);
     }
@@ -287,6 +293,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeNotNull(prefs, "dcmConversion", rule.getConversion());
         storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
         storeNotDef(prefs, "dcmPIXQuery", rule.isRunPIXQuery(), Boolean.FALSE);
+        storeNotNull(prefs, "dicomDescription", rule.getDescription());
     }
 
     private void storeForwardRuleDimse(ForwardRule rule, Preferences prefs) {
@@ -296,16 +303,17 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeNotEmpty(prefs, "dcmForwardRuleDimse", dimseList.toArray(new String[dimseList.size()]));
     }
 
-    private void storeForwardSchedules(HashMap<String, Schedule> forwardSchedules, Preferences parentNode) {
+    private void storeForwardSchedules(Collection<ForwardSchedule> fwdSchedules, Preferences parentNode) {
         Preferences schedulesNode = parentNode.node("dcmForwardSchedule");
-        for (Entry<String, Schedule> forwardSchedule : forwardSchedules.entrySet())
-            storeToForwardSchedule(forwardSchedule, schedulesNode.node(forwardSchedule.getKey()));
+        for (ForwardSchedule forwardSchedule : fwdSchedules)
+            storeToForwardSchedule(forwardSchedule, schedulesNode.node(forwardSchedule.getDestinationAET()));
     }
 
-    private void storeToForwardSchedule(Entry<String, Schedule> forwardSchedule, Preferences prefs) {
-        storeNotNull(prefs, "dcmForwardScheduleDays", forwardSchedule.getValue().getDays());
-        storeNotNull(prefs, "dcmForwardScheduleHours", forwardSchedule.getValue().getHours());
-        storeNotNull(prefs, "dcmDestinationAETitle", forwardSchedule.getKey());
+    private void storeToForwardSchedule(ForwardSchedule forwardSchedule, Preferences prefs) {
+        storeNotNull(prefs, "dcmScheduleDays", forwardSchedule.getSchedule().getDays());
+        storeNotNull(prefs, "dcmScheduleHours", forwardSchedule.getSchedule().getHours());
+        storeNotNull(prefs, "dcmDestinationAETitle", forwardSchedule.getDestinationAET());
+        storeNotNull(prefs, "dicomDescription", forwardSchedule.getDescription());
     }
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
@@ -369,7 +377,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
         merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeNode);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeNode);
-        mergeForwardSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeNode);
+        mergeForwardSchedules(pprev.getForwardSchedules().values(), pae.getForwardSchedules().values(), aeNode);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeNode);
     }
 
@@ -434,26 +442,35 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
         storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
         storeDiff(prefs, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
+        storeDiff(prefs, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
     }
 
-    private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules,
-            Preferences parentNode) throws BackingStoreException {
+    private void mergeForwardSchedules(Collection<ForwardSchedule> prevSchedules,
+            Collection<ForwardSchedule> currSchedules, Preferences parentNode) throws BackingStoreException {
         Preferences schedulesNode = parentNode.node("dcmForwardSchedule");
-        for (String aet : prevs.keySet())
-            if (!schedules.containsKey(aet))
-                schedulesNode.node(aet).removeNode();
-        for (Entry<String, Schedule> entry : schedules.entrySet()) {
-            Preferences scheduleNode = schedulesNode.node(entry.getKey());
-            if (prevs.containsKey(entry.getKey()))
-                storeScheduleDiffs(scheduleNode, prevs.get(entry.getKey()), entry.getValue());
+        Iterator<ForwardSchedule> prevIter = prevSchedules.iterator();
+        List<String> currFwdScheduleNames = new ArrayList<String>();
+        for (ForwardSchedule fwdSchedule : currSchedules)
+            currFwdScheduleNames.add(fwdSchedule.getDestinationAET());
+        while (prevIter.hasNext()) {
+            String prevFwdRuleName = prevIter.next().getDestinationAET();
+            if (!currFwdScheduleNames.contains(prevFwdRuleName))
+                schedulesNode.node(prevFwdRuleName).removeNode();
+        }
+        for (ForwardSchedule fwdSchedule : currSchedules) {
+            Preferences scheduleNode = schedulesNode.node(fwdSchedule.getDestinationAET());
+            if (prevIter.hasNext())
+                storeForwardScheduleDiffs(scheduleNode, prevIter.next(), fwdSchedule);
             else
-                storeToForwardSchedule(entry, scheduleNode);
+                storeToForwardSchedule(fwdSchedule, scheduleNode);
         }
     }
 
-    private void storeScheduleDiffs(Preferences prefs, Schedule a, Schedule b) {
-        storeDiff(prefs, "dcmForwardScheduleDays", a.getDays(), b.getDays());
-        storeDiff(prefs, "dcmForwardScheduleHours", a.getHours(), b.getHours());
+    private void storeForwardScheduleDiffs(Preferences prefs, ForwardSchedule a, ForwardSchedule b) {
+        storeDiff(prefs, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
+        storeDiff(prefs, "dcmScheduleDays", a.getSchedule().getDays(), b.getSchedule().getDays());
+        storeDiff(prefs, "dcmScheduleHours", a.getSchedule().getHours(), b.getSchedule().getHours());
+        storeDiff(prefs, "dicomDescription", a.getDescription(), b.getDescription());
     }
 
     private void mergeRetries(List<Retry> prevRetries, List<Retry> currRetries, Preferences parentNode)

@@ -70,6 +70,7 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.Schedule;
@@ -173,7 +174,7 @@ public class StgCmt extends DicomService {
 
         Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (asInvoked == null) {
-            if (isAssociationFromDestinationAET(asAccepted))
+            if (((ProxyApplicationEntity)asAccepted.getApplicationEntity()).isAssociationFromDestinationAET(asAccepted))
                 forwardNEventReportRQFromDestinationAET(asAccepted, pc, rq, data, transactionUIDFile);
             else
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
@@ -203,14 +204,6 @@ public class StgCmt extends DicomService {
                 if (file.startsWith(referencedSOPInstanceUID))
                     return true;
         }
-        return false;
-    }
-
-    private boolean isAssociationFromDestinationAET(Association asAccepted) {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        for (Entry<String, Schedule> schedule : pae.getForwardSchedules().entrySet())
-            if (asAccepted.getCallingAET().equals(schedule.getKey()))
-                return true;
         return false;
     }
 

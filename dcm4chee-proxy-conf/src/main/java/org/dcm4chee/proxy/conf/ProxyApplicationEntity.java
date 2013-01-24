@@ -103,7 +103,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String spoolDirectory;
     private boolean acceptDataOnFailedNegotiation;
     private boolean enableAuditLog;
-    private HashMap<String, Schedule> forwardSchedules = new HashMap<String, Schedule>();
+    private HashMap<String, ForwardSchedule> forwardSchedules = new HashMap<String, ForwardSchedule>();
     private List<Retry> retries = new ArrayList<Retry>();
     private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
@@ -246,11 +246,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return enableAuditLog;
     }
 
-    public HashMap<String, Schedule> getForwardSchedules() {
+    public HashMap<String, ForwardSchedule> getForwardSchedules() {
         return forwardSchedules;
     }
 
-    public void setForwardSchedules(HashMap<String, Schedule> forwardSchedules) {
+    public void setForwardSchedules(HashMap<String, ForwardSchedule> forwardSchedules) {
         this.forwardSchedules = forwardSchedules;
     }
 
@@ -306,7 +306,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                     try {
                         for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template))) {
                             destinationAETs.add(aet);
-                            LOG.info("{} : sending data to {} based on ForwardRule : {} ",
+                            LOG.info("{} : sending data to {} based on ForwardRule : {}",
                                     new Object[] { as, aet, rule.getCommonName() });
                         }
                     } catch (TransformerException e) {
@@ -315,7 +315,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
                 }
             else if (rule.getConversion() == null) {
                 destinationAETs.addAll(rule.getDestinationAETitles());
-                LOG.info("{} : sending data to {} based on ForwardRule : {} ", new Object[] { as, 
+                LOG.info("{} : sending data to {} based on ForwardRule : {}", new Object[] { as, 
                         rule.getDestinationAETitles(), rule.getCommonName()});
             }
             for (String destinationAET : destinationAETs)
@@ -373,18 +373,19 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         this.deleteFailedDataWithoutRetryConfiguration = deleteFailedDataWithoutRetryConfiguration;
     }
 
-    private boolean isAssociationFromDestinationAET(Association asAccepted) {
+    public boolean isAssociationFromDestinationAET(Association asAccepted) {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        for (Entry<String, Schedule> schedule : pae.getForwardSchedules().entrySet())
-            if (asAccepted.getCallingAET().equals(schedule.getKey()))
-                return true;
+        for (ForwardRule rule : pae.getForwardRules())
+            for (String destinationAET : rule.getDestinationAETitles())
+                if (asAccepted.getCallingAET().equals(destinationAET))
+                    return true;
         return false;
     }
 
     private boolean isAvailableDestinationAET(String destinationAET) {
-        for(Entry<String, Schedule> entry : forwardSchedules.entrySet())
-            if (entry.getKey().equals(destinationAET))
-                return entry.getValue().isNow(new GregorianCalendar());
+        for(Entry<String, ForwardSchedule> fwdSchedule : forwardSchedules.entrySet())
+            if (fwdSchedule.getKey().equals(destinationAET))
+                return fwdSchedule.getValue().getSchedule().isNow(new GregorianCalendar());
         return false;
     }
 
@@ -398,7 +399,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         forwardRules.addAll(fwr);
     }
 
-    private void reconfigureForwardSchedules(HashMap<String, Schedule> fws) {
+    private void reconfigureForwardSchedules(HashMap<String, ForwardSchedule> fws) {
         forwardSchedules.clear();
         forwardSchedules.putAll(fws);
     }

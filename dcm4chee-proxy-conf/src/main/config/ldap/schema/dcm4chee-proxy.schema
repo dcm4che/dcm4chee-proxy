@@ -218,10 +218,12 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.4
   SUP top
   STRUCTURAL
   MUST (
-    dcmDestinationAETitle ) 
+    dcmDestinationAETitle $
+    cn ) 
   MAY (
     dcmScheduleDays $
-    dcmScheduleHours ) )
+    dcmScheduleHours $
+    dicomDescription ) )
 
 objectclass ( 1.2.40.0.13.1.2.15.0.4.5 
   NAME 'dcmForwardRule'
@@ -229,8 +231,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
   SUP top
   STRUCTURAL
   MUST (
-    labeledURI $
-    cn )
+    labeledURI )
   MAY (
     dcmForwardRuleDimse $
     dcmSOPClass $
@@ -241,7 +242,8 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
     dcmScheduleHours $
     dcmConversion $
     dcmConversionUri $
-    dcmPIXQuery ) )
+    dcmPIXQuery $
+    dicomDescription ) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.6 
   NAME 'dcmProxyHL7Application'

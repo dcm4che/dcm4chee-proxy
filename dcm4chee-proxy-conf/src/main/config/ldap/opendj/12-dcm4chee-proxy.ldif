@@ -168,7 +168,8 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.4 NAME 'dcmForwardSchedule'
     dcmDestinationAETitle ) 
   MAY (
     dcmScheduleDays $
-    dcmScheduleHours ) )
+    dcmScheduleHours $
+    dicomDescription ) )
 objectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
   DESC 'Forward Rule configuration'
   SUP top
@@ -186,7 +187,8 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
     dcmScheduleHours $
     dcmConversion $
     dcmConversionUri $
-    dcmPIXQuery ) )
+    dcmPIXQuery $
+    dicomDescription ) )
 objectClasses: ( 1.2.40.0.13.1.2.15.0.4.6 NAME 'dcmProxyHL7Application'
   DESC 'DICOM Proxy HL7 Application related information'
   SUP top AUXILIARY

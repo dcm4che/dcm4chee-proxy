@@ -66,6 +66,7 @@ import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4che.net.hl7.HL7Device;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
+import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ProxyHL7Application;
@@ -340,18 +341,18 @@ public class ProxyConfigurationTestUtils {
                 "WITHOUT_PN",
                 "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
         
-        HashMap<String, Schedule> schedules = new HashMap<String, Schedule>();
+        HashMap<String, ForwardSchedule> fwdSchedules = new HashMap<String, ForwardSchedule>();
         
-        Schedule forwardScheduleStoreScp = new Schedule();
-        forwardScheduleStoreScp.setDays("Wed");
-        forwardScheduleStoreScp.setHours("8-18");
-        schedules.put("STORESCP", forwardScheduleStoreScp);
+        ForwardSchedule fwdScheduleStoreScp = new ForwardSchedule();
+        fwdScheduleStoreScp.setDestinationAET("STORESCP");
+        fwdScheduleStoreScp.setDescription("Example ForwardSchedule for STORESCP");
+        Schedule scheduleStoreScp = new Schedule();
+        scheduleStoreScp.setDays("Wed");
+        scheduleStoreScp.setHours("8-18");
+        fwdScheduleStoreScp.setSchedule(scheduleStoreScp);
+        fwdSchedules.put("STORESCP", fwdScheduleStoreScp);
         
-        Schedule forwardScheduleDCM4CHEE = new Schedule();
-        forwardScheduleDCM4CHEE.setDays("Sun-Sat");
-        schedules.put("DCM4CHEE", forwardScheduleDCM4CHEE);
-        
-        pae.setForwardSchedules(schedules);
+        pae.setForwardSchedules(fwdSchedules);
         
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
         
@@ -364,6 +365,7 @@ public class ProxyConfigurationTestUtils {
         receiveSchedulePublic.setDays("Sun-Tue,Thu-Sat");
         forwardRulePublic.setReceiveSchedule(receiveSchedulePublic);
         forwardRulePublic.setRunPIXQuery(Boolean.TRUE);
+        forwardRulePublic.setDescription("Example ForwardRule");
         forwardRules.add(forwardRulePublic);
         
         ForwardRule forwardRuleMPPS2DoseSR = new ForwardRule();
@@ -377,6 +379,7 @@ public class ProxyConfigurationTestUtils {
         sopClass.add("1.2.840.10008.3.1.2.3.3");
         forwardRuleMPPS2DoseSR.setSopClass(sopClass);
         forwardRuleMPPS2DoseSR.setConversionUri("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl");
+        forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
         forwardRules.add(forwardRuleMPPS2DoseSR);
 
         ForwardRule forwardRulePrivate = new ForwardRule();
@@ -394,6 +397,7 @@ public class ProxyConfigurationTestUtils {
         sopClassesList.add(UID.MRImageStorage);
         forwardRulePrivate.setSopClass(sopClassesList);
         forwardRulePrivate.setRunPIXQuery(Boolean.TRUE);
+        forwardRulePrivate.setDescription("Example ForwardRule");
         forwardRules.add(forwardRulePrivate);
         
         pae.setForwardRules(forwardRules);

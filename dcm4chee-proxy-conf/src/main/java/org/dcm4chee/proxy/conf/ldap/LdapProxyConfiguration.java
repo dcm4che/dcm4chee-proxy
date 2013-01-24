@@ -42,10 +42,10 @@ import java.io.Serializable;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Map.Entry;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -65,6 +65,7 @@ import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardRule.conversionType;
+import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
 import org.dcm4chee.proxy.conf.ProxyHL7Application;
@@ -234,6 +235,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
                 rule.setConversion(conversionTypeValue(attrs.get("dcmConversion")));
                 rule.setConversionUri(stringValue(attrs.get("dcmConversionUri"), null));
                 rule.setRunPIXQuery(booleanValue(attrs.get("dcmPIXQuery"), Boolean.FALSE));
+                rule.setDescription(stringValue(attrs.get("dicomDescription"), null));
                 rules.add(rule);
             }
             proxyAE.setForwardRules(rules);
@@ -259,16 +261,20 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
     private void loadForwardSchedules(ProxyApplicationEntity proxyAE, String aeDN) throws NamingException {
         NamingEnumeration<SearchResult> ne = search(aeDN, "(objectclass=dcmForwardSchedule)");
         try {
-            HashMap<String, Schedule> forwardSchedules = new HashMap<String, Schedule>();
+            HashMap<String, ForwardSchedule> fwdSchedules = new HashMap<String, ForwardSchedule>();
             while (ne.hasMore()) {
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
+                ForwardSchedule fwdSchedule = new ForwardSchedule();
+                fwdSchedule.setDestinationAET(stringValue(attrs.get("dcmDestinationAETitle"), null));
+                fwdSchedule.setDescription(stringValue(attrs.get("dicomDescription"), null));
                 Schedule schedule = new Schedule();
                 schedule.setDays(stringValue(attrs.get("dcmScheduleDays"), null));
                 schedule.setHours(stringValue(attrs.get("dcmScheduleHours"), null));
-                forwardSchedules.put(stringValue(attrs.get("dcmDestinationAETitle"), null), schedule);
+                fwdSchedule.setSchedule(schedule);
+                fwdSchedules.put(fwdSchedule.getDestinationAET(), fwdSchedule);
             }
-            proxyAE.setForwardSchedules(forwardSchedules);
+            proxyAE.setForwardSchedules(fwdSchedules);
         } finally {
             safeClose(ne);
         }
@@ -312,7 +318,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
             return;
         ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeDN);
-        storeForwardSchedules(proxyAE.getForwardSchedules(), aeDN);
+        storeForwardSchedules(proxyAE.getForwardSchedules().values(), aeDN);
         storeForwardRules(proxyAE.getForwardRules(), aeDN);
         store(proxyAE.getAttributeCoercions(), aeDN);
     }
@@ -343,6 +349,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeNotNull(attrs, "dcmConversion", rule.getConversion());
         storeNotNull(attrs, "dcmConversionUri", rule.getConversionUri());
         storeBoolean(attrs, "dcmPIXQuery", rule.isRunPIXQuery());
+        storeNotNull(attrs, "dicomDescription", rule.getDescription());
         return attrs;
     }
 
@@ -360,9 +367,9 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
             createSubcontext(dnOfRetry(retry, parentDN), storeToRetry(retry, new BasicAttributes(true)));
     }
 
-    private void storeForwardSchedules(HashMap<String, Schedule> forwardSchedules, String parentDN) throws NamingException {
-        for (Entry<String, Schedule> forwardSchedule : forwardSchedules.entrySet())
-            createSubcontext(dnOfForwardSchedule(forwardSchedule.getKey(), parentDN), 
+    private void storeForwardSchedules(Collection<ForwardSchedule> fwdSchedules, String parentDN) throws NamingException {
+        for (ForwardSchedule forwardSchedule : fwdSchedules)
+            createSubcontext(dnOfForwardSchedule(forwardSchedule, parentDN), 
                     storeToForwardSchedule(forwardSchedule, new BasicAttributes(true)));
     }
 
@@ -375,11 +382,12 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         return attrs;
     }
 
-    private Attributes storeToForwardSchedule(Entry<String, Schedule> forwardSchedule, BasicAttributes attrs) {
+    private Attributes storeToForwardSchedule(ForwardSchedule forwardSchedule, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmForwardSchedule");
-        storeNotNull(attrs, "dcmDestinationAETitle", forwardSchedule.getKey());
-        storeNotNull(attrs, "dcmScheduleDays", forwardSchedule.getValue().getDays());
-        storeNotNull(attrs, "dcmScheduleHours", forwardSchedule.getValue().getHours());
+        storeNotNull(attrs, "dcmDestinationAETitle", forwardSchedule.getDestinationAET());
+        storeNotNull(attrs, "dcmScheduleDays", forwardSchedule.getSchedule().getDays());
+        storeNotNull(attrs, "dcmScheduleHours", forwardSchedule.getSchedule().getHours());
+        storeNotNull(attrs, "dicomDescription", forwardSchedule.getDescription());
         return attrs;
     }
 
@@ -390,9 +398,9 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         return sb.toString();
     }
 
-    private String dnOfForwardSchedule(String destinationAET, String parentDN) {
+    private String dnOfForwardSchedule(ForwardSchedule fwdSchedule, String parentDN) {
         StringBuilder sb = new StringBuilder();
-        sb.append("dcmDestinationAETitle=").append(destinationAET);
+        sb.append("dcmDestinationAETitle=").append(fwdSchedule.getDestinationAET());
         sb.append(',').append(parentDN);
         return sb.toString();
     }
@@ -462,7 +470,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
         merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeDN);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeDN);
-        mergeForwardSchedules(pprev.getForwardSchedules(), pae.getForwardSchedules(), aeDN);
+        mergeForwardSchedules(pprev.getForwardSchedules().values(), pae.getForwardSchedules().values(), aeDN);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeDN);
     }
 
@@ -506,6 +514,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeDiff(mods, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
         storeDiff(mods, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
         storeDiff(mods, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
+        storeDiff(mods, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
         return mods;
     }
 
@@ -524,24 +533,32 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         }
     }
 
-    private void mergeForwardSchedules(HashMap<String, Schedule> prevs, HashMap<String, Schedule> schedules, String parentDN) throws NamingException {
-        for (String destinationAET : prevs.keySet())
-            if (!schedules.containsKey(destinationAET))
-                destroySubcontext(dnOfForwardSchedule(destinationAET, parentDN));
-        for (Entry<String, Schedule> forwardSchedule : schedules.entrySet()) {
-            String dn = dnOfForwardSchedule(forwardSchedule.getKey(), parentDN);
-            if (!prevs.containsKey(forwardSchedule.getKey()))
+    private void mergeForwardSchedules(Collection<ForwardSchedule> prevSchedules,
+            Collection<ForwardSchedule> currSchedules, String parentDN) throws NamingException {
+        List<ForwardSchedule> prevList = new ArrayList<ForwardSchedule>(prevSchedules);
+        List<ForwardSchedule> currList = new ArrayList<ForwardSchedule>(currSchedules);
+        for (ForwardSchedule prev : prevList)
+            if (!currList.contains(prev))
+                destroySubcontext(dnOfForwardSchedule(prev, parentDN));
+        for (ForwardSchedule forwardSchedule : currList) {
+            String dn = dnOfForwardSchedule(forwardSchedule, parentDN);
+            Integer indexOfPrevSchedule = prevList.indexOf(forwardSchedule);
+            if (indexOfPrevSchedule == -1)
                 createSubcontext(dn, storeToForwardSchedule(forwardSchedule, new BasicAttributes(true)));
             else
-                modifyAttributes(dn, storeScheduleDiffs(prevs.get(forwardSchedule.getKey()), forwardSchedule.getValue(), 
+                modifyAttributes(
+                        dn,
+                        storeScheduleDiffs(prevList.get(indexOfPrevSchedule), forwardSchedule,
                                 new ArrayList<ModificationItem>()));
         }
     }
 
-    private List<ModificationItem> storeScheduleDiffs(Schedule scheduleA, Schedule scheduleB,
+    private List<ModificationItem> storeScheduleDiffs(ForwardSchedule a, ForwardSchedule b,
             ArrayList<ModificationItem> mods) {
-        storeDiff(mods, "dcmScheduleDays", scheduleA.getDays(), scheduleB.getDays());
-        storeDiff(mods, "dcmScheduleHours", scheduleA.getHours(), scheduleB.getHours());
+        storeDiff(mods, "dcmScheduleDays", a.getSchedule().getDays(), b.getSchedule().getDays());
+        storeDiff(mods, "dcmScheduleHours", a.getSchedule().getHours(), b.getSchedule().getHours());
+        storeDiff(mods, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
+        storeDiff(mods, "dicomDescription", a.getDescription(), b.getDescription());
         return mods;
     }
 
