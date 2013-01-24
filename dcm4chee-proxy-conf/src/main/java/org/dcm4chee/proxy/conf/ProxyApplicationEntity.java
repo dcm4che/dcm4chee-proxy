@@ -304,15 +304,20 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             if (rule.containsTemplateURI())
                 for (String template : rule.getDestinationTemplates()) {
                     try {
-                        for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template)))
+                        for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template))) {
                             destinationAETs.add(aet);
+                            LOG.info("{} : sending data to {} based on ForwardRule : {} ",
+                                    new Object[] { as, aet, rule.getCommonName() });
+                        }
                     } catch (TransformerException e) {
                         LOG.error("Error parsing template", e);
                     }
                 }
-            else
-                if (rule.getConversion() == null)
-                    destinationAETs.addAll(rule.getDestinationAETitles());
+            else if (rule.getConversion() == null) {
+                destinationAETs.addAll(rule.getDestinationAETitles());
+                LOG.info("{} : sending data to {} based on ForwardRule : {} ", new Object[] { as, 
+                        rule.getDestinationAETitles(), rule.getCommonName()});
+            }
             for (String destinationAET : destinationAETs)
                 aeList.put(destinationAET, callingAET);
         }
@@ -401,8 +406,11 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     @Override
     protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac) throws IOException {
         filterForwardRulesOnNegotiationRQ(as, rq);
-        if (!isAssociationFromDestinationAET(as) && sendNow(as))
+        if (!isAssociationFromDestinationAET(as) && sendNow(as)) {
+            LOG.info("{} : directly forwarding connection based on rule : {}", as, getForwardRules().get(0)
+                    .getCommonName());
             return forwardAAssociateRQ(as, rq, ac, getCurrentForwardRules(as).get(0));
+        }
         as.setProperty(FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
         return super.negotiate(as, rq, ac);
