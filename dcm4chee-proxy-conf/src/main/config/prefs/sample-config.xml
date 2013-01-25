@@ -50,6 +50,7 @@
               <map>
                 <entry key="dcmAcceptDataOnFailedNegotiation" value="true"/>
                 <entry key="dcmDeleteFailedDataWithoutRetryConfiguration" value="true"/>
+                <entry key="dcmDestinationAETitle" value="DCM4CHEE"/>
                 <entry key="dcmEnableAuditLog" value="true"/>
                 <entry key="dcmProxyNetworkAE" value="true"/>
                 <entry key="dcmSpoolDirectory" value="/tmp/proxy/"/>

@@ -126,6 +126,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
         storeNotNull(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
                 proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
+        storeNotNull(prefs, "dcmDestinationAETitle", proxyAE.getFallbackDestinationAET());
     }
 
     @Override
@@ -165,6 +166,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         proxyAE.setRemotePIXManagerApplication(prefs.get("hl7RemotePIXManagerApplication", null));
         proxyAE.setDeleteFailedDataWithoutRetryConfiguration(prefs.getBoolean(
                 "dcmDeleteFailedDataWithoutRetryConfiguration", false));
+        proxyAE.setFallbackDestinationAET(prefs.get("dcmDestinationAETitle", null));
     }
 
     @Override
@@ -348,6 +350,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         storeDiff(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration", 
                 pa.isDeleteFailedDataWithoutRetryConfiguration(),
                 pb.isDeleteFailedDataWithoutRetryConfiguration());
+        storeDiff(prefs, "dcmDestinationAETitle", pa.getFallbackDestinationAET(), pb.getFallbackDestinationAET());
     }
 
     @Override

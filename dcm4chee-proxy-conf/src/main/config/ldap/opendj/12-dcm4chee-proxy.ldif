@@ -151,7 +151,8 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
     dcmDeleteFailedDataWithoutRetryConfiguration )
   MAY (
     hl7ProxyPIXConsumerApplication $
-    hl7RemotePIXManagerApplication ) )
+    hl7RemotePIXManagerApplication $
+    dcmDestinationAETitle ) )
 objectClasses: ( 1.2.40.0.13.1.2.15.0.4.3 NAME 'dcmRetry'
   DESC 'Retry configuration for specific cases'
   SUP top STRUCTURAL

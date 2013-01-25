@@ -166,13 +166,13 @@ public class ForwardFiles {
                         if (pae.isDeleteFailedDataWithoutRetryConfiguration())
                             deleteFile(pathname, ": delete files without retry configuration is ENABLED");
                         else
-                            moveToExpiredPath(pae, pathname, ": delete files without retry configuration is DISABLED");
+                            moveToNoRetryPath(pae, pathname, ": delete files without retry configuration is DISABLED");
                     else if (checkNumberOfRetries(pae, matchingRetry, suffix, pathname)
                             && (now > (pathname.lastModified() + (matchingRetry.delay * 1000))))
                         return true;
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
-                    moveToExpiredPath(pae, pathname, ": error parsing suffix");
+                    moveToNoRetryPath(pae, pathname, ": error parsing suffix");
                 }
                 return false;
             }
@@ -187,18 +187,50 @@ public class ForwardFiles {
                 currentRetries = Integer.parseInt(substring);
             } catch (NumberFormatException e) {
                 LOG.error("Error parsing number of retries in suffix of file " + pathname.getName());
-                moveToExpiredPath(pae, pathname, ": error parsing suffix");
+                moveToNoRetryPath(pae, pathname, ": error parsing suffix");
                 return false;
             }
         boolean send = currentRetries < retry.numberOfRetries;
         if (!send) {
-            String reason = ": max number of retries : " + currentRetries;
-            if (retry.deleteAfterFinalRetry)
-                deleteFile(pathname, reason);
+            String reason = ": max number of retries = " + retry.getNumberOfRetries();
+            String destinationAET = getDestinationAetFromPath(pathname);
+            if (sendToFallbackAET(pae, destinationAET))
+                moveToFallbackAetDir(pae, pathname, destinationAET, reason);
+            else if (retry.deleteAfterFinalRetry)
+                deleteFile(pathname, reason + " and delete after final retry is ENABLED");
             else
-                moveToExpiredPath(pae, pathname, reason);
+                moveToNoRetryPath(pae, pathname, reason);
         }
         return send;
+    }
+
+    private void moveToFallbackAetDir(ProxyApplicationEntity pae, File pathname, String destinationAET, String reason) {
+        String path = pathname.getAbsolutePath();
+        String fileName = pathname.getName();
+        String pathDir = path.substring(0, path.indexOf(fileName) - 1);
+        String fallbackDestinationAET = pae.getFallbackDestinationAET();
+        File dstDir = new File(pathDir.substring(0, pathDir.lastIndexOf(ProxyApplicationEntity.getSeparator()))
+                + ProxyApplicationEntity.getSeparator() + fallbackDestinationAET);
+        dstDir.mkdir();
+        File dst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".dcm");
+        if (pathname.renameTo(dst))
+            LOG.info("RENAME {} to {} {} and fallback AET is {}", new Object[] { pathname, dst, reason,
+                    fallbackDestinationAET });
+        else
+            LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dst });
+    }
+
+    private String getDestinationAetFromPath(File pathname) {
+        String path = pathname.getAbsolutePath();
+        String dirs = path.substring(0, path.indexOf(pathname.getName()) - 1);
+        return dirs.substring(dirs.lastIndexOf(ProxyApplicationEntity.getSeparator()) + 1);
+    }
+
+    private boolean sendToFallbackAET(ProxyApplicationEntity pae, String destinationAET) {
+        if (pae.getFallbackDestinationAET() != null)
+            if (!destinationAET.equals(pae.getFallbackDestinationAET()))
+                return true;
+        return false;
     }
 
     protected Retry getMatchingRetry(ProxyApplicationEntity pae, String suffix) {
@@ -208,7 +240,7 @@ public class ForwardFiles {
         return null;
     }
 
-    protected void moveToExpiredPath(ProxyApplicationEntity pae, File pathname, String reason) {
+    protected void moveToNoRetryPath(ProxyApplicationEntity pae, File pathname, String reason) {
         String path = pathname.getPath();
         String spoolDirPath = pae.getSpoolDirectoryPath().getPath();
         String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(),

@@ -326,6 +326,7 @@ m-must: dcmEnableAuditLog
 m-must: dcmDeleteFailedDataWithoutRetryConfiguration
 m-may: hl7ProxyPIXConsumerApplication
 m-may: hl7RemotePIXManagerApplication
+m-may: dcmDestinationAETitle
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.3, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
  ma

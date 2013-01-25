@@ -328,6 +328,7 @@ public class ProxyConfigurationTestUtils {
         pae.setAcceptDataOnFailedNegotiation(true);
         pae.setEnableAuditLog(true);
         pae.setDeleteFailedDataWithoutRetryConfiguration(true);
+        pae.setFallbackDestinationAET("DCM4CHEE");
         
         pae.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 

@@ -160,6 +160,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeNotNull(attrs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
         storeNotNull(attrs, "dcmDeleteFailedDataWithoutRetryConfiguration",
                 proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
+        storeNotNull(attrs, "dcmDestinationAETitle", proxyAE.getFallbackDestinationAET());
         return attrs;
     }
 
@@ -199,6 +200,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         proxyAE.setRemotePIXManagerApplication(stringValue(attrs.get("hl7RemotePIXManagerApplication"), null));
         proxyAE.setDeleteFailedDataWithoutRetryConfiguration(booleanValue(
                 attrs.get("dcmDeleteFailedDataWithoutRetryConfiguration"), Boolean.FALSE));
+        proxyAE.setFallbackDestinationAET(stringValue(attrs.get("dcmDestinationAETitle"), null));
     }
 
     @Override
@@ -426,6 +428,7 @@ public class LdapProxyConfiguration extends LdapHL7Configuration implements Seri
         storeDiff(mods, "dcmDeleteFailedDataWithoutRetryConfiguration", 
                 pa.isDeleteFailedDataWithoutRetryConfiguration(),
                 pb.isDeleteFailedDataWithoutRetryConfiguration());
+        storeDiff(mods, "dcmDestinationAETitle", pa.getFallbackDestinationAET(), pb.getFallbackDestinationAET());
         return mods;
     }
     

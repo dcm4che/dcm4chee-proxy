@@ -110,6 +110,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String proxyPIXConsumerApplication;
     private String remotePIXManagerApplication;
     private boolean deleteFailedDataWithoutRetryConfiguration;
+    private String fallbackDestinationAET;
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -371,6 +372,14 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void setDeleteFailedDataWithoutRetryConfiguration(boolean deleteFailedDataWithoutRetryConfiguration) {
         this.deleteFailedDataWithoutRetryConfiguration = deleteFailedDataWithoutRetryConfiguration;
+    }
+
+    public String getFallbackDestinationAET() {
+        return fallbackDestinationAET;
+    }
+
+    public void setFallbackDestinationAET(String fallbackDestinationAET) {
+        this.fallbackDestinationAET = fallbackDestinationAET;
     }
 
     public boolean isAssociationFromDestinationAET(Association asAccepted) {
