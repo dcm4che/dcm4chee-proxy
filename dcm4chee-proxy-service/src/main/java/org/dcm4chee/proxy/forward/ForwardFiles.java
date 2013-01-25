@@ -208,7 +208,7 @@ public class ForwardFiles {
         File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + pae.getFallbackDestinationAET());
         dstDir.mkdir();
         String fileName = pathname.getName();
-        File dst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".dcm");
+        File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".dcm") + 4));
         if (pathname.renameTo(dst))
             LOG.info("RENAME {} to {} {} and fallback AET is {}",
                     new Object[] { pathname, dst, reason, pae.getFallbackDestinationAET() });
@@ -257,13 +257,17 @@ public class ForwardFiles {
 
             @Override
             public void run() {
-                forwardScheduledMPPS(pae, files, destinationAETitle, protocol);
+                try {
+                    forwardScheduledMPPS(pae, files, destinationAETitle, protocol);
+                } catch (DicomServiceException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
 
     protected void forwardScheduledMPPS(ProxyApplicationEntity pae, File[] files, String destinationAETitle,
-            String protocol) {
+            String protocol) throws DicomServiceException {
         for (File file : files) {
             try {
                 Attributes fmi = readFileMetaInformation(file);
@@ -297,14 +301,19 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
+                renameFile(RetryObject.ConnectionException.getSuffix(), file);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
+                renameFile(RetryObject.IncompatibleConnectionException.getSuffix(), file);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
+                renameFile(RetryObject.ConfigurationException.getSuffix(), file);
             } catch (IOException e) {
                 LOG.error("Unable to read from file: " + e.getMessage());
+                renameFile(RetryObject.ConnectionException.getSuffix(), file);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
+                renameFile(RetryObject.GeneralSecurityException.getSuffix(), file);
             }
         }
     }
@@ -371,12 +380,17 @@ public class ForwardFiles {
 
             @Override
             public void run() {
-                forwardScheduledNAction(pae, files, destinationAETitle);
+                try {
+                    forwardScheduledNAction(pae, files, destinationAETitle);
+                } catch (DicomServiceException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
 
-    private void forwardScheduledNAction(ProxyApplicationEntity pae, File[] files, String destinationAETitle) {
+    private void forwardScheduledNAction(ProxyApplicationEntity pae, File[] files, String destinationAETitle)
+            throws DicomServiceException {
         for (File file : files) {
             try {
                 AAssociateRQ rq = new AAssociateRQ();
@@ -407,14 +421,19 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
+                renameFile(RetryObject.ConnectionException.getSuffix(), file);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
+                renameFile(RetryObject.IncompatibleConnectionException.getSuffix(), file);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
+                renameFile(RetryObject.ConfigurationException.getSuffix(), file);
             } catch (IOException e) {
                 LOG.error("Unable to read from file: " + e.getMessage());
+                renameFile(RetryObject.ConnectionException.getSuffix(), file);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
+                renameFile(RetryObject.GeneralSecurityException.getSuffix(), file);
             }
         }
     }
@@ -509,17 +528,17 @@ public class ForwardFiles {
         } catch (ConfigurationException ce) {
             LOG.error("Unable to load configuration: " + ce.getMessage());
         } catch (AAssociateRJ rj) {
-            handleProcessException(ft, rj, RetryObject.AAssociateRJ.getSuffix());
+            handleProcessForwardTaskException(ft, rj, RetryObject.AAssociateRJ.getSuffix());
         } catch (AAbort aa) {
-            handleProcessException(ft, aa, RetryObject.AAbort.getSuffix());
+            handleProcessForwardTaskException(ft, aa, RetryObject.AAbort.getSuffix());
         } catch (IOException e) {
-            handleProcessException(ft, e, RetryObject.ConnectionException.getSuffix());
+            handleProcessForwardTaskException(ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (InterruptedException e) {
-            handleProcessException(ft, e, RetryObject.ConnectionException.getSuffix());
+            handleProcessForwardTaskException(ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (IncompatibleConnectionException e) {
-            handleProcessException(ft, e, RetryObject.IncompatibleConnectionException.getSuffix());
+            handleProcessForwardTaskException(ft, e, RetryObject.IncompatibleConnectionException.getSuffix());
         } catch (GeneralSecurityException e) {
-            handleProcessException(ft, e, RetryObject.GeneralSecurityException.getSuffix());
+            handleProcessForwardTaskException(ft, e, RetryObject.GeneralSecurityException.getSuffix());
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {
@@ -627,17 +646,21 @@ public class ForwardFiles {
         rename(as, file, dst);
     }
 
-    private void handleProcessException(ForwardTask ft, Exception e, String suffix) throws DicomServiceException {
+    private void handleProcessForwardTaskException(ForwardTask ft, Exception e, String suffix)
+            throws DicomServiceException {
         LOG.error("Unable to connect to {}: {}", new Object[] { ft.getAAssociateRQ().getCalledAET(), e.getMessage() });
-        for (File file : ft.getFiles()) {
-            File dst = setFileSuffix(file, suffix);
-            if (file.renameTo(dst)) {
-                dst.setLastModified(System.currentTimeMillis());
-                LOG.debug("{}: RENAME to {}", new Object[] { file, dst });
-            } else {
-                LOG.debug("{}: failed to RENAME to {}", new Object[] { file, dst });
-                throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
-            }
+        for (File file : ft.getFiles())
+            renameFile(suffix, file);
+    }
+
+    private void renameFile(String suffix, File file) throws DicomServiceException {
+        File dst = setFileSuffix(file, suffix);
+        if (file.renameTo(dst)) {
+            dst.setLastModified(System.currentTimeMillis());
+            LOG.debug("{}: RENAME to {}", new Object[] { file, dst });
+        } else {
+            LOG.debug("{}: failed to RENAME to {}", new Object[] { file, dst });
+            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
 
