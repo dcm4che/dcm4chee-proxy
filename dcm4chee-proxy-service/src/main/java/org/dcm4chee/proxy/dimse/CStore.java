@@ -75,7 +75,6 @@ import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
-import org.dcm4chee.proxy.conf.Schedule;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>

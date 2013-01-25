@@ -134,8 +134,8 @@ public class Mpps extends DicomService {
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, cmd, dimse);
         HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
         List<DoseMapping> mpps2DoseSR = new ArrayList<Mpps.DoseMapping>();
-        for (ForwardRule rule : forwardRules)
-            if (rule.getConversion()!=null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
+        for (ForwardRule rule : forwardRules) {
+            if (rule.getConversion() != null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
                 String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
                 for (String destinationAET : rule.getDestinationAETitles()) {
                     DoseMapping doseMapping = new DoseMapping();
@@ -145,6 +145,9 @@ public class Mpps extends DicomService {
                     mpps2DoseSR.add(doseMapping);
                 }
             }
+            LOG.info("{} : sending data to {} based on ForwardRule : {}",
+                    new Object[] { as, rule.getDestinationAETitles(), rule.getCommonName() });
+        }
         if (aets.size() == 0 && mpps2DoseSR.size() == 0)
             throw new ConfigurationException("no destination");
 

@@ -70,10 +70,8 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 import org.dcm4chee.proxy.conf.ProxyDevice;
-import org.dcm4chee.proxy.conf.Schedule;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>

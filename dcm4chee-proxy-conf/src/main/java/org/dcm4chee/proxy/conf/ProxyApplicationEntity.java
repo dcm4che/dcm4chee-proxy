@@ -300,25 +300,24 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             throws TransformerFactoryConfigurationError {
         HashMap<String, String> aeList = new HashMap<String, String>();
         for (ForwardRule rule : rules) {
+            // MPPS2DoseSR conversion rules are processed differently
+            if (rule.getConversion() != null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR))
+                return aeList;
+
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
             List<String> destinationAETs = new ArrayList<String>();
             if (rule.containsTemplateURI())
-                for (String template : rule.getDestinationTemplates()) {
+                for (String template : rule.getDestinationTemplates())
                     try {
-                        for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template))) {
+                        for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template)))
                             destinationAETs.add(aet);
-                            LOG.info("{} : sending data to {} based on ForwardRule : {}",
-                                    new Object[] { as, aet, rule.getCommonName() });
-                        }
                     } catch (TransformerException e) {
                         LOG.error("Error parsing template", e);
                     }
-                }
-            else if (rule.getConversion() == null) {
+            else
                 destinationAETs.addAll(rule.getDestinationAETitles());
-                LOG.info("{} : sending data to {} based on ForwardRule : {}", new Object[] { as, 
-                        rule.getDestinationAETitles(), rule.getCommonName()});
-            }
+            LOG.info("{} : sending data to {} based on ForwardRule : {}",
+                    new Object[] { as, destinationAETs, rule.getCommonName() });
             for (String destinationAET : destinationAETs)
                 aeList.put(destinationAET, callingAET);
         }
