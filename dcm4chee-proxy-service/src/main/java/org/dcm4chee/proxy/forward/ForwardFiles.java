@@ -98,12 +98,12 @@ public class ForwardFiles {
             //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledMPPS(pae,
-                        new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET, "nset");
+                        new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)), calledAET, "nset");
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledMPPS(pae,
-                                new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
+                                new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)), calledAET,
                                 "nset");
         }
     }
@@ -113,13 +113,13 @@ public class ForwardFiles {
             //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledMPPS(pae,
-                        new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)), calledAET,
+                        new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)), calledAET,
                         "ncreate");
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledMPPS(pae,
-                                new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae)),
+                                new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
                                 calledAET, "ncreate");
         }
     }
@@ -128,11 +128,11 @@ public class ForwardFiles {
         for (String calledAET : pae.getNactionDirectoryPath().list()) {
             //process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)), calledAET);
+                startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)), calledAET);
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae)),
+                        startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)),
                                 calledAET);
         }
     }
@@ -149,7 +149,7 @@ public class ForwardFiles {
         }
     }
 
-    private FileFilter fileFilter(final ProxyApplicationEntity pae) {
+    private FileFilter fileFilter(final ProxyApplicationEntity pae, final String calledAET) {
         final long now = System.currentTimeMillis();
         return new FileFilter() {
 
@@ -167,7 +167,7 @@ public class ForwardFiles {
                             deleteFile(pathname, ": delete files without retry configuration is ENABLED");
                         else
                             moveToNoRetryPath(pae, pathname, ": delete files without retry configuration is DISABLED");
-                    else if (checkNumberOfRetries(pae, matchingRetry, suffix, pathname)
+                    else if (checkNumberOfRetries(pae, matchingRetry, suffix, pathname, calledAET)
                             && (now > (pathname.lastModified() + (matchingRetry.delay * 1000))))
                         return true;
                 } catch (IndexOutOfBoundsException e) {
@@ -179,7 +179,7 @@ public class ForwardFiles {
         };
     }
 
-    private boolean checkNumberOfRetries(ProxyApplicationEntity pae, Retry retry, String suffix, File pathname) {
+    private boolean checkNumberOfRetries(ProxyApplicationEntity pae, Retry retry, String suffix, File pathname, String calledAET) {
         String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
         int currentRetries = 0;
         if (!substring.isEmpty())
@@ -193,9 +193,8 @@ public class ForwardFiles {
         boolean send = currentRetries < retry.numberOfRetries;
         if (!send) {
             String reason = ": max number of retries = " + retry.getNumberOfRetries();
-            String destinationAET = getDestinationAetFromPath(pathname);
-            if (sendToFallbackAET(pae, destinationAET))
-                moveToFallbackAetDir(pae, pathname, destinationAET, reason);
+            if (sendToFallbackAET(pae, calledAET))
+                moveToFallbackAetDir(pae, pathname, calledAET, reason);
             else if (retry.deleteAfterFinalRetry)
                 deleteFile(pathname, reason + " and delete after final retry is ENABLED");
             else
@@ -204,26 +203,17 @@ public class ForwardFiles {
         return send;
     }
 
-    private void moveToFallbackAetDir(ProxyApplicationEntity pae, File pathname, String destinationAET, String reason) {
+    private void moveToFallbackAetDir(ProxyApplicationEntity pae, File pathname, String calledAET, String reason) {
         String path = pathname.getAbsolutePath();
-        String fileName = pathname.getName();
-        String pathDir = path.substring(0, path.indexOf(fileName) - 1);
-        String fallbackDestinationAET = pae.getFallbackDestinationAET();
-        File dstDir = new File(pathDir.substring(0, pathDir.lastIndexOf(ProxyApplicationEntity.getSeparator()))
-                + ProxyApplicationEntity.getSeparator() + fallbackDestinationAET);
+        File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + pae.getFallbackDestinationAET());
         dstDir.mkdir();
+        String fileName = pathname.getName();
         File dst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".dcm");
         if (pathname.renameTo(dst))
-            LOG.info("RENAME {} to {} {} and fallback AET is {}", new Object[] { pathname, dst, reason,
-                    fallbackDestinationAET });
+            LOG.info("RENAME {} to {} {} and fallback AET is {}",
+                    new Object[] { pathname, dst, reason, pae.getFallbackDestinationAET() });
         else
             LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dst });
-    }
-
-    private String getDestinationAetFromPath(File pathname) {
-        String path = pathname.getAbsolutePath();
-        String dirs = path.substring(0, path.indexOf(pathname.getName()) - 1);
-        return dirs.substring(dirs.lastIndexOf(ProxyApplicationEntity.getSeparator()) + 1);
     }
 
     private boolean sendToFallbackAET(ProxyApplicationEntity pae, String destinationAET) {
@@ -484,7 +474,7 @@ public class ForwardFiles {
 
     private void forwardScheduledCStoreFiles(ProxyApplicationEntity pae, String calledAET) {
         File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
-        File[] files = dir.listFiles(fileFilter(pae));
+        File[] files = dir.listFiles(fileFilter(pae, calledAET));
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))
                 try {
