@@ -117,9 +117,12 @@ public class ForwardDimseRQ {
                 else {
                     if (status != Status.Success)
                         status = rspStatus;
-                    NumberOfCompletedSuboperations = NumberOfCompletedSuboperations + cmd.getInt(Tag.NumberOfCompletedSuboperations, 0);
-                    NumberOfFailedSuboperations = NumberOfFailedSuboperations + cmd.getInt(Tag.NumberOfFailedSuboperations, 0);
-                    NumberOfWarningSuboperations = NumberOfWarningSuboperations + cmd.getInt(Tag.NumberOfWarningSuboperations, 0);
+                    NumberOfCompletedSuboperations = NumberOfCompletedSuboperations
+                            + cmd.getInt(Tag.NumberOfCompletedSuboperations, 0);
+                    NumberOfFailedSuboperations = NumberOfFailedSuboperations
+                            + cmd.getInt(Tag.NumberOfFailedSuboperations, 0);
+                    NumberOfWarningSuboperations = NumberOfWarningSuboperations
+                            + cmd.getInt(Tag.NumberOfWarningSuboperations, 0);
                     waitForOutstandingRSP.countDown();
                     if (waitForOutstandingRSP.getCount() == 0) {
                         if (dimse == Dimse.C_FIND_RQ)
@@ -161,12 +164,14 @@ public class ForwardDimseRQ {
                         data.setString(Tag.IssuerOfPatientID, VR.LO,
                                 requestedPatientIDWithIssuer.issuer.getLocalNamespaceEntityID());
                     }
-                    if (dimse == Dimse.C_FIND_RQ)
-                        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
-                    if (dimse == Dimse.C_GET_RQ)
-                        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_GET_RSP, data);
-                    if (dimse == Dimse.C_MOVE_RQ)
-                        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_MOVE_RSP, data);
+                    if (data != null) {
+                        if (dimse == Dimse.C_FIND_RQ)
+                            pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RSP, data);
+                        if (dimse == Dimse.C_GET_RQ)
+                            pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_GET_RSP, data);
+                        if (dimse == Dimse.C_MOVE_RQ)
+                            pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_MOVE_RSP, data);
+                    }
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.debug(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
@@ -237,7 +242,7 @@ public class ForwardDimseRQ {
         for (ForwardRule fwr : fwdRules)
             if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
                 pids = getOtherPatientIDs(pae, data);
-                continue;
+                break;
             }
         return pids;
     }
