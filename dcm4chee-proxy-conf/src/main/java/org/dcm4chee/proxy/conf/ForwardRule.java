@@ -93,12 +93,10 @@ public class ForwardRule implements Serializable {
         return destinationURI;
     }
 
-    public List<String> getDestinationTemplates() {
-        List<String> templates = new ArrayList<String>();
-        for (String aet : destinationURI)
-            if (!aet.startsWith("aet:"))
-                templates.add(aet);
-        return templates;
+    public String getDestinationTemplate() {
+        if (containsTemplateURI())
+            return destinationURI.get(0);
+        return null;
     }
 
     public List<String> getDestinationAETitles() {
@@ -110,10 +108,7 @@ public class ForwardRule implements Serializable {
     }
 
     public boolean containsTemplateURI() {
-        for (String uri : destinationURI)
-            if (!uri.startsWith("aet:"))
-                return true;
-        return false;
+        return !destinationURI.get(0).startsWith("aet:");
     }
 
     public void setDestinationURIs(List<String> destinationURI) {
@@ -185,6 +180,7 @@ public class ForwardRule implements Serializable {
     }
 
     public enum conversionType {
-        MPPS2DoseSR;
+        MPPS2DoseSR,
+        Emf2Sf;
     }
 }

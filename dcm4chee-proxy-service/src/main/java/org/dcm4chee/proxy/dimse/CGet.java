@@ -40,6 +40,7 @@ package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 import org.dcm4che.data.Attributes;
 import org.dcm4che.net.Association;
@@ -49,6 +50,7 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.PIXConsumer;
 import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 
@@ -74,8 +76,8 @@ public class CGet extends DicomService {
         pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, dimse, data);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            HashMap<String, String> aets = pae.filterForwardAETs(asAccepted, cmd, dimse);
-            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse, aets);
+            List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, cmd, dimse);
+            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse, forwardRules);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
 

@@ -41,10 +41,8 @@ package org.dcm4chee.proxy.dimse;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
@@ -120,25 +118,30 @@ public class StgCmt extends DicomService {
             Attributes data) throws IOException, ConfigurationException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, dimse);
-        HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
-        switch (aets.entrySet().size()) {
+        if (forwardRules.size() > 1)
+            throw new ConfigurationException("more than one matching forward rule");
+        
+        ForwardRule rule = forwardRules.get(0);
+        List<String> destinationAETs = pae.getDestinationAETsFromForwardRule(as, rule);
+        switch (destinationAETs.size()) {
         case 0:
             throw new ConfigurationException("no destination");
-        case 1:
-            processNActionForwardRule(as, pc, dimse, rq, data, pae, aets);
+        case 1: {
+            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
+            processNActionForwardRule(as, pc, dimse, rq, data, pae, callingAET, destinationAETs.get(0));
+        }
         default:
             throw new ConfigurationException("more than one destination");
         }
     }
 
     private void processNActionForwardRule(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
-            Attributes data, ProxyApplicationEntity pae, HashMap<String, String> aets) throws IOException,
+            Attributes data, ProxyApplicationEntity pae, String callingAET, String calledAET) throws IOException,
             ConfigurationException {
-        Entry<String, String> entry = aets.entrySet().iterator().next();
         try {
             AAssociateRQ aarq = asAccepted.getAAssociateRQ();
-            aarq.setCallingAET(entry.getValue());
-            aarq.setCalledAET(entry.getKey());
+            aarq.setCallingAET(callingAET);
+            aarq.setCalledAET(calledAET);
             Association asCalled = pae.connect(pae.getDestinationAE(aarq.getCalledAET()), aarq);
             asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, asCalled);
             processNActionRQ(asAccepted, pc, dimse, rq, data);
@@ -146,7 +149,7 @@ public class StgCmt extends DicomService {
             LOG.error("Unexpected exception: " + e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
-            LOG.error("Unable to connect to {} ({})", new Object[] { entry.getValue(), e.getMessage()} );
+            LOG.error("Unable to connect to {} ({})", new Object[] { calledAET, e.getMessage()} );
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context: " + e.getMessage());
         }

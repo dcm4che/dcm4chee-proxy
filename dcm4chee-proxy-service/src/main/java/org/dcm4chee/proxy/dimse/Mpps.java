@@ -41,11 +41,7 @@ package org.dcm4chee.proxy.dimse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -122,52 +118,23 @@ public class Mpps extends DicomService {
             }
     }
 
-    class DoseMapping {
-        String conversionUri;
-        String callingAET;
-        String destinationAET;
-    }
-
     private void processForwardRules(Association as, PresentationContext pc, Dimse dimse, Attributes cmd,
             Attributes data) throws ConfigurationException, IOException {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
         List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, cmd, dimse);
-        HashMap<String, String> aets = pae.getAETsFromForwardRules(as, forwardRules);
-        List<DoseMapping> mpps2DoseSR = new ArrayList<Mpps.DoseMapping>();
-        for (ForwardRule rule : forwardRules) {
-            if (rule.getConversion() != null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR)) {
-                String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-                for (String destinationAET : rule.getDestinationAETitles()) {
-                    DoseMapping doseMapping = new DoseMapping();
-                    doseMapping.callingAET = callingAET;
-                    doseMapping.destinationAET = destinationAET;
-                    doseMapping.conversionUri = rule.getConversionUri();
-                    mpps2DoseSR.add(doseMapping);
-                }
-            }
-            LOG.info("{} : sending data to {} based on ForwardRule : {}",
-                    new Object[] { as, rule.getDestinationAETitles(), rule.getCommonName() });
-        }
-        if (aets.size() == 0 && mpps2DoseSR.size() == 0)
+        if (forwardRules.size() == 0)
             throw new ConfigurationException("no destination");
 
-        Attributes rsp = (dimse == Dimse.N_CREATE_RQ) 
-                ? Commands.mkNCreateRSP(cmd, Status.Success) 
-                : Commands.mkNSetRSP(cmd, Status.Success);
+        Attributes rsp = (dimse == Dimse.N_CREATE_RQ) ? Commands.mkNCreateRSP(cmd, Status.Success) : Commands
+                .mkNSetRSP(cmd, Status.Success);
         String iuid = rsp.getString(Tag.AffectedSOPInstanceUID);
         String cuid = rsp.getString(Tag.AffectedSOPClassUID);
         String tsuid = UID.ExplicitVRLittleEndian;
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
-        for (Entry<String, String> entry : aets.entrySet()) {
-            File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
-            File file = createFile(as, dimse, data, iuid, fmi, dir, entry.getKey(), entry.getValue());
-            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
-            rename(as, file);
-        }
-        Iterator<DoseMapping> doseMappingIterator = mpps2DoseSR.iterator();
-        while (doseMappingIterator.hasNext()) {
-            File dir = pae.getDoseSrPath();
-            processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, doseMappingIterator.next());
+        for (ForwardRule rule : forwardRules) {
+            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
+            List<String> destinationAETs = pae.getDestinationAETsFromForwardRule(as, rule);
+            processDestinationAETs(as, dimse, data, pae, iuid, fmi, rule, callingAET, destinationAETs);
         }
         try {
             as.writeDimseRSP(pc, rsp, data);
@@ -177,45 +144,63 @@ public class Mpps extends DicomService {
         }
     }
 
+    private void processDestinationAETs(Association as, Dimse dimse, Attributes data, ProxyApplicationEntity pae,
+            String iuid, Attributes fmi, ForwardRule rule, String callingAET, List<String> destinationAETs)
+            throws DicomServiceException {
+        for (String calledAET : destinationAETs) {
+            if (rule.getConversion() == ForwardRule.conversionType.MPPS2DoseSR) {
+                File dir = pae.getDoseSrPath();
+                processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, calledAET, callingAET, rule);
+            } else {
+                File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae
+                        .getNSetDirectoryPath();
+                File file = createFile(as, dimse, data, iuid, fmi, dir, calledAET, callingAET);
+                as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
+                rename(as, file);
+            }
+        }
+    }
+
     private void processMpps2DoseSRConversion(Association as, Dimse dimse, Attributes data, String iuid,
-            Attributes fmi, File baseDir, DoseMapping doseMapping) throws DicomServiceException {
+            Attributes fmi, File baseDir, String calledAET, String callingAET, ForwardRule rule)
+            throws DicomServiceException {
         if (dimse == Dimse.N_CREATE_RQ) {
-            File file = createFile(as, dimse, data, iuid, fmi, baseDir, doseMapping.destinationAET,
-                    doseMapping.callingAET);
+            File file = createFile(as, dimse, data, iuid, fmi, baseDir, calledAET, callingAET);
             as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ncreate");
             rename(as, file);
         } else
-            processNSetMpps2DoseSR(as, dimse, data, iuid, fmi, baseDir, doseMapping);
+            processNSetMpps2DoseSR(as, dimse, data, iuid, fmi, baseDir, calledAET, callingAET, rule);
     }
 
     private void processNSetMpps2DoseSR(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi,
-            File baseDir, DoseMapping doseMapping) throws DicomServiceException, TransformerFactoryConfigurationError {
+            File baseDir, String calledAET, String callingAET, ForwardRule rule) throws DicomServiceException,
+            TransformerFactoryConfigurationError {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        File ncreateDir = new File(baseDir, doseMapping.destinationAET);
+        File ncreateDir = new File(baseDir, calledAET);
         File ncreateFile = new File(ncreateDir, iuid + ".ncreate");
         Attributes ncreateAttrs = readAttributesFromNCreateFile(ncreateFile);
         data.merge(ncreateAttrs);
         Attributes doseSrData = new Attributes();
         String ppsSOPIUID = fmi.getString(Tag.MediaStorageSOPInstanceUID);
-        transformMpps2DoseSr(as, pae, data, iuid, ppsSOPIUID, doseMapping, doseSrData);
+        transformMpps2DoseSr(as, pae, data, iuid, ppsSOPIUID, rule, doseSrData);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
         doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
         doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, pae.getCStoreDirectoryPath(),
-                doseMapping.destinationAET, doseMapping.callingAET);
+        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, pae.getCStoreDirectoryPath(), calledAET,
+                callingAET);
         as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
         delete(as, ncreateFile);
     }
 
     private void transformMpps2DoseSr(Association as, ProxyApplicationEntity pae, Attributes data, String iuid,
-            String ppsSOPIUID, DoseMapping doseMapping, Attributes doseSrData)
+            String ppsSOPIUID, ForwardRule rule, Attributes doseSrData)
             throws TransformerFactoryConfigurationError, DicomServiceException {
         try {
-            Templates templates = pae.getTemplates(doseMapping.conversionUri);
+            Templates templates = pae.getTemplates(rule.getConversionUri());
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);
             Transformer tr = th.getTransformer();

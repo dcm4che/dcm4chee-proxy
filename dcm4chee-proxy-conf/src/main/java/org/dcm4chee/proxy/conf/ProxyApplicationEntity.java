@@ -53,7 +53,6 @@ import java.util.Properties;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.sax.SAXResult;
@@ -296,50 +295,38 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return getProxyDevice().getTemplates(uri);
     }
 
-    public HashMap<String, String> getAETsFromForwardRules(Association as, List<ForwardRule> rules)
+    public List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule)
             throws TransformerFactoryConfigurationError {
-        HashMap<String, String> aeList = new HashMap<String, String>();
-        for (ForwardRule rule : rules) {
-            // MPPS2DoseSR conversion rules are processed differently
-            if (rule.getConversion() != null && rule.getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR))
-                return aeList;
-
-            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-            List<String> destinationAETs = new ArrayList<String>();
-            if (rule.containsTemplateURI())
-                for (String template : rule.getDestinationTemplates())
-                    try {
-                        for (String aet : getDestinationAETsFromTemplate((Templates) getTemplates(template)))
-                            destinationAETs.add(aet);
-                    } catch (TransformerException e) {
-                        LOG.error("Error parsing template", e);
-                    }
-            else
-                destinationAETs.addAll(rule.getDestinationAETitles());
-            LOG.info("{} : sending data to {} based on ForwardRule : {}",
-                    new Object[] { as, destinationAETs, rule.getCommonName() });
-            for (String destinationAET : destinationAETs)
-                aeList.put(destinationAET, callingAET);
-        }
-        return aeList;
+        List<String> destinationAETs = new ArrayList<String>();
+        if (rule.containsTemplateURI())
+            destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate()));
+        else
+            destinationAETs.addAll(rule.getDestinationAETitles());
+        LOG.info("{} : sending data to {} based on ForwardRule : {}",
+                new Object[] { as, destinationAETs, rule.getCommonName() });
+        return destinationAETs;
     }
 
-    private List<String> getDestinationAETsFromTemplate(Templates template) throws TransformerFactoryConfigurationError,
-            TransformerConfigurationException {
-        SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
-        TransformerHandler handler = transFac.newTransformerHandler(template);
+    private List<String> getDestinationAETsFromTemplate(String template) {
         final List<String> result = new ArrayList<String>();
-        handler.setResult(new SAXResult(new DefaultHandler() {
-    
-            @Override
-            public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
-                    throws SAXException {
-                if (qName.equals("Destination")) {
-                    result.add(attributes.getValue("aet"));
+        try {
+            Templates templates = (Templates) getTemplates(template);
+            SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
+            TransformerHandler handler = transFac.newTransformerHandler(templates);
+            handler.setResult(new SAXResult(new DefaultHandler() {
+
+                @Override
+                public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
+                        throws SAXException {
+                    if (qName.equals("Destination")) {
+                        result.add(attributes.getValue("aet"));
+                    }
                 }
-            }
-    
-        }));
+
+            }));
+        } catch (TransformerConfigurationException e) {
+            LOG.error("Error parsing template {} : {}", template, e);
+        }
         return result;
     }
 
@@ -385,7 +372,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
         for (ForwardRule rule : pae.getForwardRules())
             for (String destinationAET : rule.getDestinationAETitles())
-                if (asAccepted.getCallingAET().equals(destinationAET))
+                if (asAccepted.getRemoteAET().equals(destinationAET))
                     return true;
         return false;
     }
@@ -623,37 +610,38 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         attributeCoercions.add(ac);
     }
 
-    public HashMap<String, String> filterForwardAETs(Association asAccepted, Attributes rq, Dimse dimse) {
-        List<ForwardRule> forwardRules = filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
-        return getAETsFromForwardRules(asAccepted, forwardRules);
-    }
-    
     public HashMap<String, Association> openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse,
-            HashMap<String, String> aets) {
-        HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(aets.size());
-        for (Entry<String, String> entry : aets.entrySet()) {
-            String callingAET = entry.getValue();
-            String calledAET = entry.getKey();
-            Association asInvoked = openForwardAssociation(asAccepted, callingAET, calledAET, asAccepted.getAAssociateRQ());
-            fwdAssocs.put(calledAET, asInvoked);
+            List<ForwardRule> forwardRules) {
+        HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(forwardRules.size());
+        for (ForwardRule rule : forwardRules) {
+            String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule
+                    .getUseCallingAET();
+            List<String> destinationAETs = getDestinationAETsFromForwardRule(asAccepted, rule);
+            for (String calledAET : destinationAETs) {
+                Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
+                        asAccepted.getAAssociateRQ());
+                if (asInvoked != null)
+                    fwdAssocs.put(calledAET, asInvoked);
+            }
         }
         return fwdAssocs;
     }
-    
-    public Association openForwardAssociation(Association asAccepted, String callingAET, String calledAET, 
-            AAssociateRQ rq) {
+
+    public Association openForwardAssociation(Association asAccepted, ForwardRule rule, String callingAET,
+            String calledAET, AAssociateRQ rq) {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
         Association asInvoked = null;
         try {
             asInvoked = connect(getDestinationAE(calledAET), rq);
             asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
+            asInvoked.setProperty(ForwardRule.class.getName(), rule);
         } catch (IncompatibleConnectionException e) {
             LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
         } catch (GeneralSecurityException e) {
-            LOG.error("Failed to create SSL context: ", e.getMessage() );
+            LOG.error("Failed to create SSL context: ", e.getMessage());
         } catch (ConfigurationException e) {
-            LOG.error("Unable to load configuration for destination AET: ", e.getMessage() );
+            LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
         } catch (ConnectException e) {
             LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
         } catch (Exception e) {
