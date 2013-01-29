@@ -45,12 +45,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import javax.xml.transform.TransformerFactoryConfigurationError;
 
@@ -73,7 +70,6 @@ import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.PDVInputStream;
 import org.dcm4che.net.Status;
-import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;

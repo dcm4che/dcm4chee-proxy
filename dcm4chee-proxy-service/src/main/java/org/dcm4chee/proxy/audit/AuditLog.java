@@ -93,6 +93,13 @@ public class AuditLog {
     }
 
     private void writeLog(File studyIUIDDir) {
+        String separator = System.getProperty("file.separator");
+        File startLog = new File(studyIUIDDir + separator + "start.log");
+        long lastModified = startLog.lastModified();
+        long now = System.currentTimeMillis();
+        if (!(now > lastModified + ((ProxyDevice) ae.getDevice()).getSchedulerInterval() * 1000 * 2))
+            return;
+
         File[] logFiles = studyIUIDDir.listFiles(fileFilter());
         if (logFiles != null && logFiles.length > 1) {
             Log log = new Log();
@@ -102,7 +109,6 @@ public class AuditLog {
             }
             float mb = log.totalSize / 1048576F;
             float time = (log.t2 - log.t1) / 1000F;
-            String separator = System.getProperty("file.separator");
             String path = studyIUIDDir.getPath();
             String studyIUID = path.substring(path.lastIndexOf(separator)+1);
             path = path.substring(0, path.lastIndexOf(separator));
@@ -147,13 +153,11 @@ public class AuditLog {
     }
 
     private FileFilter fileFilter() {
-        final long now = System.currentTimeMillis();
         return new FileFilter() {
 
             @Override
             public boolean accept(File pathname) {
-                String path = pathname.getPath();
-                if (path.endsWith(".log") && now > pathname.lastModified() + ((ProxyDevice)ae.getDevice()).getSchedulerInterval()*1000)
+                if (pathname.getPath().endsWith(".log"))
                     return true;
                 return false;
             }
