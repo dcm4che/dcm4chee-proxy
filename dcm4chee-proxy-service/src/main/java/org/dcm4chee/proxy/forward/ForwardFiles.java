@@ -562,7 +562,8 @@ public class ForwardFiles {
             final String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
             final String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
             final String tsuid = fmi.getString(Tag.TransferSyntaxUID);
-            asInvoked.getAAssociateRQ().setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
+            final String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+            asInvoked.getAAssociateRQ().setCallingAET(callingAET);
             final Attributes[] ds = new Attributes[1];
             final long fileSize = file.length();
             DimseRSPHandler rspHandler = new DimseRSPHandler(asInvoked.nextMessageID()) {
@@ -575,7 +576,7 @@ public class ForwardFiles {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
                         if (pae.isEnableAuditLog())
-                            pae.writeLogFile(asInvoked, ds[0], fileSize);
+                            pae.writeLogFile(callingAET, asInvoked.getRemoteAET(), ds[0], fileSize);
                         delete(asInvoked, file);
                         break;
                     default: {
@@ -703,7 +704,7 @@ public class ForwardFiles {
             pae.coerceAttributes(attrs, ac);
             ds[0] = attrs;
             if (pae.isEnableAuditLog())
-                pae.createStartLogFile(as, ds[0]);
+                pae.createStartLogFile(as.getCallingAET(), as.getCalledAET(), ds[0].getString(Tag.StudyInstanceUID));
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);

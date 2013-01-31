@@ -57,6 +57,7 @@ import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
 import org.dcm4che.emf.MultiframeExtractor;
+import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
@@ -266,8 +267,8 @@ public class CStore extends BasicCStoreSCP {
         }
         Attributes attrs = parse(asAccepted, file);
         if (pae.isEnableAuditLog()) {
-            pae.createStartLogFile(asInvoked, attrs);
-            pae.writeLogFile(asInvoked, attrs, file.length());
+            pae.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs.getString(Tag.StudyInstanceUID));
+            pae.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, file.length());
         }
         try {
             forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
@@ -301,22 +302,29 @@ public class CStore extends BasicCStoreSCP {
         }
         MultiframeExtractor extractor = new MultiframeExtractor();
         int n = src.getInt(Tag.NumberOfFrames, 1);
+        long t = 0;
         for (int frame = 0; frame < n; ++frame) {
+            long t1 = System.currentTimeMillis();
             Attributes attrs = extractor.extract(src, frame);
+            long t2 = System.currentTimeMillis();
+            t = t + t2 - t1;
             rq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
             rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             if (pae.isEnableAuditLog()) {
-                pae.createStartLogFile(asInvoked, attrs);
-                pae.writeLogFile(asInvoked, attrs, file.length());
+                pae.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs.getString(Tag.StudyInstanceUID));
+                pae.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, 
+                        attrs.calcLength(DicomEncodingOptions.DEFAULT, true));
             }
             try {
                 forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
             } catch (InterruptedException e) {
-                LOG.error("{} : Error forwarding to {} : {}",
-                        new Object[] { asInvoked, asAccepted.getRemoteAET(), e.getMessage() });
+                LOG.error("{}: Error forwarding to {} : {}",
+                        new Object[] { asAccepted, asInvoked.getRemoteAET(), e.getMessage() });
                 throw new DicomServiceException(Status.UnableToProcess);
             }
         }
+        LOG.info("{}: extracted {} frames from {} in {}sec",
+                new Object[] { asAccepted, n, src.getString(Tag.SOPInstanceUID), t / 1000F });
     }
 
     protected File createMappedFile(Association as, File file, Attributes fmi, String callingAET, String calledAET)
@@ -374,7 +382,7 @@ public class CStore extends BasicCStoreSCP {
                         cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.debug(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());
+                    LOG.debug(asInvoked + ": Failed to forward C-STORE RSP : " + e.getMessage());
                 }
             }
         };

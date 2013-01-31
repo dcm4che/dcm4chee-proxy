@@ -271,9 +271,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return (List<ForwardRule>) as.getProperty(FORWARD_RULES);
     }
 
-    private File getLogDir(Association as, Attributes attrs) {
-        File path = new File(getAuditDirectoryPath().getPath() + getSeparator() + as.getCalledAET()
-                + getSeparator() + as.getCallingAET() + getSeparator() + attrs.getString(Tag.StudyInstanceUID));
+    private File getLogDir(String callingAET, String calledAET, String studyIUID) {
+        File path = new File(getAuditDirectoryPath().getPath() + getSeparator() + calledAET
+                + getSeparator() + callingAET + getSeparator() + studyIUID);
         path.mkdirs();
         return path;
     }
@@ -582,27 +582,30 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         attrs.addAll(modify);
     }
 
-    public void createStartLogFile(final Association as, final Attributes attrs)
-            throws IOException {
-        File file = new File(getLogDir(as, attrs), "start.log");
-        
+    public void createStartLogFile(String callingAET, String calledAET, final String studyIUID) throws IOException {
+        File file = new File(getLogDir(callingAET, calledAET, studyIUID), "start.log");
         if (!file.exists()) {
-            Properties prop = new Properties();
-            prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
-            prop.store(new FileOutputStream(file), null);
+            try {
+                Properties prop = new Properties();
+                prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
+                prop.store(new FileOutputStream(file), null);
+            } catch (IOException e) {
+                LOG.debug("Failed to create log file : " + e.getMessage());
+            }
         }
     }
 
-    public void writeLogFile(Association as, Attributes attrs, long size) {
+    public void writeLogFile(String callingAET, String calledAET, Attributes attrs, long size) {
         Properties prop = new Properties();
         try {
-            File file = new File(getLogDir(as, attrs), attrs.getString(Tag.SOPInstanceUID).concat(".log"));
+            File file = new File(getLogDir(callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID)), attrs
+                    .getString(Tag.SOPInstanceUID).concat(".log"));
             prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
             prop.setProperty("size", String.valueOf(size));
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);
         } catch (IOException e) {
-            LOG.debug(as + ": failed to create log file", e);
+            LOG.debug("Failed to create log file : " + e.getMessage());
         }
     }
 
