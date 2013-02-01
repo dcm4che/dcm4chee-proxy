@@ -613,8 +613,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         attributeCoercions.add(ac);
     }
 
-    public HashMap<String, Association> openForwardAssociations(Association asAccepted, Attributes rq, Dimse dimse,
-            List<ForwardRule> forwardRules) {
+    public HashMap<String, Association> openForwardAssociations(Association asAccepted, List<ForwardRule> forwardRules) {
         HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(forwardRules.size());
         for (ForwardRule rule : forwardRules) {
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule

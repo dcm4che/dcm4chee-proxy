@@ -77,7 +77,7 @@ public class CGet extends DicomService {
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
             List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, cmd, dimse);
-            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, cmd, dimse, forwardRules);
+            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, forwardRules);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
 
