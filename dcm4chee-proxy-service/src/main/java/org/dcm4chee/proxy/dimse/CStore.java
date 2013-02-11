@@ -44,6 +44,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.DigestOutputStream;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -297,8 +298,18 @@ public class CStore extends BasicCStoreSCP {
             ProxyAEExtension pae, HashMap<String, Association> fwdAssocs, ForwardRule rule) {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
-        return as.getApplicationEntity().getAEExtension(ProxyAEExtension.class)
-                .openForwardAssociation(as, rule, callingAET, calledAET, rq, aeCache);
+        Association asInvoked = null;
+        try {
+            asInvoked = as.getApplicationEntity().getAEExtension(ProxyAEExtension.class)
+                    .openForwardAssociation(as, rule, callingAET, calledAET, rq, aeCache);
+        } catch (GeneralSecurityException e) {
+            LOG.error("Failed to create SSL context: ", e.getMessage());
+        } catch (ConfigurationException e) {
+            LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
+        } catch (Exception e) {
+            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });;
+        }
+        return asInvoked;
     }
 
     private void deleteFile(Association as, File file) {

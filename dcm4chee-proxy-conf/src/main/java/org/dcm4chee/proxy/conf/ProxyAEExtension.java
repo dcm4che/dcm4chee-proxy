@@ -63,6 +63,7 @@ import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
+import org.dcm4che.data.UID;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.AEExtension;
@@ -71,6 +72,7 @@ import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -460,35 +462,58 @@ public class ProxyAEExtension extends AEExtension {
                     .getUseCallingAET();
             List<String> destinationAETs = getDestinationAETsFromForwardRule(asAccepted, rule);
             for (String calledAET : destinationAETs) {
-                Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
-                        asAccepted.getAAssociateRQ(), aeCache);
-                if (asInvoked != null)
-                    fwdAssocs.put(calledAET, asInvoked);
+                try {
+                    Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
+                            asAccepted.getAAssociateRQ(), aeCache);
+                    if (asInvoked != null)
+                        fwdAssocs.put(calledAET, asInvoked);
+                } catch (IncompatibleConnectionException e) {
+                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
+                } catch (GeneralSecurityException e) {
+                    LOG.error("Failed to create SSL context: ", e.getMessage());
+                } catch (ConfigurationException e) {
+                    LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
+                } catch (ConnectException e) {
+                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
+                } catch (Exception e) {
+                    LOG.debug("Unexpected exception: ", e.getMessage());
+                }
             }
         }
         return fwdAssocs;
     }
 
     public Association openForwardAssociation(Association asAccepted, ForwardRule rule, String callingAET,
-            String calledAET, AAssociateRQ rq, ApplicationEntityCache aeCache) {
+            String calledAET, AAssociateRQ rq, ApplicationEntityCache aeCache) throws IOException,
+            InterruptedException, IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
         Association asInvoked = null;
-        try {
-            asInvoked = getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
-            asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
-            asInvoked.setProperty(ForwardRule.class.getName(), rule);
-        } catch (IncompatibleConnectionException e) {
-            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
-        } catch (GeneralSecurityException e) {
-            LOG.error("Failed to create SSL context: ", e.getMessage());
-        } catch (ConfigurationException e) {
-            LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
-        } catch (ConnectException e) {
-            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
-        } catch (Exception e) {
-            LOG.debug("Unexpected exception: ", e.getMessage());
+        if (rule.getConversion().equals(ForwardRule.conversionType.Emf2Sf)) {
+            List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
+            int pcSize = rq.getNumberOfPresentationContexts();
+            HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
+            for (PresentationContext pc : rq.getPresentationContexts())
+                as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
+            checkEnhancedTS(UID.CTImageStorage, UID.EnhancedCTImageStorage, newPcList, pcSize, as_ts);
+            checkEnhancedTS(UID.MRImageStorage, UID.EnhancedMRImageStorage, newPcList, pcSize, as_ts);
+            checkEnhancedTS(UID.PositronEmissionTomographyImageStorage, UID.EnhancedPETImageStorage, newPcList, pcSize,
+                    as_ts);
+            for (PresentationContext pc : newPcList)
+                rq.addPresentationContext(pc);
         }
+        asInvoked = getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
+        asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
+        asInvoked.setProperty(ForwardRule.class.getName(), rule);
         return asInvoked;
     }
+
+    private void checkEnhancedTS(String singleTs, String enhancedTs, List<PresentationContext> newPcList, int pcSize,
+            HashMap<String, String[]> as_ts) {
+        String[] imageStorageTS = as_ts.get(singleTs);
+        if (imageStorageTS != null)
+            if (!as_ts.containsKey(enhancedTs))
+                newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, enhancedTs, imageStorageTS));
+    }
+
 }
