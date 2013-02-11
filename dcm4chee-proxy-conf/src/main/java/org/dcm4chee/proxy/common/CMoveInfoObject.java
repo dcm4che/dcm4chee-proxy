@@ -36,46 +36,68 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.dimse;
+package org.dcm4chee.proxy.common;
 
-import java.io.IOException;
-
-import org.dcm4che.data.Attributes;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSP;
-import org.dcm4che.net.Status;
-import org.dcm4che.net.pdu.AAbort;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.BasicCEchoSCP;
-import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ForwardRule;
 
 /**
- * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CEcho extends BasicCEchoSCP {
+public class CMoveInfoObject {
 
-    @Override
-    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
-            Attributes data) throws IOException {
-        if (dimse != Dimse.C_ECHO_RQ)
-            throw new DicomServiceException(Status.UnrecognizedOperation);
+    private String moveOriginatorAET;
+    private String moveDestinationAET;
+    private String calledAET;
+    private int sourceMsgId;
+    private ForwardRule rule;
 
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
-        if (asInvoked == null) {
-            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
-            return;
-        }
-        try {
-            DimseRSP rsp = asInvoked.cecho();
-            rsp.next();
-            asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
-        } catch (Exception e) {
-            LOG.debug("Failed to forward C-ECHO RQ to {} ({})", new Object[] {asInvoked, e.getMessage()} );
-            throw new AAbort(AAbort.UL_SERIVE_USER, 0);
-        }
+    public CMoveInfoObject(String moveOriginatorAET, String moveDestinationAET, String calledAET, int sourceMsgId,
+            ForwardRule rule) {
+        this.moveOriginatorAET = moveOriginatorAET;
+        this.moveDestinationAET = moveDestinationAET;
+        this.calledAET = calledAET;
+        this.sourceMsgId = sourceMsgId;
+        this.rule = rule;
+    }
+
+    public String getMoveOriginatorAET() {
+        return moveOriginatorAET;
+    }
+
+    public void setMoveOriginatorAET(String moveOriginatorAET) {
+        this.moveOriginatorAET = moveOriginatorAET;
+    }
+
+    public String getMoveDestinationAET() {
+        return moveDestinationAET;
+    }
+
+    public void setMoveDestinationAET(String moveDestinationAET) {
+        this.moveDestinationAET = moveDestinationAET;
+    }
+
+    public String getCalledAET() {
+        return calledAET;
+    }
+
+    public void setCalledAET(String calledAET) {
+        this.calledAET = calledAET;
+    }
+
+    public int getSourceMsgId() {
+        return sourceMsgId;
+    }
+
+    public void setSourceMsgId(int sourceMsgId) {
+        this.sourceMsgId = sourceMsgId;
+    }
+
+    public ForwardRule getRule() {
+        return rule;
+    }
+
+    public void setRule(ForwardRule rule) {
+        this.rule = rule;
     }
 
 }

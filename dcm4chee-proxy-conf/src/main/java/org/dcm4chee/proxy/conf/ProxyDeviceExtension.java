@@ -38,34 +38,27 @@
 
 package org.dcm4chee.proxy.conf;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
 
-import org.dcm4che.conf.api.ApplicationEntityCache;
-import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.io.TemplatesCache;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Device;
-import org.dcm4che.net.hl7.HL7Device;
+import org.dcm4che.net.DeviceExtension;
 import org.dcm4che.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class ProxyDevice extends HL7Device {
+public class ProxyDeviceExtension extends DeviceExtension {
 
     private static final long serialVersionUID = -7370790158878613899L;
     
     public static final int DEFAULT_FORWARD_THREADS = 1;
-    public static final int DEFAULT_SCHEDULER_INTERVAL = 60;
+    public static final int DEFAULT_SCHEDULER_INTERVAL = 30;
 
     private Integer schedulerInterval;
     private HL7Configuration dicomConf;
@@ -73,8 +66,6 @@ public class ProxyDevice extends HL7Device {
     private int forwardThreads;
     private transient ThreadPoolExecutor fileForwardingExecutor;
     private int configurationStaleTimeout;
-    private transient ApplicationEntityCache aeCache;
-    private transient HL7ApplicationCache hl7AppCache;
 
     public ThreadPoolExecutor getFileForwardingExecutor() {
         if (fileForwardingExecutor == null)
@@ -99,9 +90,9 @@ public class ProxyDevice extends HL7Device {
         return templateCache.get(StringUtils.replaceSystemProperties(uri).replace('\\', '/'));
     }
 
-    public ProxyDevice(String name) {
-        super(name);
+    public ProxyDeviceExtension() {
         setForwardThreads(1);
+        setSchedulerInterval(30);
     }
 
     public void setSchedulerInterval(Integer schedulerInterval) {
@@ -128,37 +119,11 @@ public class ProxyDevice extends HL7Device {
         this.configurationStaleTimeout = configurationStaleTimeout;
     }
 
-    public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {
-        return dicomConf.findApplicationEntity(aet);
-    }
-
-    public ApplicationEntityCache getAeCache() {
-        return aeCache;
-    }
-
-    public void setAeCache(ApplicationEntityCache aeCache) {
-        this.aeCache = aeCache;
-        aeCache.setStaleTimeout(configurationStaleTimeout);
-    }
-
-    public HL7ApplicationCache getHl7AppCache() {
-        return hl7AppCache;
-    }
-
-    public void setHl7AppCache(HL7ApplicationCache hl7AppCache) {
-        this.hl7AppCache = hl7AppCache;
-    }
-
     @Override
-    public void reconfigure(Device from) throws IOException,
-            GeneralSecurityException {
-        super.reconfigure(from);
-        setProxyDeviceAttributes((ProxyDevice) from);
-    }
-
-    private void setProxyDeviceAttributes(ProxyDevice from) {
-        setForwardThreads(from.forwardThreads);
-        setSchedulerInterval(from.schedulerInterval);
+    public void reconfigure(DeviceExtension from) {
+        ProxyDeviceExtension proxyDevExt = (ProxyDeviceExtension) from;
+        setForwardThreads(proxyDevExt.forwardThreads);
+        setSchedulerInterval(proxyDevExt.schedulerInterval);
         fileForwardingExecutor = (ThreadPoolExecutor) Executors
                 .newFixedThreadPool(forwardThreads);
     }

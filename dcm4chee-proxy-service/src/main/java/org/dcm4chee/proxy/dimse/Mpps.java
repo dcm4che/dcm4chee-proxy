@@ -60,6 +60,7 @@ import org.dcm4che.io.ContentHandlerAdapter;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.io.SAXWriter;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.Commands;
@@ -72,7 +73,8 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4che.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.jboss.resteasy.util.Hex;
 
 /**
@@ -101,7 +103,7 @@ public class Mpps extends DicomService {
 
     private void onNCreateRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,
             Attributes data) throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             try {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);
@@ -120,8 +122,9 @@ public class Mpps extends DicomService {
 
     private void processForwardRules(Association as, PresentationContext pc, Dimse dimse, Attributes cmd,
             Attributes data) throws ConfigurationException, IOException {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, cmd, dimse);
+        ApplicationEntity ae = as.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(as, cmd, dimse);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no destination");
 
@@ -133,8 +136,8 @@ public class Mpps extends DicomService {
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
         for (ForwardRule rule : forwardRules) {
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-            List<String> destinationAETs = pae.getDestinationAETsFromForwardRule(as, rule);
-            processDestinationAETs(as, dimse, data, pae, iuid, fmi, rule, callingAET, destinationAETs);
+            List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule);
+            processDestinationAETs(as, dimse, data, proxyAEE, iuid, fmi, rule, callingAET, destinationAETs);
         }
         try {
             as.writeDimseRSP(pc, rsp, data);
@@ -144,7 +147,7 @@ public class Mpps extends DicomService {
         }
     }
 
-    private void processDestinationAETs(Association as, Dimse dimse, Attributes data, ProxyApplicationEntity pae,
+    private void processDestinationAETs(Association as, Dimse dimse, Attributes data, ProxyAEExtension pae,
             String iuid, Attributes fmi, ForwardRule rule, String callingAET, List<String> destinationAETs)
             throws DicomServiceException {
         for (String calledAET : destinationAETs) {
@@ -155,7 +158,7 @@ public class Mpps extends DicomService {
                 File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae
                         .getNSetDirectoryPath();
                 File file = createFile(as, dimse, data, iuid, fmi, dir, calledAET, callingAET);
-                as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
+                as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
                 rename(as, file);
             }
         }
@@ -166,7 +169,7 @@ public class Mpps extends DicomService {
             throws DicomServiceException {
         if (dimse == Dimse.N_CREATE_RQ) {
             File file = createFile(as, dimse, data, iuid, fmi, baseDir, calledAET, callingAET);
-            as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".ncreate");
+            as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".ncreate");
             rename(as, file);
         } else
             processNSetMpps2DoseSR(as, dimse, data, iuid, fmi, baseDir, calledAET, callingAET, rule);
@@ -175,32 +178,34 @@ public class Mpps extends DicomService {
     private void processNSetMpps2DoseSR(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi,
             File baseDir, String calledAET, String callingAET, ForwardRule rule) throws DicomServiceException,
             TransformerFactoryConfigurationError {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+        ApplicationEntity ae = as.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         File ncreateDir = new File(baseDir, calledAET);
         File ncreateFile = new File(ncreateDir, iuid + ".ncreate");
         Attributes ncreateAttrs = readAttributesFromNCreateFile(ncreateFile);
         data.merge(ncreateAttrs);
         Attributes doseSrData = new Attributes();
         String ppsSOPIUID = fmi.getString(Tag.MediaStorageSOPInstanceUID);
-        transformMpps2DoseSr(as, pae, data, iuid, ppsSOPIUID, rule, doseSrData);
+        transformMpps2DoseSr(as, proxyAEE, data, iuid, ppsSOPIUID, rule, doseSrData);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
         doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
         doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, pae.getCStoreDirectoryPath(), calledAET,
+        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, proxyAEE.getCStoreDirectoryPath(), calledAET,
                 callingAET);
-        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, ".dcm");
+        as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
         delete(as, ncreateFile);
     }
 
-    private void transformMpps2DoseSr(Association as, ProxyApplicationEntity pae, Attributes data, String iuid,
+    private void transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String iuid,
             String ppsSOPIUID, ForwardRule rule, Attributes doseSrData)
             throws TransformerFactoryConfigurationError, DicomServiceException {
         try {
-            Templates templates = pae.getTemplates(rule.getConversionUri());
+            Templates templates = pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)
+                    .getTemplates(rule.getConversionUri());
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);
             Transformer tr = th.getTransformer();
@@ -258,7 +263,7 @@ public class Mpps extends DicomService {
     protected File rename(Association as, File file) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5).concat(
-                (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
+                (String) as.getProperty(ProxyAEExtension.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.info("{}: RENAME {} to {}", new Object[] { as, file, dst });
@@ -292,7 +297,7 @@ public class Mpps extends DicomService {
 
     private void onNSetRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
             throws IOException {
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        Association asInvoked = (Association) asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             try {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);

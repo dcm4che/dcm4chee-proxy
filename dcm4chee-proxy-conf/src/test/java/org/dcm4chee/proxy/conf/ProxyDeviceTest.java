@@ -36,10 +36,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf.ldap.test;
+package org.dcm4chee.proxy.conf;
 
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -49,7 +49,10 @@ import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
-import org.dcm4che.conf.api.hl7.HL7Configuration;
+import org.dcm4che.conf.ldap.LdapDicomConfiguration;
+import org.dcm4che.conf.ldap.hl7.LdapHL7Configuration;
+import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che.data.Code;
 import org.dcm4che.data.Issuer;
 import org.dcm4che.data.UID;
@@ -59,19 +62,15 @@ import org.dcm4che.net.Connection.Protocol;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.QueryOption;
-import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.hl7.HL7Application;
-import org.dcm4che.net.hl7.HL7Device;
+import org.dcm4che.net.hl7.HL7DeviceExtension;
+import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
-import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.ForwardSchedule;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
-import org.dcm4chee.proxy.conf.ProxyDevice;
-import org.dcm4chee.proxy.conf.ProxyHL7Application;
-import org.dcm4chee.proxy.conf.Retry;
-import org.dcm4chee.proxy.conf.Schedule;
+import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
+import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
+import org.junit.Before;
 import org.junit.Test;
 
 
@@ -79,7 +78,7 @@ import org.junit.Test;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class ProxyConfigurationTestUtils {
+public class ProxyDeviceTest {
 
     private static final String[] OTHER_DEVICES = {
         "dcm4chee-arc",
@@ -255,7 +254,10 @@ public class ProxyConfigurationTestUtils {
         UID.ModalityWorklistInformationModelFIND,
         UID.PatientRootQueryRetrieveInformationModelGET,
         UID.StudyRootQueryRetrieveInformationModelGET,
-        UID.PatientStudyOnlyQueryRetrieveInformationModelGETRetired
+        UID.PatientStudyOnlyQueryRetrieveInformationModelGETRetired,
+        UID.PatientRootQueryRetrieveInformationModelMOVE,
+        UID.StudyRootQueryRetrieveInformationModelMOVE,
+        UID.PatientStudyOnlyQueryRetrieveInformationModelMOVERetired
     };
 
     private static final String[] HL7_MESSAGE_TYPES = {
@@ -268,14 +270,62 @@ public class ProxyConfigurationTestUtils {
         "ORM^O01"
     };
 
-    private static final KeyStore KEYSTORE = loadKeyStore();
+    private DicomConfiguration config;
 
-    private static KeyStore loadKeyStore() {
+    @Before
+    public void setUp() throws Exception {
+        config = System.getProperty("ldap") == null
+                ? newPreferencesProxyConfiguration()
+                : newLdapProxyConfiguration();
+        cleanUp();
+    }
+
+    private DicomConfiguration newLdapProxyConfiguration()
+            throws ConfigurationException {
+        LdapDicomConfiguration config = new LdapDicomConfiguration();
+        LdapHL7Configuration hl7Config = new LdapHL7Configuration();
+        config.addDicomConfigurationExtension(hl7Config);
+        LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
+        config.addDicomConfigurationExtension(proxyConfig);
+        hl7Config.addHL7ConfigurationExtension(proxyConfig);
+//        config.addDicomConfigurationExtension(
+//                new LdapAuditLoggerConfiguration());
+//        config.addDicomConfigurationExtension(
+//                new LdapAuditRecordRepositoryConfiguration());
+        return config;
+    }
+
+    private DicomConfiguration newPreferencesProxyConfiguration() {
+        PreferencesDicomConfiguration config = new PreferencesDicomConfiguration();
+        PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
+        config.addDicomConfigurationExtension(hl7Config);
+        PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
+        config.addDicomConfigurationExtension(proxyConfig);
+        hl7Config.addHL7ConfigurationExtension(proxyConfig);
+//        config.addDicomConfigurationExtension(
+//                new PreferencesAuditLoggerConfiguration());
+//        config.addDicomConfigurationExtension(
+//                new PreferencesAuditRecordRepositoryConfiguration());
+        return config;
+    }
+    
+    private void cleanUp() throws Exception {
+        config.unregisterAETitle("DCM4CHEE-PROXY");
+        for (String aet : OTHER_AES)
+            config.unregisterAETitle(aet);
         try {
-            return SSLManagerFactory.loadKeyStore("JKS", "resource:cacerts.jks", "secret");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            config.removeDevice("dcm4chee-proxy");
+        } catch (ConfigurationNotFoundException e) {}
+//        try {
+//            config.removeDevice("syslog");
+//        } catch (ConfigurationNotFoundException e) {}
+        try {
+            config.removeDevice("hl7rcv");
+        } catch (ConfigurationNotFoundException e) {}
+        for (String name : OTHER_DEVICES)
+            try {
+                config.removeDevice(name);
+            }  catch (ConfigurationNotFoundException e) {}
     }
     
     public static void cleanUp(DicomConfiguration config) throws ConfigurationException {
@@ -286,6 +336,9 @@ public class ProxyConfigurationTestUtils {
         try {
             config.removeDevice("dcm4chee-proxy");
         }  catch (ConfigurationNotFoundException e) {}
+//        try {
+//            config.removeDevice("syslog");
+//        } catch (ConfigurationNotFoundException e) {}
         try {
             config.removeDevice("hl7rcv");
         } catch (ConfigurationNotFoundException e) {}
@@ -296,7 +349,7 @@ public class ProxyConfigurationTestUtils {
     }
     
     @Test
-    public static void testPersist(HL7Configuration config) throws Exception {
+    public void test() throws Exception {
         for (int i = 0; i < OTHER_AES.length; i++) {
             String aet = OTHER_AES[i];
             config.registerAETitle(aet);
@@ -304,39 +357,56 @@ public class ProxyConfigurationTestUtils {
         }
         for (int i = OTHER_AES.length; i < OTHER_DEVICES.length; i++)
             config.persist(createDevice(config, OTHER_DEVICES[i]));
-        config.persist(createHL7Device("hl7rcv", SITE_A, INST_A, PIX_MANAGER, "localhost", 2575, 12575));
+        config.persist(createHL7Device("hl7rcv", SITE_A, INST_A, PIX_MANAGER, "localhost", 2576, 12576));
         config.registerAETitle("DCM4CHEE-PROXY");
-        config.persist(createProxyDevice(config, "dcm4chee-proxy"));
+        config.persist(createProxyDevice("dcm4chee-proxy"));
         config.findApplicationEntity("DCM4CHEE-PROXY");
+        if (config instanceof PreferencesDicomConfiguration)
+            export(System.getProperty("export"));
     }
 
-    private static ProxyDevice createProxyDevice(HL7Configuration config, String name) throws Exception {
-        ProxyDevice device = new ProxyDevice(name);
-//        device.setThisNodeCertificates(config.deviceRef(name),
-//                (X509Certificate) KEYSTORE.getCertificate(name));
-//        for (String other : OTHER_DEVICES)
-//            device.setAuthorizedNodeCertificates(config.deviceRef(other),
-//                    (X509Certificate) KEYSTORE.getCertificate(other));
-        device.setSchedulerInterval(10);
-        device.setForwardThreads(1);
-        device.setConfigurationStaleTimeout(60);
+    private void export(String name) throws Exception {
+        if (name == null)
+            return;
+
+        OutputStream os = new FileOutputStream(name);
+        try {
+            ((PreferencesDicomConfiguration) config)
+                    .getDicomConfigurationRoot().exportSubtree(os);
+        } finally {
+            SafeClose.close(os);
+        }
+    }
+
+    private Device createProxyDevice(String name) throws Exception {
+        Device device = new Device(name);
+        HL7DeviceExtension hl7DevExt = new HL7DeviceExtension();
+        device.addDeviceExtension(hl7DevExt);
+        ProxyDeviceExtension proxyDev = new ProxyDeviceExtension();
+        device.addDeviceExtension(proxyDev);
         
-        ProxyApplicationEntity pae = new ProxyApplicationEntity("DCM4CHEE-PROXY");
-        pae.setAssociationAcceptor(true);
-        pae.setAssociationInitiator(true);
-        pae.setSpoolDirectory("/tmp/proxy/");
-        pae.setAcceptDataOnFailedNegotiation(true);
-        pae.setEnableAuditLog(true);
-        pae.setDeleteFailedDataWithoutRetryConfiguration(true);
-        pae.setFallbackDestinationAET("DCM4CHEE");
+        proxyDev.setSchedulerInterval(10);
+        proxyDev.setForwardThreads(1);
+        proxyDev.setConfigurationStaleTimeout(60);
         
-        pae.addAttributeCoercion(new AttributeCoercion(null, 
+        ApplicationEntity ae = new ApplicationEntity("DCM4CHEE-PROXY");
+        ProxyAEExtension proxyAEE = new ProxyAEExtension();
+        ae.addAEExtension(proxyAEE);
+        ae.setAssociationAcceptor(true);
+        ae.setAssociationInitiator(true);
+        proxyAEE.setSpoolDirectory("/tmp/proxy/");
+        proxyAEE.setAcceptDataOnFailedNegotiation(true);
+        proxyAEE.setEnableAuditLog(true);
+        proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(true);
+        proxyAEE.setFallbackDestinationAET("DCM4CHEE");
+        
+        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCP,
                 "ENSURE_PID",
                 "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
         
-        pae.addAttributeCoercion(new AttributeCoercion(null, 
+        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, 
                 Dimse.C_STORE_RQ, 
                 TransferCapability.Role.SCU,
                 "WITHOUT_PN",
@@ -353,7 +423,7 @@ public class ProxyConfigurationTestUtils {
         fwdScheduleStoreScp.setSchedule(scheduleStoreScp);
         fwdSchedules.put("STORESCP", fwdScheduleStoreScp);
         
-        pae.setForwardSchedules(fwdSchedules);
+        proxyAEE.setForwardSchedules(fwdSchedules);
         
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
         
@@ -401,93 +471,69 @@ public class ProxyConfigurationTestUtils {
         forwardRulePrivate.setDescription("Example ForwardRule");
         forwardRules.add(forwardRulePrivate);
         
-        pae.setForwardRules(forwardRules);
+        proxyAEE.setForwardRules(forwardRules);
         
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(RetryObject.ConnectionException, 20, 10, true));
         retries.add(new Retry(RetryObject.AssociationStateException, 20, 10, true));
-        pae.setRetries(retries);
+        proxyAEE.setRetries(retries);
         
-        addVerificationStorageTransferCapabilities(pae);
-        addTCs(pae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
-        addTCs(pae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);
-        addTCs(pae, null, Role.SCP, OTHER_CUIDS, OTHER_TSUIDS);
-        addTCs(pae, null, Role.SCU, IMAGE_CUIDS, IMAGE_TSUIDS);
-        addTCs(pae, null, Role.SCU, VIDEO_CUIDS, VIDEO_TSUIDS);
-        addTCs(pae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
-        addTCs(pae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
-        device.addApplicationEntity(pae);
+        addVerificationStorageTransferCapabilities(ae);
+        addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
+        addTCs(ae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);
+        addTCs(ae, null, Role.SCP, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(ae, null, Role.SCU, IMAGE_CUIDS, IMAGE_TSUIDS);
+        addTCs(ae, null, Role.SCU, VIDEO_CUIDS, VIDEO_TSUIDS);
+        addTCs(ae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
+        addTCs(ae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
+        device.addApplicationEntity(ae);
         Connection dicom = new Connection("dicom", "localhost", 22222);
         dicom.setMaxOpsInvoked(0);
         dicom.setMaxOpsPerformed(0);
         dicom.setInstalled(true);
         device.addConnection(dicom);
-        pae.addConnection(dicom);
-//        Connection dicomTLS = new Connection("dicom-tls", "localhost", 22762);
-//        dicomTLS.setMaxOpsInvoked(0);
-//        dicomTLS.setMaxOpsPerformed(0);
-//        dicomTLS.setTlsCipherSuites(
-//                Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
-//                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
-//        dicomTLS.setInstalled(false);
-//        device.addConnection(dicomTLS);
-//        ae.addConnection(dicomTLS);
-
-        ProxyHL7Application hl7App = new ProxyHL7Application("*");
-        hl7App.setApplicationName(PIX_CONSUMER);
+        ae.addConnection(dicom);
+        
+        HL7Application hl7App = new HL7Application("*");
+        ProxyHL7ApplicationExtension proxyHL7App = new ProxyHL7ApplicationExtension();
+        hl7App.addHL7ApplicationExtension(proxyHL7App);
         hl7App.setAcceptedMessageTypes(HL7_MESSAGE_TYPES);
-        hl7App.setHL7DefaultCharacterSet("8859/1");
-        device.addHL7Application(hl7App);
-
+        proxyHL7App.addTemplatesURI("adt2dcm",
+                "file:${jboss.server.config.dir}/dcm4chee-proxy/hl7-adt2dcm.xsl");
+        hl7DevExt.addHL7Application(hl7App);
         Connection hl7 = new Connection("hl7", "localhost", 22575);
         hl7.setProtocol(Protocol.HL7);
         device.addConnection(hl7);
         hl7App.addConnection(hl7);
-//        Connection hl7TLS = new Connection("hl7-tls", "localhost", 12575);
-//        hl7TLS.setTlsCipherSuites(
-//                Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
-//                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
-//        device.addConnection(hl7TLS);
-//        hl7App.addConnection(hl7TLS);
 
-        pae.setProxyPIXConsumerApplication(PIX_CONSUMER);
-        pae.setRemotePIXManagerApplication(PIX_MANAGER);
+        proxyAEE.setProxyPIXConsumerApplication(PIX_CONSUMER);
+        proxyAEE.setRemotePIXManagerApplication(PIX_MANAGER);
 
         return device;
     }
     
     private static Device createDevice(DicomConfiguration config, String name) throws Exception {
         Device device = new Device(name);
-//        device.setThisNodeCertificates(config.deviceRef(name), (X509Certificate) KEYSTORE
-//                .getCertificate(name));
         return device;
     }
 
-    private static HL7Device createHL7Device(String name,
-            Issuer issuer, Code institutionCode, String appName,
-            String host, int port, int tlsPort) throws Exception {
-         HL7Device device = new HL7Device(name);
-         init(device, issuer, institutionCode);
-         HL7Application hl7app = new HL7Application(appName);
-         device.addHL7Application(hl7app);
-         Connection hl7Connection = new Connection("hl7", host, port);
-         hl7Connection.setProtocol(Protocol.HL7);
-         device.addConnection(hl7Connection);
-         hl7app.addConnection(hl7Connection);
-//         Connection dicomTLS = new Connection("hl7-tls", host, tlsPort);
-//         dicomTLS.setTlsCipherSuites(
-//                 Connection.TLS_RSA_WITH_AES_128_CBC_SHA, 
-//                 Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
-//         device.addConnection(dicomTLS);
-//         hl7app.addConnection(dicomTLS);
-         return device;
-     }
+    private Device createHL7Device(String name, Issuer issuer, Code institutionCode, String appName, String host,
+            int port, int tlsPort) throws Exception {
+        Device device = new Device(name);
+        HL7DeviceExtension hl7Device = new HL7DeviceExtension();
+        device.addDeviceExtension(hl7Device);
+        init(device, issuer, institutionCode);
+        HL7Application hl7app = new HL7Application(appName);
+        hl7Device.addHL7Application(hl7app);
+        Connection hl7Connection = new Connection("hl7", host, port);
+        hl7Connection.setProtocol(Protocol.HL7);
+        device.addConnection(hl7Connection);
+        hl7app.addConnection(hl7Connection);
+        return device;
+    }
 
     private static Device init(Device device, Issuer issuer, Code institutionCode)
             throws Exception {
-//        String name = device.getDeviceName();
-//        device.setThisNodeCertificates(config.deviceRef(name),
-//                (X509Certificate) keystore.getCertificate(name));
         device.setIssuerOfPatientID(issuer);
         device.setIssuerOfAccessionNumber(issuer);
         if (institutionCode != null) {
@@ -506,16 +552,10 @@ public class ProxyConfigurationTestUtils {
         Connection dicom = new Connection("dicom", host, port);
         device.addConnection(dicom);
         ae.addConnection(dicom);
-//        Connection dicomTLS = new Connection("dicom-tls", host, tlsPort);
-//        dicomTLS.setTlsCipherSuites(Connection.TLS_RSA_WITH_AES_128_CBC_SHA,
-//                Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
-//        device.addConnection(dicomTLS);
-//        ae.addConnection(dicomTLS);
         return device;
     }
 
-    private static void addVerificationStorageTransferCapabilities(
-            ProxyApplicationEntity ae) {
+    private static void addVerificationStorageTransferCapabilities(ApplicationEntity ae) {
         String cuid = UID.VerificationSOPClass;
         String name = UID.nameOf(cuid).replace('/', ' ');
         ae.addTransferCapability(
@@ -527,13 +567,13 @@ public class ProxyConfigurationTestUtils {
         
     }
 
-    private static void addTCs(ProxyApplicationEntity ae, EnumSet<QueryOption> queryOpts,
+    private void addTCs(ApplicationEntity ae, EnumSet<QueryOption> queryOpts,
             TransferCapability.Role role, String[] cuids, String... tss) {
         for (String cuid : cuids)
             addTC(ae, queryOpts, role, cuid, tss);
     }
 
-    private static void addTC(ProxyApplicationEntity ae, EnumSet<QueryOption> queryOpts,
+    private void addTC(ApplicationEntity ae, EnumSet<QueryOption> queryOpts,
             TransferCapability.Role role, String cuid, String... tss) {
         String name = UID.nameOf(cuid).replace('/', ' ');
         TransferCapability tc = new TransferCapability(name + ' ' + role, cuid, role, tss);

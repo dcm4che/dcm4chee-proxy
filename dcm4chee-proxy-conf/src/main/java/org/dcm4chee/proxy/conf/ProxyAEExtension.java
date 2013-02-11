@@ -44,11 +44,9 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.xml.transform.Templates;
@@ -65,23 +63,17 @@ import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
-import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.net.AEExtension;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.net.pdu.AAbort;
-import org.dcm4che.net.pdu.AAssociateAC;
-import org.dcm4che.net.pdu.AAssociateRJ;
 import org.dcm4che.net.pdu.AAssociateRQ;
-import org.dcm4che.net.pdu.CommonExtendedNegotiation;
-import org.dcm4che.net.pdu.ExtendedNegotiation;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.pdu.RoleSelection;
-import org.dcm4chee.proxy.common.RetryObject;
+import org.dcm4chee.proxy.common.CMoveInfoObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -89,7 +81,9 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class ProxyApplicationEntity extends ApplicationEntity {
+public class ProxyAEExtension extends AEExtension {
+
+    public static final Logger LOG = LoggerFactory.getLogger(ProxyAEExtension.class);
 
     private static final long serialVersionUID = -3552156927326582473L;
     private static final String separator = System.getProperty("file.separator");
@@ -98,6 +92,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
     public static final String FILE_SUFFIX = ".dcm.part";
     public static final String FORWARD_RULES = "forward.rules";
+    public static final String FORWARD_CMOVE_INFO = "forward.cmove.info";
 
     private String spoolDirectory;
     private boolean acceptDataOnFailedNegotiation;
@@ -110,6 +105,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     private String remotePIXManagerApplication;
     private boolean deleteFailedDataWithoutRetryConfiguration;
     private String fallbackDestinationAET;
+    private CMoveInfoObject[] CMoveMessageID = new CMoveInfoObject[256];
 
     public boolean isAcceptDataOnFailedNegotiation() {
         return acceptDataOnFailedNegotiation;
@@ -117,19 +113,6 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
     public void setAcceptDataOnFailedNegotiation(boolean acceptDataOnFailedNegotiation) {
         this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
-    }
-
-    @Override
-    protected void setApplicationEntityAttributes(ApplicationEntity from) {
-        super.setApplicationEntityAttributes(from);
-        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) from;
-        reconfigureForwardRules(proxyAE.forwardRules);
-        reconfigureForwardSchedules(proxyAE.forwardSchedules);
-        reconfigureRetries(proxyAE.retries);
-    }
-
-    public ProxyApplicationEntity(String aeTitle) {
-        super(aeTitle);
     }
 
     public final void setSpoolDirectory(String spoolDirectoryString) {
@@ -287,30 +270,24 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return attributeCoercions;
     }
 
-    private ProxyDevice getProxyDevice() {
-        return (ProxyDevice) this.getDevice();
-    }
-
-    public Templates getTemplates(String uri) throws TransformerConfigurationException {
-        return getProxyDevice().getTemplates(uri);
-    }
-
     public List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule)
             throws TransformerFactoryConfigurationError {
         List<String> destinationAETs = new ArrayList<String>();
-        if (rule.containsTemplateURI())
-            destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate()));
-        else
+        if (rule.containsTemplateURI()) {
+            ProxyDeviceExtension proxyDevExt = as.getApplicationEntity().getDevice()
+                    .getDeviceExtension(ProxyDeviceExtension.class);
+            destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate(), proxyDevExt));
+        } else
             destinationAETs.addAll(rule.getDestinationAETitles());
         LOG.info("{} : sending data to {} based on ForwardRule : {}",
                 new Object[] { as, destinationAETs, rule.getCommonName() });
         return destinationAETs;
     }
 
-    private List<String> getDestinationAETsFromTemplate(String template) {
+    private List<String> getDestinationAETsFromTemplate(String uri, ProxyDeviceExtension proxyDevExt) {
         final List<String> result = new ArrayList<String>();
         try {
-            Templates templates = (Templates) getTemplates(template);
+            Templates templates = proxyDevExt.getTemplates(uri);
             SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler handler = transFac.newTransformerHandler(templates);
             handler.setResult(new SAXResult(new DefaultHandler() {
@@ -325,15 +302,9 @@ public class ProxyApplicationEntity extends ApplicationEntity {
 
             }));
         } catch (TransformerConfigurationException e) {
-            LOG.error("Error parsing template {} : {}", template, e);
+            LOG.error("Error parsing template {} : {}", uri, e);
         }
         return result;
-    }
-
-    public ApplicationEntity getDestinationAE(String destinationAETitle) throws ConfigurationException {
-        ProxyDevice device = (ProxyDevice) getDevice();
-        ApplicationEntityCache aeCache = device.getAeCache();
-        return aeCache.findApplicationEntity(destinationAETitle);
     }
 
     public String getProxyPIXConsumerApplication() {
@@ -368,8 +339,26 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         this.fallbackDestinationAET = fallbackDestinationAET;
     }
 
+    public int getNewCMoveMessageID(CMoveInfoObject info) {
+        for (int index = 0; index < 256; index++)
+            if (CMoveMessageID[index] == null) {
+                CMoveMessageID[index] = info;
+                return index + 1;
+            }
+        return -1;
+    }
+
+    public CMoveInfoObject getCMoveInfoObject(int msgId) {
+        return CMoveMessageID[msgId - 1];
+    }
+
+    public void removeCMoveInfoObject(int msgId) {
+        CMoveMessageID[msgId - 1] = null;
+    }
+
     public boolean isAssociationFromDestinationAET(Association asAccepted) {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        ProxyAEExtension pae = (ProxyAEExtension) asAccepted.getApplicationEntity().getAEExtension(
+                ProxyAEExtension.class);
         for (ForwardRule rule : pae.getForwardRules())
             for (String destinationAET : rule.getDestinationAETitles())
                 if (asAccepted.getRemoteAET().equals(destinationAET))
@@ -377,63 +366,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return false;
     }
 
-    private boolean isAvailableDestinationAET(String destinationAET) {
-        for(Entry<String, ForwardSchedule> fwdSchedule : forwardSchedules.entrySet())
-            if (fwdSchedule.getKey().equals(destinationAET))
-                return fwdSchedule.getValue().getSchedule().isNow(new GregorianCalendar());
-        return false;
-    }
-
-    private void reconfigureRetries(List<Retry> rty) {
-        retries.clear();
-        retries.addAll(rty);
-    }
-
-    private void reconfigureForwardRules(List<ForwardRule> fwr) {
-        forwardRules.clear();
-        forwardRules.addAll(fwr);
-    }
-
-    private void reconfigureForwardSchedules(HashMap<String, ForwardSchedule> fws) {
-        forwardSchedules.clear();
-        forwardSchedules.putAll(fws);
-    }
-
     @Override
-    protected AAssociateAC negotiate(Association as, AAssociateRQ rq, AAssociateAC ac) throws IOException {
-        filterForwardRulesOnNegotiationRQ(as, rq);
-        if (!isAssociationFromDestinationAET(as) && sendNow(as)) {
-            LOG.info("{} : directly forwarding connection based on rule : {}", as, getForwardRules().get(0)
-                    .getCommonName());
-            return forwardAAssociateRQ(as, rq, ac, getCurrentForwardRules(as).get(0));
-        }
-        as.setProperty(FILE_SUFFIX, ".dcm");
-        rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
-        return super.negotiate(as, rq, ac);
-    }
-
-    private boolean sendNow(Association as) {
-        List<ForwardRule> matchingForwardRules = getCurrentForwardRules(as);
-        return (matchingForwardRules.size() == 1 
-                && !forwardBasedOnTemplates(matchingForwardRules)
-                && matchingForwardRules.get(0).getDimse().isEmpty()
-                && matchingForwardRules.get(0).getSopClass().isEmpty()
-                && (matchingForwardRules.get(0).getCallingAET() == null || 
-                        matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
-                && matchingForwardRules.get(0).getDestinationAETitles().size() == 1
-                && isAvailableDestinationAET(matchingForwardRules.get(0).getDestinationAETitles().get(0)))
-                && matchingForwardRules.get(0).getConversion() == null;
-    }
-
-    private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq) {
-        List<ForwardRule> list = new ArrayList<ForwardRule>();
-        for (ForwardRule rule : getForwardRules()) {
-            String callingAET = rule.getCallingAET();
-            if ((callingAET == null || callingAET.equals(rq.getCallingAET()))
-                    && rule.getReceiveSchedule().isNow(new GregorianCalendar()))
-                list.add(rule);
-        }
-        as.setProperty(FORWARD_RULES, list);
+    public void reconfigure(AEExtension from) {
+        ProxyAEExtension proxyAEE = (ProxyAEExtension) from;
+        setForwardRules(proxyAEE.forwardRules);
+        setForwardSchedules(proxyAEE.forwardSchedules);
+        setRetries(proxyAEE.retries);
     }
 
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
@@ -464,116 +402,17 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         return rules;
     }
 
-    private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
-        for (ForwardRule rule : forwardRules)
-            if (rule.getReceiveSchedule().isNow(new GregorianCalendar()))
-                if (rule.containsTemplateURI())
-                    return true;
-        return false;
-    }
-
-    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, AAssociateAC ac, ForwardRule forwardRule) 
-            throws IOException {
-        String calledAET = forwardRule.getDestinationAETitles().get(0);
-        try {
-            if (forwardRule.getUseCallingAET() != null)
-                rq.setCallingAET(forwardRule.getUseCallingAET());
-            else if (!getAETitle().equals("*"))
-                rq.setCallingAET(getAETitle());
-            rq.setCalledAET(calledAET);
-            Association asCalled = connect(getDestinationAE(calledAET), rq);
-            as.setProperty(FORWARD_ASSOCIATION, asCalled);
-            asCalled.setProperty(FORWARD_ASSOCIATION, as);
-            AAssociateAC acCalled = asCalled.getAAssociateAC();
-            if (forwardRule.isExclusiveUseDefinedTC()) {
-                AAssociateAC acProxy = super.negotiate(as, rq, new AAssociateAC());
-                for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
-                    final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
-                    ac.addPresentationContext(pcLocal.isAccepted() ? pcCalled : pcLocal);
-                }
-            } else
-                for (PresentationContext pc : acCalled.getPresentationContexts())
-                    ac.addPresentationContext(pc);
-            for (RoleSelection rs : acCalled.getRoleSelections())
-                ac.addRoleSelection(rs);
-            for (ExtendedNegotiation extNeg : acCalled.getExtendedNegotiations())
-                ac.addExtendedNegotiation(extNeg);
-            for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
-                ac.addCommonExtendedNegotiation(extNeg);
-            return ac;
-        } catch (ConfigurationException e) {
-            LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
-            throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
-        } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, rj, RetryObject.AAssociateRJ.getSuffix(),
-                    rj.getReason());
-        } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, aa, RetryObject.AAbort.getSuffix(),
-                    aa.getReason());
-        } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
-                    RetryObject.ConnectionException.getSuffix(), 0);
-        } catch (InterruptedException e) {
-            LOG.debug("Unexpected exception: ", e.getMessage());
-            throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
-        } catch (IncompatibleConnectionException e) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
-                    RetryObject.IncompatibleConnectionException.getSuffix(), 0);
-        } catch (GeneralSecurityException e) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
-                    RetryObject.GeneralSecurityException.getSuffix(), 0);
-        }
-    }
-
-    private AAssociateAC handleNegotiateConnectException(Association as, AAssociateRQ rq,
-            AAssociateAC ac, String destinationAETitle, Exception e, String suffix, int reason) 
-                    throws IOException, AAbort {
-        as.clearProperty(FORWARD_ASSOCIATION);
-        LOG.debug(as + ": unable to connect to {}: {}", new Object[]{destinationAETitle, e.getMessage()});
-        if (acceptDataOnFailedNegotiation) {
-            as.setProperty(FILE_SUFFIX, suffix);
-            return super.negotiate(as, rq, ac);
-        }
-        throw new AAbort(AAbort.UL_SERIVE_PROVIDER, reason);
-    }
-
-    @Override
-    protected void onClose(Association asAccepted) {
-        super.onClose(asAccepted);
-        Association[] asInvoked;
-        Object forwardAssociationProperty = asAccepted.getProperty(FORWARD_ASSOCIATION);
-        if (forwardAssociationProperty == null)
-            return;
-
-        if (forwardAssociationProperty instanceof Association) {
-            ArrayList<Association> list = new ArrayList<Association>(1);
-            list.add((Association) forwardAssociationProperty);
-            asInvoked = list.toArray(new Association[1]);
-        } else {
-            @SuppressWarnings("unchecked")
-            HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
-            asInvoked = fwdAssocs.values().toArray(new Association[fwdAssocs.size()]);
-        }
-        for (Association as : asInvoked) {
-            if (as != null && as.isRequestor())
-                try {
-                    as.release();
-                } catch (IOException e) {
-                    LOG.debug("Failed to release {} ({})", new Object[] { as, e });
-                }
-        }
-    }
-
-    public void coerceDataset(String remoteAET, Role role, Dimse dimse, Attributes attrs) throws IOException {
+    public void coerceDataset(String remoteAET, Role role, Dimse dimse, Attributes attrs,
+            ProxyDeviceExtension proxyDevExt) throws IOException {
         AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(dimse.tagOfSOPClassUID()), role, dimse);
         if (ac != null)
-            coerceAttributes(attrs, ac);
+            coerceAttributes(attrs, ac, proxyDevExt);
     }
 
-    public void coerceAttributes(Attributes attrs, AttributeCoercion ac) {
+    public void coerceAttributes(Attributes attrs, AttributeCoercion ac, ProxyDeviceExtension proxyDevExt) {
         Attributes modify = new Attributes();
         try {
-            SAXWriter w = SAXTransformer.getSAXWriter(getTemplates(ac.getURI()), modify);
+            SAXWriter w = SAXTransformer.getSAXWriter(proxyDevExt.getTemplates(ac.getURI()), modify);
             w.setIncludeKeyword(false);
             w.write(attrs);
         } catch (Exception e) {
@@ -613,7 +452,8 @@ public class ProxyApplicationEntity extends ApplicationEntity {
         attributeCoercions.add(ac);
     }
 
-    public HashMap<String, Association> openForwardAssociations(Association asAccepted, List<ForwardRule> forwardRules) {
+    public HashMap<String, Association> openForwardAssociations(Association asAccepted, List<ForwardRule> forwardRules,
+            ApplicationEntityCache aeCache) {
         HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(forwardRules.size());
         for (ForwardRule rule : forwardRules) {
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule
@@ -621,7 +461,7 @@ public class ProxyApplicationEntity extends ApplicationEntity {
             List<String> destinationAETs = getDestinationAETsFromForwardRule(asAccepted, rule);
             for (String calledAET : destinationAETs) {
                 Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
-                        asAccepted.getAAssociateRQ());
+                        asAccepted.getAAssociateRQ(), aeCache);
                 if (asInvoked != null)
                     fwdAssocs.put(calledAET, asInvoked);
             }
@@ -630,12 +470,12 @@ public class ProxyApplicationEntity extends ApplicationEntity {
     }
 
     public Association openForwardAssociation(Association asAccepted, ForwardRule rule, String callingAET,
-            String calledAET, AAssociateRQ rq) {
+            String calledAET, AAssociateRQ rq, ApplicationEntityCache aeCache) {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
         Association asInvoked = null;
         try {
-            asInvoked = connect(getDestinationAE(calledAET), rq);
+            asInvoked = getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
             asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
             asInvoked.setProperty(ForwardRule.class.getName(), rule);
         } catch (IncompatibleConnectionException e) {

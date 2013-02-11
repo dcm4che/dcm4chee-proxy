@@ -15,8 +15,8 @@
     <servlet-name>dcm4chee-proxy</servlet-name>
     <servlet-class>org.dcm4chee.proxy.ProxyServlet</servlet-class>
     <init-param>
-      <param-name>dicomConfigurationClass</param-name>
-      <param-value>${config-class}</param-value>
+      <param-name>ldapPropertiesURL</param-name>
+      <param-value>file:${jboss.server.config.dir}/dcm4chee-proxy/ldap.properties</param-value>
     </init-param>
     <init-param>
       <param-name>deviceName</param-name>
@@ -24,7 +24,7 @@
     </init-param>
     <init-param>
       <param-name>jmxName</param-name>
-      <param-value>dcm4che:service=dcm4chee-proxy</param-value>
+      <param-value>org.dcm4chee.proxy:type=Service</param-value>
     </init-param>
     <load-on-startup>1</load-on-startup>
   </servlet>

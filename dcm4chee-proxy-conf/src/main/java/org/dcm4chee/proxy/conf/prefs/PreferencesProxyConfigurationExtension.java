@@ -38,7 +38,6 @@
 
 package org.dcm4chee.proxy.conf.prefs;
 
-import java.io.Serializable;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,18 +48,19 @@ import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
+import org.dcm4che.conf.prefs.PreferencesDicomConfigurationExtension;
+import org.dcm4che.conf.prefs.PreferencesUtils;
+import org.dcm4che.conf.prefs.hl7.PreferencesHL7ConfigurationExtension;
 import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardSchedule;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
-import org.dcm4chee.proxy.conf.ProxyDevice;
-import org.dcm4chee.proxy.conf.ProxyHL7Application;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
+import org.dcm4chee.proxy.conf.ProxyHL7ApplicationExtension;
 import org.dcm4chee.proxy.conf.Retry;
 import org.dcm4chee.proxy.conf.Schedule;
 
@@ -68,139 +68,114 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
-public class PreferencesProxyConfiguration extends PreferencesHL7Configuration implements Serializable {
-
-    private static final long serialVersionUID = 7295686215722926221L;
-
-    @Override
-    protected Device newDevice(Preferences deviceNode) {
-        if (!deviceNode.getBoolean("dcmProxyDevice", false))
-            return super.newDevice(deviceNode);
-
-        ProxyDevice device = new ProxyDevice(deviceNode.name());
-        device.setDicomConf(this);
-        return device;
-    }
-
-    @Override
-    protected ApplicationEntity newApplicationEntity(Preferences aeNode) {
-        if (!aeNode.getBoolean("dcmProxyNetworkAE", false))
-            return super.newApplicationEntity(aeNode);
-
-        return new ProxyApplicationEntity(aeNode.name());
-    }
-
-    @Override
-    protected HL7Application newHL7Application(Preferences hl7AppNode) {
-        if (!hl7AppNode.getBoolean("dcmArchiveHL7Application", false))
-            return super.newHL7Application(hl7AppNode);
-
-        return new ProxyHL7Application(hl7AppNode.name());
-    }
+public class PreferencesProxyConfigurationExtension extends PreferencesDicomConfigurationExtension implements
+        PreferencesHL7ConfigurationExtension {
 
     @Override
     protected void storeTo(Device device, Preferences prefs) {
-        super.storeTo(device, prefs);
-        if (!(device instanceof ProxyDevice))
+        ProxyDeviceExtension proxyDev = device.getDeviceExtension(ProxyDeviceExtension.class);
+        if (proxyDev == null)
             return;
 
-        ProxyDevice proxyDev = (ProxyDevice) device;
         prefs.putBoolean("dcmProxyDevice", true);
-        storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
-        storeNotNull(prefs, "dcmForwardThreads", proxyDev.getForwardThreads());
-        storeNotDef(prefs, "dcmProxyConfigurationStaleTimeout", proxyDev.getConfigurationStaleTimeout(), 0);
+        PreferencesUtils.storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
+        PreferencesUtils.storeNotNull(prefs, "dcmForwardThreads", proxyDev.getForwardThreads());
+        PreferencesUtils.storeNotDef(prefs, "dcmProxyConfigurationStaleTimeout",
+                proxyDev.getConfigurationStaleTimeout(), 0);
     }
 
     @Override
-    protected void storeTo(ApplicationEntity ae, Preferences prefs, List<Connection> devConns) {
-        super.storeTo(ae, prefs, devConns);
-        if (!(ae instanceof ProxyApplicationEntity))
+    protected void storeTo(ApplicationEntity ae, Preferences prefs) {
+        ProxyAEExtension proxyAE = ae.getAEExtension(ProxyAEExtension.class);
+        if (proxyAE == null)
             return;
 
-        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         prefs.putBoolean("dcmProxyNetworkAE", true);
-        storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
-        storeNotNull(prefs, "dcmAcceptDataOnFailedNegotiation", proxyAE.isAcceptDataOnFailedNegotiation());
-        storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
-        storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
-        storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
-        storeNotNull(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
+        PreferencesUtils.storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
+        PreferencesUtils.storeNotNull(prefs, "dcmAcceptDataOnFailedNegotiation",
+                proxyAE.isAcceptDataOnFailedNegotiation());
+        PreferencesUtils.storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
+        PreferencesUtils
+                .storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
+        PreferencesUtils
+                .storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
+        PreferencesUtils.storeNotNull(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
                 proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
-        storeNotNull(prefs, "dcmDestinationAETitle", proxyAE.getFallbackDestinationAET());
+        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", proxyAE.getFallbackDestinationAET());
     }
 
     @Override
-    protected void storeTo(HL7Application hl7App, Preferences prefs,
-            List<Connection> devConns) {
-        super.storeTo(hl7App, prefs, devConns);
-        if (!(hl7App instanceof ProxyHL7Application))
+    public void storeTo(HL7Application hl7App, Preferences prefs) {
+        ProxyHL7ApplicationExtension prxHL7App = hl7App.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
+        if (prxHL7App == null)
             return;
 
-        ProxyHL7Application prxHL7App = (ProxyHL7Application) hl7App;
         prefs.putBoolean("dcmProxyHL7Application", true);
-        storeNotEmpty(prefs, "labeledURI", prxHL7App.getTemplatesURIs());
+        PreferencesUtils.storeNotEmpty(prefs, "labeledURI", prxHL7App.getTemplatesURIs());
     }
 
     @Override
     protected void loadFrom(Device device, Preferences prefs) throws CertificateException, BackingStoreException {
-        super.loadFrom(device, prefs);
-        if (!(device instanceof ProxyDevice))
+        if (!prefs.getBoolean("dcmProxyDevice", false))
             return;
 
-        ProxyDevice proxyDev = (ProxyDevice) device;
-        proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval", ProxyDevice.DEFAULT_SCHEDULER_INTERVAL));
-        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", ProxyDevice.DEFAULT_FORWARD_THREADS));
+        ProxyDeviceExtension proxyDev = new ProxyDeviceExtension();
+        device.addDeviceExtension(proxyDev);
+        proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval",
+                ProxyDeviceExtension.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", ProxyDeviceExtension.DEFAULT_FORWARD_THREADS));
         proxyDev.setConfigurationStaleTimeout(prefs.getInt("dcmProxyConfigurationStaleTimeout", 0));
     }
 
     @Override
     protected void loadFrom(ApplicationEntity ae, Preferences prefs) {
-        super.loadFrom(ae, prefs);
-        if (!(ae instanceof ProxyApplicationEntity))
+        if (!prefs.getBoolean("dcmProxyNetworkAE", false))
             return;
-        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
-        proxyAE.setSpoolDirectory(prefs.get("dcmSpoolDirectory", null));
-        proxyAE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmAcceptDataOnFailedNegotiation", false));
-        proxyAE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
-        proxyAE.setProxyPIXConsumerApplication(prefs.get("hl7ProxyPIXConsumerApplication", null));
-        proxyAE.setRemotePIXManagerApplication(prefs.get("hl7RemotePIXManagerApplication", null));
-        proxyAE.setDeleteFailedDataWithoutRetryConfiguration(prefs.getBoolean(
+
+        ProxyAEExtension proxyAEE = new ProxyAEExtension();
+        ae.addAEExtension(proxyAEE);
+        proxyAEE.setSpoolDirectory(prefs.get("dcmSpoolDirectory", null));
+        proxyAEE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmAcceptDataOnFailedNegotiation", false));
+        proxyAEE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
+        proxyAEE.setProxyPIXConsumerApplication(prefs.get("hl7ProxyPIXConsumerApplication", null));
+        proxyAEE.setRemotePIXManagerApplication(prefs.get("hl7RemotePIXManagerApplication", null));
+        proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(prefs.getBoolean(
                 "dcmDeleteFailedDataWithoutRetryConfiguration", false));
-        proxyAE.setFallbackDestinationAET(prefs.get("dcmDestinationAETitle", null));
+        proxyAEE.setFallbackDestinationAET(prefs.get("dcmDestinationAETitle", null));
     }
 
     @Override
-    protected void loadFrom(HL7Application hl7App, Preferences prefs) {
-        super.loadFrom(hl7App, prefs);
-        if (!(hl7App instanceof ProxyHL7Application))
+    public void loadFrom(HL7Application hl7App, Preferences prefs) {
+        if (!prefs.getBoolean("dcmProxyHL7Application", false))
             return;
-        ProxyHL7Application arcHL7App = (ProxyHL7Application) hl7App;
-        arcHL7App.setTemplatesURIs(stringArray(prefs, "labeledURI"));
+
+        ProxyHL7ApplicationExtension proxyHL7App = new ProxyHL7ApplicationExtension();
+        hl7App.addHL7ApplicationExtension(proxyHL7App);
+        proxyHL7App.setTemplatesURIs(PreferencesUtils.stringArray(prefs, "labeledURI"));
     }
 
     @Override
     protected void loadChilds(ApplicationEntity ae, Preferences aeNode) throws BackingStoreException {
-        super.loadChilds(ae, aeNode);
-        if (!(ae instanceof ProxyApplicationEntity))
+        ProxyAEExtension proxyAE = ae.getAEExtension(ProxyAEExtension.class);
+        if (proxyAE == null)
             return;
 
-        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         loadRetries(proxyAE, aeNode);
         loadForwardSchedules(proxyAE, aeNode);
         loadForwardRules(proxyAE, aeNode);
-        load(proxyAE.getAttributeCoercions(), aeNode);
+        config.load(proxyAE.getAttributeCoercions(), aeNode);
     }
 
-    private void loadForwardRules(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
+    private void loadForwardRules(ProxyAEExtension proxyAE, Preferences paeNode) throws BackingStoreException {
         Preferences rulesNode = paeNode.node("dcmForwardRule");
         List<ForwardRule> rules = new ArrayList<ForwardRule>();
         for (String ruleName : rulesNode.childrenNames()) {
             Preferences ruleNode = rulesNode.node(ruleName);
             ForwardRule rule = new ForwardRule();
             rule.setDimse(Arrays.asList(dimseArray(ruleNode, "dcmForwardRuleDimse")));
-            rule.setSopClass(Arrays.asList(stringArray(ruleNode, "dcmSOPClass")));
+            rule.setSopClass(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "dcmSOPClass")));
             rule.setCallingAET(ruleNode.get("dcmCallingAETitle", null));
-            rule.setDestinationURIs(Arrays.asList(stringArray(ruleNode, "labeledURI")));
+            rule.setDestinationURIs(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "labeledURI")));
             rule.setUseCallingAET(ruleNode.get("dcmUseCallingAETitle", null));
             rule.setExclusiveUseDefinedTC(ruleNode.getBoolean("dcmExclusiveUseDefinedTC", Boolean.FALSE));
             rule.setCommonName(ruleNode.get("cn", null));
@@ -230,7 +205,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         return dimse;
     }
 
-    private void loadForwardSchedules(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
+    private void loadForwardSchedules(ProxyAEExtension proxyAE, Preferences paeNode) throws BackingStoreException {
         Preferences schedulesNode = paeNode.node("dcmForwardSchedule");
         HashMap<String, ForwardSchedule> fwdSchedules = new HashMap<String, ForwardSchedule>();
         for (String scheduleIndex : schedulesNode.childrenNames()) {
@@ -247,7 +222,7 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         proxyAE.setForwardSchedules(fwdSchedules);
     }
 
-    private void loadRetries(ProxyApplicationEntity proxyAE, Preferences paeNode) throws BackingStoreException {
+    private void loadRetries(ProxyAEExtension proxyAE, Preferences paeNode) throws BackingStoreException {
         Preferences retriesNode = paeNode.node("dcmRetry");
         List<Retry> retries = new ArrayList<Retry>();
         for (String retryIndex : retriesNode.childrenNames()) {
@@ -265,15 +240,14 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
 
     @Override
     protected void storeChilds(ApplicationEntity ae, Preferences aeNode) {
-        super.storeChilds(ae, aeNode);
-        if (!(ae instanceof ProxyApplicationEntity))
+        ProxyAEExtension proxyAE = ae.getAEExtension(ProxyAEExtension.class);
+        if (proxyAE == null)
             return;
 
-        ProxyApplicationEntity proxyAE = (ProxyApplicationEntity) ae;
         storeRetries(proxyAE.getRetries(), aeNode);
         storeForwardSchedules(proxyAE.getForwardSchedules().values(), aeNode);
         storeForwardRules(proxyAE.getForwardRules(), aeNode);
-        store(proxyAE.getAttributeCoercions(), aeNode);
+        config.store(proxyAE.getAttributeCoercions(), aeNode);
     }
 
     private void storeForwardRules(List<ForwardRule> forwardRules, Preferences paeNode) {
@@ -284,25 +258,27 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
 
     private void storeToForwardRule(ForwardRule rule, Preferences prefs) {
         storeForwardRuleDimse(rule, prefs);
-        storeNotEmpty(prefs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
-        storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
-        storeNotEmpty(prefs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
-        storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
-        storeNotDef(prefs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC(), Boolean.FALSE);
-        storeNotNull(prefs, "cn", rule.getCommonName());
-        storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
-        storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
-        storeNotNull(prefs, "dcmConversion", rule.getConversion());
-        storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
-        storeNotDef(prefs, "dcmPIXQuery", rule.isRunPIXQuery(), Boolean.FALSE);
-        storeNotNull(prefs, "dicomDescription", rule.getDescription());
+        PreferencesUtils.storeNotEmpty(prefs, "dcmSOPClass",
+                rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
+        PreferencesUtils.storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
+        PreferencesUtils.storeNotEmpty(prefs, "labeledURI",
+                rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
+        PreferencesUtils.storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
+        PreferencesUtils.storeNotDef(prefs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC(), Boolean.FALSE);
+        PreferencesUtils.storeNotNull(prefs, "cn", rule.getCommonName());
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
+        PreferencesUtils.storeNotNull(prefs, "dcmConversion", rule.getConversion());
+        PreferencesUtils.storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
+        PreferencesUtils.storeNotDef(prefs, "dcmPIXQuery", rule.isRunPIXQuery(), Boolean.FALSE);
+        PreferencesUtils.storeNotNull(prefs, "dicomDescription", rule.getDescription());
     }
 
     private void storeForwardRuleDimse(ForwardRule rule, Preferences prefs) {
         List<String> dimseList = new ArrayList<String>();
         for (Dimse dimse : rule.getDimse())
             dimseList.add(dimse.toString());
-        storeNotEmpty(prefs, "dcmForwardRuleDimse", dimseList.toArray(new String[dimseList.size()]));
+        PreferencesUtils.storeNotEmpty(prefs, "dcmForwardRuleDimse", dimseList.toArray(new String[dimseList.size()]));
     }
 
     private void storeForwardSchedules(Collection<ForwardSchedule> fwdSchedules, Preferences parentNode) {
@@ -312,10 +288,10 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
     }
 
     private void storeToForwardSchedule(ForwardSchedule forwardSchedule, Preferences prefs) {
-        storeNotNull(prefs, "dcmScheduleDays", forwardSchedule.getSchedule().getDays());
-        storeNotNull(prefs, "dcmScheduleHours", forwardSchedule.getSchedule().getHours());
-        storeNotNull(prefs, "dcmDestinationAETitle", forwardSchedule.getDestinationAET());
-        storeNotNull(prefs, "dicomDescription", forwardSchedule.getDescription());
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", forwardSchedule.getSchedule().getDays());
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", forwardSchedule.getSchedule().getHours());
+        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", forwardSchedule.getDestinationAET());
+        PreferencesUtils.storeNotNull(prefs, "dicomDescription", forwardSchedule.getDescription());
     }
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
@@ -325,78 +301,70 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
     }
 
     private void storeToRetry(Retry retry, Preferences prefs) {
-        storeNotNull(prefs, "dcmRetryObject", retry.getRetryObject().toString());
-        storeNotNull(prefs, "dcmRetryDelay", retry.getDelay());
-        storeNotNull(prefs, "dcmRetryNum", retry.getNumberOfRetries());
-        storeNotNull(prefs, "dcmDeleteAfterFinalRetry", retry.isDeleteAfterFinalRetry());
+        PreferencesUtils.storeNotNull(prefs, "dcmRetryObject", retry.getRetryObject().toString());
+        PreferencesUtils.storeNotNull(prefs, "dcmRetryDelay", retry.getDelay());
+        PreferencesUtils.storeNotNull(prefs, "dcmRetryNum", retry.getNumberOfRetries());
+        PreferencesUtils.storeNotNull(prefs, "dcmDeleteAfterFinalRetry", retry.isDeleteAfterFinalRetry());
     }
 
     @Override
-    protected void storeDiffs(Preferences prefs, ApplicationEntity a, ApplicationEntity b) {
-        super.storeDiffs(prefs, a, b);
-        if (!(a instanceof ProxyApplicationEntity) || !(b instanceof ProxyApplicationEntity))
+    protected void storeDiffs(ApplicationEntity a, ApplicationEntity b, Preferences prefs) {
+        ProxyAEExtension pa = a.getAEExtension(ProxyAEExtension.class);
+        ProxyAEExtension pb = b.getAEExtension(ProxyAEExtension.class);
+        if (pa == null || pb == null)
             return;
 
-        ProxyApplicationEntity pa = (ProxyApplicationEntity) a;
-        ProxyApplicationEntity pb = (ProxyApplicationEntity) b;
-        storeDiff(prefs, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
-        storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
+        PreferencesUtils.storeDiff(prefs, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
+        PreferencesUtils.storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
                 pb.isAcceptDataOnFailedNegotiation());
-        storeDiff(prefs, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
-        storeDiff(prefs, "hl7ProxyPIXConsumerApplication", pa.getProxyPIXConsumerApplication(),
+        PreferencesUtils.storeDiff(prefs, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
+        PreferencesUtils.storeDiff(prefs, "hl7ProxyPIXConsumerApplication", pa.getProxyPIXConsumerApplication(),
                 pb.getProxyPIXConsumerApplication());
-        storeDiff(prefs, "hl7RemotePIXManagerApplication", pa.getRemotePIXManagerApplication(),
+        PreferencesUtils.storeDiff(prefs, "hl7RemotePIXManagerApplication", pa.getRemotePIXManagerApplication(),
                 pb.getRemotePIXManagerApplication());
-        storeDiff(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration", 
+        PreferencesUtils.storeDiff(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration", 
                 pa.isDeleteFailedDataWithoutRetryConfiguration(),
                 pb.isDeleteFailedDataWithoutRetryConfiguration());
-        storeDiff(prefs, "dcmDestinationAETitle", pa.getFallbackDestinationAET(), pb.getFallbackDestinationAET());
+        PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", pa.getFallbackDestinationAET(), pb.getFallbackDestinationAET());
     }
 
     @Override
-    protected void storeDiffs(Preferences prefs, Device a, Device b) {
-        super.storeDiffs(prefs, a, b);
-        if (!(a instanceof ProxyDevice) || !(b instanceof ProxyDevice))
+    protected void storeDiffs(Device a, Device b, Preferences prefs) {
+        ProxyDeviceExtension pa = a.getDeviceExtension(ProxyDeviceExtension.class);
+        ProxyDeviceExtension pb = b.getDeviceExtension(ProxyDeviceExtension.class);
+        if (pa == null || pb == null)
             return;
 
-        ProxyDevice pa = (ProxyDevice) a;
-        ProxyDevice pb = (ProxyDevice) b;
-        storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
-        storeDiff(prefs, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
-        storeDiff(prefs, "dcmProxyConfigurationStaleTimeout",
+        PreferencesUtils.storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
+        PreferencesUtils.storeDiff(prefs, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
+        PreferencesUtils.storeDiff(prefs, "dcmProxyConfigurationStaleTimeout", 
                 pa.getConfigurationStaleTimeout(),
-                pb.getConfigurationStaleTimeout(),
+                pb.getConfigurationStaleTimeout(), 
                 0);
     }
 
     @Override
-    protected void mergeChilds(ApplicationEntity prev, ApplicationEntity ae, Preferences aeNode)
+    protected void mergeChilds(ApplicationEntity prev, ApplicationEntity ae, Preferences aePrefs)
             throws BackingStoreException {
-        super.mergeChilds(prev, ae, aeNode);
-        if (!(prev instanceof ProxyApplicationEntity) || !(ae instanceof ProxyApplicationEntity))
+        ProxyAEExtension pprev = prev.getAEExtension(ProxyAEExtension.class);
+        ProxyAEExtension pae = ae.getAEExtension(ProxyAEExtension.class);
+        if (pprev == null || pae == null)
             return;
 
-        ProxyApplicationEntity pprev = (ProxyApplicationEntity) prev;
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) ae;
-        merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeNode);
-        mergeRetries(pprev.getRetries(), pae.getRetries(), aeNode);
-        mergeForwardSchedules(pprev.getForwardSchedules().values(), pae.getForwardSchedules().values(), aeNode);
-        mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeNode);
+        config.merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aePrefs);
+        mergeRetries(pprev.getRetries(), pae.getRetries(), aePrefs);
+        mergeForwardSchedules(pprev.getForwardSchedules().values(), pae.getForwardSchedules().values(), aePrefs);
+        mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aePrefs);
     }
 
     @Override
-    protected void storeDiffs(Preferences prefs, HL7Application a,
-            HL7Application b) {
-        super.storeDiffs(prefs, a, b);
-        if (!(a instanceof ProxyHL7Application 
-           && b instanceof ProxyHL7Application))
-                 return;
+    public void storeDiffs(HL7Application a, HL7Application b, Preferences prefs) {
+        ProxyHL7ApplicationExtension pa = a.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
+        ProxyHL7ApplicationExtension pb = b.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
+        if (pa == null || pb == null)
+            return;
 
-         ProxyHL7Application aa = (ProxyHL7Application) a;
-         ProxyHL7Application bb = (ProxyHL7Application) b;
-         storeDiff(prefs, "labeledURI",
-                 aa.getTemplatesURIs(),
-                 bb.getTemplatesURIs());
+        PreferencesUtils.storeDiff(prefs, "labeledURI", pa.getTemplatesURIs(), pb.getTemplatesURIs());
     }
 
     private void mergeForwardRules(List<ForwardRule> prevForwardRules, List<ForwardRule> currForwardRules,
@@ -427,25 +395,25 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
         List<String> dimseB = new ArrayList<String>();
         for (Dimse dimse : ruleB.getDimse())
             dimseB.add(dimse.toString());
-        storeDiff(prefs, "dcmForwardRuleDimse", 
+        PreferencesUtils.storeDiff(prefs, "dcmForwardRuleDimse", 
                 dimseA.toArray(new String[dimseA.size()]), 
                 dimseB.toArray(new String[dimseB.size()]));
-        storeDiff(prefs, "dcmSOPClass",
+        PreferencesUtils.storeDiff(prefs, "dcmSOPClass",
                 ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
                 ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
-        storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
-        storeDiff(prefs, "labeledURI", 
+        PreferencesUtils.storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
+        PreferencesUtils.storeDiff(prefs, "labeledURI", 
                 ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), 
                 ruleB.getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
-        storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
-        storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
-        storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
-        storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
-        storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
-        storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
-        storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
-        storeDiff(prefs, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
-        storeDiff(prefs, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
+        PreferencesUtils.storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
+        PreferencesUtils.storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
+        PreferencesUtils.storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
+        PreferencesUtils.storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
+        PreferencesUtils.storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
+        PreferencesUtils.storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
+        PreferencesUtils.storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
+        PreferencesUtils.storeDiff(prefs, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
+        PreferencesUtils.storeDiff(prefs, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
     }
 
     private void mergeForwardSchedules(Collection<ForwardSchedule> prevSchedules,
@@ -470,10 +438,10 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
     }
 
     private void storeForwardScheduleDiffs(Preferences prefs, ForwardSchedule a, ForwardSchedule b) {
-        storeDiff(prefs, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
-        storeDiff(prefs, "dcmScheduleDays", a.getSchedule().getDays(), b.getSchedule().getDays());
-        storeDiff(prefs, "dcmScheduleHours", a.getSchedule().getHours(), b.getSchedule().getHours());
-        storeDiff(prefs, "dicomDescription", a.getDescription(), b.getDescription());
+        PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
+        PreferencesUtils.storeDiff(prefs, "dcmScheduleDays", a.getSchedule().getDays(), b.getSchedule().getDays());
+        PreferencesUtils.storeDiff(prefs, "dcmScheduleHours", a.getSchedule().getHours(), b.getSchedule().getHours());
+        PreferencesUtils.storeDiff(prefs, "dicomDescription", a.getDescription(), b.getDescription());
     }
 
     private void mergeRetries(List<Retry> prevRetries, List<Retry> currRetries, Preferences parentNode)
@@ -498,8 +466,8 @@ public class PreferencesProxyConfiguration extends PreferencesHL7Configuration i
     }
 
     private void storeRetryDiffs(Preferences prefs, Retry a, Retry b) {
-        storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
-        storeDiff(prefs, "dcmRetryNum", a.getNumberOfRetries(), b.getNumberOfRetries());
-        storeDiff(prefs, "dcmDeleteAfterFinalRetry", a.isDeleteAfterFinalRetry(), b.isDeleteAfterFinalRetry());
+        PreferencesUtils.storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
+        PreferencesUtils.storeDiff(prefs, "dcmRetryNum", a.getNumberOfRetries(), b.getNumberOfRetries());
+        PreferencesUtils.storeDiff(prefs, "dcmDeleteAfterFinalRetry", a.isDeleteAfterFinalRetry(), b.isDeleteAfterFinalRetry());
     }
 }

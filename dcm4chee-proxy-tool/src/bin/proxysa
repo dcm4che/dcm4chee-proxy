@@ -6,7 +6,7 @@
 MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
 MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
 
-DCM4CHE_VERSION=3.0.1
+DCM4CHE_VERSION=3.0.2-SNAPSHOT
 
 DIRNAME="`dirname "$0"`"
 

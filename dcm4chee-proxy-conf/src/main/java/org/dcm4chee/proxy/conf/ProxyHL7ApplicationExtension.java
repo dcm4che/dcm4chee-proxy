@@ -44,26 +44,19 @@ import java.util.Map;
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
 
-import org.dcm4che.net.hl7.HL7Application;
+import org.dcm4che.io.TemplatesCache;
+import org.dcm4che.net.hl7.HL7ApplicationExtension;
+import org.dcm4che.util.StringUtils;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  * @author Gunter Zeilinger <gunterze@gmail.com>
  */
-public class ProxyHL7Application extends HL7Application {
+public class ProxyHL7ApplicationExtension extends HL7ApplicationExtension {
 
     private static final long serialVersionUID = 4760865893085490161L;
 
-    private final LinkedHashMap<String, String> templatesURIs =
-            new LinkedHashMap<String, String>();
-
-    public ProxyHL7Application(String name) {
-        super(name);
-    }
-
-    public final ProxyDevice getProxyDevice() {
-        return ((ProxyDevice) getDevice());
-    }
+    private final LinkedHashMap<String, String> templatesURIs = new LinkedHashMap<String, String>();
 
     public void addTemplatesURI(String key, String uri) {
         templatesURIs.put(key, uri);
@@ -86,30 +79,28 @@ public class ProxyHL7Application extends HL7Application {
         int i = 0;
         for (Map.Entry<String, String> entry : templatesURIs.entrySet())
             ss[i++] = entry.getValue() + " " + entry.getKey();
-        return ss ;
+        return ss;
     }
 
     public void setTemplatesURIs(String[] ss) {
         clearTemplatesURIs();
         for (String s : ss) {
             int end = s.indexOf(' ');
-            addTemplatesURI(s.substring(end+1), s.substring(0, end));
+            addTemplatesURI(s.substring(end + 1), s.substring(0, end));
         }
     }
 
     public Templates getTemplates(String key) throws TransformerConfigurationException {
         String uri = getTemplatesURI(key);
         if (uri == null)
-            throw new TransformerConfigurationException(
-                    "No templates for " + key + " configured");
-        return uri != null ? getProxyDevice().getTemplates(uri) : null;
+            throw new TransformerConfigurationException("No templates for " + key + " configured");
+        return TemplatesCache.getDefault().get(StringUtils.replaceSystemProperties(uri).replace('\\', '/'));
     }
 
     @Override
-    protected void setHL7ApplicationAttributes(HL7Application src) {
-        super.setHL7ApplicationAttributes(src);
-        ProxyHL7Application arcapp = (ProxyHL7Application) src;
+    public void reconfigure(HL7ApplicationExtension src) {
+        ProxyHL7ApplicationExtension proxyApp = (ProxyHL7ApplicationExtension) src;
         templatesURIs.clear();
-        templatesURIs.putAll(arcapp.templatesURIs);
+        templatesURIs.putAll(proxyApp.templatesURIs);
     }
 }

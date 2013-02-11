@@ -45,12 +45,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.xml.transform.TransformerFactoryConfigurationError;
 
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
@@ -61,6 +63,7 @@ import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.Commands;
@@ -76,10 +79,11 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardSchedule;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -87,8 +91,11 @@ import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
  */
 public class CStore extends BasicCStoreSCP {
 
-    public CStore(String... sopClasses) {
+    private ApplicationEntityCache aeCache;
+    
+    public CStore(ApplicationEntityCache aeCache, String... sopClasses) {
         super(sopClasses);
+        this.aeCache = aeCache;
     }
 
     @Override
@@ -97,44 +104,100 @@ public class CStore extends BasicCStoreSCP {
         if (dimse != Dimse.C_STORE_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
-        Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         ForwardRule fwdRule = (ForwardRule) asAccepted.getProperty(ForwardRule.class.getName());
+        ApplicationEntity ae = asAccepted.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         if (forwardAssociationProperty == null
-                || !((ProxyApplicationEntity) asAccepted.getApplicationEntity()).getAttributeCoercions().getAll().isEmpty()
-                || ((ProxyApplicationEntity) asAccepted.getApplicationEntity()).isEnableAuditLog()
+                || !proxyAEE.getAttributeCoercions().getAll().isEmpty()
+                || proxyAEE.isEnableAuditLog()
                 || (forwardAssociationProperty instanceof HashMap<?, ?>)
-                || (requiresMultiFrameConversion(asAccepted, fwdRule, rq)))
+                || (requiresMultiFrameConversion(asAccepted, fwdRule, rq))
+                || proxyAEE.isAssociationFromDestinationAET(asAccepted))
             store(asAccepted, pc, rq, data, null);
         else {
             try {
-                forward(asAccepted, pc, rq, new InputStreamDataWriter(data), (Association) forwardAssociationProperty);
+                forward(asAccepted, pc, rq, new InputStreamDataWriter(data), (Association) forwardAssociationProperty, -1);
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
-                asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-                asAccepted.setProperty(ProxyApplicationEntity.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
+                asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
+                asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix());
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
             }
         }
     }
 
     @Override
-    protected void store(Association as, PresentationContext pc, Attributes rq, PDVInputStream data, Attributes rsp)
+    protected void store(Association as, PresentationContext pc, Attributes cmd, PDVInputStream data, Attributes rsp)
             throws IOException {
         File file = createSpoolFile(as);
         MessageDigest digest = getMessageDigest(as);
-        Attributes fmi = processInputStream(as, pc, rq, data, file, digest);
+        Attributes fmi = processInputStream(as, pc, cmd, data, file, digest);
+        ProxyAEExtension proxyAEE = as.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
         try {
-            Object forwardAssociationProperty = as.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-            if (forwardAssociationProperty != null && forwardAssociationProperty instanceof Association) {
-                processFile(as, (Association) forwardAssociationProperty, pc, rq, file, fmi);
-            } 
+            Object forwardAssociationProperty = as.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
+            if (proxyAEE.isAssociationFromDestinationAET(as) && forwardAssociationProperty == null)
+                forwardAssociationProperty = getCMoveDestinationAS(as, cmd, proxyAEE);
+            if (forwardAssociationProperty != null && forwardAssociationProperty instanceof Association)
+                processFile(as, (Association) forwardAssociationProperty, pc, cmd, file, fmi);
             else
-                processForwardRules(as, forwardAssociationProperty, pc, rq, rsp, file, fmi);
+                processForwardRules(as, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
         } catch (Exception e) {
-            LOG.error(as + ": error processing C-STORE-RQ: " + e.getMessage());
+            LOG.error(as + ": error processing C-STORE-RQ: ", e);
             throw new DicomServiceException(Status.UnableToProcess);
         } finally {
             deleteFile(as, file);
+        }
+    }
+
+    private Association getCMoveDestinationAS(Association as, Attributes cmd, ProxyAEExtension proxyAEE)
+            throws DicomServiceException {
+        int moveOriMsgId = cmd.getInt(Tag.MoveOriginatorMessageID, 0);
+        String moveOriAET = cmd.getString(Tag.MoveOriginatorApplicationEntityTitle);
+        CMoveInfoObject info = proxyAEE.getCMoveInfoObject(moveOriMsgId);
+        Association asInvoked = null;
+        if (info == null || !info.getMoveOriginatorAET().equals(moveOriAET)
+                || !info.getCalledAET().equals(as.getRemoteAET()))
+            return asInvoked;
+
+        AAssociateRQ rq = as.getAAssociateRQ();
+        rq.setCalledAET(info.getMoveDestinationAET());
+        if (info.getRule().getConversion() != null)
+            updatePresentationContext(cmd, rq);
+        try {
+            asInvoked = as.getApplicationEntity().connect(
+                    aeCache.findApplicationEntity(info.getMoveDestinationAET()), rq);
+            as.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
+            as.setProperty(ProxyAEExtension.FORWARD_CMOVE_INFO, info);
+            as.setProperty(ForwardRule.class.getName(), info.getRule());
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, as);
+        } catch (Exception e) {
+            LOG.error("Unable to connect to {}: {}", info.getMoveDestinationAET(), e.getMessage());
+            throw new DicomServiceException(Status.UnableToProcess);
+        }
+        return asInvoked;
+    }
+
+    private void updatePresentationContext(Attributes cmd, AAssociateRQ rq) {
+        String sopClass = cmd.getString(Tag.AffectedSOPClassUID);
+        if (sopClass.equals(UID.EnhancedCTImageStorage))
+            replacePresentationContext(rq, sopClass, UID.CTImageStorage);
+        else if (sopClass.equals(UID.EnhancedMRImageStorage))
+            replacePresentationContext(rq, sopClass, UID.MRImageStorage);
+        else if (sopClass.equals(UID.EnhancedPETImageStorage))
+            replacePresentationContext(rq, sopClass, UID.PositronEmissionTomographyImageStorage);
+    }
+
+    private void replacePresentationContext(AAssociateRQ rq, String prevAS, String newAS) {
+        List<PresentationContext> newPcList = new ArrayList<PresentationContext>();
+        for (PresentationContext pc : rq.getPresentationContexts())
+            if (pc.getAbstractSyntax().equals(prevAS)) {
+                PresentationContext newPC = new PresentationContext(pc.getPCID(), newAS, pc.getTransferSyntaxes());
+                newPcList.add(newPC);
+            }
+        for (PresentationContext pc : newPcList) {
+            rq.removePresentationContext(rq.getPresentationContext(pc.getPCID()));
+            rq.addPresentationContext(pc);
         }
     }
 
@@ -158,17 +221,19 @@ public class CStore extends BasicCStoreSCP {
     private void processForwardRules(Association as, Object forwardAssociationProperty, PresentationContext pc,
             Attributes rq, Attributes rsp, File file, Attributes fmi) throws IOException, DicomServiceException,
             ConfigurationException {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
+        ApplicationEntity ae = as.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         Association asInvoked = null;
-        List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(as, rq, Dimse.C_STORE_RQ);
+        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(as, rq, Dimse.C_STORE_RQ);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no matching forward rule");
 
         if (forwardRules.size() == 1 && forwardRules.get(0).getDestinationAETitles().size() == 1)
-            asInvoked = setSingleForwardDestination(as, forwardAssociationProperty, pae, asInvoked, forwardRules.get(0));
+            asInvoked = setSingleForwardDestination(as, forwardAssociationProperty, proxyAEE, asInvoked,
+                    forwardRules.get(0));
         boolean writeDimseRSP = false;
         for (ForwardRule rule : forwardRules)
-            writeDimseRSP = processForwardRule(as, pc, rq, file, fmi, pae, asInvoked, writeDimseRSP, rule);
+            writeDimseRSP = processForwardRule(as, pc, rq, file, fmi, proxyAEE, asInvoked, writeDimseRSP, rule);
         if (writeDimseRSP) {
             rsp = Commands.mkCStoreRSP(rq, Status.Success);
             try {
@@ -180,7 +245,7 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private boolean processForwardRule(Association as, PresentationContext pc, Attributes rq, File file,
-            Attributes fmi, ProxyApplicationEntity pae, Association asInvoked, boolean writeDimseRSP, ForwardRule rule)
+            Attributes fmi, ProxyAEExtension pae, Association asInvoked, boolean writeDimseRSP, ForwardRule rule)
             throws TransformerFactoryConfigurationError, DicomServiceException, IOException {
         String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
         List<String> destinationAETs = pae.getDestinationAETsFromForwardRule(as, rule);
@@ -199,7 +264,7 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private Association setSingleForwardDestination(Association as, Object forwardAssociationProperty,
-            ProxyApplicationEntity pae, Association asInvoked, ForwardRule rule) {
+            ProxyAEExtension pae, Association asInvoked, ForwardRule rule) {
         String calledAET = rule.getDestinationAETitles().get(0);
         ForwardSchedule forwardSchedule = pae.getForwardSchedules().get(calledAET);
         if (forwardSchedule == null || forwardSchedule.getSchedule().isNow(new GregorianCalendar())) {
@@ -211,7 +276,7 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private Association getSingleForwardDestination(Association as, String callingAET, String calledAET,
-            AAssociateRQ rq, Object forwardAssociationProperty, ProxyApplicationEntity pae, ForwardRule rule) {
+            AAssociateRQ rq, Object forwardAssociationProperty, ProxyAEExtension pae, ForwardRule rule) {
         return (forwardAssociationProperty == null)
             ? newForwardAssociation(as, callingAET, calledAET, rq, pae, new HashMap<String, Association>(1), rule)
             : (forwardAssociationProperty instanceof Association)
@@ -220,7 +285,7 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private Association getAssociationFromHashMap(Association as, String callingAET, String calledAET,
-            AAssociateRQ rq, Object forwardAssociationProperty, ProxyApplicationEntity pae, ForwardRule rule) {
+            AAssociateRQ rq, Object forwardAssociationProperty, ProxyAEExtension pae, ForwardRule rule) {
         @SuppressWarnings("unchecked")
         HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
         return (fwdAssocs.containsKey(calledAET))
@@ -228,12 +293,12 @@ public class CStore extends BasicCStoreSCP {
             : newForwardAssociation(as, callingAET, calledAET, rq, pae, fwdAssocs, rule);
     }
 
-    private Association newForwardAssociation(Association as, String callingAET, String calledAET,
-            AAssociateRQ rq, ProxyApplicationEntity pae, HashMap<String, Association> fwdAssocs, ForwardRule rule) {
-        Association asInvoked = pae.openForwardAssociation(as, rule, callingAET, calledAET, rq);
-        fwdAssocs.put(calledAET, asInvoked);
-        as.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
-        return asInvoked;
+    private Association newForwardAssociation(Association as, String callingAET, String calledAET, AAssociateRQ rq,
+            ProxyAEExtension pae, HashMap<String, Association> fwdAssocs, ForwardRule rule) {
+        rq.setCallingAET(callingAET);
+        rq.setCalledAET(calledAET);
+        return as.getApplicationEntity().getAEExtension(ProxyAEExtension.class)
+                .openForwardAssociation(as, rule, callingAET, calledAET, rq, aeCache);
     }
 
     private void deleteFile(Association as, File file) {
@@ -245,8 +310,9 @@ public class CStore extends BasicCStoreSCP {
 
     protected File createSpoolFile(Association as) throws DicomServiceException {
         try {
-            ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-            return File.createTempFile("dcm", ".part", pae.getCStoreDirectoryPath());
+            ApplicationEntity ae = as.getApplicationEntity();
+            ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+            return File.createTempFile("dcm", ".part", proxyAEE.getCStoreDirectoryPath());
         } catch (Exception e) {
             LOG.debug(as + ": failed to create temp file: " + e.getMessage());
             throw new DicomServiceException(Status.OutOfResources, e);
@@ -255,10 +321,11 @@ public class CStore extends BasicCStoreSCP {
 
     protected boolean processFile(Association asAccepted, Association asInvoked, PresentationContext pc, Attributes rq,
             File file, Attributes fmi) throws IOException {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
+        ApplicationEntity ae = asAccepted.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         ForwardRule rule = (ForwardRule) asAccepted.getProperty(ForwardRule.class.getName());
         if (requiresMultiFrameConversion(asAccepted, rule, rq)) {
-            processMultiFrame(pae, asAccepted, asInvoked, pc, rq, file, fmi);
+            processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, file, fmi);
             return false;
         }
         if (asInvoked == null) {
@@ -266,12 +333,12 @@ public class CStore extends BasicCStoreSCP {
             return true;
         }
         Attributes attrs = parse(asAccepted, file);
-        if (pae.isEnableAuditLog()) {
-            pae.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs.getString(Tag.StudyInstanceUID));
-            pae.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, file.length());
+        if (proxyAEE.isEnableAuditLog()) {
+            proxyAEE.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs.getString(Tag.StudyInstanceUID));
+            proxyAEE.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, file.length());
         }
         try {
-            forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
+            forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked, -1);
         } catch (AssociationStateException ass) {
             handleForwardException(asAccepted, pc, rq, attrs, RetryObject.AssociationStateException.getSuffix(), ass, file);
         } catch (Exception e) {
@@ -282,15 +349,16 @@ public class CStore extends BasicCStoreSCP {
 
     private boolean requiresMultiFrameConversion(Association asAccepted, ForwardRule rule, Attributes rq) {
         String sopClass = rq.getString(Tag.AffectedSOPClassUID);
-        return  rule != null
+        return rule != null
                 && rule.getConversion() == ForwardRule.conversionType.Emf2Sf
                 && (sopClass.equals(UID.EnhancedCTImageStorage) 
-                    || sopClass.equals(UID.EnhancedMRImageStorage) 
-                    || sopClass.equals(UID.EnhancedPETImageStorage))
-                && asAccepted.isRequestor();
+                        || sopClass.equals(UID.EnhancedMRImageStorage) 
+                        || sopClass.equals(UID.EnhancedPETImageStorage))
+                && (asAccepted.isRequestor() 
+                        || asAccepted.getProperty(ProxyAEExtension.FORWARD_CMOVE_INFO) != null);
     }
 
-    private void processMultiFrame(ProxyApplicationEntity pae, Association asAccepted, Association asInvoked,
+    private void processMultiFrame(ProxyAEExtension pae, Association asAccepted, Association asInvoked,
             PresentationContext pc, Attributes rq, File file, Attributes fmi) throws IOException {
         Attributes src;
         DicomInputStream dis = new DicomInputStream(file);
@@ -303,20 +371,21 @@ public class CStore extends BasicCStoreSCP {
         MultiframeExtractor extractor = new MultiframeExtractor();
         int n = src.getInt(Tag.NumberOfFrames, 1);
         long t = 0;
-        for (int frame = 0; frame < n; ++frame) {
+        for (int i = n - 1; i >= 0; --i) {
             long t1 = System.currentTimeMillis();
-            Attributes attrs = extractor.extract(src, frame);
+            Attributes attrs = extractor.extract(src, i);
             long t2 = System.currentTimeMillis();
             t = t + t2 - t1;
             rq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
             rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             if (pae.isEnableAuditLog()) {
-                pae.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs.getString(Tag.StudyInstanceUID));
-                pae.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, 
+                pae.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
+                        attrs.getString(Tag.StudyInstanceUID));
+                pae.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
                         attrs.calcLength(DicomEncodingOptions.DEFAULT, true));
             }
             try {
-                forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked);
+                forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked, i);
             } catch (InterruptedException e) {
                 LOG.error("{}: Error forwarding to {} : {}",
                         new Object[] { asAccepted, asInvoked.getRemoteAET(), e.getMessage() });
@@ -329,11 +398,12 @@ public class CStore extends BasicCStoreSCP {
 
     protected File createMappedFile(Association as, File file, Attributes fmi, String callingAET, String calledAET)
             throws DicomServiceException {
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) as.getApplicationEntity();
-        String separator = ProxyApplicationEntity.getSeparator();
+        ApplicationEntity ae = as.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        String separator = ProxyAEExtension.getSeparator();
         String path = file.getPath();
         String fileName = path.substring(path.lastIndexOf(separator) + 1, path.length());
-        File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
+        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
         File dst = new File(dir, fileName);
         DicomOutputStream out = null;
@@ -358,27 +428,33 @@ public class CStore extends BasicCStoreSCP {
     private void handleForwardException(Association as, PresentationContext pc, Attributes rq, Attributes attrs,
             String suffix, Exception e, File file) throws DicomServiceException, IOException {
         LOG.debug(as + ": error forwarding C-STORE-RQ: " + e.getMessage());
-        as.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
-        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix + "1");
+        as.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
+        as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix + "1");
         rename(as, file);
         Attributes rsp = Commands.mkCStoreRSP(rq, Status.Success);
         as.writeDimseRSP(pc, rsp);
     }
 
     private static void forward(final Association asAccepted, final PresentationContext pc, Attributes rq,
-            DataWriter data, Association asInvoked) throws IOException, InterruptedException {
+            DataWriter data, Association asInvoked, final int frame) throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
         int priority = rq.getInt(Tag.Priority, 0);
         final int msgId = rq.getInt(Tag.MessageID, 0);
-        DimseRSPHandler rspHandler = new DimseRSPHandler(asAccepted.isRequestor() ? asInvoked.nextMessageID() : msgId) {
+        final CMoveInfoObject info = (CMoveInfoObject) asAccepted.getProperty(ProxyAEExtension.FORWARD_CMOVE_INFO);
+        int newMsgId = msgId;
+        if (info != null || asAccepted.isRequestor())
+                newMsgId = asInvoked.nextMessageID();
+        DimseRSPHandler rspHandler = new DimseRSPHandler(newMsgId) {
 
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
                 try {
-                    if (!asInvoked.isRequestor())
+                    if (info != null && frame > 0)
+                        return;
+                    if (!asInvoked.isRequestor() || info != null)
                         cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
@@ -386,13 +462,17 @@ public class CStore extends BasicCStoreSCP {
                 }
             }
         };
-        asInvoked.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
+        if (info != null)
+            asInvoked.cstore(cuid, iuid, priority, info.getMoveOriginatorAET(), info.getSourceMsgId(), data, tsuid,
+                    rspHandler);
+        else
+            asInvoked.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
     }
 
     protected File rename(Association as, File file) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5).concat(
-                (String) as.getProperty(ProxyApplicationEntity.FILE_SUFFIX)));
+                (String) as.getProperty(ProxyAEExtension.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });

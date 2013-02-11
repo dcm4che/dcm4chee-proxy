@@ -51,29 +51,39 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.dcm4che.conf.api.ConfigurationException;
+import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
+import org.dcm4che.conf.ldap.LdapDicomConfiguration;
 import org.dcm4che.conf.ldap.LdapEnv;
+import org.dcm4che.conf.ldap.hl7.LdapHL7Configuration;
+import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
+import org.dcm4che.net.Device;
 import org.dcm4chee.proxy.Proxy;
-import org.dcm4chee.proxy.conf.ProxyDevice;
-import org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration;
-import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration;
-
+import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
+import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class ProxySA {
-    
-    private static ResourceBundle rb =
-        ResourceBundle.getBundle("org.dcm4chee.proxy.tool.messages");
-    
+
+    private static ResourceBundle rb = ResourceBundle.getBundle("org.dcm4chee.proxy.tool.messages");
+
     public static void main(String[] args) {
         try {
             CommandLine cl = parseComandLine(args);
-            HL7Configuration dicomConfig = configureDicomConfiguration(cl);
+            if (!cl.hasOption("device")) {
+                System.err.println("Missing device name.");
+                System.err.println(rb.getString("try"));
+                System.exit(2);
+            }
+            DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
+            HL7Configuration hl7Config = null;
             String deviceName = cl.getOptionValue("device");
-            ProxyDevice proxyDevice = (ProxyDevice) dicomConfig.findDevice(deviceName);
-            Proxy proxy = new Proxy(dicomConfig, proxyDevice);
+            Device device = dicomConfig.findDevice(deviceName);
+            //TODO: add negotiate handler
+            Proxy proxy = new Proxy(dicomConfig, hl7Config, device);
             proxy.start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,35 +91,59 @@ public class ProxySA {
         }
     }
 
-    private static HL7Configuration configureDicomConfiguration(CommandLine cl)
-            throws NamingException, ConfigurationException {
-        if (!cl.hasOption("device")) {
-            System.err.println("Missing device name.");
-            System.err.println(rb.getString("try"));
-            System.exit(2);
-        }
+    private static DicomConfiguration configureDicomConfiguration(CommandLine cl) throws NamingException,
+            ConfigurationException {
         if (useLdapConfiguration(cl)) {
             LdapEnv env = new LdapEnv();
             env.setUrl(cl.getOptionValue("ldap-url"));
             env.setUserDN(cl.getOptionValue("ldap-userDN"));
             env.setPassword(cl.getOptionValue("ldap-pwd"));
-            return new LdapProxyConfiguration(env);
+            return newLdapProxyConfiguration();
         } else if (cl.hasOption("jdbc-backend-url")) {
             if (!DriverManager.getDrivers().hasMoreElements())
                 throw new RuntimeException("No jdbc driver in classpath.");
-            
-            System.setProperty("java.util.prefs.PreferencesFactory", "org.dcm4che.jdbc.prefs.PreferencesFactoryJDBCImpl");
+
+            System.setProperty("java.util.prefs.PreferencesFactory",
+                    "org.dcm4che.jdbc.prefs.PreferencesFactoryJDBCImpl");
             System.setProperty("jdbc.prefs.datasource", cl.getOptionValue("jdbc-backend-url"));
             System.setProperty("jdbc.prefs.connection.username", cl.getOptionValue("jdbc-user-name"));
             System.setProperty("jdbc.prefs.connection.password", cl.getOptionValue("jdbc-user-pwd"));
         }
-        return (HL7Configuration) new PreferencesProxyConfiguration();
+        return newPreferencesProxyConfiguration();
+    }
+
+    private static DicomConfiguration newLdapProxyConfiguration() throws ConfigurationException {
+        LdapDicomConfiguration config = new LdapDicomConfiguration();
+        LdapHL7Configuration hl7Config = new LdapHL7Configuration();
+        config.addDicomConfigurationExtension(hl7Config);
+        LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
+        config.addDicomConfigurationExtension(proxyConfig);
+        hl7Config.addHL7ConfigurationExtension(proxyConfig);
+        // config.addDicomConfigurationExtension(
+        // new LdapAuditLoggerConfiguration());
+        // config.addDicomConfigurationExtension(
+        // new LdapAuditRecordRepositoryConfiguration());
+        return config;
+    }
+
+    private static DicomConfiguration newPreferencesProxyConfiguration() {
+        PreferencesDicomConfiguration config = new PreferencesDicomConfiguration();
+        PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
+        config.addDicomConfigurationExtension(hl7Config);
+        PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
+        config.addDicomConfigurationExtension(proxyConfig);
+        hl7Config.addHL7ConfigurationExtension(proxyConfig);
+        // config.addDicomConfigurationExtension(
+        // new PreferencesAuditLoggerConfiguration());
+        // config.addDicomConfigurationExtension(
+        // new PreferencesAuditRecordRepositoryConfiguration());
+        return config;
     }
 
     private static boolean useLdapConfiguration(CommandLine cl) {
         return cl.hasOption("ldap-url") && cl.hasOption("ldap-userDN") && cl.hasOption("ldap-pwd");
     }
-    
+
     private static CommandLine parseComandLine(String[] args) throws ParseException {
         Options opts = new Options();
         addCommonOptions(opts);
@@ -120,121 +154,69 @@ public class ProxySA {
         addOracleOptions(opts);
         return parseComandLine(args, opts, rb, ProxySA.class);
     }
-    
+
     @SuppressWarnings("static-access")
     private static void addOracleOptions(Options opts) {
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("url")
-                .withDescription(rb.getString("jdbc-backend-url"))
-                .withLongOpt("jdbc-backend-url")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("name")
-                .withDescription(rb.getString("jdbc-user-name"))
-                .withLongOpt("jdbc-user-name")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("password")
-                .withDescription(rb.getString("jdbc-user-pwd"))
-                .withLongOpt("jdbc-user-pwd")
-                .create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("url").withDescription(rb.getString("jdbc-backend-url"))
+                .withLongOpt("jdbc-backend-url").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("name").withDescription(rb.getString("jdbc-user-name"))
+                .withLongOpt("jdbc-user-name").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("password").withDescription(rb.getString("jdbc-user-pwd"))
+                .withLongOpt("jdbc-user-pwd").create(null));
     }
 
     @SuppressWarnings("static-access")
     private static void addDicomConfig(Options opts) {
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("name")
-                .withDescription(rb.getString("device"))
-                .withLongOpt("device")
-                .create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("name").withDescription(rb.getString("device"))
+                .withLongOpt("device").create(null));
     }
 
     @SuppressWarnings("static-access")
     private static void addLDAPOptions(Options opts) {
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("url")
-                .withDescription(rb.getString("ldap-url"))
-                .withLongOpt("ldap-url")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("dn")
-                .withDescription(rb.getString("ldap-userDN"))
-                .withLongOpt("ldap-userDN")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("password")
-                .withDescription(rb.getString("ldap-pwd"))
-                .withLongOpt("ldap-pwd")
-                .create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("url").withDescription(rb.getString("ldap-url"))
+                .withLongOpt("ldap-url").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("dn").withDescription(rb.getString("ldap-userDN"))
+                .withLongOpt("ldap-userDN").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("password").withDescription(rb.getString("ldap-pwd"))
+                .withLongOpt("ldap-pwd").create(null));
     }
 
     @SuppressWarnings("static-access")
     private static void addTLSOptions(Options opts) {
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("file|url")
-                .withDescription(rb.getString("key-store"))
-                .withLongOpt("key-store")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("storetype")
-                .withDescription(rb.getString("key-store-type"))
-                .withLongOpt("key-store-type")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("password")
-                .withDescription(rb.getString("key-store-pwd"))
-                .withLongOpt("key-store-pwd")
-                .create(null));
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("password")
-                .withDescription(rb.getString("key-pwd"))
-                .withLongOpt("key-pwd")
-                .create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("file|url").withDescription(rb.getString("key-store"))
+                .withLongOpt("key-store").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("storetype").withDescription(rb.getString("key-store-type"))
+                .withLongOpt("key-store-type").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("password").withDescription(rb.getString("key-store-pwd"))
+                .withLongOpt("key-store-pwd").create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("password").withDescription(rb.getString("key-pwd"))
+                .withLongOpt("key-pwd").create(null));
     }
-    
+
     @SuppressWarnings("static-access")
     private static void addAuditLogOptions(Options opts) {
-        opts.addOption(OptionBuilder
-                .hasArg()
-                .withArgName("integer")
-                .withDescription(rb.getString("log-interval"))
-                .withLongOpt("log-interval")
-                .create(null));
+        opts.addOption(OptionBuilder.hasArg().withArgName("integer").withDescription(rb.getString("log-interval"))
+                .withLongOpt("log-interval").create(null));
     }
-    
+
     public static void addCommonOptions(Options opts) {
         opts.addOption("h", "help", false, rb.getString("help"));
         opts.addOption("V", "version", false, rb.getString("version"));
     }
-    
-    public static CommandLine parseComandLine(String[] args, Options opts, 
-            ResourceBundle rb2, Class<?> clazz) throws ParseException {
+
+    public static CommandLine parseComandLine(String[] args, Options opts, ResourceBundle rb2, Class<?> clazz)
+            throws ParseException {
         CommandLineParser parser = new PosixParser();
         CommandLine cl = parser.parse(opts, args);
         if (cl.hasOption("h")) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(
-                    rb2.getString("usage"),
-                    rb2.getString("description"), opts,
-                    rb2.getString("example"));
+            formatter.printHelp(rb2.getString("usage"), rb2.getString("description"), opts, rb2.getString("example"));
             System.exit(0);
         }
         if (cl.hasOption("V")) {
             Package p = clazz.getPackage();
             String s = p.getName();
-            System.out.println(s.substring(s.lastIndexOf('.')+1) + ": " +
-                   p.getImplementationVersion());
+            System.out.println(s.substring(s.lastIndexOf('.') + 1) + ": " + p.getImplementationVersion());
             System.exit(0);
         }
         return cl;

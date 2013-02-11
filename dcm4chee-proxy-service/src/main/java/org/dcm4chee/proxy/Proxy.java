@@ -39,15 +39,14 @@
 package org.dcm4chee.proxy;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
-import org.dcm4che.conf.api.ConfigurationException;
+import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
 import org.dcm4che.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.audit.AuditLog;
-import org.dcm4chee.proxy.conf.PIXConsumer;
-import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.dimse.CEcho;
 import org.dcm4chee.proxy.dimse.CFind;
 import org.dcm4chee.proxy.dimse.CGet;
@@ -56,29 +55,50 @@ import org.dcm4chee.proxy.dimse.CStore;
 import org.dcm4chee.proxy.dimse.Mpps;
 import org.dcm4chee.proxy.dimse.StgCmt;
 import org.dcm4chee.proxy.forward.Scheduler;
+import org.dcm4chee.proxy.pix.PIXConsumer;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
+public class Proxy extends DeviceService implements ProxyMBean {
 
     public static final String KS_TYPE = "org.dcm4chee.proxy.net.keyStoreType";
     public static final String KS_URL = "org.dcm4chee.proxy.net.keyStoreURL";
     public static final String KS_PASSWORD = "org.dcm4chee.proxy.net.storePassword";
     public static final String KEY_PASSWORD = "org.dcm4chee.proxy.net.keyPassword";
 
-    private final HL7Configuration dicomConfiguration;
+    private final DicomConfiguration dicomConfiguration;
     private PIXConsumer pixConsumer;
     private static Scheduler scheduler;
+    private final HL7ApplicationCache hl7AppCache;
+    private final ApplicationEntityCache aeCache;
+    private final CEcho cecho;
+    private final CStore cstore;
+    private final StgCmt stgcmt;
+    private final CFind cfind;
+    private final CGet cget;
+    private final CMove cmove;
+    private final Mpps mpps;
 
-    public Proxy(HL7Configuration dicomConfiguration, ProxyDevice proxyDevice) throws ConfigurationException,
-            Exception {
+    public Proxy(DicomConfiguration dicomConfiguration, HL7Configuration hl7configuration, Device device) {
+        init(device);
         this.dicomConfiguration = dicomConfiguration;
-        init(proxyDevice);
-        device.setAeCache(new ApplicationEntityCache(dicomConfiguration));
-        device.setHl7AppCache(new HL7ApplicationCache(dicomConfiguration));
-        setPixConsumer(new PIXConsumer(device.getHl7AppCache()));
+        this.aeCache = new ApplicationEntityCache(dicomConfiguration);
+        this.hl7AppCache = new HL7ApplicationCache(hl7configuration);
+        this.pixConsumer = new PIXConsumer(hl7AppCache);
+        this.cecho = new CEcho();
+        this.cstore = new CStore(aeCache, "*");
+        this.stgcmt = new StgCmt(aeCache);
+        this.cfind = new CFind(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.1", "1.2.840.10008.5.1.4.1.2.2.1",
+                "1.2.840.10008.5.1.4.1.2.3.1", "1.2.840.10008.5.1.4.31");
+        this.cget = new CGet(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.3", "1.2.840.10008.5.1.4.1.2.2.3",
+                "1.2.840.10008.5.1.4.1.2.3.3");
+        this.cmove = new CMove(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.2", "1.2.840.10008.5.1.4.1.2.2.2",
+                "1.2.840.10008.5.1.4.1.2.3.2");
+        this.mpps = new Mpps();
         device.setDimseRQHandler(serviceRegistry());
+        device.setAssociationHandler(new ProxyAssociationHandler(aeCache));
+        setConfigurationStaleTimeout();
     }
 
     public PIXConsumer getPixConsumer() {
@@ -91,7 +111,7 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
 
     @Override
     public void start() throws Exception {
-        scheduler = new Scheduler((ProxyDevice) device, new AuditLog());
+        scheduler = new Scheduler(aeCache, device, new AuditLog());
         super.start();
         scheduler.start();
     }
@@ -104,16 +124,13 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
 
     protected DicomServiceRegistry serviceRegistry() {
         DicomServiceRegistry dcmService = new DicomServiceRegistry();
-        dcmService.addDicomService(new CEcho());
-        dcmService.addDicomService(new CStore("*"));
-        dcmService.addDicomService(new StgCmt());
-        dcmService.addDicomService(new CFind(pixConsumer, "1.2.840.10008.5.1.4.1.2.1.1", "1.2.840.10008.5.1.4.1.2.2.1",
-                "1.2.840.10008.5.1.4.1.2.3.1", "1.2.840.10008.5.1.4.31"));
-        dcmService.addDicomService(new CGet(pixConsumer, "1.2.840.10008.5.1.4.1.2.1.3", "1.2.840.10008.5.1.4.1.2.2.3",
-                "1.2.840.10008.5.1.4.1.2.3.3"));
-        dcmService.addDicomService(new CMove(pixConsumer, "1.2.840.10008.5.1.4.1.2.1.2", "1.2.840.10008.5.1.4.1.2.2.2",
-                "1.2.840.10008.5.1.4.1.2.3.2"));
-        dcmService.addDicomService(new Mpps());
+        dcmService.addDicomService(cecho);
+        dcmService.addDicomService(cstore);
+        dcmService.addDicomService(stgcmt);
+        dcmService.addDicomService(cfind);
+        dcmService.addDicomService(cget);
+        dcmService.addDicomService(cmove);
+        dcmService.addDicomService(mpps);
         return dcmService;
     }
 
@@ -122,6 +139,7 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
         scheduler.stop();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
         device.rebindConnections();
+        setConfigurationStaleTimeout();
         scheduler.start();
     }
 
@@ -129,4 +147,11 @@ public class Proxy extends DeviceService<ProxyDevice> implements ProxyMBean {
     public Device unwrapDevice() {
         return device;
     }
+
+    private void setConfigurationStaleTimeout() {
+        int staleTimeout = device.getDeviceExtension(ProxyDeviceExtension.class).getConfigurationStaleTimeout();
+        aeCache.setStaleTimeout(staleTimeout);
+        hl7AppCache.setStaleTimeout(staleTimeout);
+    }
+
 }

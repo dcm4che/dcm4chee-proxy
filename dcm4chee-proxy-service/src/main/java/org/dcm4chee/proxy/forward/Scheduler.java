@@ -38,13 +38,17 @@
 
 package org.dcm4chee.proxy.forward;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.net.Device;
 import org.dcm4chee.proxy.audit.AuditLog;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
-import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -52,25 +56,29 @@ import org.dcm4chee.proxy.conf.ProxyDevice;
  */
 public class Scheduler {
 
-    private final ProxyDevice device;
+    private final Device device;
     private final AuditLog log;
     private ScheduledFuture<?> timer;
+    private ApplicationEntityCache aeCache;
+    private ScheduledExecutorService scheduledExecutor;
 
-    public Scheduler(ProxyDevice device, AuditLog log) {
+    public Scheduler(ApplicationEntityCache aeCache, Device device, AuditLog log) {
+        this.aeCache = aeCache;
         this.device = device;
         this.log = log;
+        this.scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
     }
 
     public void start() {
-        long period = device.getSchedulerInterval();
-        timer = device.scheduleAtFixedRate(new Runnable(){
+        long period = device.getDeviceExtension(ProxyDeviceExtension.class).getSchedulerInterval();
+        timer = scheduledExecutor.scheduleAtFixedRate(new Runnable(){
 
             @Override
             public void run() {
                 for (ApplicationEntity ae : device.getApplicationEntities()) {
-                    if (ae instanceof ProxyApplicationEntity) {
-                        new ForwardFiles().execute((ProxyApplicationEntity) ae);
-                        log.writeLog((ProxyApplicationEntity) ae);
+                    if (ae.getAEExtension(ProxyAEExtension.class) != null) {
+                        new ForwardFiles(aeCache).execute(ae);
+                        log.writeLog(ae);
                     }
                 }
             }}, period, period, TimeUnit.SECONDS);

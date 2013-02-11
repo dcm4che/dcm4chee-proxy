@@ -47,12 +47,14 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
 import org.dcm4che.net.DataWriter;
@@ -72,8 +74,8 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardSchedule;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
-import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,8 +86,15 @@ import org.slf4j.LoggerFactory;
 public class ForwardFiles {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ForwardFiles.class);
+    
+    private ApplicationEntityCache aeCache;
 
-    public void execute(ProxyApplicationEntity pae) {
+    public ForwardFiles(ApplicationEntityCache aeCache) {
+        this.aeCache = aeCache;
+    }
+
+    public void execute(ApplicationEntity ae) {
+        ProxyAEExtension pae = ae.getAEExtension(ProxyAEExtension.class);
         HashMap<String, ForwardSchedule> forwardSchedules = pae.getForwardSchedules();
         processCStore(pae, forwardSchedules);
         processNAction(pae, forwardSchedules);
@@ -93,63 +102,69 @@ public class ForwardFiles {
         processNSet(pae, forwardSchedules);
     }
 
-    private void processNSet(ProxyApplicationEntity pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processNSet(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
         for (String calledAET : pae.getNSetDirectoryPath().list()) {
-            //process destinations without forward schedule
+            // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledMPPS(pae,
-                        new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)), calledAET, "nset");
+                        new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
+                        calledAET, "nset");
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
-                    if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
+                    if (calledAET.equals(entry.getKey())
+                            && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledMPPS(pae,
-                                new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)), calledAET,
-                                "nset");
+                                new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
+                                calledAET, "nset");
         }
     }
 
-    private void processNCreate(ProxyApplicationEntity pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processNCreate(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
         for (String calledAET : pae.getNCreateDirectoryPath().list()) {
-            //process destinations without forward schedule
+            // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledMPPS(pae,
-                        new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)), calledAET,
-                        "ncreate");
+                        new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
+                        calledAET, "ncreate");
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
-                    if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
+                    if (calledAET.equals(entry.getKey())
+                            && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledMPPS(pae,
-                                new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
-                                calledAET, "ncreate");
+                                new File(pae.getNCreateDirectoryPath(), calledAET)
+                                        .listFiles(fileFilter(pae, calledAET)), calledAET, "ncreate");
         }
     }
 
-    private void processNAction(ProxyApplicationEntity pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processNAction(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
         for (String calledAET : pae.getNactionDirectoryPath().list()) {
-            //process destinations without forward schedule
+            // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)), calledAET);
+                startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)),
+                        calledAET);
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
-                    if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)),
-                                calledAET);
+                    if (calledAET.equals(entry.getKey())
+                            && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
+                        startForwardScheduledNAction(pae,
+                                pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)), calledAET);
         }
     }
 
-    private void processCStore(ProxyApplicationEntity pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processCStore(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
         for (String calledAET : pae.getCStoreDirectoryPath().list()) {
-            //process destinations without forward schedule
+            // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledCStoreFiles(pae, calledAET);
             else
                 for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
-                    if (calledAET.equals(entry.getKey()) && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
+                    if (calledAET.equals(entry.getKey())
+                            && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledCStoreFiles(pae, calledAET);
         }
     }
 
-    private FileFilter fileFilter(final ProxyApplicationEntity pae, final String calledAET) {
+    private FileFilter fileFilter(final ProxyAEExtension pae, final String calledAET) {
         final long now = System.currentTimeMillis();
         return new FileFilter() {
 
@@ -179,7 +194,8 @@ public class ForwardFiles {
         };
     }
 
-    private boolean checkNumberOfRetries(ProxyApplicationEntity pae, Retry retry, String suffix, File pathname, String calledAET) {
+    private boolean checkNumberOfRetries(ProxyAEExtension pae, Retry retry, String suffix, File pathname,
+            String calledAET) {
         String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
         int currentRetries = 0;
         if (!substring.isEmpty())
@@ -203,7 +219,7 @@ public class ForwardFiles {
         return send;
     }
 
-    private void moveToFallbackAetDir(ProxyApplicationEntity pae, File pathname, String calledAET, String reason) {
+    private void moveToFallbackAetDir(ProxyAEExtension pae, File pathname, String calledAET, String reason) {
         String path = pathname.getAbsolutePath();
         File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + pae.getFallbackDestinationAET());
         dstDir.mkdir();
@@ -216,21 +232,21 @@ public class ForwardFiles {
             LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dst });
     }
 
-    private boolean sendToFallbackAET(ProxyApplicationEntity pae, String destinationAET) {
+    private boolean sendToFallbackAET(ProxyAEExtension pae, String destinationAET) {
         if (pae.getFallbackDestinationAET() != null)
             if (!destinationAET.equals(pae.getFallbackDestinationAET()))
                 return true;
         return false;
     }
 
-    protected Retry getMatchingRetry(ProxyApplicationEntity pae, String suffix) {
+    protected Retry getMatchingRetry(ProxyAEExtension pae, String suffix) {
         for (Retry retry : pae.getRetries())
-            if(suffix.startsWith(retry.getRetryObject().getSuffix()))
+            if (suffix.startsWith(retry.getRetryObject().getSuffix()))
                 return retry;
         return null;
     }
 
-    protected void moveToNoRetryPath(ProxyApplicationEntity pae, File pathname, String reason) {
+    protected void moveToNoRetryPath(ProxyAEExtension pae, File pathname, String reason) {
         String path = pathname.getPath();
         String spoolDirPath = pae.getSpoolDirectoryPath().getPath();
         String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(),
@@ -251,23 +267,23 @@ public class ForwardFiles {
             LOG.error("Failed to M-DELETE {}", file);
     }
 
-    private void startForwardScheduledMPPS(final ProxyApplicationEntity pae, final File[] files,
+    private void startForwardScheduledMPPS(final ProxyAEExtension pae, final File[] files,
             final String destinationAETitle, final String protocol) {
-        ((ProxyDevice) pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
+        ((ProxyDeviceExtension) pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
+                .getFileForwardingExecutor().execute(new Runnable() {
 
-            @Override
-            public void run() {
-                try {
-                    forwardScheduledMPPS(pae, files, destinationAETitle, protocol);
-                } catch (DicomServiceException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+                    @Override
+                    public void run() {
+                        try {
+                            forwardScheduledMPPS(pae, files, destinationAETitle, protocol);
+                        } catch (DicomServiceException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
     }
 
-    protected void forwardScheduledMPPS(ProxyApplicationEntity pae, File[] files, String destinationAETitle,
-            String protocol) throws DicomServiceException {
+    protected void forwardScheduledMPPS(ProxyAEExtension pae, File[] files, String destinationAETitle, String protocol) throws DicomServiceException {
         for (File file : files) {
             try {
                 Attributes fmi = readFileMetaInformation(file);
@@ -279,7 +295,8 @@ public class ForwardFiles {
                         UID.ExplicitVRLittleEndian));
                 rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
                 rq.setCalledAET(destinationAETitle);
-                Association as = pae.connect(pae.getDestinationAE(destinationAETitle), rq);
+                Association as = pae.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
+                        rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledMPPS(as, file, fmi, protocol);
@@ -318,7 +335,7 @@ public class ForwardFiles {
         }
     }
 
-    private boolean pendingNCreateForwarding(ProxyApplicationEntity pae, String destinationAETitle, Attributes fmi) {
+    private boolean pendingNCreateForwarding(ProxyAEExtension pae, String destinationAETitle, Attributes fmi) {
         File dir = new File(pae.getNCreateDirectoryPath(), destinationAETitle);
         if (!dir.exists())
             return false;
@@ -374,22 +391,23 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledNAction(final ProxyApplicationEntity pae, final File[] files,
+    private void startForwardScheduledNAction(final ProxyAEExtension pae, final File[] files,
             final String destinationAETitle) {
-        ((ProxyDevice) pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
+        ((ProxyDeviceExtension) pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
+                .getFileForwardingExecutor().execute(new Runnable() {
 
-            @Override
-            public void run() {
-                try {
-                    forwardScheduledNAction(pae, files, destinationAETitle);
-                } catch (DicomServiceException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+                    @Override
+                    public void run() {
+                        try {
+                            forwardScheduledNAction(pae, files, destinationAETitle);
+                        } catch (DicomServiceException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
     }
 
-    private void forwardScheduledNAction(ProxyApplicationEntity pae, File[] files, String destinationAETitle)
+    private void forwardScheduledNAction(ProxyAEExtension pae, File[] files, String destinationAETitle) 
             throws DicomServiceException {
         for (File file : files) {
             try {
@@ -399,7 +417,8 @@ public class ForwardFiles {
                 Attributes fmi = readFileMetaInformation(file);
                 rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
                 rq.setCalledAET(destinationAETitle);
-                Association as = pae.connect(pae.getDestinationAE(destinationAETitle), rq);
+                Association as = pae.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
+                        rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(pae, as, file, fmi);
@@ -438,7 +457,7 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledNAction(final ProxyApplicationEntity pae, final Association as, final File file,
+    private void forwardScheduledNAction(final ProxyAEExtension pae, final Association as, final File file,
             Attributes fmi) throws IOException, InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
@@ -481,17 +500,18 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledCStoreFiles(final ProxyApplicationEntity pae, final String calledAET) {
-        ((ProxyDevice) pae.getDevice()).getFileForwardingExecutor().execute(new Runnable() {
+    private void startForwardScheduledCStoreFiles(final ProxyAEExtension pae, final String calledAET) {
+        ((ProxyDeviceExtension) pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
+                .getFileForwardingExecutor().execute(new Runnable() {
 
-            @Override
-            public void run() {
-                forwardScheduledCStoreFiles(pae, calledAET);
-            }
-        });
+                    @Override
+                    public void run() {
+                        forwardScheduledCStoreFiles(pae, calledAET);
+                    }
+                });
     }
 
-    private void forwardScheduledCStoreFiles(ProxyApplicationEntity pae, String calledAET) {
+    private void forwardScheduledCStoreFiles(ProxyAEExtension pae, String calledAET) {
         File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
         File[] files = dir.listFiles(fileFilter(pae, calledAET));
         if (files != null && files.length > 0)
@@ -503,11 +523,12 @@ public class ForwardFiles {
                 }
     }
 
-    private void processForwardTask(ProxyApplicationEntity pae, ForwardTask ft) throws DicomServiceException {
+    private void processForwardTask(ProxyAEExtension pae, ForwardTask ft)
+            throws DicomServiceException {
         AAssociateRQ rq = ft.getAAssociateRQ();
         Association asInvoked = null;
         try {
-            asInvoked = pae.connect(pae.getDestinationAE(rq.getCalledAET()), rq);
+            asInvoked = pae.getApplicationEntity().connect(aeCache.findApplicationEntity(rq.getCalledAET()), rq);
             for (File file : ft.getFiles()) {
                 try {
                     if (asInvoked.isReadyForDataTransfer()) {
@@ -553,8 +574,8 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledCStoreFiles(final ProxyApplicationEntity pae, final Association asInvoked,
-            final File file) throws IOException, InterruptedException {
+    private void forwardScheduledCStoreFiles(final ProxyAEExtension pae, final Association asInvoked, final File file)
+            throws IOException, InterruptedException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -599,7 +620,7 @@ public class ForwardFiles {
     }
 
     protected void releaseAS(Association asAccepted) {
-        Association asInvoked = (Association) asAccepted.clearProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        Association asInvoked = (Association) asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (asInvoked != null)
             try {
                 asInvoked.release();
@@ -642,7 +663,7 @@ public class ForwardFiles {
     private void handleForwardException(Association as, File file, Exception e, String suffix)
             throws DicomServiceException {
         LOG.debug(as + ": error processing forward task: " + e.getMessage());
-        as.setProperty(ProxyApplicationEntity.FILE_SUFFIX, suffix);
+        as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
         File dst = setFileSuffix(file, suffix);
         rename(as, file, dst);
     }
@@ -696,12 +717,12 @@ public class ForwardFiles {
         return new File(pathname);
     }
 
-    private DataWriter createDataWriter(ProxyApplicationEntity pae, DicomInputStream in, Association as,
-            Attributes[] ds, String cuid) throws IOException {
+    private DataWriter createDataWriter(ProxyAEExtension pae, DicomInputStream in, Association as, Attributes[] ds,
+            String cuid) throws IOException {
         AttributeCoercion ac = pae.getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
         if (ac != null || pae.isEnableAuditLog()) {
             Attributes attrs = in.readDataset(-1, -1);
-            pae.coerceAttributes(attrs, ac);
+            pae.coerceAttributes(attrs, ac, as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
             ds[0] = attrs;
             if (pae.isEnableAuditLog())
                 pae.createStartLogFile(as.getCallingAET(), as.getCalledAET(), ds[0].getString(Tag.StudyInstanceUID));

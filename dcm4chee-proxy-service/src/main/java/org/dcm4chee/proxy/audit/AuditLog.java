@@ -50,9 +50,10 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.util.SafeClose;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
-import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,12 +64,13 @@ public class AuditLog {
 
     protected static final Logger LOG = LoggerFactory.getLogger(AuditLog.class);
 
-    ProxyApplicationEntity ae;
+    ApplicationEntity ae;
 
-    public void writeLog(ProxyApplicationEntity ae) {
+    public void writeLog(ApplicationEntity ae) {
         this.ae = ae;
-        for (String calledAET : ae.getAuditDirectoryPath().list()) {
-            File calledAETDir = new File(ae.getAuditDirectoryPath(), calledAET);
+        ProxyAEExtension proxyAE = ae.getAEExtension(ProxyAEExtension.class);
+        for (String calledAET : proxyAE.getAuditDirectoryPath().list()) {
+            File calledAETDir = new File(proxyAE.getAuditDirectoryPath(), calledAET);
             scanCalledAETDir(calledAETDir);
         }
     }
@@ -97,7 +99,8 @@ public class AuditLog {
         File startLog = new File(studyIUIDDir + separator + "start.log");
         long lastModified = startLog.lastModified();
         long now = System.currentTimeMillis();
-        if (!(now > lastModified + ((ProxyDevice) ae.getDevice()).getSchedulerInterval() * 1000 * 2))
+        ProxyDeviceExtension proxyDev = (ProxyDeviceExtension) ae.getDevice().getDeviceExtension(ProxyDeviceExtension.class);
+        if (!(now > lastModified + proxyDev.getSchedulerInterval() * 1000 * 2))
             return;
 
         File[] logFiles = studyIUIDDir.listFiles(fileFilter());

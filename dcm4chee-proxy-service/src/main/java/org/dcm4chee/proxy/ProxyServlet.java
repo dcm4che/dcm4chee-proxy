@@ -38,7 +38,11 @@
 
 package org.dcm4chee.proxy;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
+import java.util.Properties;
 
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
@@ -49,8 +53,19 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
+import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
-import org.dcm4chee.proxy.conf.ProxyDevice;
+import org.dcm4che.conf.ldap.LdapDicomConfiguration;
+import org.dcm4che.conf.ldap.hl7.LdapHL7Configuration;
+import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
+import org.dcm4che.net.Device;
+import org.dcm4che.util.SafeClose;
+import org.dcm4che.util.StringUtils;
+import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
+import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 @Path("servlet")
@@ -58,30 +73,63 @@ import org.dcm4chee.proxy.conf.ProxyDevice;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class ProxyServlet extends HttpServlet {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyServlet.class);
 
     private ObjectInstance mbean;
-
-    private HL7Configuration dicomConfig;
-
+    private DicomConfiguration dicomConfig;
+    private HL7Configuration hl7Config;
     private Proxy proxy;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         try {
-            dicomConfig = (HL7Configuration) Class.forName(config.getInitParameter("dicomConfigurationClass"), false,
-                    Thread.currentThread().getContextClassLoader()).newInstance();
-            String deviceName = System.getProperty(
-                    "org.dcm4chee.proxy.deviceName",
+            String ldapPropertiesURL = StringUtils.replaceSystemProperties(
+                    System.getProperty("org.dcm4chee.proxy.ldapPropertiesURL",
+                            config.getInitParameter("ldapPropertiesURL"))).replace('\\', '/');
+            String deviceName = System.getProperty("org.dcm4chee.proxy.deviceName",
                     config.getInitParameter("deviceName"));
-            String jmxName = System.getProperty(
-                    "org.dcm4chee.proxy.jmxName",
-                    config.getInitParameter("jmxName"));
-            ProxyDevice proxyDevice = (ProxyDevice) dicomConfig.findDevice(deviceName);
-            proxy = new Proxy(dicomConfig, proxyDevice);
+            String jmxName = System.getProperty("org.dcm4chee.proxy.jmxName", config.getInitParameter("jmxName"));
+            InputStream ldapConf = null;
+            try {
+                ldapConf = new URL(ldapPropertiesURL).openStream();
+                Properties p = new Properties();
+                p.load(ldapConf);
+                LdapDicomConfiguration ldapConfig = new LdapDicomConfiguration(p);
+                LdapHL7Configuration hl7Config = new LdapHL7Configuration();
+                ldapConfig.addDicomConfigurationExtension(hl7Config);
+                LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
+                ldapConfig.addDicomConfigurationExtension(proxyConfig);
+                hl7Config.addHL7ConfigurationExtension(proxyConfig);
+                // ldapConfig.addDicomConfigurationExtension(
+                // new LdapAuditLoggerConfiguration());
+                // ldapConfig.addDicomConfigurationExtension(
+                // new LdapAuditRecordRepositoryConfiguration());
+                dicomConfig = ldapConfig;
+                this.hl7Config = hl7Config;
+            } catch (FileNotFoundException e) {
+                LOG.info("Could not find " + ldapPropertiesURL + " - use Java Preferences as Configuration Backend");
+                PreferencesDicomConfiguration prefsConfig = new PreferencesDicomConfiguration();
+                PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
+                prefsConfig.addDicomConfigurationExtension(hl7Config);
+                PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
+                prefsConfig.addDicomConfigurationExtension(proxyConfig);
+                hl7Config.addHL7ConfigurationExtension(proxyConfig);
+                // prefsConfig.addDicomConfigurationExtension(
+                // new PreferencesAuditLoggerConfiguration());
+                // prefsConfig.addDicomConfigurationExtension(
+                // new PreferencesAuditRecordRepositoryConfiguration());
+                dicomConfig = prefsConfig;
+                this.hl7Config = hl7Config;
+            } finally {
+                SafeClose.close(ldapConf);
+            }
+            Device device = dicomConfig.findDevice(deviceName);
+            //TODO: add negotiate and onClose handler
+            proxy = new Proxy(dicomConfig, hl7Config, device);
             proxy.start();
-            mbean = ManagementFactory.getPlatformMBeanServer()
-                    .registerMBean(proxy, new ObjectName(jmxName));
+            mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy, new ObjectName(jmxName));
         } catch (Exception e) {
             destroy();
             throw new ServletException(e);

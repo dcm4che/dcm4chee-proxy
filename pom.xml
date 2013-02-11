@@ -6,7 +6,7 @@
   <packaging>pom</packaging>
   <name>dcm4chee-proxy-parent</name>
   <properties>
-    <dcm4che.version>3.0.1</dcm4che.version>
+    <dcm4che.version>3.0.2-SNAPSHOT</dcm4che.version>
   </properties>
   <build>
     <plugins>

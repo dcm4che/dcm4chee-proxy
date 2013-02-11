@@ -42,7 +42,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.Status;
@@ -51,8 +53,9 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.PIXConsumer;
-import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
+import org.dcm4chee.proxy.pix.PIXConsumer;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -61,9 +64,11 @@ import org.dcm4chee.proxy.conf.ProxyApplicationEntity;
 public class CFind extends DicomService {
 
     private PIXConsumer pixConsumer;
+    private ApplicationEntityCache aeCache;
 
-    public CFind(PIXConsumer pixConsumer, String... sopClasses) {
+    public CFind(ApplicationEntityCache aeCache, PIXConsumer pixConsumer, String... sopClasses) {
         super(sopClasses);
+        this.aeCache = aeCache;
         this.pixConsumer = pixConsumer;
     }
 
@@ -73,18 +78,21 @@ public class CFind extends DicomService {
         if (dimse != Dimse.C_FIND_RQ)
             throw new DicomServiceException(Status.UnrecognizedOperation);
 
-        ProxyApplicationEntity pae = (ProxyApplicationEntity) asAccepted.getApplicationEntity();
-        pae.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, data);
-        Object forwardAssociationProperty = asAccepted.getProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION);
+        ApplicationEntity ae = asAccepted.getApplicationEntity();
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        proxyAEE.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, Dimse.C_FIND_RQ, data, 
+                asAccepted.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+        Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            List<ForwardRule> forwardRules = pae.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
-            HashMap<String, Association> fwdAssocs = pae.openForwardAssociations(asAccepted, forwardRules);
+            List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+            HashMap<String, Association> fwdAssocs = proxyAEE
+                    .openForwardAssociations(asAccepted, forwardRules, aeCache);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
 
             try {
-                asAccepted.setProperty(ProxyApplicationEntity.FORWARD_ASSOCIATION, fwdAssocs);
-                new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, fwdAssocs.values().toArray(
+                asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, fwdAssocs);
+                new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, aeCache, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());
@@ -93,13 +101,13 @@ public class CFind extends DicomService {
         } else
             try {
                 if (forwardAssociationProperty instanceof Association)
-                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, (Association) forwardAssociationProperty)
-                            .execute();
+                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, aeCache,
+                            (Association) forwardAssociationProperty).execute();
                 else {
                     @SuppressWarnings("unchecked")
                     HashMap<String, Association> fwdAssocs = (HashMap<String, Association>) forwardAssociationProperty;
-                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, fwdAssocs.values().toArray(
-                            new Association[fwdAssocs.size()])).execute();
+                    new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, aeCache, fwdAssocs.values()
+                            .toArray(new Association[fwdAssocs.size()])).execute();
                 }
             } catch (InterruptedException e) {
                 LOG.debug("Unexpected exception: " + e.getMessage());

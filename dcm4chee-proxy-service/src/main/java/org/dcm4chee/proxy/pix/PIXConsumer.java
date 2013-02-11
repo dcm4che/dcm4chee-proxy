@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.conf;
+package org.dcm4chee.proxy.pix;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -49,9 +49,12 @@ import org.dcm4che.hl7.HL7Segment;
 import org.dcm4che.hl7.MLLPConnection;
 import org.dcm4che.net.CompatibleConnection;
 import org.dcm4che.net.Connection;
+import org.dcm4che.net.Device;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.hl7.HL7Application;
+import org.dcm4che.net.hl7.HL7DeviceExtension;
 import org.dcm4chee.proxy.common.IDWithIssuer;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -65,7 +68,7 @@ public class PIXConsumer {
         this.hl7AppCache = hl7AppCache;
     }
 
-    public IDWithIssuer[] pixQuery(ProxyApplicationEntity pae, IDWithIssuer pid) throws ConfigurationException,
+    public IDWithIssuer[] pixQuery(ProxyAEExtension pae, IDWithIssuer pid) throws ConfigurationException,
             IncompatibleConnectionException, IOException, GeneralSecurityException {
         if (pid == null)
             return IDWithIssuer.EMPTY;
@@ -77,8 +80,9 @@ public class PIXConsumer {
 
         ArrayList<IDWithIssuer> pids = new ArrayList<IDWithIssuer>();
         pids.add(pid);
-        ProxyDevice dev = (ProxyDevice) pae.getDevice();
-        HL7Application pixConsumerApp = dev.getHL7Application(pixConsumer);
+        Device dev = pae.getApplicationEntity().getDevice();
+        HL7DeviceExtension hl7 = dev.getDeviceExtension(HL7DeviceExtension.class);
+        HL7Application pixConsumerApp = hl7.getHL7Application(pixConsumer);
         if (pixConsumerApp == null)
             throw new ConfigurationException("Unknown HL7 Application: " + pixConsumer);
 
