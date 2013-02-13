@@ -174,6 +174,9 @@ public class ForwardFiles {
                 if (path.endsWith(".dcm"))
                     return true;
 
+                if (path.endsWith(".part"))
+                    return false;
+
                 try {
                     String suffix = path.substring(path.lastIndexOf('.'));
                     Retry matchingRetry = getMatchingRetry(pae, suffix);

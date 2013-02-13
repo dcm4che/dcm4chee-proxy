@@ -468,13 +468,13 @@ public class ProxyAEExtension extends AEExtension {
                     if (asInvoked != null)
                         fwdAssocs.put(calledAET, asInvoked);
                 } catch (IncompatibleConnectionException e) {
-                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
+                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
                 } catch (GeneralSecurityException e) {
                     LOG.error("Failed to create SSL context: ", e.getMessage());
                 } catch (ConfigurationException e) {
-                    LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
+                    LOG.error("Unable to load configuration for destination AET {}: {}", new Object[] { calledAET, e });
                 } catch (ConnectException e) {
-                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
+                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
                 } catch (Exception e) {
                     LOG.debug("Unexpected exception: ", e.getMessage());
                 }

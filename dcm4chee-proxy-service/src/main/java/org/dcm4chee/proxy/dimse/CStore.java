@@ -144,7 +144,7 @@ public class CStore extends BasicCStoreSCP {
             else
                 processForwardRules(as, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
         } catch (Exception e) {
-            LOG.error(as + ": error processing C-STORE-RQ: ", e);
+            LOG.error(as + ": error processing C-STORE-RQ: ", e.getMessage());
             throw new DicomServiceException(Status.UnableToProcess);
         } finally {
             deleteFile(as, file);
@@ -168,10 +168,10 @@ public class CStore extends BasicCStoreSCP {
         try {
             asInvoked = as.getApplicationEntity().connect(
                     aeCache.findApplicationEntity(info.getMoveDestinationAET()), rq);
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
             as.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
             as.setProperty(ProxyAEExtension.FORWARD_CMOVE_INFO, info);
             as.setProperty(ForwardRule.class.getName(), info.getRule());
-            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, as);
         } catch (Exception e) {
             LOG.error("Unable to connect to {}: {}", info.getMoveDestinationAET(), e.getMessage());
             throw new DicomServiceException(Status.UnableToProcess);
@@ -272,6 +272,8 @@ public class CStore extends BasicCStoreSCP {
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
             asInvoked = getSingleForwardDestination(as, callingAET, calledAET, as.getAAssociateRQ(),
                     forwardAssociationProperty, pae, rule);
+            if (asInvoked != null)
+                as.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
         }
         return asInvoked;
     }
@@ -307,7 +309,7 @@ public class CStore extends BasicCStoreSCP {
         } catch (ConfigurationException e) {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
         } catch (Exception e) {
-            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });;
+            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });;
         }
         return asInvoked;
     }
@@ -345,15 +347,18 @@ public class CStore extends BasicCStoreSCP {
         }
         Attributes attrs = parse(asAccepted, file);
         if (proxyAEE.isEnableAuditLog()) {
-            proxyAEE.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs.getString(Tag.StudyInstanceUID));
+            proxyAEE.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
+                    attrs.getString(Tag.StudyInstanceUID));
             proxyAEE.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, file.length());
         }
         try {
             forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked, -1);
         } catch (AssociationStateException ass) {
-            handleForwardException(asAccepted, pc, rq, attrs, RetryObject.AssociationStateException.getSuffix(), ass, file);
+            handleForwardException(proxyAEE, asAccepted, pc, rq, attrs, fmi,
+                    RetryObject.AssociationStateException.getSuffix(), ass, file);
         } catch (Exception e) {
-            handleForwardException(asAccepted, pc, rq, attrs, RetryObject.ConnectionException.getSuffix(), e, file);
+            handleForwardException(proxyAEE, asAccepted, pc, rq, attrs, fmi, RetryObject.ConnectionException.getSuffix(), e,
+                    file);
         }
         return false;
     }
@@ -369,7 +374,7 @@ public class CStore extends BasicCStoreSCP {
                         || asAccepted.getProperty(ProxyAEExtension.FORWARD_CMOVE_INFO) != null);
     }
 
-    private void processMultiFrame(ProxyAEExtension pae, Association asAccepted, Association asInvoked,
+    private void processMultiFrame(ProxyAEExtension proxyAEE, Association asAccepted, Association asInvoked,
             PresentationContext pc, Attributes rq, File file, Attributes fmi) throws IOException {
         Attributes src;
         DicomInputStream dis = new DicomInputStream(file);
@@ -389,18 +394,20 @@ public class CStore extends BasicCStoreSCP {
             t = t + t2 - t1;
             rq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
             rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
-            if (pae.isEnableAuditLog()) {
-                pae.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
+            if (proxyAEE.isEnableAuditLog()) {
+                proxyAEE.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
                         attrs.getString(Tag.StudyInstanceUID));
-                pae.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
+                proxyAEE.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
                         attrs.calcLength(DicomEncodingOptions.DEFAULT, true));
             }
             try {
                 forward(asAccepted, pc, rq, new DataWriterAdapter(attrs), asInvoked, i);
             } catch (InterruptedException e) {
-                LOG.error("{}: Error forwarding to {} : {}",
-                        new Object[] { asAccepted, asInvoked.getRemoteAET(), e.getMessage() });
-                throw new DicomServiceException(Status.UnableToProcess);
+                LOG.error("{}: Error forwarding single-frame from multi-frame object: {}",
+                        new Object[] { asAccepted, e.getMessage() });
+                handleForwardException(proxyAEE, asAccepted, pc, rq, attrs, fmi,
+                        RetryObject.ConnectionException.getSuffix(), e, file);
+                break;
             }
         }
         LOG.info("{}: extracted {} frames from {} in {}sec",
@@ -436,17 +443,25 @@ public class CStore extends BasicCStoreSCP {
         return dst;
     }
 
-    private void handleForwardException(Association as, PresentationContext pc, Attributes rq, Attributes attrs,
-            String suffix, Exception e, File file) throws DicomServiceException, IOException {
+    private void handleForwardException(ProxyAEExtension proxyAEE, Association as, PresentationContext pc,
+            Attributes rq, Attributes attrs, Attributes fmi, String suffix, Exception e, File file)
+            throws DicomServiceException, IOException {
         LOG.debug(as + ": error forwarding C-STORE-RQ: " + e.getMessage());
+        if (proxyAEE.isAssociationFromDestinationAET(as)) {
+            Attributes rsp = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
+            as.writeDimseRSP(pc, rsp);
+            file.delete();
+            throw new DicomServiceException(Status.UnableToProcess);
+        }
         as.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix + "1");
-        rename(as, file);
+        File copy = createMappedFile(as, file, fmi, as.getCallingAET(), as.getCalledAET());
+        rename(as, copy);
         Attributes rsp = Commands.mkCStoreRSP(rq, Status.Success);
         as.writeDimseRSP(pc, rsp);
     }
 
-    private static void forward(final Association asAccepted, final PresentationContext pc, Attributes rq,
+    private static void forward(final Association asAccepted, final PresentationContext pc, final Attributes rq,
             DataWriter data, Association asInvoked, final int frame) throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
@@ -472,7 +487,21 @@ public class CStore extends BasicCStoreSCP {
                     LOG.debug(asInvoked + ": Failed to forward C-STORE RSP : " + e.getMessage());
                 }
             }
+
+            @Override
+            public void onClose(Association as) {
+                super.onClose(as);
+                Attributes cmd = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
+                if (!as.isRequestor() || info != null)
+                    cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
+                try {
+                    asAccepted.writeDimseRSP(pc, cmd);
+                } catch (IOException e) {
+                    LOG.debug(as + ": Failed to forward C-STORE RSP : " + e.getMessage());
+                }
+            }
         };
+
         if (info != null)
             asInvoked.cstore(cuid, iuid, priority, info.getMoveOriginatorAET(), info.getSourceMsgId(), data, tsuid,
                     rspHandler);
