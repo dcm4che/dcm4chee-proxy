@@ -16,42 +16,12 @@ Source: https://github.com/dcm4che/dcm4chee-proxy
 Building
 ========
 
-Building the dcm4chee-proxy requires selecting one of 2 supported configuration backends - Java Preferences or LDAP.
+Building the dcm4chee-proxy run `mvn clean install` in the root directory.
+On success, a JBoss AS7 deployable file can be found in dcm4chee-proxy-war/target/dcm4chee-proxy-war-<version>.war
+and the command line proxy-version can be found in dcm4chee-proxy-tool/target/dcm4chee-proxy-tool-<version>.zip.
+The standard build includes configuration support for LDAP and Java Preferences.
 
-Java Preferences
-----------------
-
-Java Preferences stores preference and configuration data in a place depending on the operating system. 
-On a Unix or Linux system, preferences are stored in the home directory of the user importing the data
-(e.g. under `~/.java/.userPrefs/`). On MS Windows systems, preferences are stored into the windows registry.
-
-dcm4che provides another project - dcm4che-jdbc-prefs - which acts as a wrapper for java preferences
-and allows to store configuration data in a SQL backend. This setup requires the proxy to run in
-JBoss AS7 (cp. section *Configuration*).
-
-To compile the dcm4chee-proxy for use with Java Preferences, run:
-
-`mvn install -P {prefs|prefs-jdbc}`
-
-*Note:* To store java preferences in a SQL backend utilizing dcm4che-jdbc-prefs 
-(https://github.com/dcm4che/dcm4che-jdbc-prefs), compile with `mvn install -P prefs-jdbc`. 
-This will add a deployment requirement for JBoss AS7 to wait for deployment 
-of dcm4che-jdbc-prefs before deploying dcm4chee-proxy.
-More details can be found in the section *Configuration*.
-
-LDAP
-----
-
-Supported LDAP servers are OpenLDAP, OpenDJ, and ApacheDS. 
-Select one of the supported LDAP servers in the maven build (default slapd):
-
-`mvn install -P ldap [-D ldap={slapd|opendj|apacheds}]`
-
-*Example:* To build the proxy to work with OpenDJ as the configuration backend, run: 
-`mvn install -Pldap -Dldap=opendj`.
-
-*Note:* the LDAP server is not included in the build - it must be setup independently. 
-Please follow the according install descriptions for the LDAP server of your choice.
+To build the proxy with a dependency for use with dcm4che-jdbc-prefs, run `mvn clean install -P prefs-jdbc`.
 
 Configuration
 =============
@@ -60,7 +30,7 @@ LDAP Schema Import
 ------------------
 
 In order to store configuration data for dcm4chee-proxy, new schema files
-have to be imported into your LDAP server instance.
+have to be imported into the LDAP server instance.
 The folder `/dcm4chee-proxy/dcm4chee-proxy-conf/src/main/config/ldap` contains
 subfolders with the required schema files for the supported LDAP servers:
 ```
@@ -87,7 +57,7 @@ The LDAP sample configuration can be found at `/dcm4chee-proxy/dcm4chee-proxy-co
 ./sample-config.ldif
 ```
 After importing the LDAP specific schema file (see step *LDAP Schema Import*), 
-import the ldif files in the above order into your LDAP server.
+import the ldif files in the above order into the LDAP server.
 
 **Java Preferences**
 
@@ -97,7 +67,7 @@ A Java Preferences sample configuration can be found at `dcm4chee-proxy/dcm4chee
 ```
 To import the sample config, use the `xml2prefs` tool provided by the dcm4che 3.0 library (https://github.com/dcm4che/dcm4che).
 
-*Note:* If you are planning to use the SQL backend for storing configuration data, the dcm4che-jdbc-prefs project 
+*Note:* If planned to use the SQL backend for storing configuration data, the dcm4che-jdbc-prefs project 
 provides a tool `xmlPrefs2jdbc` for importing the Java Preferences sample configuration.
 Please check the dcm4che-jdbc-prefs project for further information.
 
@@ -108,7 +78,21 @@ JBoss Setup
 
 To run dcm4chee-proxy within JBoss AS7 requires dcm4che-jboss-modules to be installed,
 which can be found in the dcm4che-3.x DICOM Toolkit (https://github.com/dcm4che/dcm4che).
-You need to unpack `dcm4che-jboss-modules-<version>.zip` into the JBoss AS7 folder.
+Unpack `dcm4che-jboss-modules-<version>.zip` into the JBoss AS7 folder.
+
+**Container Configuration**
+
+Create a directory `dcm4chee-proxy` inside the container configuration directory 
+(e.g. `<jbossDir>/standalone/configuration/dcm4chee-proxy`)
+and copy all files from `dcm4chee-proxy-conf/src/main/config/conf/` into it.
+
+If planned to use Java Preferences as configuration backend, delete the file
+`ldap.properties` from `<jbossDir>/standalone/configuration/dcm4chee-proxy/`.
+
+If planned to use a LDAP configuration backend, edit the file
+`<jbossDir>/standalone/configuration/dcm4chee-proxy/ldap.properties`
+and set the connection and authentication parameters according
+to the LDAP server configuration.
 
 **Deployment**
 
@@ -135,7 +119,7 @@ specified in [DICOM 2011, Part 15][1], Annex H.
 On start-up, the dcm4chee-proxy application needs to load a proxy device configuration
 from the configuration backend. The device to be loaded can be set via  
 
-i) JBoss AS7 system property `proxy.device.name` in the JBoss container configuration 
+i) JBoss AS7 system property `org.dcm4chee.proxy.deviceName` in the JBoss container configuration 
 
 *Example:* Edit `<jbossDir>standalone/configuration/standalone.xml`:
 ```xml
@@ -146,7 +130,7 @@ i) JBoss AS7 system property `proxy.device.name` in the JBoss container configur
     ...
     </extensions>
     <system-properties>
-        <property name="proxy.device.name" value="dcm4chee-proxy"/>
+        <property name="org.dcm4chee.proxy.deviceName" value="dcm4chee-proxy"/>
     </system-properties>
     ...
 </server>
