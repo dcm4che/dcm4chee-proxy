@@ -13,7 +13,7 @@ olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.2 NAME 'dcmSpoolDirectory'
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.3 NAME 'dcmAcceptDataOnFailedNegotiation'
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.3 NAME 'dcmAcceptDataOnFailedAssociation'
   DESC 'Boolean : temporary store data on failed negotiation with Called AET'
   EQUALITY booleanMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
@@ -148,7 +148,7 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
   AUXILIARY
   MUST (
     dcmSpoolDirectory $
-    dcmAcceptDataOnFailedNegotiation $
+    dcmAcceptDataOnFailedAssociation $
     dcmEnableAuditLog $
     dcmDeleteFailedDataWithoutRetryConfiguration )
   MAY (

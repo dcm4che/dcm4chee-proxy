@@ -101,11 +101,8 @@ public class ProxyServlet extends HttpServlet {
                 ldapConfig.addDicomConfigurationExtension(hl7Config);
                 LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
                 ldapConfig.addDicomConfigurationExtension(proxyConfig);
-                hl7Config.addHL7ConfigurationExtension(proxyConfig);
                 // ldapConfig.addDicomConfigurationExtension(
                 // new LdapAuditLoggerConfiguration());
-                // ldapConfig.addDicomConfigurationExtension(
-                // new LdapAuditRecordRepositoryConfiguration());
                 dicomConfig = ldapConfig;
                 this.hl7Config = hl7Config;
             } catch (FileNotFoundException e) {
@@ -115,18 +112,14 @@ public class ProxyServlet extends HttpServlet {
                 prefsConfig.addDicomConfigurationExtension(hl7Config);
                 PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
                 prefsConfig.addDicomConfigurationExtension(proxyConfig);
-                hl7Config.addHL7ConfigurationExtension(proxyConfig);
                 // prefsConfig.addDicomConfigurationExtension(
                 // new PreferencesAuditLoggerConfiguration());
-                // prefsConfig.addDicomConfigurationExtension(
-                // new PreferencesAuditRecordRepositoryConfiguration());
                 dicomConfig = prefsConfig;
                 this.hl7Config = hl7Config;
             } finally {
                 SafeClose.close(ldapConf);
             }
             Device device = dicomConfig.findDevice(deviceName);
-            //TODO: add negotiate and onClose handler
             proxy = new Proxy(dicomConfig, hl7Config, device);
             proxy.start();
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy, new ObjectName(jmxName));

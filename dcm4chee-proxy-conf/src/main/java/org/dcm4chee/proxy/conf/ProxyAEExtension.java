@@ -92,12 +92,12 @@ public class ProxyAEExtension extends AEExtension {
     private static final String jbossServerDataDir = System.getProperty("jboss.server.data.dir");
     private static final String currentWorkingDir = System.getProperty("user.dir");
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
-    public static final String FILE_SUFFIX = ".dcm.part";
+    public static final String FILE_SUFFIX = ".part";
     public static final String FORWARD_RULES = "forward.rules";
     public static final String FORWARD_CMOVE_INFO = "forward.cmove.info";
 
     private String spoolDirectory;
-    private boolean acceptDataOnFailedNegotiation;
+    private boolean acceptDataOnFailedAssociation;
     private boolean enableAuditLog;
     private HashMap<String, ForwardSchedule> forwardSchedules = new HashMap<String, ForwardSchedule>();
     private List<Retry> retries = new ArrayList<Retry>();
@@ -109,12 +109,12 @@ public class ProxyAEExtension extends AEExtension {
     private String fallbackDestinationAET;
     private CMoveInfoObject[] CMoveMessageID = new CMoveInfoObject[256];
 
-    public boolean isAcceptDataOnFailedNegotiation() {
-        return acceptDataOnFailedNegotiation;
+    public boolean isAcceptDataOnFailedAssociation() {
+        return acceptDataOnFailedAssociation;
     }
 
-    public void setAcceptDataOnFailedNegotiation(boolean acceptDataOnFailedNegotiation) {
-        this.acceptDataOnFailedNegotiation = acceptDataOnFailedNegotiation;
+    public void setAcceptDataOnFailedAssociation(boolean acceptDataOnFailedNegotiation) {
+        this.acceptDataOnFailedAssociation = acceptDataOnFailedNegotiation;
     }
 
     public final void setSpoolDirectory(String spoolDirectoryString) {
@@ -436,10 +436,11 @@ public class ProxyAEExtension extends AEExtension {
         }
     }
 
-    public void writeLogFile(String callingAET, String calledAET, Attributes attrs, long size) {
+    public File writeLogFile(String callingAET, String calledAET, Attributes attrs, long size) {
         Properties prop = new Properties();
+        File file = null;
         try {
-            File file = new File(getLogDir(callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID)), attrs
+            file = new File(getLogDir(callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID)), attrs
                     .getString(Tag.SOPInstanceUID).concat(".log"));
             prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
             prop.setProperty("size", String.valueOf(size));
@@ -448,6 +449,7 @@ public class ProxyAEExtension extends AEExtension {
         } catch (IOException e) {
             LOG.debug("Failed to create log file : " + e.getMessage());
         }
+        return file;
     }
 
     public void addAttributeCoercion(AttributeCoercion ac) {

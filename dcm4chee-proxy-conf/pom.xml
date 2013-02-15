@@ -28,39 +28,11 @@
         <directory>src/main/config/conf</directory>
         <includes>
           <include>dcm4chee-proxy-key.jks</include>
+          <include>ldap.properties</include>
         </includes>
       </resource>
     </resources>
   </build>
-  <profiles>
-    <profile>
-      <id>prefs</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
-      </properties>
-    </profile>
-    <profile>
-      <id>ldap</id>
-      <properties>
-        <ldap>slapd</ldap>
-        <config-class>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</config-class>
-      </properties>
-      <build>
-        <filters>
-          <filter>src/main/filters/${ldap}.properties</filter>
-        </filters>
-        <resources>
-          <resource>
-            <directory>src/main/resources-ldap</directory>
-            <filtering>true</filtering>
-          </resource>
-        </resources>
-      </build>
-    </profile>
-  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.dcm4che</groupId>

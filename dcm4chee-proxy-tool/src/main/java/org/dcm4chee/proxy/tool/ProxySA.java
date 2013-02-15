@@ -118,11 +118,8 @@ public class ProxySA {
         config.addDicomConfigurationExtension(hl7Config);
         LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
         config.addDicomConfigurationExtension(proxyConfig);
-        hl7Config.addHL7ConfigurationExtension(proxyConfig);
         // config.addDicomConfigurationExtension(
         // new LdapAuditLoggerConfiguration());
-        // config.addDicomConfigurationExtension(
-        // new LdapAuditRecordRepositoryConfiguration());
         return config;
     }
 
@@ -132,11 +129,8 @@ public class ProxySA {
         config.addDicomConfigurationExtension(hl7Config);
         PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
         config.addDicomConfigurationExtension(proxyConfig);
-        hl7Config.addHL7ConfigurationExtension(proxyConfig);
         // config.addDicomConfigurationExtension(
         // new PreferencesAuditLoggerConfiguration());
-        // config.addDicomConfigurationExtension(
-        // new PreferencesAuditRecordRepositoryConfiguration());
         return config;
     }
 

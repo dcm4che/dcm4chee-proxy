@@ -56,18 +56,15 @@ import javax.naming.directory.SearchResult;
 
 import org.dcm4che.conf.ldap.LdapDicomConfigurationExtension;
 import org.dcm4che.conf.ldap.LdapUtils;
-import org.dcm4che.conf.ldap.hl7.LdapHL7ConfigurationExtension;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
-import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardRule.conversionType;
 import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
-import org.dcm4chee.proxy.conf.ProxyHL7ApplicationExtension;
 import org.dcm4chee.proxy.conf.Retry;
 import org.dcm4chee.proxy.conf.Schedule;
 
@@ -75,7 +72,7 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExtension implements LdapHL7ConfigurationExtension {
+public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExtension {
 
     @Override
     protected void storeTo(Device device, Attributes attrs) {
@@ -97,23 +94,13 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         
         attrs.get("objectClass").add("dcmProxyNetworkAE");
         LdapUtils.storeNotNull(attrs, "dcmSpoolDirectory", proxyAEE.getSpoolDirectory());
-        LdapUtils.storeNotNull(attrs, "dcmAcceptDataOnFailedNegotiation", proxyAEE.isAcceptDataOnFailedNegotiation());
+        LdapUtils.storeNotNull(attrs, "dcmAcceptDataOnFailedAssociation", proxyAEE.isAcceptDataOnFailedAssociation());
         LdapUtils.storeNotNull(attrs, "dcmEnableAuditLog", proxyAEE.isEnableAuditLog());
         LdapUtils.storeNotNull(attrs, "hl7ProxyPIXConsumerApplication", proxyAEE.getProxyPIXConsumerApplication());
         LdapUtils.storeNotNull(attrs, "hl7RemotePIXManagerApplication", proxyAEE.getRemotePIXManagerApplication());
         LdapUtils.storeNotNull(attrs, "dcmDeleteFailedDataWithoutRetryConfiguration",
                 proxyAEE.isDeleteFailedDataWithoutRetryConfiguration());
         LdapUtils.storeNotNull(attrs, "dcmDestinationAETitle", proxyAEE.getFallbackDestinationAET());
-    }
-
-    @Override
-    public void storeTo(HL7Application hl7App, String deviceDN, Attributes attrs) {
-        ProxyHL7ApplicationExtension proxyHL7App = hl7App.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
-        if (proxyHL7App == null)
-            return;
-        
-        attrs.get("objectclass").add("dcmProxyHL7Application");
-        LdapUtils.storeNotEmpty(attrs, "labeledURI", proxyHL7App.getTemplatesURIs());
     }
 
     @Override
@@ -138,7 +125,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         ProxyAEExtension proxyAEE = new ProxyAEExtension();
         ae.addAEExtension(proxyAEE);
         proxyAEE.setSpoolDirectory(LdapUtils.stringValue(attrs.get("dcmSpoolDirectory"), null));
-        proxyAEE.setAcceptDataOnFailedNegotiation(LdapUtils.booleanValue(attrs.get("dcmAcceptDataOnFailedNegotiation"),
+        proxyAEE.setAcceptDataOnFailedAssociation(LdapUtils.booleanValue(attrs.get("dcmAcceptDataOnFailedAssociation"),
                 Boolean.FALSE));
         proxyAEE.setEnableAuditLog(LdapUtils.booleanValue(attrs.get("dcmEnableAuditLog"), Boolean.FALSE));
         proxyAEE.setProxyPIXConsumerApplication(LdapUtils.stringValue(attrs.get("hl7ProxyPIXConsumerApplication"), null));
@@ -249,15 +236,6 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
     }
 
     @Override
-    public void loadFrom(HL7Application hl7App, Attributes attrs) throws NamingException {
-        if (!LdapUtils.hasObjectClass(attrs, "dcmProxyHL7Application"))
-            return;
-
-        ProxyHL7ApplicationExtension proxyHL7App = new ProxyHL7ApplicationExtension();
-        proxyHL7App.setTemplatesURIs(LdapUtils.stringArray(attrs.get("labeledURI")));
-    }
-
-    @Override
     protected void storeChilds(String aeDN, ApplicationEntity ae) throws NamingException {
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         if (proxyAEE == null)
@@ -360,8 +338,8 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
             return;
 
         LdapUtils.storeDiff(mods, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
-        LdapUtils.storeDiff(mods, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
-                pb.isAcceptDataOnFailedNegotiation());
+        LdapUtils.storeDiff(mods, "dcmAcceptDataOnFailedAssociation", pa.isAcceptDataOnFailedAssociation(),
+                pb.isAcceptDataOnFailedAssociation());
         LdapUtils.storeDiff(mods, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
         LdapUtils.storeDiff(mods, "hl7ProxyPIXConsumerApplication", pa.getProxyPIXConsumerApplication(),
                 pb.getProxyPIXConsumerApplication());
@@ -371,16 +349,6 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
                 pa.isDeleteFailedDataWithoutRetryConfiguration(), pb.isDeleteFailedDataWithoutRetryConfiguration());
         LdapUtils.storeDiff(mods, "dcmDestinationAETitle", pa.getFallbackDestinationAET(),
                 pb.getFallbackDestinationAET());
-    }
-
-    @Override
-    public void storeDiffs(HL7Application a, HL7Application b, List<ModificationItem> mods) {
-        ProxyHL7ApplicationExtension pa = a.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
-        ProxyHL7ApplicationExtension pb = b.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
-        if (pa == null || pb == null)
-            return;
-
-        LdapUtils.storeDiff(mods, "labeledURI", pa.getTemplatesURIs(), pb.getTemplatesURIs());
     }
 
     @Override

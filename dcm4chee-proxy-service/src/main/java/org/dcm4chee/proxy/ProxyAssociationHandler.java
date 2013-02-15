@@ -152,7 +152,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     || matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
                 && matchingForwardRules.get(0).getDestinationAETitles().size() == 1 && isAvailableDestinationAET(
                     matchingForwardRules.get(0).getDestinationAETitles().get(0), proxyAEE))
-                && matchingForwardRules.get(0).getConversion() == null;
+                && !matchingForwardRules.get(0).getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR);
     }
 
     private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
@@ -237,7 +237,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             throws IOException, AAbort {
         as.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         LOG.debug(as + ": unable to connect to {}: {}", new Object[] { destinationAETitle, e.getMessage() });
-        if (proxyAEE.isAcceptDataOnFailedNegotiation()) {
+        if (proxyAEE.isAcceptDataOnFailedAssociation()) {
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
             return super.makeAAssociateAC(as, rq, null);
         }

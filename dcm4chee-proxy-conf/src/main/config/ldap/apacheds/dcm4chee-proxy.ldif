@@ -37,7 +37,7 @@ objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.3.3
-m-name: dcmAcceptDataOnFailedNegotiation
+m-name: dcmAcceptDataOnFailedAssociation
 m-description: Boolean : temporary store data on failed negotiation with Called 
  AET
 m-singleValue: TRUE
@@ -321,7 +321,7 @@ m-name: dcmProxyNetworkAE
 m-description: DICOM Proxy Network AE related information
 m-typeObjectClass: AUXILIARY
 m-must: dcmSpoolDirectory
-m-must: dcmAcceptDataOnFailedNegotiation
+m-must: dcmAcceptDataOnFailedAssociation
 m-must: dcmEnableAuditLog
 m-must: dcmDeleteFailedDataWithoutRetryConfiguration
 m-may: hl7ProxyPIXConsumerApplication

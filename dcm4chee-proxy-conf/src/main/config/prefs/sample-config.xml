@@ -48,7 +48,7 @@
             <map/>
             <node name="DCM4CHEE-PROXY">
               <map>
-                <entry key="dcmAcceptDataOnFailedNegotiation" value="true"/>
+                <entry key="dcmAcceptDataOnFailedAssociation" value="true"/>
                 <entry key="dcmDeleteFailedDataWithoutRetryConfiguration" value="true"/>
                 <entry key="dcmDestinationAETitle" value="DCM4CHEE"/>
                 <entry key="dcmEnableAuditLog" value="true"/>
@@ -3746,7 +3746,6 @@
             <map/>
             <node name="*">
               <map>
-                <entry key="dcmProxyHL7Application" value="true"/>
                 <entry key="dicomNetworkConnectionReference.#" value="1"/>
                 <entry key="dicomNetworkConnectionReference.1" value="2"/>
                 <entry key="hl7AcceptedMessageType.#" value="7"/>
@@ -3757,8 +3756,6 @@
                 <entry key="hl7AcceptedMessageType.5" value="ADT^A08"/>
                 <entry key="hl7AcceptedMessageType.6" value="ADT^A40"/>
                 <entry key="hl7AcceptedMessageType.7" value="ORM^O01"/>
-                <entry key="labeledURI.#" value="1"/>
-                <entry key="labeledURI.1" value="file:${jboss.server.config.dir}/dcm4chee-proxy/hl7-adt2dcm.xsl adt2dcm"/>
               </map>
             </node>
           </node>

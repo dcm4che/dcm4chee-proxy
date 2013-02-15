@@ -229,10 +229,10 @@ public class ForwardFiles {
         String fileName = pathname.getName();
         File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".dcm") + 4));
         if (pathname.renameTo(dst))
-            LOG.info("RENAME {} to {} {} and fallback AET is {}",
+            LOG.info("rename {} to {} {} and fallback AET is {}",
                     new Object[] { pathname, dst, reason, pae.getFallbackDestinationAET() });
         else
-            LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dst });
+            LOG.error("Failed to rename {} to {}", new Object[] { pathname, dst });
     }
 
     private boolean sendToFallbackAET(ProxyAEExtension pae, String destinationAET) {
@@ -258,16 +258,16 @@ public class ForwardFiles {
         dstDir.mkdirs();
         File dstFile = new File(dstDir, pathname.getName());
         if (pathname.renameTo(dstFile))
-            LOG.info("RENAME {} to {} {}", new Object[] { pathname, dstFile, reason });
+            LOG.info("rename {} to {} {}", new Object[] { pathname, dstFile, reason });
         else
-            LOG.error("Failed to RENAME {} to {}", new Object[] { pathname, dstFile });
+            LOG.error("Failed to rename {} to {}", new Object[] { pathname, dstFile });
     }
 
     private void deleteFile(File file, String reason) {
         if (file.delete())
-            LOG.info("M-DELETE {} {}", file, reason);
+            LOG.info("delete {} {}", file, reason);
         else
-            LOG.error("Failed to M-DELETE {}", file);
+            LOG.error("Failed to delete {}", file);
     }
 
     private void startForwardScheduledMPPS(final ProxyAEExtension pae, final File[] files,
@@ -478,9 +478,9 @@ public class ForwardFiles {
                     File dest = new File(pae.getNeventDirectoryPath(), transactionUID);
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
-                        LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dest });
+                        LOG.debug("{}: rename {} to {}", new Object[] { as, file, dest });
                     } else
-                        LOG.debug("{}: failed to RENAME {} to {}", new Object[] { as, file, dest });
+                        LOG.debug("{}: failed to rename {} to {}", new Object[] { as, file, dest });
                     break;
                 }
                 default: {
@@ -682,9 +682,9 @@ public class ForwardFiles {
         File dst = setFileSuffix(file, suffix);
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: RENAME to {}", new Object[] { file, dst });
+            LOG.debug("{}: rename to {}", new Object[] { file, dst });
         } else {
-            LOG.debug("{}: failed to RENAME to {}", new Object[] { file, dst });
+            LOG.debug("{}: failed to rename to {}", new Object[] { file, dst });
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
@@ -692,10 +692,10 @@ public class ForwardFiles {
     private File rename(Association as, File file, File dst) throws DicomServiceException {
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.debug("{}: rename {} to {}", new Object[] { as, file, dst });
             return dst;
         } else {
-            LOG.debug("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.debug("{}: failed to rename {} to {}", new Object[] { as, file, dst });
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
@@ -736,9 +736,9 @@ public class ForwardFiles {
 
     private static void delete(Association as, File file) {
         if (file.delete())
-            LOG.debug("{}: M-DELETE {}", as, file);
+            LOG.debug("{}: delete {}", as, file);
         else
-            LOG.debug("{}: failed to M-DELETE {}", as, file);
+            LOG.debug("{}: failed to delete {}", as, file);
     }
 
 }

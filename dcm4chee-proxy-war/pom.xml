@@ -33,7 +33,7 @@
   </build>
   <profiles>
     <profile>
-      <id>prefs</id>
+      <id>standard</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
@@ -47,13 +47,6 @@
       <properties>
         <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
         <profile.dependencies>org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.prefs-hl7,org.dcm4che.emf,org.dcm4che.conf.ldap-hl7,deployment.dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar</profile.dependencies>
-      </properties>
-    </profile>
-    <profile>
-      <id>ldap</id>
-      <properties>
-        <config-class>org.dcm4chee.proxy.conf.ldap.LdapProxyConfiguration</config-class>
-        <profile.dependencies>org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.ldap-hl7,org.dcm4che.emf,org.dcm4che.conf.prefs-hl7</profile.dependencies>
       </properties>
     </profile>
   </profiles>

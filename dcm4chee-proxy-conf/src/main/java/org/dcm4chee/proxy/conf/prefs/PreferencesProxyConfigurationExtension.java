@@ -50,17 +50,14 @@ import java.util.prefs.Preferences;
 
 import org.dcm4che.conf.prefs.PreferencesDicomConfigurationExtension;
 import org.dcm4che.conf.prefs.PreferencesUtils;
-import org.dcm4che.conf.prefs.hl7.PreferencesHL7ConfigurationExtension;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
-import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardSchedule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
-import org.dcm4chee.proxy.conf.ProxyHL7ApplicationExtension;
 import org.dcm4chee.proxy.conf.Retry;
 import org.dcm4chee.proxy.conf.Schedule;
 
@@ -68,8 +65,7 @@ import org.dcm4chee.proxy.conf.Schedule;
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
-public class PreferencesProxyConfigurationExtension extends PreferencesDicomConfigurationExtension implements
-        PreferencesHL7ConfigurationExtension {
+public class PreferencesProxyConfigurationExtension extends PreferencesDicomConfigurationExtension {
 
     @Override
     protected void storeTo(Device device, Preferences prefs) {
@@ -92,8 +88,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
 
         prefs.putBoolean("dcmProxyNetworkAE", true);
         PreferencesUtils.storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
-        PreferencesUtils.storeNotNull(prefs, "dcmAcceptDataOnFailedNegotiation",
-                proxyAE.isAcceptDataOnFailedNegotiation());
+        PreferencesUtils.storeNotNull(prefs, "dcmAcceptDataOnFailedAssociation",
+                proxyAE.isAcceptDataOnFailedAssociation());
         PreferencesUtils.storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
         PreferencesUtils
                 .storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
@@ -102,16 +98,6 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeNotNull(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
                 proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
         PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", proxyAE.getFallbackDestinationAET());
-    }
-
-    @Override
-    public void storeTo(HL7Application hl7App, Preferences prefs) {
-        ProxyHL7ApplicationExtension prxHL7App = hl7App.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
-        if (prxHL7App == null)
-            return;
-
-        prefs.putBoolean("dcmProxyHL7Application", true);
-        PreferencesUtils.storeNotEmpty(prefs, "labeledURI", prxHL7App.getTemplatesURIs());
     }
 
     @Override
@@ -135,23 +121,13 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         ProxyAEExtension proxyAEE = new ProxyAEExtension();
         ae.addAEExtension(proxyAEE);
         proxyAEE.setSpoolDirectory(prefs.get("dcmSpoolDirectory", null));
-        proxyAEE.setAcceptDataOnFailedNegotiation(prefs.getBoolean("dcmAcceptDataOnFailedNegotiation", false));
+        proxyAEE.setAcceptDataOnFailedAssociation(prefs.getBoolean("dcmAcceptDataOnFailedAssociation", false));
         proxyAEE.setEnableAuditLog(prefs.getBoolean("dcmEnableAuditLog", false));
         proxyAEE.setProxyPIXConsumerApplication(prefs.get("hl7ProxyPIXConsumerApplication", null));
         proxyAEE.setRemotePIXManagerApplication(prefs.get("hl7RemotePIXManagerApplication", null));
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(prefs.getBoolean(
                 "dcmDeleteFailedDataWithoutRetryConfiguration", false));
         proxyAEE.setFallbackDestinationAET(prefs.get("dcmDestinationAETitle", null));
-    }
-
-    @Override
-    public void loadFrom(HL7Application hl7App, Preferences prefs) {
-        if (!prefs.getBoolean("dcmProxyHL7Application", false))
-            return;
-
-        ProxyHL7ApplicationExtension proxyHL7App = new ProxyHL7ApplicationExtension();
-        hl7App.addHL7ApplicationExtension(proxyHL7App);
-        proxyHL7App.setTemplatesURIs(PreferencesUtils.stringArray(prefs, "labeledURI"));
     }
 
     @Override
@@ -315,8 +291,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             return;
 
         PreferencesUtils.storeDiff(prefs, "dcmSpoolDirectory", pa.getSpoolDirectory(), pb.getSpoolDirectory());
-        PreferencesUtils.storeDiff(prefs, "dcmAcceptDataOnFailedNegotiation", pa.isAcceptDataOnFailedNegotiation(),
-                pb.isAcceptDataOnFailedNegotiation());
+        PreferencesUtils.storeDiff(prefs, "dcmAcceptDataOnFailedAssociation", pa.isAcceptDataOnFailedAssociation(),
+                pb.isAcceptDataOnFailedAssociation());
         PreferencesUtils.storeDiff(prefs, "dcmEnableAuditLog", pa.isEnableAuditLog(), pb.isEnableAuditLog());
         PreferencesUtils.storeDiff(prefs, "hl7ProxyPIXConsumerApplication", pa.getProxyPIXConsumerApplication(),
                 pb.getProxyPIXConsumerApplication());
@@ -355,16 +331,6 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         mergeRetries(pprev.getRetries(), pae.getRetries(), aePrefs);
         mergeForwardSchedules(pprev.getForwardSchedules().values(), pae.getForwardSchedules().values(), aePrefs);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aePrefs);
-    }
-
-    @Override
-    public void storeDiffs(HL7Application a, HL7Application b, Preferences prefs) {
-        ProxyHL7ApplicationExtension pa = a.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
-        ProxyHL7ApplicationExtension pb = b.getHL7ApplicationExtension(ProxyHL7ApplicationExtension.class);
-        if (pa == null || pb == null)
-            return;
-
-        PreferencesUtils.storeDiff(prefs, "labeledURI", pa.getTemplatesURIs(), pb.getTemplatesURIs());
     }
 
     private void mergeForwardRules(List<ForwardRule> prevForwardRules, List<ForwardRule> currForwardRules,

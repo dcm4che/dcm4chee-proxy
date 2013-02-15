@@ -287,11 +287,8 @@ public class ProxyDeviceTest {
         config.addDicomConfigurationExtension(hl7Config);
         LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
         config.addDicomConfigurationExtension(proxyConfig);
-        hl7Config.addHL7ConfigurationExtension(proxyConfig);
 //        config.addDicomConfigurationExtension(
 //                new LdapAuditLoggerConfiguration());
-//        config.addDicomConfigurationExtension(
-//                new LdapAuditRecordRepositoryConfiguration());
         return config;
     }
 
@@ -301,11 +298,8 @@ public class ProxyDeviceTest {
         config.addDicomConfigurationExtension(hl7Config);
         PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
         config.addDicomConfigurationExtension(proxyConfig);
-        hl7Config.addHL7ConfigurationExtension(proxyConfig);
 //        config.addDicomConfigurationExtension(
 //                new PreferencesAuditLoggerConfiguration());
-//        config.addDicomConfigurationExtension(
-//                new PreferencesAuditRecordRepositoryConfiguration());
         return config;
     }
     
@@ -395,7 +389,7 @@ public class ProxyDeviceTest {
         ae.setAssociationAcceptor(true);
         ae.setAssociationInitiator(true);
         proxyAEE.setSpoolDirectory("/tmp/proxy/");
-        proxyAEE.setAcceptDataOnFailedNegotiation(true);
+        proxyAEE.setAcceptDataOnFailedAssociation(true);
         proxyAEE.setEnableAuditLog(true);
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(true);
         proxyAEE.setFallbackDestinationAET("DCM4CHEE");
@@ -495,11 +489,7 @@ public class ProxyDeviceTest {
         ae.addConnection(dicom);
         
         HL7Application hl7App = new HL7Application("*");
-        ProxyHL7ApplicationExtension proxyHL7App = new ProxyHL7ApplicationExtension();
-        hl7App.addHL7ApplicationExtension(proxyHL7App);
         hl7App.setAcceptedMessageTypes(HL7_MESSAGE_TYPES);
-        proxyHL7App.addTemplatesURI("adt2dcm",
-                "file:${jboss.server.config.dir}/dcm4chee-proxy/hl7-adt2dcm.xsl");
         hl7DevExt.addHL7Application(hl7App);
         Connection hl7 = new Connection("hl7", "localhost", 22575);
         hl7.setProtocol(Protocol.HL7);
