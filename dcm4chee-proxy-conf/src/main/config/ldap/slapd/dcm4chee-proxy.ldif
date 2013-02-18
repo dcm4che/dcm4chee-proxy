@@ -84,11 +84,10 @@ olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.15 NAME 'dcmSOPClass'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.16 NAME 'dcmConversion'
-  DESC 'String : enum value of conversion type to be applied to object matching the forward rule'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.16 NAME 'dcmConvertEmf2Sf'
+  DESC 'Boolean : enable enhanced multi-frame to single-frame conversion'
+  EQUALITY booleanMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
   SINGLE-VALUE )
 olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.17 NAME 'dcmForwardRuleDimse'
   DESC 'DIMSE: "C_STORE_RQ", "C_FIND_RQ", "C_FIND_RSP"'
@@ -100,7 +99,7 @@ olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.18 NAME 'dcmProxyConfigurationStaleT
   EQUALITY integerMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.19 NAME 'dcmConversionUri'
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.19 NAME 'dcmMpps2DoseSrTemplateURI'
   DESC 'String : URI of conversion template'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
@@ -164,7 +163,7 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.3 NAME 'dcmRetry'
     dcmRetryDelay $
     dcmRetryNum $
     dcmDeleteAfterFinalRetry ) )
-olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.4 NAME 'dcmForwardSchedule'
+olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.4 NAME 'dcmForwardOption'
   DESC 'Schedule configuration for AE'
   SUP top
   STRUCTURAL
@@ -173,7 +172,8 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.4 NAME 'dcmForwardSchedule'
   MAY (
     dcmScheduleDays $
     dcmScheduleHours $
-    dicomDescription ) )
+    dicomDescription $
+    dcmConvertEmf2Sf ) )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
   DESC 'Forward Rule configuration'
   SUP top
@@ -189,8 +189,7 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.5 NAME 'dcmForwardRule'
     dcmUseCallingAETitle $
     dcmScheduleDays $
     dcmScheduleHours $
-    dcmConversion $
-    dcmConversionUri $
+    dcmMpps2DoseSrTemplateURI $
     dcmPIXQuery $
     dicomDescription ) )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.6 NAME 'dcmProxyHL7Application'

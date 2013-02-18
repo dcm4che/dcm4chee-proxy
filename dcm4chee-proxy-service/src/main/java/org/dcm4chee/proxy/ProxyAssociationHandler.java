@@ -63,7 +63,7 @@ import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.pdu.UserIdentityAC;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.ForwardSchedule;
+import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +86,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             throws IOException {
         ProxyAEExtension proxyAEE = as.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
         filterForwardRulesOnNegotiationRQ(as, rq, proxyAEE);
-        if (!isAssociationFromDestinationAET(as, proxyAEE) && sendNow(as, proxyAEE)) {
+        if (!proxyAEE.isAssociationFromDestinationAET(as) && sendNow(as, proxyAEE)) {
             LOG.info("{} : directly forwarding connection based on rule : {}", as, proxyAEE.getForwardRules().get(0)
                     .getCommonName());
             return forwardAAssociateRQ(as, rq, proxyAEE);
@@ -105,14 +105,6 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 list.add(rule);
         }
         as.setProperty(ProxyAEExtension.FORWARD_RULES, list);
-    }
-
-    public boolean isAssociationFromDestinationAET(Association asAccepted, ProxyAEExtension proxyAEE) {
-        for (ForwardRule rule : proxyAEE.getForwardRules())
-            for (String destinationAET : rule.getDestinationAETitles())
-                if (asAccepted.getRemoteAET().equals(destinationAET))
-                    return true;
-        return false;
     }
 
     @Override
@@ -152,7 +144,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     || matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
                 && matchingForwardRules.get(0).getDestinationAETitles().size() == 1 && isAvailableDestinationAET(
                     matchingForwardRules.get(0).getDestinationAETitles().get(0), proxyAEE))
-                && !matchingForwardRules.get(0).getConversion().equals(ForwardRule.conversionType.MPPS2DoseSR);
+                && matchingForwardRules.get(0).getMpps2DoseSrTemplateURI() == null;
     }
 
     private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {
@@ -164,7 +156,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
     }
 
     private boolean isAvailableDestinationAET(String destinationAET, ProxyAEExtension proxyAEE) {
-        for (Entry<String, ForwardSchedule> fwdSchedule : proxyAEE.getForwardSchedules().entrySet())
+        for (Entry<String, ForwardOption> fwdSchedule : proxyAEE.getForwardOptions().entrySet())
             if (fwdSchedule.getKey().equals(destinationAET))
                 return fwdSchedule.getValue().getSchedule().isNow(new GregorianCalendar());
         return false;

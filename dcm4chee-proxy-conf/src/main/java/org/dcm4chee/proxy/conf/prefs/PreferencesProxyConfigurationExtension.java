@@ -55,7 +55,7 @@ import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
-import org.dcm4chee.proxy.conf.ForwardSchedule;
+import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
@@ -137,7 +137,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             return;
 
         loadRetries(proxyAE, aeNode);
-        loadForwardSchedules(proxyAE, aeNode);
+        loadForwardOptions(proxyAE, aeNode);
         loadForwardRules(proxyAE, aeNode);
         config.load(proxyAE.getAttributeCoercions(), aeNode);
     }
@@ -159,10 +159,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             schedule.setDays(ruleNode.get("dcmScheduleDays", null));
             schedule.setHours(ruleNode.get("dcmScheduleHours", null));
             rule.setReceiveSchedule(schedule);
-            String conversion = ruleNode.get("dcmConversion", null);
-            if (conversion != null)
-                rule.setConversion(ForwardRule.conversionType.valueOf(conversion));
-            rule.setConversionUri(ruleNode.get("dcmConversionUri", null));
+            rule.setMpps2DoseSrTemplateURI(ruleNode.get("dcmMpps2DoseSrTemplateURI", null));
             rule.setRunPIXQuery(ruleNode.getBoolean("dcmPIXQuery", Boolean.FALSE));
             rule.setDescription(ruleNode.get("dicomDescription", null));
             rules.add(rule);
@@ -181,21 +178,22 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         return dimse;
     }
 
-    private void loadForwardSchedules(ProxyAEExtension proxyAE, Preferences paeNode) throws BackingStoreException {
-        Preferences schedulesNode = paeNode.node("dcmForwardSchedule");
-        HashMap<String, ForwardSchedule> fwdSchedules = new HashMap<String, ForwardSchedule>();
-        for (String scheduleIndex : schedulesNode.childrenNames()) {
-            Preferences scheduleNode = schedulesNode.node(scheduleIndex);
-            ForwardSchedule fwdSchedule = new ForwardSchedule();
-            fwdSchedule.setDestinationAET(scheduleNode.get("dcmDestinationAETitle", null));
+    private void loadForwardOptions(ProxyAEExtension proxyAE, Preferences paeNode) throws BackingStoreException {
+        Preferences fwdOptionsNode = paeNode.node("dcmForwardOption");
+        HashMap<String, ForwardOption> fwdOptions = new HashMap<String, ForwardOption>();
+        for (String fwdOptionIndex : fwdOptionsNode.childrenNames()) {
+            Preferences fwdOptionNode = fwdOptionsNode.node(fwdOptionIndex);
+            ForwardOption fwdOption = new ForwardOption();
+            fwdOption.setDestinationAET(fwdOptionNode.get("dcmDestinationAETitle", null));
+            fwdOption.setDescription(fwdOptionNode.get("dicomDescription", null));
+            fwdOption.setConvertEmf2Sf(fwdOptionNode.getBoolean("dcmConvertEmf2Sf", false));
             Schedule schedule = new Schedule();
-            schedule.setDays(scheduleNode.get("dcmScheduleDays", null));
-            schedule.setHours(scheduleNode.get("dcmScheduleHours", null));
-            fwdSchedule.setSchedule(schedule);
-            fwdSchedule.setDescription(scheduleNode.get("dicomDescription", null));
-            fwdSchedules.put(fwdSchedule.getDestinationAET(), fwdSchedule);
+            schedule.setDays(fwdOptionNode.get("dcmScheduleDays", null));
+            schedule.setHours(fwdOptionNode.get("dcmScheduleHours", null));
+            fwdOption.setSchedule(schedule);
+            fwdOptions.put(fwdOption.getDestinationAET(), fwdOption);
         }
-        proxyAE.setForwardSchedules(fwdSchedules);
+        proxyAE.setForwardOptions(fwdOptions);
     }
 
     private void loadRetries(ProxyAEExtension proxyAE, Preferences paeNode) throws BackingStoreException {
@@ -203,12 +201,9 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         List<Retry> retries = new ArrayList<Retry>();
         for (String retryIndex : retriesNode.childrenNames()) {
             Preferences retryNode = retriesNode.node(retryIndex);
-            Retry retry = new Retry(
-                    RetryObject.valueOf(
-                            retryNode.get("dcmRetryObject", null)),
-                            retryNode.getInt("dcmRetryDelay", Retry.DEFAULT_DELAY),
-                            retryNode.getInt("dcmRetryNum", Retry.DEFAULT_RETRIES),
-                            retryNode.getBoolean("dcmDeleteAfterFinalRetry", false));
+            Retry retry = new Retry(RetryObject.valueOf(retryNode.get("dcmRetryObject", null)), retryNode.getInt(
+                    "dcmRetryDelay", Retry.DEFAULT_DELAY), retryNode.getInt("dcmRetryNum", Retry.DEFAULT_RETRIES),
+                    retryNode.getBoolean("dcmDeleteAfterFinalRetry", false));
             retries.add(retry);
         }
         proxyAE.setRetries(retries);
@@ -221,7 +216,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             return;
 
         storeRetries(proxyAE.getRetries(), aeNode);
-        storeForwardSchedules(proxyAE.getForwardSchedules().values(), aeNode);
+        storeForwardOptions(proxyAE.getForwardOptions().values(), aeNode);
         storeForwardRules(proxyAE.getForwardRules(), aeNode);
         config.store(proxyAE.getAttributeCoercions(), aeNode);
     }
@@ -244,8 +239,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeNotNull(prefs, "cn", rule.getCommonName());
         PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
-        PreferencesUtils.storeNotNull(prefs, "dcmConversion", rule.getConversion());
-        PreferencesUtils.storeNotNull(prefs, "dcmConversionUri", rule.getConversionUri());
+        PreferencesUtils.storeNotNull(prefs, "dcmMpps2DoseSrTemplateURI", rule.getMpps2DoseSrTemplateURI());
         PreferencesUtils.storeNotDef(prefs, "dcmPIXQuery", rule.isRunPIXQuery(), Boolean.FALSE);
         PreferencesUtils.storeNotNull(prefs, "dicomDescription", rule.getDescription());
     }
@@ -257,17 +251,18 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeNotEmpty(prefs, "dcmForwardRuleDimse", dimseList.toArray(new String[dimseList.size()]));
     }
 
-    private void storeForwardSchedules(Collection<ForwardSchedule> fwdSchedules, Preferences parentNode) {
-        Preferences schedulesNode = parentNode.node("dcmForwardSchedule");
-        for (ForwardSchedule forwardSchedule : fwdSchedules)
-            storeToForwardSchedule(forwardSchedule, schedulesNode.node(forwardSchedule.getDestinationAET()));
+    private void storeForwardOptions(Collection<ForwardOption> fwdOptions, Preferences parentNode) {
+        Preferences fwdOptionsNode = parentNode.node("dcmForwardOption");
+        for (ForwardOption fwdOption : fwdOptions)
+            storeToForwardOption(fwdOption, fwdOptionsNode.node(fwdOption.getDestinationAET()));
     }
 
-    private void storeToForwardSchedule(ForwardSchedule forwardSchedule, Preferences prefs) {
-        PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", forwardSchedule.getSchedule().getDays());
-        PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", forwardSchedule.getSchedule().getHours());
-        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", forwardSchedule.getDestinationAET());
-        PreferencesUtils.storeNotNull(prefs, "dicomDescription", forwardSchedule.getDescription());
+    private void storeToForwardOption(ForwardOption forwardOption, Preferences prefs) {
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", forwardOption.getSchedule().getDays());
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", forwardOption.getSchedule().getHours());
+        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", forwardOption.getDestinationAET());
+        PreferencesUtils.storeNotNull(prefs, "dicomDescription", forwardOption.getDescription());
+        PreferencesUtils.storeNotNull(prefs, "dcmConvertEmf2Sf", forwardOption.isConvertEmf2Sf());
     }
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
@@ -298,10 +293,10 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
                 pb.getProxyPIXConsumerApplication());
         PreferencesUtils.storeDiff(prefs, "hl7RemotePIXManagerApplication", pa.getRemotePIXManagerApplication(),
                 pb.getRemotePIXManagerApplication());
-        PreferencesUtils.storeDiff(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration", 
-                pa.isDeleteFailedDataWithoutRetryConfiguration(),
-                pb.isDeleteFailedDataWithoutRetryConfiguration());
-        PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", pa.getFallbackDestinationAET(), pb.getFallbackDestinationAET());
+        PreferencesUtils.storeDiff(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
+                pa.isDeleteFailedDataWithoutRetryConfiguration(), pb.isDeleteFailedDataWithoutRetryConfiguration());
+        PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", pa.getFallbackDestinationAET(),
+                pb.getFallbackDestinationAET());
     }
 
     @Override
@@ -313,10 +308,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
 
         PreferencesUtils.storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
         PreferencesUtils.storeDiff(prefs, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
-        PreferencesUtils.storeDiff(prefs, "dcmProxyConfigurationStaleTimeout", 
-                pa.getConfigurationStaleTimeout(),
-                pb.getConfigurationStaleTimeout(), 
-                0);
+        PreferencesUtils.storeDiff(prefs, "dcmProxyConfigurationStaleTimeout", pa.getConfigurationStaleTimeout(),
+                pb.getConfigurationStaleTimeout(), 0);
     }
 
     @Override
@@ -329,7 +322,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
 
         config.merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aePrefs);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aePrefs);
-        mergeForwardSchedules(pprev.getForwardSchedules().values(), pae.getForwardSchedules().values(), aePrefs);
+        mergeForwardOptions(pprev.getForwardOptions().values(), pae.getForwardOptions().values(), aePrefs);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aePrefs);
     }
 
@@ -361,53 +354,56 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         List<String> dimseB = new ArrayList<String>();
         for (Dimse dimse : ruleB.getDimse())
             dimseB.add(dimse.toString());
-        PreferencesUtils.storeDiff(prefs, "dcmForwardRuleDimse", 
-                dimseA.toArray(new String[dimseA.size()]), 
+        PreferencesUtils.storeDiff(prefs, "dcmForwardRuleDimse", dimseA.toArray(new String[dimseA.size()]),
                 dimseB.toArray(new String[dimseB.size()]));
         PreferencesUtils.storeDiff(prefs, "dcmSOPClass",
-                ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]), 
+                ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]),
                 ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
         PreferencesUtils.storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
-        PreferencesUtils.storeDiff(prefs, "labeledURI", 
-                ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), 
-                ruleB.getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
-        PreferencesUtils.storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(), ruleB.isExclusiveUseDefinedTC());
+        PreferencesUtils.storeDiff(prefs, "labeledURI",
+                ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), ruleB
+                        .getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
+        PreferencesUtils.storeDiff(prefs, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(),
+                ruleB.isExclusiveUseDefinedTC());
         PreferencesUtils.storeDiff(prefs, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         PreferencesUtils.storeDiff(prefs, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
-        PreferencesUtils.storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
-        PreferencesUtils.storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
-        PreferencesUtils.storeDiff(prefs, "dcmConversion", ruleA.getConversion(), ruleB.getConversion());
-        PreferencesUtils.storeDiff(prefs, "dcmConversionUri", ruleA.getConversionUri(), ruleB.getConversionUri());
+        PreferencesUtils.storeDiff(prefs, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB
+                .getReceiveSchedule().getDays());
+        PreferencesUtils.storeDiff(prefs, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB
+                .getReceiveSchedule().getHours());
+        PreferencesUtils.storeDiff(prefs, "dcmMpps2DoseSrTemplateURI", ruleA.getMpps2DoseSrTemplateURI(),
+                ruleB.getMpps2DoseSrTemplateURI());
         PreferencesUtils.storeDiff(prefs, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
         PreferencesUtils.storeDiff(prefs, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
     }
 
-    private void mergeForwardSchedules(Collection<ForwardSchedule> prevSchedules,
-            Collection<ForwardSchedule> currSchedules, Preferences parentNode) throws BackingStoreException {
-        Preferences schedulesNode = parentNode.node("dcmForwardSchedule");
-        Iterator<ForwardSchedule> prevIter = prevSchedules.iterator();
-        List<String> currFwdScheduleNames = new ArrayList<String>();
-        for (ForwardSchedule fwdSchedule : currSchedules)
-            currFwdScheduleNames.add(fwdSchedule.getDestinationAET());
+    private void mergeForwardOptions(Collection<ForwardOption> prevOptions,
+            Collection<ForwardOption> currOptions, Preferences parentNode) throws BackingStoreException {
+        Preferences fwdOptionsNode = parentNode.node("dcmForwardOption");
+        Iterator<ForwardOption> prevIter = prevOptions.iterator();
+        List<String> currFwdOptionNames = new ArrayList<String>();
+        for (ForwardOption fwdOption : currOptions)
+            currFwdOptionNames.add(fwdOption.getDestinationAET());
         while (prevIter.hasNext()) {
             String prevFwdRuleName = prevIter.next().getDestinationAET();
-            if (!currFwdScheduleNames.contains(prevFwdRuleName))
-                schedulesNode.node(prevFwdRuleName).removeNode();
+            if (!currFwdOptionNames.contains(prevFwdRuleName))
+                fwdOptionsNode.node(prevFwdRuleName).removeNode();
         }
-        for (ForwardSchedule fwdSchedule : currSchedules) {
-            Preferences scheduleNode = schedulesNode.node(fwdSchedule.getDestinationAET());
+        for (ForwardOption fwdOption : currOptions) {
+            Preferences fwdOptionNode = fwdOptionsNode.node(fwdOption.getDestinationAET());
             if (prevIter.hasNext())
-                storeForwardScheduleDiffs(scheduleNode, prevIter.next(), fwdSchedule);
+                storeForwardOptionDiffs(fwdOptionNode, prevIter.next(), fwdOption);
             else
-                storeToForwardSchedule(fwdSchedule, scheduleNode);
+                storeToForwardOption(fwdOption, fwdOptionNode);
         }
     }
 
-    private void storeForwardScheduleDiffs(Preferences prefs, ForwardSchedule a, ForwardSchedule b) {
+    private void storeForwardOptionDiffs(Preferences prefs, ForwardOption a, ForwardOption b) {
         PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
         PreferencesUtils.storeDiff(prefs, "dcmScheduleDays", a.getSchedule().getDays(), b.getSchedule().getDays());
         PreferencesUtils.storeDiff(prefs, "dcmScheduleHours", a.getSchedule().getHours(), b.getSchedule().getHours());
         PreferencesUtils.storeDiff(prefs, "dicomDescription", a.getDescription(), b.getDescription());
+        PreferencesUtils.storeDiff(prefs, "dcmConvertEmf2Sf", a.isConvertEmf2Sf(), b.isConvertEmf2Sf());
     }
 
     private void mergeRetries(List<Retry> prevRetries, List<Retry> currRetries, Preferences parentNode)
@@ -434,6 +430,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
     private void storeRetryDiffs(Preferences prefs, Retry a, Retry b) {
         PreferencesUtils.storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
         PreferencesUtils.storeDiff(prefs, "dcmRetryNum", a.getNumberOfRetries(), b.getNumberOfRetries());
-        PreferencesUtils.storeDiff(prefs, "dcmDeleteAfterFinalRetry", a.isDeleteAfterFinalRetry(), b.isDeleteAfterFinalRetry());
+        PreferencesUtils.storeDiff(prefs, "dcmDeleteAfterFinalRetry", a.isDeleteAfterFinalRetry(),
+                b.isDeleteAfterFinalRetry());
     }
 }

@@ -60,8 +60,7 @@ public class ForwardRule implements Serializable {
     private Schedule receiveSchedule = new Schedule();
     private boolean exclusiveUseDefinedTC;
     private String commonName;
-    private conversionType conversion;
-    private String conversionUri;
+    private String mpps2DoseSrTemplateURI;
     private boolean runPIXQuery;
     private String description;
 
@@ -147,20 +146,12 @@ public class ForwardRule implements Serializable {
         this.commonName = commonName;
     }
 
-    public conversionType getConversion() {
-        return conversion;
+    public String getMpps2DoseSrTemplateURI() {
+        return mpps2DoseSrTemplateURI;
     }
 
-    public void setConversion(conversionType conversion) {
-        this.conversion = conversion;
-    }
-
-    public String getConversionUri() {
-        return conversionUri;
-    }
-
-    public void setConversionUri(String conversionUri) {
-        this.conversionUri = conversionUri;
+    public void setMpps2DoseSrTemplateURI(String conversionUri) {
+        this.mpps2DoseSrTemplateURI = conversionUri;
     }
 
     public boolean isRunPIXQuery() {
@@ -179,8 +170,4 @@ public class ForwardRule implements Serializable {
         this.description = description;
     }
 
-    public enum conversionType {
-        MPPS2DoseSR,
-        Emf2Sf;
-    }
 }

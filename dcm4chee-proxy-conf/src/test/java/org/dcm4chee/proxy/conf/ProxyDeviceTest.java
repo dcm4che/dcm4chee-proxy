@@ -406,18 +406,19 @@ public class ProxyDeviceTest {
                 "WITHOUT_PN",
                 "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
         
-        HashMap<String, ForwardSchedule> fwdSchedules = new HashMap<String, ForwardSchedule>();
+        HashMap<String, ForwardOption> fwdOptions = new HashMap<String, ForwardOption>();
         
-        ForwardSchedule fwdScheduleStoreScp = new ForwardSchedule();
-        fwdScheduleStoreScp.setDestinationAET("STORESCP");
-        fwdScheduleStoreScp.setDescription("Example ForwardSchedule for STORESCP");
+        ForwardOption fwdOptionStoreScp = new ForwardOption();
+        fwdOptionStoreScp.setDestinationAET("STORESCP");
+        fwdOptionStoreScp.setDescription("Example ForwardOption for STORESCP");
+        fwdOptionStoreScp.setConvertEmf2Sf(true);
         Schedule scheduleStoreScp = new Schedule();
         scheduleStoreScp.setDays("Wed");
         scheduleStoreScp.setHours("8-18");
-        fwdScheduleStoreScp.setSchedule(scheduleStoreScp);
-        fwdSchedules.put("STORESCP", fwdScheduleStoreScp);
+        fwdOptionStoreScp.setSchedule(scheduleStoreScp);
+        fwdOptions.put("STORESCP", fwdOptionStoreScp);
         
-        proxyAEE.setForwardSchedules(fwdSchedules);
+        proxyAEE.setForwardOptions(fwdOptions);
         
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
         
@@ -439,11 +440,10 @@ public class ProxyDeviceTest {
         List<String> destinationURIMPPS2DoseSR = new ArrayList<String>();
         destinationURIMPPS2DoseSR.add("aet:DCM4CHEE");
         forwardRuleMPPS2DoseSR.setDestinationURIs(destinationURIMPPS2DoseSR);
-        forwardRuleMPPS2DoseSR.setConversion(ForwardRule.conversionType.MPPS2DoseSR);
         List<String> sopClass = new ArrayList<String>();
         sopClass.add("1.2.840.10008.3.1.2.3.3");
         forwardRuleMPPS2DoseSR.setSopClass(sopClass);
-        forwardRuleMPPS2DoseSR.setConversionUri("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl");
+        forwardRuleMPPS2DoseSR.setMpps2DoseSrTemplateURI("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl");
         forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
         forwardRules.add(forwardRuleMPPS2DoseSR);
 

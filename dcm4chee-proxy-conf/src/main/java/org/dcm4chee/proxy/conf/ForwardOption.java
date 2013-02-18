@@ -44,13 +44,14 @@ import java.io.Serializable;
  * @author Michael Backhaus <michael.backaus@agfa.com>
  * 
  */
-public class ForwardSchedule implements Serializable {
+public class ForwardOption implements Serializable {
 
     private static final long serialVersionUID = 3546841067921034079L;
-    
+
     private String destinationAET;
     private Schedule schedule;
     private String description;
+    private boolean convertEmf2Sf;
 
     public String getDestinationAET() {
         return destinationAET;
@@ -69,6 +70,12 @@ public class ForwardSchedule implements Serializable {
     }
     public void setDescription(String description) {
         this.description = description;
+    }
+    public boolean isConvertEmf2Sf() {
+        return convertEmf2Sf;
+    }
+    public void setConvertEmf2Sf(boolean convertEmf2Sf) {
+        this.convertEmf2Sf = convertEmf2Sf;
     }
 
 }

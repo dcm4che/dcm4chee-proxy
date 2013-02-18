@@ -73,7 +73,7 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
-import org.dcm4chee.proxy.conf.ForwardSchedule;
+import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
@@ -95,14 +95,14 @@ public class ForwardFiles {
 
     public void execute(ApplicationEntity ae) {
         ProxyAEExtension pae = ae.getAEExtension(ProxyAEExtension.class);
-        HashMap<String, ForwardSchedule> forwardSchedules = pae.getForwardSchedules();
+        HashMap<String, ForwardOption> forwardSchedules = pae.getForwardOptions();
         processCStore(pae, forwardSchedules);
         processNAction(pae, forwardSchedules);
         processNCreate(pae, forwardSchedules);
         processNSet(pae, forwardSchedules);
     }
 
-    private void processNSet(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processNSet(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
         for (String calledAET : pae.getNSetDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
@@ -110,7 +110,7 @@ public class ForwardFiles {
                         new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
                         calledAET, "nset");
             else
-                for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
+                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledMPPS(pae,
@@ -119,7 +119,7 @@ public class ForwardFiles {
         }
     }
 
-    private void processNCreate(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processNCreate(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
         for (String calledAET : pae.getNCreateDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
@@ -127,7 +127,7 @@ public class ForwardFiles {
                         new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
                         calledAET, "ncreate");
             else
-                for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
+                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledMPPS(pae,
@@ -136,14 +136,14 @@ public class ForwardFiles {
         }
     }
 
-    private void processNAction(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processNAction(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
         for (String calledAET : pae.getNactionDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)),
                         calledAET);
             else
-                for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
+                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledNAction(pae,
@@ -151,13 +151,13 @@ public class ForwardFiles {
         }
     }
 
-    private void processCStore(ProxyAEExtension pae, HashMap<String, ForwardSchedule> forwardSchedules) {
+    private void processCStore(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
         for (String calledAET : pae.getCStoreDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
                 startForwardScheduledCStoreFiles(pae, calledAET);
             else
-                for (Entry<String, ForwardSchedule> entry : forwardSchedules.entrySet())
+                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
                         startForwardScheduledCStoreFiles(pae, calledAET);

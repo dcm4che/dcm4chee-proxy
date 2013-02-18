@@ -80,14 +80,25 @@
                   </map>
                 </node>
               </node>
+              <node name="dcmForwardOption">
+                <map/>
+                <node name="STORESCP">
+                  <map>
+                    <entry key="dcmConvertEmf2Sf" value="true"/>
+                    <entry key="dcmDestinationAETitle" value="STORESCP"/>
+                    <entry key="dcmScheduleDays" value="Wed"/>
+                    <entry key="dcmScheduleHours" value="8-18"/>
+                    <entry key="dicomDescription" value="Example ForwardOption for STORESCP"/>
+                  </map>
+                </node>
+              </node>
               <node name="dcmForwardRule">
                 <map/>
                 <node name="MPPS2XrayDoseSR">
                   <map>
                     <entry key="cn" value="MPPS2XrayDoseSR"/>
                     <entry key="dcmCallingAETitle" value="MPPSSCU"/>
-                    <entry key="dcmConversion" value="MPPS2DoseSR"/>
-                    <entry key="dcmConversionUri" value="file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl"/>
+                    <entry key="dcmMpps2DoseSrTemplateURI" value="file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl"/>
                     <entry key="dcmSOPClass.#" value="1"/>
                     <entry key="dcmSOPClass.1" value="1.2.840.10008.3.1.2.3.3"/>
                     <entry key="dcmScheduleDays" value="Sun-Sat"/>
@@ -121,17 +132,6 @@
                     <entry key="dicomDescription" value="Example ForwardRule"/>
                     <entry key="labeledURI.#" value="1"/>
                     <entry key="labeledURI.1" value="aet:DCM4CHEE"/>
-                  </map>
-                </node>
-              </node>
-              <node name="dcmForwardSchedule">
-                <map/>
-                <node name="STORESCP">
-                  <map>
-                    <entry key="dcmDestinationAETitle" value="STORESCP"/>
-                    <entry key="dcmScheduleDays" value="Wed"/>
-                    <entry key="dcmScheduleHours" value="8-18"/>
-                    <entry key="dicomDescription" value="Example ForwardSchedule for STORESCP"/>
                   </map>
                 </node>
               </node>

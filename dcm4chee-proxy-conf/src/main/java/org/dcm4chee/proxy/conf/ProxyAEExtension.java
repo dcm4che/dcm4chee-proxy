@@ -99,7 +99,7 @@ public class ProxyAEExtension extends AEExtension {
     private String spoolDirectory;
     private boolean acceptDataOnFailedAssociation;
     private boolean enableAuditLog;
-    private HashMap<String, ForwardSchedule> forwardSchedules = new HashMap<String, ForwardSchedule>();
+    private HashMap<String, ForwardOption> forwardOptions = new HashMap<String, ForwardOption>();
     private List<Retry> retries = new ArrayList<Retry>();
     private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
     private final AttributeCoercions attributeCoercions = new AttributeCoercions();
@@ -231,12 +231,12 @@ public class ProxyAEExtension extends AEExtension {
         return enableAuditLog;
     }
 
-    public HashMap<String, ForwardSchedule> getForwardSchedules() {
-        return forwardSchedules;
+    public HashMap<String, ForwardOption> getForwardOptions() {
+        return forwardOptions;
     }
 
-    public void setForwardSchedules(HashMap<String, ForwardSchedule> forwardSchedules) {
-        this.forwardSchedules = forwardSchedules;
+    public void setForwardOptions(HashMap<String, ForwardOption> forwardOptions) {
+        this.forwardOptions = forwardOptions;
     }
 
     public static String getSeparator() {
@@ -372,7 +372,7 @@ public class ProxyAEExtension extends AEExtension {
     public void reconfigure(AEExtension from) {
         ProxyAEExtension proxyAEE = (ProxyAEExtension) from;
         setForwardRules(proxyAEE.forwardRules);
-        setForwardSchedules(proxyAEE.forwardSchedules);
+        setForwardOptions(proxyAEE.forwardOptions);
         setRetries(proxyAEE.retries);
     }
 
@@ -490,32 +490,48 @@ public class ProxyAEExtension extends AEExtension {
             InterruptedException, IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
-        Association asInvoked = null;
-        if (rule.getConversion().equals(ForwardRule.conversionType.Emf2Sf)) {
-            List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
-            int pcSize = rq.getNumberOfPresentationContexts();
-            HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
-            for (PresentationContext pc : rq.getPresentationContexts())
-                as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
-            checkEnhancedTS(UID.CTImageStorage, UID.EnhancedCTImageStorage, newPcList, pcSize, as_ts);
-            checkEnhancedTS(UID.MRImageStorage, UID.EnhancedMRImageStorage, newPcList, pcSize, as_ts);
-            checkEnhancedTS(UID.PositronEmissionTomographyImageStorage, UID.EnhancedPETImageStorage, newPcList, pcSize,
-                    as_ts);
-            for (PresentationContext pc : newPcList)
-                rq.addPresentationContext(pc);
-        }
-        asInvoked = getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
+        if (forwardOptions.containsKey(callingAET) && forwardOptions.get(callingAET).isConvertEmf2Sf())
+            addEnhancedTS(rq);
+        else if (forwardOptions.containsKey(calledAET) && forwardOptions.get(calledAET).isConvertEmf2Sf())
+            addReducedTS(rq);
+        Association asInvoked = getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
         asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
         asInvoked.setProperty(ForwardRule.class.getName(), rule);
         return asInvoked;
     }
 
-    private void checkEnhancedTS(String singleTs, String enhancedTs, List<PresentationContext> newPcList, int pcSize,
-            HashMap<String, String[]> as_ts) {
-        String[] imageStorageTS = as_ts.get(singleTs);
+    private void addEnhancedTS(AAssociateRQ rq) {
+        List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
+        int pcSize = rq.getNumberOfPresentationContexts();
+        HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
+        for (PresentationContext pc : rq.getPresentationContexts())
+            as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
+        addTsSopClass(UID.CTImageStorage, UID.EnhancedCTImageStorage, newPcList, pcSize, as_ts);
+        addTsSopClass(UID.MRImageStorage, UID.EnhancedMRImageStorage, newPcList, pcSize, as_ts);
+        addTsSopClass(UID.PositronEmissionTomographyImageStorage, UID.EnhancedPETImageStorage, newPcList, pcSize, as_ts);
+        for (PresentationContext pc : newPcList)
+            rq.addPresentationContext(pc);
+    }
+    
+    private void addReducedTS(AAssociateRQ rq) {
+        List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
+        int pcSize = rq.getNumberOfPresentationContexts();
+        HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
+        for (PresentationContext pc : rq.getPresentationContexts())
+            as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
+        addTsSopClass(UID.EnhancedCTImageStorage, UID.CTImageStorage, newPcList, pcSize, as_ts);
+        addTsSopClass(UID.EnhancedMRImageStorage, UID.MRImageStorage, newPcList, pcSize, as_ts);
+        addTsSopClass(UID.EnhancedPETImageStorage, UID.PositronEmissionTomographyImageStorage, newPcList, pcSize, as_ts);
+        for (PresentationContext pc : newPcList)
+            rq.addPresentationContext(pc);
+    }
+
+    private void addTsSopClass(String tsA, String tsB, List<PresentationContext> newPcList,
+            int pcSize, HashMap<String, String[]> as_ts) {
+        String[] imageStorageTS = as_ts.get(tsA);
         if (imageStorageTS != null)
-            if (!as_ts.containsKey(enhancedTs))
-                newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, enhancedTs, imageStorageTS));
+            if (!as_ts.containsKey(tsB))
+                newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, tsB, imageStorageTS));
     }
 
 }

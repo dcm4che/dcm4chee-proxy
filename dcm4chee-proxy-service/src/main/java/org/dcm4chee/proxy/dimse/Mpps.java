@@ -151,7 +151,7 @@ public class Mpps extends DicomService {
             String iuid, Attributes fmi, ForwardRule rule, String callingAET, List<String> destinationAETs)
             throws DicomServiceException {
         for (String calledAET : destinationAETs) {
-            if (rule.getConversion() == ForwardRule.conversionType.MPPS2DoseSR) {
+            if (rule.getMpps2DoseSrTemplateURI() != null) {
                 File dir = pae.getDoseSrPath();
                 processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, calledAET, callingAET, rule);
             } else {
@@ -205,7 +205,7 @@ public class Mpps extends DicomService {
             throws TransformerFactoryConfigurationError, DicomServiceException {
         try {
             Templates templates = pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)
-                    .getTemplates(rule.getConversionUri());
+                    .getTemplates(rule.getMpps2DoseSrTemplateURI());
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);
             Transformer tr = th.getTransformer();

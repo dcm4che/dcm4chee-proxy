@@ -161,14 +161,14 @@ m-name: dcmSOPClass
 m-description: SOP Class UID List
 m-length: 0
 
-dn: m-oid=1.2.40.0.13.1.2.15.0.3.16, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
- ema
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.16, ou=attributeTypes, cn=dcm4chee-proxy, ou=sc
+ hema
 objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
-m-oid: 1.2.40.0.13.1.2.15.0.3.16
-m-name: dcmConversion
-m-description: String : enum value of conversion type to be applied to object matching the forward rule
+m-oid: 1.2.40.0.13.1.2.15.0.3.7
+m-name: dcmConvertEmf2Sf
+m-description: Boolean : enable enhanced multi-frame to single-frame conversion
 m-singleValue: TRUE
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.3.17, ou=attributetypes, cn=dcm4chee-proxy, ou=schema
@@ -200,7 +200,7 @@ objectclass: metaAttributeType
 objectclass: metaTop
 objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.3.19
-m-name: dcmConversionUri
+m-name: dcmMpps2DoseSrTemplateURI
 m-description: String : URI of conversion template
 m-singleValue: TRUE
 
@@ -352,6 +352,7 @@ m-must: dcmDestinationAETitle
 m-may: dcmScheduleDays
 m-may: dcmScheduleHours
 m-may: dicomDescription
+m-may: dcmConvertEmf2Sf
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.5, ou=objectClasses, cn=dcm4chee-proxy, ou=sche
  ma
@@ -370,8 +371,7 @@ m-may: dcmExclusiveUseDefinedTC
 m-may: dcmUseCallingAETitle
 m-may: dcmScheduleDays
 m-may: dcmScheduleHours
-m-may: dcmConversion
-m-may: dcmConversionUri
+m-may: dcmMpps2DoseSrTemplateURI
 m-may: dcmPIXQuery
 m-may: dicomDescription
 
