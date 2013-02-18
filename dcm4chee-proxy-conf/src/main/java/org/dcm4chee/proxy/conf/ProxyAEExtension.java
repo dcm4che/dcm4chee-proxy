@@ -478,7 +478,7 @@ public class ProxyAEExtension extends AEExtension {
                 } catch (ConnectException e) {
                     LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
                 } catch (Exception e) {
-                    LOG.debug("Unexpected exception: ", e.getMessage());
+                    LOG.error("Unexpected exception: ", e);
                 }
             }
         }

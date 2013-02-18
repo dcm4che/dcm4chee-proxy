@@ -94,7 +94,7 @@ public class CMove extends DicomService {
                 new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, aeCache, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
-                LOG.debug("Unexpected exception: " + e.getMessage());
+                LOG.error("Unexpected exception: ", e);
                 throw new DicomServiceException(Status.UnableToProcess, e);
             }
         } else
@@ -109,7 +109,7 @@ public class CMove extends DicomService {
                             .toArray(new Association[fwdAssocs.size()])).execute();
                 }
             } catch (InterruptedException e) {
-                LOG.debug("Unexpected exception: " + e.getMessage());
+                LOG.error("Unexpected exception: ", e);
                 throw new DicomServiceException(Status.UnableToProcess, e);
             }
     };

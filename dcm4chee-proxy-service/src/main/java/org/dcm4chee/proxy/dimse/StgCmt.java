@@ -151,7 +151,7 @@ public class StgCmt extends DicomService {
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
             processNActionRQ(asAccepted, pc, dimse, rq, data);
         } catch (InterruptedException e) {
-            LOG.error("Unexpected exception: " + e.getMessage());
+            LOG.error("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
             LOG.error("Unable to connect to {} ({})", new Object[] { calledAET, e.getMessage() });
@@ -237,7 +237,7 @@ public class StgCmt extends DicomService {
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix() + "1");
             rename(asAccepted, file);
         } catch (IOException e) {
-            LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
+            LOG.error(asAccepted + ": unexpected exception: ", e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
                     + "1");
@@ -250,7 +250,7 @@ public class StgCmt extends DicomService {
                     + "1");
             rename(asAccepted, file);
         } catch (InterruptedException e) {
-            LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
+            LOG.error(asAccepted + ": unexpected exception: ", e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
                     + "1");

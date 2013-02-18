@@ -165,7 +165,7 @@ public class ForwardDimseRQ {
                                     data,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
-                        if (dimse == Dimse.C_GET_RQ)
+                        else if (dimse == Dimse.C_GET_RQ)
                             proxyAEE.coerceDataset(
                                     asAccepted.getRemoteAET(),
                                     Role.SCU,
@@ -173,7 +173,7 @@ public class ForwardDimseRQ {
                                     data,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
-                        if (dimse == Dimse.C_MOVE_RQ)
+                        else if (dimse == Dimse.C_MOVE_RQ)
                             proxyAEE.coerceDataset(
                                     asAccepted.getRemoteAET(),
                                     Role.SCU,
@@ -195,7 +195,7 @@ public class ForwardDimseRQ {
                 try {
                     rspHandler.cancel(asInvoked);
                 } catch (IOException e) {
-                    LOG.debug(asAccepted + ": unexpected exception: " + e.getMessage());
+                    LOG.error(asAccepted + ": unexpected exception: ", e);
                 }
             }
         });
@@ -230,7 +230,7 @@ public class ForwardDimseRQ {
             } catch (IOException e) {
                 LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
             }
-        if (dimse == Dimse.C_GET_RQ)
+        else if (dimse == Dimse.C_GET_RQ)
             try {
                 Attributes rsp = Commands.mkCGetRSP(rq, status);
                 addNumberOfSuboperations(rsp);
@@ -239,7 +239,7 @@ public class ForwardDimseRQ {
             } catch (IOException e) {
                 LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
             }
-        if (dimse == Dimse.C_MOVE_RQ)
+        else if (dimse == Dimse.C_MOVE_RQ)
             try {
                 Attributes rsp = Commands.mkCMoveRSP(rq, status);
                 addNumberOfSuboperations(rsp);

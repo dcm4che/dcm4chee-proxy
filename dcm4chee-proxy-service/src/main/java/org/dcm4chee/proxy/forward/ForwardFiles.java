@@ -313,9 +313,9 @@ public class ForwardFiles {
                             as.waitForOutstandingRSP();
                             as.release();
                         } catch (InterruptedException e) {
-                            LOG.debug(as + ": unexpected exception", e);
+                            LOG.error(as + ": unexpected exception", e);
                         } catch (IOException e) {
-                            LOG.debug(as + ": failed to release association", e);
+                            LOG.error(as + ": failed to release association", e);
                         }
                     }
                 }
@@ -435,9 +435,9 @@ public class ForwardFiles {
                             as.waitForOutstandingRSP();
                             as.release();
                         } catch (InterruptedException e) {
-                            LOG.debug(as + ": unexpected exception", e);
+                            LOG.error(as + ": unexpected exception", e);
                         } catch (IOException e) {
-                            LOG.debug(as + ": failed to release association", e);
+                            LOG.error(as + ": failed to release association", e);
                         }
                     }
                 }
@@ -569,9 +569,9 @@ public class ForwardFiles {
                     asInvoked.waitForOutstandingRSP();
                     asInvoked.release();
                 } catch (InterruptedException e) {
-                    LOG.debug(asInvoked + ": unexpected exception: " + e.getMessage());
+                    LOG.error(asInvoked + ": unexpected exception: " + e.getMessage());
                 } catch (IOException e) {
-                    LOG.debug(asInvoked + ": failed to release association: " + e.getMessage());
+                    LOG.error(asInvoked + ": failed to release association: " + e.getMessage());
                 }
             }
         }

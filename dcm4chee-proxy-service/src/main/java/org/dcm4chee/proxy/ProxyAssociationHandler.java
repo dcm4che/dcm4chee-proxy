@@ -209,7 +209,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             return handleNegotiateConnectException(as, rq, ac, calledAET, e,
                     RetryObject.ConnectionException.getSuffix(), 0, proxyAEE);
         } catch (InterruptedException e) {
-            LOG.debug("Unexpected exception: ", e.getMessage());
+            LOG.error("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
             return handleNegotiateConnectException(as, rq, ac, calledAET, e,
