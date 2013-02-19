@@ -16,7 +16,7 @@ Source: https://github.com/dcm4che/dcm4chee-proxy
 Building
 ========
 
-Building the dcm4chee-proxy run `mvn clean install` in the root directory.
+To build the dcm4chee-proxy, run `mvn clean install` in the root directory.
 On success, a JBoss AS7 deployable file can be found in dcm4chee-proxy-war/target/dcm4chee-proxy-war-<version>.war
 and the command line proxy-version can be found in dcm4chee-proxy-tool/target/dcm4chee-proxy-tool-<version>.zip.
 The standard build includes configuration support for LDAP and Java Preferences.
