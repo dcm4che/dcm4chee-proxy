@@ -78,7 +78,7 @@ public class Scheduler {
                 for (ApplicationEntity ae : device.getApplicationEntities()) {
                     if (ae.getAEExtension(ProxyAEExtension.class) != null) {
                         new ForwardFiles(aeCache).execute(ae);
-                        log.writeLog(ae);
+                        log.scanLogDir(ae);
                     }
                 }
             }}, period, period, TimeUnit.SECONDS);

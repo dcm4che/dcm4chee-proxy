@@ -38,12 +38,24 @@
 
 package org.dcm4chee.proxy;
 
+import static org.dcm4che.audit.AuditMessages.createEventIdentification;
+
+import java.util.Calendar;
+
+import org.dcm4che.audit.AuditMessage;
+import org.dcm4che.audit.AuditMessages;
+import org.dcm4che.audit.AuditMessages.EventActionCode;
+import org.dcm4che.audit.AuditMessages.EventID;
+import org.dcm4che.audit.AuditMessages.EventOutcomeIndicator;
+import org.dcm4che.audit.AuditMessages.EventTypeCode;
+import org.dcm4che.audit.AuditMessages.RoleIDCode;
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
+import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.audit.AuditLog;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
@@ -56,11 +68,15 @@ import org.dcm4chee.proxy.dimse.Mpps;
 import org.dcm4chee.proxy.dimse.StgCmt;
 import org.dcm4chee.proxy.forward.Scheduler;
 import org.dcm4chee.proxy.pix.PIXConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class Proxy extends DeviceService implements ProxyMBean {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Proxy.class);
 
     public static final String KS_TYPE = "org.dcm4chee.proxy.net.keyStoreType";
     public static final String KS_URL = "org.dcm4chee.proxy.net.keyStoreURL";
@@ -111,15 +127,44 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     @Override
     public void start() throws Exception {
-        scheduler = new Scheduler(aeCache, device, new AuditLog());
+        scheduler = new Scheduler(aeCache, device, new AuditLog(device.getDeviceExtension(AuditLogger.class)));
         super.start();
         scheduler.start();
+        log(AuditMessages.EventTypeCode.ApplicationStart);
     }
 
     @Override
     public void stop() {
         scheduler.stop();
         super.stop();
+        log(EventTypeCode.ApplicationStop);
+    }
+
+    private void log(EventTypeCode eventType) {
+        AuditLogger logger = device.getDeviceExtension(AuditLogger.class);
+        if (logger != null && logger.isInstalled()) {
+            Calendar timeStamp = logger.timeStamp();
+            try {
+                logger.write(timeStamp, createApplicationActivityMessage(logger, timeStamp, eventType));
+            } catch (Exception e) {
+                LOG.error("Failed to write audit log message: ", e);
+            }
+        }
+    }
+
+    
+    private AuditMessage createApplicationActivityMessage(AuditLogger logger, Calendar timeStamp,
+            EventTypeCode eventType) {
+        AuditMessage msg = new AuditMessage();
+        msg.setEventIdentification(createEventIdentification(EventID.ApplicationActivity, 
+                EventActionCode.Execute,
+                timeStamp, 
+                EventOutcomeIndicator.Success, 
+                null, 
+                eventType));
+        msg.getAuditSourceIdentification().add(logger.createAuditSourceIdentification());
+        msg.getActiveParticipant().add(logger.createActiveParticipant(true, RoleIDCode.Application));
+        return msg;
     }
 
     protected DicomServiceRegistry serviceRegistry() {

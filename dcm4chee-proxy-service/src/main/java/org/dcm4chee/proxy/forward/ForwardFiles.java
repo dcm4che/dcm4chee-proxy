@@ -54,6 +54,7 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
@@ -94,83 +95,83 @@ public class ForwardFiles {
     }
 
     public void execute(ApplicationEntity ae) {
-        ProxyAEExtension pae = ae.getAEExtension(ProxyAEExtension.class);
-        HashMap<String, ForwardOption> forwardSchedules = pae.getForwardOptions();
-        processCStore(pae, forwardSchedules);
-        processNAction(pae, forwardSchedules);
-        processNCreate(pae, forwardSchedules);
-        processNSet(pae, forwardSchedules);
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        HashMap<String, ForwardOption> forwardSchedules = proxyAEE.getForwardOptions();
+        processCStore(proxyAEE, forwardSchedules);
+        processNAction(proxyAEE, forwardSchedules);
+        processNCreate(proxyAEE, forwardSchedules);
+        processNSet(proxyAEE, forwardSchedules);
     }
 
-    private void processNSet(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
-        for (String calledAET : pae.getNSetDirectoryPath().list()) {
+    private void processNSet(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+        for (String calledAET : proxyAEE.getNSetDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledMPPS(pae,
-                        new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
+                startForwardScheduledMPPS(proxyAEE,
+                        new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET)),
                         calledAET, "nset");
             else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledMPPS(pae,
-                                new File(pae.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
+                        startForwardScheduledMPPS(proxyAEE,
+                                new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET)),
                                 calledAET, "nset");
         }
     }
 
-    private void processNCreate(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
-        for (String calledAET : pae.getNCreateDirectoryPath().list()) {
+    private void processNCreate(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+        for (String calledAET : proxyAEE.getNCreateDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledMPPS(pae,
-                        new File(pae.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(pae, calledAET)),
+                startForwardScheduledMPPS(proxyAEE,
+                        new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET)),
                         calledAET, "ncreate");
             else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledMPPS(pae,
-                                new File(pae.getNCreateDirectoryPath(), calledAET)
-                                        .listFiles(fileFilter(pae, calledAET)), calledAET, "ncreate");
+                        startForwardScheduledMPPS(proxyAEE,
+                                new File(proxyAEE.getNCreateDirectoryPath(), calledAET)
+                                        .listFiles(fileFilter(proxyAEE, calledAET)), calledAET, "ncreate");
         }
     }
 
-    private void processNAction(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
-        for (String calledAET : pae.getNactionDirectoryPath().list()) {
+    private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+        for (String calledAET : proxyAEE.getNactionDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledNAction(pae, pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)),
+                startForwardScheduledNAction(proxyAEE, proxyAEE.getNactionDirectoryPath().listFiles(fileFilter(proxyAEE, calledAET)),
                         calledAET);
             else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledNAction(pae,
-                                pae.getNactionDirectoryPath().listFiles(fileFilter(pae, calledAET)), calledAET);
+                        startForwardScheduledNAction(proxyAEE,
+                                proxyAEE.getNactionDirectoryPath().listFiles(fileFilter(proxyAEE, calledAET)), calledAET);
         }
     }
 
-    private void processCStore(ProxyAEExtension pae, HashMap<String, ForwardOption> forwardSchedules) {
-        for (String calledAET : pae.getCStoreDirectoryPath().list()) {
+    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+        for (String calledAET : proxyAEE.getCStoreDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledCStoreFiles(pae, calledAET);
+                startForwardScheduledCStoreFiles(proxyAEE, calledAET);
             else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledCStoreFiles(pae, calledAET);
+                        startForwardScheduledCStoreFiles(proxyAEE, calledAET);
         }
     }
 
-    private FileFilter fileFilter(final ProxyAEExtension pae, final String calledAET) {
+    private FileFilter fileFilter(final ProxyAEExtension proxyAEE, final String calledAET) {
         final long now = System.currentTimeMillis();
         return new FileFilter() {
 
             @Override
-            public boolean accept(File pathname) {
-                String path = pathname.getPath();
+            public boolean accept(File file) {
+                String path = file.getPath();
                 if (path.endsWith(".dcm"))
                     return true;
 
@@ -179,25 +180,25 @@ public class ForwardFiles {
 
                 try {
                     String suffix = path.substring(path.lastIndexOf('.'));
-                    Retry matchingRetry = getMatchingRetry(pae, suffix);
+                    Retry matchingRetry = getMatchingRetry(proxyAEE, suffix);
                     if (matchingRetry == null)
-                        if (pae.isDeleteFailedDataWithoutRetryConfiguration())
-                            deleteFile(pathname, ": delete files without retry configuration is ENABLED");
+                        if (proxyAEE.isDeleteFailedDataWithoutRetryConfiguration())
+                            deleteFailedFile(proxyAEE, calledAET, file, ": delete files without retry configuration is ENABLED");
                         else
-                            moveToNoRetryPath(pae, pathname, ": delete files without retry configuration is DISABLED");
-                    else if (checkNumberOfRetries(pae, matchingRetry, suffix, pathname, calledAET)
-                            && (now > (pathname.lastModified() + (matchingRetry.delay * 1000))))
+                            moveToNoRetryPath(proxyAEE, file, ": delete files without retry configuration is DISABLED");
+                    else if (checkNumberOfRetries(proxyAEE, matchingRetry, suffix, file, calledAET)
+                            && (now > (file.lastModified() + (matchingRetry.delay * 1000))))
                         return true;
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
-                    moveToNoRetryPath(pae, pathname, ": error parsing suffix");
+                    moveToNoRetryPath(proxyAEE, file, ": error parsing suffix");
                 }
                 return false;
             }
         };
     }
 
-    private boolean checkNumberOfRetries(ProxyAEExtension pae, Retry retry, String suffix, File pathname,
+    private boolean checkNumberOfRetries(ProxyAEExtension proxyAEE, Retry retry, String suffix, File file,
             String calledAET) {
         String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
         int currentRetries = 0;
@@ -205,56 +206,56 @@ public class ForwardFiles {
             try {
                 currentRetries = Integer.parseInt(substring);
             } catch (NumberFormatException e) {
-                LOG.error("Error parsing number of retries in suffix of file " + pathname.getName());
-                moveToNoRetryPath(pae, pathname, ": error parsing suffix");
+                LOG.error("Error parsing number of retries in suffix of file " + file.getName());
+                moveToNoRetryPath(proxyAEE, file, ": error parsing suffix");
                 return false;
             }
         boolean send = currentRetries < retry.numberOfRetries;
         if (!send) {
             String reason = ": max number of retries = " + retry.getNumberOfRetries();
-            if (sendToFallbackAET(pae, calledAET))
-                moveToFallbackAetDir(pae, pathname, calledAET, reason);
+            if (sendToFallbackAET(proxyAEE, calledAET))
+                moveToFallbackAetDir(proxyAEE, file, calledAET, reason);
             else if (retry.deleteAfterFinalRetry)
-                deleteFile(pathname, reason + " and delete after final retry is ENABLED");
+                deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED");
             else
-                moveToNoRetryPath(pae, pathname, reason);
+                moveToNoRetryPath(proxyAEE, file, reason);
         }
         return send;
     }
 
-    private void moveToFallbackAetDir(ProxyAEExtension pae, File pathname, String calledAET, String reason) {
+    private void moveToFallbackAetDir(ProxyAEExtension proxyAEE, File pathname, String calledAET, String reason) {
         String path = pathname.getAbsolutePath();
-        File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + pae.getFallbackDestinationAET());
+        File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + proxyAEE.getFallbackDestinationAET());
         dstDir.mkdir();
         String fileName = pathname.getName();
         File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".dcm") + 4));
         if (pathname.renameTo(dst))
             LOG.info("rename {} to {} {} and fallback AET is {}",
-                    new Object[] { pathname, dst, reason, pae.getFallbackDestinationAET() });
+                    new Object[] { pathname, dst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { pathname, dst });
     }
 
-    private boolean sendToFallbackAET(ProxyAEExtension pae, String destinationAET) {
-        if (pae.getFallbackDestinationAET() != null)
-            if (!destinationAET.equals(pae.getFallbackDestinationAET()))
+    private boolean sendToFallbackAET(ProxyAEExtension proxyAEE, String destinationAET) {
+        if (proxyAEE.getFallbackDestinationAET() != null)
+            if (!destinationAET.equals(proxyAEE.getFallbackDestinationAET()))
                 return true;
         return false;
     }
 
-    protected Retry getMatchingRetry(ProxyAEExtension pae, String suffix) {
-        for (Retry retry : pae.getRetries())
+    protected Retry getMatchingRetry(ProxyAEExtension proxyAEE, String suffix) {
+        for (Retry retry : proxyAEE.getRetries())
             if (suffix.startsWith(retry.getRetryObject().getSuffix()))
                 return retry;
         return null;
     }
 
-    protected void moveToNoRetryPath(ProxyAEExtension pae, File pathname, String reason) {
+    protected void moveToNoRetryPath(ProxyAEExtension proxyAEE, File pathname, String reason) {
         String path = pathname.getPath();
-        String spoolDirPath = pae.getSpoolDirectoryPath().getPath();
+        String spoolDirPath = proxyAEE.getSpoolDirectoryPath().getPath();
         String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(),
                 path.indexOf(pathname.getName()));
-        File dstDir = new File(pae.getNoRetryPath().getPath() + subPath);
+        File dstDir = new File(proxyAEE.getNoRetryPath().getPath() + subPath);
         dstDir.mkdirs();
         File dstFile = new File(dstDir, pathname.getName());
         if (pathname.renameTo(dstFile))
@@ -263,22 +264,50 @@ public class ForwardFiles {
             LOG.error("Failed to rename {} to {}", new Object[] { pathname, dstFile });
     }
 
-    private void deleteFile(File file, String reason) {
-        if (file.delete())
-            LOG.info("delete {} {}", file, reason);
-        else
+    private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason) {
+        try {
+            if (proxyAEE.isEnableAuditLog()) {
+                Attributes fmi = readFileMetaInformation(file);
+                String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+                Attributes attrs = parse(file);
+                proxyAEE.createStartLogFile(false, callingAET, calledAET, attrs, null);
+                long length = file.length();
+                proxyAEE.writeLogFile(false, callingAET, calledAET, attrs, length);
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to create log file: ", e.getMessage());
+        }
+        if (file.delete()) {
+            LOG.info("Delete {} {}", file, reason);
+        } else {
             LOG.error("Failed to delete {}", file);
+        }
     }
 
-    private void startForwardScheduledMPPS(final ProxyAEExtension pae, final File[] files,
+    protected Attributes parse(File file)
+            throws DicomServiceException {
+        DicomInputStream in = null;
+        try {
+            in = new DicomInputStream(file);
+            in.setIncludeBulkData(IncludeBulkData.NO);
+            return in.readDataset(-1, Tag.PixelData);
+        } catch (IOException e) {
+            LOG.warn("Failed to decode dataset:", e);
+            throw new DicomServiceException(Status.CannotUnderstand);
+        } finally {
+            SafeClose.close(in);
+        }
+    }
+
+    private void startForwardScheduledMPPS(final ProxyAEExtension proxyAEE, final File[] files,
             final String destinationAETitle, final String protocol) {
-        ((ProxyDeviceExtension) pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
+        ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
                 .getFileForwardingExecutor().execute(new Runnable() {
 
                     @Override
                     public void run() {
                         try {
-                            forwardScheduledMPPS(pae, files, destinationAETitle, protocol);
+                            forwardScheduledMPPS(proxyAEE, files, destinationAETitle, protocol);
                         } catch (DicomServiceException e) {
                             e.printStackTrace();
                         }
@@ -286,11 +315,11 @@ public class ForwardFiles {
                 });
     }
 
-    protected void forwardScheduledMPPS(ProxyAEExtension pae, File[] files, String destinationAETitle, String protocol) throws DicomServiceException {
+    protected void forwardScheduledMPPS(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle, String protocol) throws DicomServiceException {
         for (File file : files) {
             try {
                 Attributes fmi = readFileMetaInformation(file);
-                if (protocol == "nset" && pendingNCreateForwarding(pae, destinationAETitle, fmi))
+                if (protocol == "nset" && pendingNCreateForwarding(proxyAEE, destinationAETitle, fmi))
                     return;
 
                 AAssociateRQ rq = new AAssociateRQ();
@@ -298,7 +327,7 @@ public class ForwardFiles {
                         UID.ExplicitVRLittleEndian));
                 rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
                 rq.setCalledAET(destinationAETitle);
-                Association as = pae.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
+                Association as = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
                         rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
@@ -338,8 +367,8 @@ public class ForwardFiles {
         }
     }
 
-    private boolean pendingNCreateForwarding(ProxyAEExtension pae, String destinationAETitle, Attributes fmi) {
-        File dir = new File(pae.getNCreateDirectoryPath(), destinationAETitle);
+    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, Attributes fmi) {
+        File dir = new File(proxyAEE.getNCreateDirectoryPath(), destinationAETitle);
         if (!dir.exists())
             return false;
 
@@ -369,7 +398,7 @@ public class ForwardFiles {
                 case Status.Success:
                     LOG.debug("{}: forwarded file {} with status {}",
                             new Object[] { as, file, Integer.toHexString(status) + 'H' });
-                    delete(as, file);
+                    deleteSendFile(as, file);
                     break;
                 default: {
                     LOG.debug("{}: failed to forward file {} with error status {}",
@@ -394,15 +423,15 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledNAction(final ProxyAEExtension pae, final File[] files,
+    private void startForwardScheduledNAction(final ProxyAEExtension proxyAEE, final File[] files,
             final String destinationAETitle) {
-        ((ProxyDeviceExtension) pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
+        ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
                 .getFileForwardingExecutor().execute(new Runnable() {
 
                     @Override
                     public void run() {
                         try {
-                            forwardScheduledNAction(pae, files, destinationAETitle);
+                            forwardScheduledNAction(proxyAEE, files, destinationAETitle);
                         } catch (DicomServiceException e) {
                             e.printStackTrace();
                         }
@@ -410,7 +439,7 @@ public class ForwardFiles {
                 });
     }
 
-    private void forwardScheduledNAction(ProxyAEExtension pae, File[] files, String destinationAETitle) 
+    private void forwardScheduledNAction(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle) 
             throws DicomServiceException {
         for (File file : files) {
             try {
@@ -420,11 +449,11 @@ public class ForwardFiles {
                 Attributes fmi = readFileMetaInformation(file);
                 rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
                 rq.setCalledAET(destinationAETitle);
-                Association as = pae.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
+                Association as = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
                         rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
-                        forwardScheduledNAction(pae, as, file, fmi);
+                        forwardScheduledNAction(proxyAEE, as, file, fmi);
                     } else {
                         File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
                         rename(as, file, dst);
@@ -460,7 +489,7 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledNAction(final ProxyAEExtension pae, final Association as, final File file,
+    private void forwardScheduledNAction(final ProxyAEExtension proxyAEE, final Association as, final File file,
             Attributes fmi) throws IOException, InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
@@ -475,7 +504,7 @@ public class ForwardFiles {
                 int status = cmd.getInt(Tag.Status, -1);
                 switch (status) {
                 case Status.Success: {
-                    File dest = new File(pae.getNeventDirectoryPath(), transactionUID);
+                    File dest = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
                         LOG.debug("{}: rename {} to {}", new Object[] { as, file, dest });
@@ -503,39 +532,39 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledCStoreFiles(final ProxyAEExtension pae, final String calledAET) {
-        ((ProxyDeviceExtension) pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
+    private void startForwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final String calledAET) {
+        ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
                 .getFileForwardingExecutor().execute(new Runnable() {
 
                     @Override
                     public void run() {
-                        forwardScheduledCStoreFiles(pae, calledAET);
+                        forwardScheduledCStoreFiles(proxyAEE, calledAET);
                     }
                 });
     }
 
-    private void forwardScheduledCStoreFiles(ProxyAEExtension pae, String calledAET) {
-        File dir = new File(pae.getCStoreDirectoryPath(), calledAET);
-        File[] files = dir.listFiles(fileFilter(pae, calledAET));
+    private void forwardScheduledCStoreFiles(ProxyAEExtension proxyAEE, String calledAET) {
+        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+        File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
         if (files != null && files.length > 0)
             for (ForwardTask ft : scanFiles(calledAET, files))
                 try {
-                    processForwardTask(pae, ft);
+                    processForwardTask(proxyAEE, ft);
                 } catch (DicomServiceException e) {
                     e.printStackTrace();
                 }
     }
 
-    private void processForwardTask(ProxyAEExtension pae, ForwardTask ft)
+    private void processForwardTask(ProxyAEExtension proxyAEE, ForwardTask ft)
             throws DicomServiceException {
         AAssociateRQ rq = ft.getAAssociateRQ();
         Association asInvoked = null;
         try {
-            asInvoked = pae.getApplicationEntity().connect(aeCache.findApplicationEntity(rq.getCalledAET()), rq);
+            asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(rq.getCalledAET()), rq);
             for (File file : ft.getFiles()) {
                 try {
                     if (asInvoked.isReadyForDataTransfer()) {
-                        forwardScheduledCStoreFiles(pae, asInvoked, file);
+                        forwardScheduledCStoreFiles(proxyAEE, asInvoked, file);
                     } else {
                         File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
                         rename(asInvoked, file, dst);
@@ -577,7 +606,7 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledCStoreFiles(final ProxyAEExtension pae, final Association asInvoked, final File file)
+    private void forwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final Association asInvoked, final File file)
             throws IOException, InterruptedException {
         DicomInputStream in = null;
         try {
@@ -599,9 +628,9 @@ public class ForwardFiles {
                     switch (status) {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
-                        if (pae.isEnableAuditLog())
-                            pae.writeLogFile(callingAET, asInvoked.getRemoteAET(), ds[0], fileSize);
-                        delete(asInvoked, file);
+                        if (proxyAEE.isEnableAuditLog())
+                            proxyAEE.writeLogFile(true, callingAET, asInvoked.getRemoteAET(), ds[0], fileSize);
+                        deleteSendFile(asInvoked, file);
                         break;
                     default: {
                         LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
@@ -616,7 +645,7 @@ public class ForwardFiles {
                     }
                 }
             };
-            asInvoked.cstore(cuid, iuid, 0, createDataWriter(pae, in, asInvoked, ds, cuid), tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, 0, createDataWriter(proxyAEE, in, asInvoked, ds, cuid), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }
@@ -720,21 +749,21 @@ public class ForwardFiles {
         return new File(pathname);
     }
 
-    private DataWriter createDataWriter(ProxyAEExtension pae, DicomInputStream in, Association as, Attributes[] ds,
+    private DataWriter createDataWriter(ProxyAEExtension proxyAEE, DicomInputStream in, Association as, Attributes[] ds,
             String cuid) throws IOException {
-        AttributeCoercion ac = pae.getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
-        if (ac != null || pae.isEnableAuditLog()) {
+        AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
+        if (ac != null || proxyAEE.isEnableAuditLog()) {
             Attributes attrs = in.readDataset(-1, -1);
-            pae.coerceAttributes(attrs, ac, as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+            proxyAEE.coerceAttributes(attrs, ac, as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
             ds[0] = attrs;
-            if (pae.isEnableAuditLog())
-                pae.createStartLogFile(as.getCallingAET(), as.getCalledAET(), ds[0].getString(Tag.StudyInstanceUID));
+            if (proxyAEE.isEnableAuditLog())
+                proxyAEE.createStartLogFile(true, as.getCallingAET(), as.getCalledAET(), ds[0], as.getConnection().getHostname());
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);
     }
 
-    private static void delete(Association as, File file) {
+    private static void deleteSendFile(Association as, File file) {
         if (file.delete())
             LOG.debug("{}: delete {}", as, file);
         else

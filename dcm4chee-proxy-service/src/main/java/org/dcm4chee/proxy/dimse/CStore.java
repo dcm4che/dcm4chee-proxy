@@ -323,9 +323,9 @@ public class CStore extends BasicCStoreSCP {
         Attributes attrs = parse(asAccepted, dataFile);
         File logFile = null;
         if (proxyAEE.isEnableAuditLog()) {
-            proxyAEE.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
-                    attrs.getString(Tag.StudyInstanceUID));
-            logFile = proxyAEE.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
+            proxyAEE.createStartLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
+                    attrs, asInvoked.getConnection().getHostname());
+            logFile = proxyAEE.writeLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
                     dataFile.length());
         }
         try {
@@ -371,9 +371,9 @@ public class CStore extends BasicCStoreSCP {
             rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             File logFile = null;
             if (proxyAEE.isEnableAuditLog()) {
-                proxyAEE.createStartLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
-                        attrs.getString(Tag.StudyInstanceUID));
-                logFile = proxyAEE.writeLogFile(asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
+                proxyAEE.createStartLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, asInvoked
+                        .getConnection().getHostname());
+                logFile = proxyAEE.writeLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
                         attrs.calcLength(DicomEncodingOptions.DEFAULT, true));
             }
             try {

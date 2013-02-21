@@ -145,6 +145,26 @@ public class ProxyAEExtension extends AEExtension {
         return path;
     }
 
+    public File getSendAuditDirectoryPath() {
+        File path = new File(getAuditDirectoryPath(), "send");
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, "send")
+                : new File(currentWorkingDir, "send");
+        path.mkdirs();
+        return path;
+    }
+
+    public File getFailedAuditDirectoryPath() {
+        File path = new File(getAuditDirectoryPath(), "failed");
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, "failed")
+                : new File(currentWorkingDir, "failed");
+        path.mkdirs();
+        return path;
+    }
+
     public File getNactionDirectoryPath() {
         File path = new File(getSpoolDirectoryPath(), "naction");
         if (!path.isAbsolute())
@@ -256,9 +276,9 @@ public class ProxyAEExtension extends AEExtension {
         return (List<ForwardRule>) as.getProperty(FORWARD_RULES);
     }
 
-    private File getLogDir(String callingAET, String calledAET, String studyIUID) {
-        File path = new File(getAuditDirectoryPath().getPath() + getSeparator() + calledAET
-                + getSeparator() + callingAET + getSeparator() + studyIUID);
+    private File getLogDir(boolean send, String callingAET, String calledAET, String studyIUID) {
+        File path = new File((send) ? getSendAuditDirectoryPath().getPath() : getFailedAuditDirectoryPath().getPath()
+                + getSeparator() + calledAET + getSeparator() + callingAET + getSeparator() + studyIUID);
         path.mkdirs();
         return path;
     }
@@ -423,12 +443,16 @@ public class ProxyAEExtension extends AEExtension {
         attrs.addAll(modify);
     }
 
-    public void createStartLogFile(String callingAET, String calledAET, final String studyIUID) throws IOException {
-        File file = new File(getLogDir(callingAET, calledAET, studyIUID), "start.log");
+    public void createStartLogFile(boolean send, String callingAET, String calledAET, Attributes attrs, String hostname) {
+        final String studyIUID = attrs.getString(Tag.StudyInstanceUID);
+        File file = new File(getLogDir(send, callingAET, calledAET, studyIUID), "start.log");
         if (!file.exists()) {
             try {
                 Properties prop = new Properties();
                 prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
+                if (hostname != null)
+                    prop.setProperty("hostname", hostname);
+                prop.setProperty("patientID", attrs.getString(Tag.PatientID));
                 prop.store(new FileOutputStream(file), null);
             } catch (IOException e) {
                 LOG.debug("Failed to create log file : " + e.getMessage());
@@ -436,11 +460,11 @@ public class ProxyAEExtension extends AEExtension {
         }
     }
 
-    public File writeLogFile(String callingAET, String calledAET, Attributes attrs, long size) {
+    public File writeLogFile(boolean send, String callingAET, String calledAET, Attributes attrs, long size) {
         Properties prop = new Properties();
         File file = null;
         try {
-            file = new File(getLogDir(callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID)), attrs
+            file = new File(getLogDir(send, callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID)), attrs
                     .getString(Tag.SOPInstanceUID).concat(".log"));
             prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
             prop.setProperty("size", String.valueOf(size));

@@ -46,11 +46,21 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.dcm4che.audit.AuditMessage;
+import org.dcm4che.audit.AuditMessages;
+import org.dcm4che.audit.AuditMessages.EventActionCode;
+import org.dcm4che.audit.AuditMessages.EventID;
+import org.dcm4che.audit.AuditMessages.EventOutcomeIndicator;
+import org.dcm4che.audit.ParticipantObjectDescription;
+import org.dcm4che.audit.SOPClass;
 import org.dcm4che.net.ApplicationEntity;
+import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
@@ -66,35 +76,43 @@ public class AuditLog {
 
     ApplicationEntity ae;
 
-    public void writeLog(ApplicationEntity ae) {
-        this.ae = ae;
-        ProxyAEExtension proxyAE = ae.getAEExtension(ProxyAEExtension.class);
-        for (String calledAET : proxyAE.getAuditDirectoryPath().list()) {
-            File calledAETDir = new File(proxyAE.getAuditDirectoryPath(), calledAET);
-            scanCalledAETDir(calledAETDir);
-        }
+    private static AuditLogger logger;
+
+    public AuditLog(AuditLogger logger) {
+        AuditLog.logger = logger;
     }
 
-    private void scanCalledAETDir(File calledAETDir) {
+    public void scanLogDir(ApplicationEntity ae) {
+        this.ae = ae;
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        File sendPath = proxyAEE.getSendAuditDirectoryPath();
+        for (String calledAET : sendPath.list())
+            scanCalledAETDir(new File(sendPath, calledAET), true);
+        File failedPath = proxyAEE.getFailedAuditDirectoryPath();
+        for (String calledAET : failedPath.list())
+            scanCalledAETDir(new File(failedPath, calledAET), false);
+    }
+
+    private void scanCalledAETDir(File calledAETDir, boolean send) {
         for (String callingAET : calledAETDir.list()) {
             File callingAETDir = new File(calledAETDir.getPath(), callingAET);
             for (String studyIUID : callingAETDir.list()) {
                 File studyIUIDDir = new File(callingAETDir.getPath(), studyIUID);
-                scanStudyDir(studyIUIDDir);
+                scanStudyDir(studyIUIDDir, send);
             }
         }
     }
 
-    private void scanStudyDir(final File studyIUIDDir) {
+    private void scanStudyDir(final File studyIUIDDir, final boolean send) {
         ae.getDevice().execute(new Runnable() {
             @Override
             public void run() {
-                writeLog(studyIUIDDir);
+                writeLog(studyIUIDDir, send);
             }
         });
     }
 
-    private void writeLog(File studyIUIDDir) {
+    private void writeLog(File studyIUIDDir, boolean send) {
         String separator = System.getProperty("file.separator");
         File startLog = new File(studyIUIDDir + separator + "start.log");
         long lastModified = startLog.lastModified();
@@ -107,9 +125,8 @@ public class AuditLog {
         if (logFiles != null && logFiles.length > 1) {
             Log log = new Log();
             log.files = logFiles.length;
-            for (File file : logFiles) {
+            for (File file : logFiles)
                 readProperties(file, log);
-            }
             float mb = log.totalSize / 1048576F;
             float time = (log.t2 - log.t1) / 1000F;
             String path = studyIUIDDir.getPath();
@@ -118,23 +135,131 @@ public class AuditLog {
             String callingAET = path.substring(path.lastIndexOf(separator)+1);
             path = path.substring(0, path.lastIndexOf(separator));
             String calledAET = path.substring(path.lastIndexOf(separator)+1);
-            LOG.info("Sent {} {} (={}MB) of study {} with SOPClassUIDs {} from {} to {} in {}s (={}MB/s)",
-                    new Object[] {
-                            log.files - 1,
-                            ((log.files - 1) > 1) ? "objects" : "object",
-                            mb,
-                            studyIUID, 
-                            Arrays.toString(log.sopclassuid.toArray()), 
-                            callingAET, 
-                            calledAET, 
-                            time, 
-                            (log.totalSize / 1048576F) / time});
+            if (send)
+                LOG.info("Sent {} {} (={}MB) of study {} with SOPClassUIDs {} from {} to {} in {}s (={}MB/s)",
+                        new Object[] {  log.files - 1, 
+                        ((log.files - 1) > 1) ? "objects" : "object", 
+                        mb, 
+                        studyIUID,
+                        Arrays.toString(log.sopclassuid.toArray()), 
+                        callingAET, 
+                        calledAET, 
+                        time,
+                        (log.totalSize / 1048576F) / time });
+            Calendar timeStamp = new GregorianCalendar();
+            timeStamp.setTimeInMillis(log.t2);
+            AuditMessage msg = (send) 
+                    ? createInstancesTransferedAuditMessage(log, studyIUID, calledAET, timeStamp)
+                    : createInstancesDeletedAuditMessage(log, studyIUID, callingAET, timeStamp);
+            try {
+                LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
+                logger.write(timeStamp, msg);
+            } catch (Exception e) {
+                LOG.error("Failed to write audit log message: ", e);
+            }
             for (File file : logFiles)
                 if (!file.delete())
                     LOG.debug("Failed to delete " + file);
             if (!studyIUIDDir.delete())
                 LOG.debug("Failed to delete " + studyIUIDDir);
         }
+    }
+
+    private AuditMessage createInstancesDeletedAuditMessage(Log log, String studyIUID, String callingAET,
+            Calendar timeStamp) {
+        AuditMessage msg = new AuditMessage();
+        msg.setEventIdentification(AuditMessages.createEventIdentification(
+                EventID.DICOMInstancesAccessed, 
+                EventActionCode.Delete, 
+                timeStamp, 
+                EventOutcomeIndicator.Success, 
+                null));
+        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
+                ae.getConnections().get(0).getHostname(), 
+                AuditMessages.alternativeUserIDForAETitle(ae.getAETitle()), 
+                null, 
+                true, 
+                null, 
+                null, 
+                null, 
+                AuditMessages.RoleIDCode.Application));
+        ParticipantObjectDescription pod = new ParticipantObjectDescription();
+        for (String sopClassUID : log.sopclassuid) {
+            SOPClass sc = new SOPClass();
+            sc.setUID(sopClassUID);
+            sc.setNumberOfInstances(log.files - 1);
+            pod.getSOPClass().add(sc);
+        }
+        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
+                studyIUID, 
+                AuditMessages.ParticipantObjectIDTypeCode.StudyInstanceUID, 
+                null, 
+                null, 
+                AuditMessages.ParticipantObjectTypeCode.SystemObject, 
+                AuditMessages.ParticipantObjectTypeCodeRole.Report, 
+                null, 
+                null, 
+                pod));
+        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
+                log.patientID,
+                AuditMessages.ParticipantObjectIDTypeCode.PatientNumber,
+                null,
+                null,
+                AuditMessages.ParticipantObjectTypeCode.Person,
+                AuditMessages.ParticipantObjectTypeCodeRole.Patient,
+                null,
+                null,
+                null));
+        msg.getAuditSourceIdentification().add(logger.createAuditSourceIdentification());
+        return msg;
+    }
+
+    private AuditMessage createInstancesTransferedAuditMessage(Log log, String studyIUID, String calledAET, Calendar timeStamp) {
+        AuditMessage msg = new AuditMessage();
+        msg.setEventIdentification(AuditMessages.createEventIdentification(
+                EventID.DICOMInstancesTransferred, 
+                EventActionCode.Read, 
+                timeStamp, 
+                EventOutcomeIndicator.Success, 
+                null));
+        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
+                log.hostname, 
+                AuditMessages.alternativeUserIDForAETitle(calledAET), 
+                null, 
+                false, 
+                null, 
+                null, 
+                null, 
+                AuditMessages.RoleIDCode.Destination));
+        ParticipantObjectDescription pod = new ParticipantObjectDescription();
+        for (String sopClassUID : log.sopclassuid) {
+            SOPClass sc = new SOPClass();
+            sc.setUID(sopClassUID);
+            sc.setNumberOfInstances(log.files - 1);
+            pod.getSOPClass().add(sc);
+        }
+        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
+                studyIUID, 
+                AuditMessages.ParticipantObjectIDTypeCode.StudyInstanceUID, 
+                null, 
+                null, 
+                AuditMessages.ParticipantObjectTypeCode.SystemObject, 
+                AuditMessages.ParticipantObjectTypeCodeRole.Report, 
+                null, 
+                null, 
+                pod));
+        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
+                log.patientID,
+                AuditMessages.ParticipantObjectIDTypeCode.PatientNumber,
+                null,
+                null,
+                AuditMessages.ParticipantObjectTypeCode.Person,
+                AuditMessages.ParticipantObjectTypeCodeRole.Patient,
+                null,
+                null,
+                null));
+        msg.getAuditSourceIdentification().add(logger.createAuditSourceIdentification());
+        return msg;
     }
 
     private void readProperties(File file, Log log) {
@@ -145,6 +270,9 @@ public class AuditLog {
             if (!file.getPath().endsWith("start.log")) {
                 log.totalSize = log.totalSize + Long.parseLong(prop.getProperty("size"));
                 log.sopclassuid.add(prop.getProperty("SOPClassUID"));
+            } else {
+                log.hostname = prop.getProperty("hostname");
+                log.patientID = prop.getProperty("patientID");
             }
             long time = Long.parseLong(prop.getProperty("time"));
             SafeClose.close(inStream);
@@ -168,6 +296,8 @@ public class AuditLog {
     }
 
     private class Log {
+        public String patientID;
+        public String hostname;
         private long totalSize;
         private int files;
         private long t1, t2;

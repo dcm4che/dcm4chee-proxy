@@ -56,8 +56,12 @@ import javax.ws.rs.PathParam;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.conf.ldap.LdapDicomConfiguration;
+import org.dcm4che.conf.ldap.audit.LdapAuditLoggerConfiguration;
+import org.dcm4che.conf.ldap.audit.LdapAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.ldap.hl7.LdapHL7Configuration;
 import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.audit.PreferencesAuditLoggerConfiguration;
+import org.dcm4che.conf.prefs.audit.PreferencesAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che.net.Device;
 import org.dcm4che.util.SafeClose;
@@ -96,26 +100,25 @@ public class ProxyServlet extends HttpServlet {
                 ldapConf = new URL(ldapPropertiesURL).openStream();
                 Properties p = new Properties();
                 p.load(ldapConf);
+                LOG.info("Using LDAP Configuration Backend");
                 LdapDicomConfiguration ldapConfig = new LdapDicomConfiguration(p);
-                LdapHL7Configuration hl7Config = new LdapHL7Configuration();
-                ldapConfig.addDicomConfigurationExtension(hl7Config);
-                LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
-                ldapConfig.addDicomConfigurationExtension(proxyConfig);
-                // ldapConfig.addDicomConfigurationExtension(
-                // new LdapAuditLoggerConfiguration());
+                LdapHL7Configuration hl7Conf = new LdapHL7Configuration();
+                ldapConfig.addDicomConfigurationExtension(hl7Conf);
+                ldapConfig.addDicomConfigurationExtension(new LdapProxyConfigurationExtension());
+                ldapConfig.addDicomConfigurationExtension(new LdapAuditLoggerConfiguration());
+                ldapConfig.addDicomConfigurationExtension(new LdapAuditRecordRepositoryConfiguration());
                 dicomConfig = ldapConfig;
-                this.hl7Config = hl7Config;
+                this.hl7Config = hl7Conf;
             } catch (FileNotFoundException e) {
-                LOG.info("Could not find " + ldapPropertiesURL + " - use Java Preferences as Configuration Backend");
+                LOG.info("Using Java Preferences as Configuration Backend");
                 PreferencesDicomConfiguration prefsConfig = new PreferencesDicomConfiguration();
-                PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
-                prefsConfig.addDicomConfigurationExtension(hl7Config);
-                PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
-                prefsConfig.addDicomConfigurationExtension(proxyConfig);
-                // prefsConfig.addDicomConfigurationExtension(
-                // new PreferencesAuditLoggerConfiguration());
+                PreferencesHL7Configuration hl7Conf = new PreferencesHL7Configuration();
+                prefsConfig.addDicomConfigurationExtension(hl7Conf);
+                prefsConfig.addDicomConfigurationExtension(new PreferencesProxyConfigurationExtension());
+                prefsConfig.addDicomConfigurationExtension(new PreferencesAuditLoggerConfiguration());
+                prefsConfig.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
                 dicomConfig = prefsConfig;
-                this.hl7Config = hl7Config;
+                this.hl7Config = hl7Conf;
             } finally {
                 SafeClose.close(ldapConf);
             }

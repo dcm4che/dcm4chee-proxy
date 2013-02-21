@@ -54,9 +54,15 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.conf.ldap.LdapDicomConfiguration;
+import org.dcm4che.conf.ldap.LdapDicomConfigurationExtension;
 import org.dcm4che.conf.ldap.LdapEnv;
+import org.dcm4che.conf.ldap.audit.LdapAuditLoggerConfiguration;
+import org.dcm4che.conf.ldap.audit.LdapAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.ldap.hl7.LdapHL7Configuration;
 import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.PreferencesDicomConfigurationExtension;
+import org.dcm4che.conf.prefs.audit.PreferencesAuditLoggerConfiguration;
+import org.dcm4che.conf.prefs.audit.PreferencesAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che.net.Device;
 import org.dcm4chee.proxy.Proxy;
@@ -78,11 +84,12 @@ public class ProxySA {
                 System.err.println(rb.getString("try"));
                 System.exit(2);
             }
-            DicomConfiguration dicomConfig = configureDicomConfiguration(cl);
-            HL7Configuration hl7Config = null;
+            HL7Configuration hl7Config = (useLdapConfiguration(cl)) 
+                    ? new LdapHL7Configuration()
+                    : new PreferencesHL7Configuration();
+            DicomConfiguration dicomConfig = configureDicomConfiguration(cl, hl7Config);
             String deviceName = cl.getOptionValue("device");
             Device device = dicomConfig.findDevice(deviceName);
-            //TODO: add negotiate handler
             Proxy proxy = new Proxy(dicomConfig, hl7Config, device);
             proxy.start();
         } catch (Exception e) {
@@ -91,14 +98,14 @@ public class ProxySA {
         }
     }
 
-    private static DicomConfiguration configureDicomConfiguration(CommandLine cl) throws NamingException,
-            ConfigurationException {
+    private static DicomConfiguration configureDicomConfiguration(CommandLine cl, HL7Configuration hl7Config)
+            throws NamingException, ConfigurationException {
         if (useLdapConfiguration(cl)) {
             LdapEnv env = new LdapEnv();
             env.setUrl(cl.getOptionValue("ldap-url"));
             env.setUserDN(cl.getOptionValue("ldap-userDN"));
             env.setPassword(cl.getOptionValue("ldap-pwd"));
-            return newLdapProxyConfiguration();
+            return newLdapProxyConfiguration(hl7Config);
         } else if (cl.hasOption("jdbc-backend-url")) {
             if (!DriverManager.getDrivers().hasMoreElements())
                 throw new RuntimeException("No jdbc driver in classpath.");
@@ -109,28 +116,27 @@ public class ProxySA {
             System.setProperty("jdbc.prefs.connection.username", cl.getOptionValue("jdbc-user-name"));
             System.setProperty("jdbc.prefs.connection.password", cl.getOptionValue("jdbc-user-pwd"));
         }
-        return newPreferencesProxyConfiguration();
+        return newPreferencesProxyConfiguration(hl7Config);
     }
 
-    private static DicomConfiguration newLdapProxyConfiguration() throws ConfigurationException {
+    private static DicomConfiguration newLdapProxyConfiguration(HL7Configuration hl7Config)
+            throws ConfigurationException {
         LdapDicomConfiguration config = new LdapDicomConfiguration();
-        LdapHL7Configuration hl7Config = new LdapHL7Configuration();
-        config.addDicomConfigurationExtension(hl7Config);
-        LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
-        config.addDicomConfigurationExtension(proxyConfig);
-        // config.addDicomConfigurationExtension(
-        // new LdapAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new LdapHL7Configuration());
+        config.addDicomConfigurationExtension(new LdapProxyConfigurationExtension());
+        config.addDicomConfigurationExtension(new LdapAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new LdapAuditRecordRepositoryConfiguration());
+        config.addDicomConfigurationExtension((LdapDicomConfigurationExtension) hl7Config);
         return config;
     }
 
-    private static DicomConfiguration newPreferencesProxyConfiguration() {
+    private static DicomConfiguration newPreferencesProxyConfiguration(HL7Configuration hl7Config) {
         PreferencesDicomConfiguration config = new PreferencesDicomConfiguration();
-        PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
-        config.addDicomConfigurationExtension(hl7Config);
-        PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
-        config.addDicomConfigurationExtension(proxyConfig);
-        // config.addDicomConfigurationExtension(
-        // new PreferencesAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new PreferencesHL7Configuration());
+        config.addDicomConfigurationExtension(new PreferencesProxyConfigurationExtension());
+        config.addDicomConfigurationExtension(new PreferencesAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
+        config.addDicomConfigurationExtension((PreferencesDicomConfigurationExtension) hl7Config);
         return config;
     }
 

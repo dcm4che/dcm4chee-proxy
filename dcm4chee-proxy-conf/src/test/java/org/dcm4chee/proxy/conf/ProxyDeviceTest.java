@@ -50,8 +50,12 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.ldap.LdapDicomConfiguration;
+import org.dcm4che.conf.ldap.audit.LdapAuditLoggerConfiguration;
+import org.dcm4che.conf.ldap.audit.LdapAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.ldap.hl7.LdapHL7Configuration;
 import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
+import org.dcm4che.conf.prefs.audit.PreferencesAuditLoggerConfiguration;
+import org.dcm4che.conf.prefs.audit.PreferencesAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che.data.Code;
 import org.dcm4che.data.Issuer;
@@ -64,6 +68,8 @@ import org.dcm4che.net.Dimse;
 import org.dcm4che.net.QueryOption;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4che.net.audit.AuditLogger;
+import org.dcm4che.net.audit.AuditRecordRepository;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4che.net.hl7.HL7DeviceExtension;
 import org.dcm4che.util.SafeClose;
@@ -283,23 +289,19 @@ public class ProxyDeviceTest {
     private DicomConfiguration newLdapProxyConfiguration()
             throws ConfigurationException {
         LdapDicomConfiguration config = new LdapDicomConfiguration();
-        LdapHL7Configuration hl7Config = new LdapHL7Configuration();
-        config.addDicomConfigurationExtension(hl7Config);
-        LdapProxyConfigurationExtension proxyConfig = new LdapProxyConfigurationExtension();
-        config.addDicomConfigurationExtension(proxyConfig);
-//        config.addDicomConfigurationExtension(
-//                new LdapAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new LdapHL7Configuration());
+        config.addDicomConfigurationExtension(new LdapProxyConfigurationExtension());
+        config.addDicomConfigurationExtension(new LdapAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new LdapAuditRecordRepositoryConfiguration());
         return config;
     }
 
     private DicomConfiguration newPreferencesProxyConfiguration() {
         PreferencesDicomConfiguration config = new PreferencesDicomConfiguration();
-        PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
-        config.addDicomConfigurationExtension(hl7Config);
-        PreferencesProxyConfigurationExtension proxyConfig = new PreferencesProxyConfigurationExtension();
-        config.addDicomConfigurationExtension(proxyConfig);
-//        config.addDicomConfigurationExtension(
-//                new PreferencesAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new PreferencesHL7Configuration());
+        config.addDicomConfigurationExtension(new PreferencesProxyConfigurationExtension());
+        config.addDicomConfigurationExtension(new PreferencesAuditLoggerConfiguration());
+        config.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
         return config;
     }
     
@@ -310,9 +312,6 @@ public class ProxyDeviceTest {
         try {
             config.removeDevice("dcm4chee-proxy");
         } catch (ConfigurationNotFoundException e) {}
-//        try {
-//            config.removeDevice("syslog");
-//        } catch (ConfigurationNotFoundException e) {}
         try {
             config.removeDevice("hl7rcv");
         } catch (ConfigurationNotFoundException e) {}
@@ -330,9 +329,9 @@ public class ProxyDeviceTest {
         try {
             config.removeDevice("dcm4chee-proxy");
         }  catch (ConfigurationNotFoundException e) {}
-//        try {
-//            config.removeDevice("syslog");
-//        } catch (ConfigurationNotFoundException e) {}
+        try {
+            config.removeDevice("syslog");
+        } catch (ConfigurationNotFoundException e) {}
         try {
             config.removeDevice("hl7rcv");
         } catch (ConfigurationNotFoundException e) {}
@@ -352,11 +351,24 @@ public class ProxyDeviceTest {
         for (int i = OTHER_AES.length; i < OTHER_DEVICES.length; i++)
             config.persist(createDevice(config, OTHER_DEVICES[i]));
         config.persist(createHL7Device("hl7rcv", SITE_A, INST_A, PIX_MANAGER, "localhost", 2576, 12576));
+        Device arrDevice = createARRDevice("syslog", Protocol.SYSLOG_UDP, 514);
+        config.persist(arrDevice);
         config.registerAETitle("DCM4CHEE-PROXY");
-        config.persist(createProxyDevice("dcm4chee-proxy"));
+        config.persist(createProxyDevice("dcm4chee-proxy", arrDevice));
         config.findApplicationEntity("DCM4CHEE-PROXY");
         if (config instanceof PreferencesDicomConfiguration)
             export(System.getProperty("export"));
+    }
+
+    private Device createARRDevice(String name, Protocol protocol, int port) {
+        Device arrDevice = new Device(name);
+        AuditRecordRepository arr = new AuditRecordRepository();
+        arrDevice.addDeviceExtension(arr);
+        Connection auditUDP = new Connection("audit-udp", "localhost", port);
+        auditUDP.setProtocol(protocol);
+        arrDevice.addConnection(auditUDP);
+        arr.addConnection(auditUDP);
+        return arrDevice ;
     }
 
     private void export(String name) throws Exception {
@@ -372,7 +384,7 @@ public class ProxyDeviceTest {
         }
     }
 
-    private Device createProxyDevice(String name) throws Exception {
+    private Device createProxyDevice(String name, Device arrDevice) throws Exception {
         Device device = new Device(name);
         HL7DeviceExtension hl7DevExt = new HL7DeviceExtension();
         device.addDeviceExtension(hl7DevExt);
@@ -390,7 +402,6 @@ public class ProxyDeviceTest {
         ae.setAssociationInitiator(true);
         proxyAEE.setSpoolDirectory("/tmp/proxy/");
         proxyAEE.setAcceptDataOnFailedAssociation(true);
-        proxyAEE.setEnableAuditLog(true);
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(true);
         proxyAEE.setFallbackDestinationAET("DCM4CHEE");
         
@@ -498,6 +509,15 @@ public class ProxyDeviceTest {
 
         proxyAEE.setProxyPIXConsumerApplication(PIX_CONSUMER);
         proxyAEE.setRemotePIXManagerApplication(PIX_MANAGER);
+
+        AuditLogger auditLogger = new AuditLogger();
+        device.addDeviceExtension(auditLogger);
+        Connection auditUDP = new Connection("audit-udp", "localhost");
+        auditUDP.setProtocol(Protocol.SYSLOG_UDP);
+        device.addConnection(auditUDP);
+        auditLogger.addConnection(auditUDP);
+        auditLogger.setAuditSourceTypeCodes("4");
+        auditLogger.setAuditRecordRepositoryDevice(arrDevice);
 
         return device;
     }
