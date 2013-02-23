@@ -58,12 +58,12 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
+import org.dcm4che.data.Value;
 import org.dcm4che.emf.MultiframeExtractor;
 import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.DataWriter;
@@ -129,7 +129,7 @@ public class CStore extends BasicCStoreSCP {
 
     protected void spool(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes cmd,
             PDVInputStream data, Attributes rsp) throws IOException {
-        File file = createSpoolFile(asAccepted);
+        File file = createSpoolFile(proxyAEE, asAccepted);
         MessageDigest digest = getMessageDigest(asAccepted);
         Attributes fmi = processInputStream(asAccepted, pc, cmd, data, file, digest);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
@@ -197,6 +197,7 @@ public class CStore extends BasicCStoreSCP {
         DicomOutputStream out = new DicomOutputStream(bout, UID.ExplicitVRLittleEndian);
         Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
         out.writeFileMetaInformation(fmi);
+        out.writeAttribute(0x00030016, VR.SH, as.getConnection().getHostname().getBytes());
         try {
             data.copyTo(out);
         } finally {
@@ -302,10 +303,8 @@ public class CStore extends BasicCStoreSCP {
         return asInvoked;
     }
 
-    protected File createSpoolFile(Association as) throws DicomServiceException {
+    protected File createSpoolFile(ProxyAEExtension proxyAEE, Association as) throws DicomServiceException {
         try {
-            ApplicationEntity ae = as.getApplicationEntity();
-            ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
             return File.createTempFile("dcm", ".part", proxyAEE.getCStoreDirectoryPath());
         } catch (Exception e) {
             LOG.debug(as + ": failed to create temp file: " + e.getMessage());
@@ -323,10 +322,9 @@ public class CStore extends BasicCStoreSCP {
         Attributes attrs = parse(asAccepted, dataFile);
         File logFile = null;
         if (proxyAEE.isEnableAuditLog()) {
-            proxyAEE.createStartLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(),
-                    attrs, asInvoked.getConnection().getHostname());
-            logFile = proxyAEE.writeLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
-                    dataFile.length());
+            String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+            proxyAEE.createStartLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs);
+            logFile = proxyAEE.writeLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs, dataFile.length());
         }
         try {
             forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile);
@@ -371,9 +369,9 @@ public class CStore extends BasicCStoreSCP {
             rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             File logFile = null;
             if (proxyAEE.isEnableAuditLog()) {
-                proxyAEE.createStartLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs, asInvoked
-                        .getConnection().getHostname());
-                logFile = proxyAEE.writeLogFile(true, asAccepted.getRemoteAET(), asInvoked.getRemoteAET(), attrs,
+                String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+                proxyAEE.createStartLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs);
+                logFile = proxyAEE.writeLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs,
                         attrs.calcLength(DicomEncodingOptions.DEFAULT, true));
             }
             try {

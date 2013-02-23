@@ -85,34 +85,34 @@ public class AuditLog {
     public void scanLogDir(ApplicationEntity ae) {
         this.ae = ae;
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        File sendPath = proxyAEE.getSendAuditDirectoryPath();
-        for (String calledAET : sendPath.list())
-            scanCalledAETDir(new File(sendPath, calledAET), true);
-        File failedPath = proxyAEE.getFailedAuditDirectoryPath();
-        for (String calledAET : failedPath.list())
-            scanCalledAETDir(new File(failedPath, calledAET), false);
+        File transferredPath = proxyAEE.getTransferredAuditDirectoryPath();
+        for (String calledAET : transferredPath.list())
+            scanCalledAETDir(new File(transferredPath, calledAET), true);
+        File deletePath = proxyAEE.getDeleteAuditDirectoryPath();
+        for (String calledAET : deletePath.list())
+            scanCalledAETDir(new File(deletePath, calledAET), false);
     }
 
-    private void scanCalledAETDir(File calledAETDir, boolean send) {
+    private void scanCalledAETDir(File calledAETDir, boolean transferred) {
         for (String callingAET : calledAETDir.list()) {
             File callingAETDir = new File(calledAETDir.getPath(), callingAET);
             for (String studyIUID : callingAETDir.list()) {
                 File studyIUIDDir = new File(callingAETDir.getPath(), studyIUID);
-                scanStudyDir(studyIUIDDir, send);
+                scanStudyDir(studyIUIDDir, transferred);
             }
         }
     }
 
-    private void scanStudyDir(final File studyIUIDDir, final boolean send) {
+    private void scanStudyDir(final File studyIUIDDir, final boolean transferred) {
         ae.getDevice().execute(new Runnable() {
             @Override
             public void run() {
-                writeLog(studyIUIDDir, send);
+                writeLog(studyIUIDDir, transferred);
             }
         });
     }
 
-    private void writeLog(File studyIUIDDir, boolean send) {
+    private void writeLog(File studyIUIDDir, boolean transferred) {
         String separator = System.getProperty("file.separator");
         File startLog = new File(studyIUIDDir + separator + "start.log");
         long lastModified = startLog.lastModified();
@@ -130,27 +130,21 @@ public class AuditLog {
             float mb = log.totalSize / 1048576F;
             float time = (log.t2 - log.t1) / 1000F;
             String path = studyIUIDDir.getPath();
-            String studyIUID = path.substring(path.lastIndexOf(separator)+1);
+            String studyIUID = path.substring(path.lastIndexOf(separator) + 1);
             path = path.substring(0, path.lastIndexOf(separator));
-            String callingAET = path.substring(path.lastIndexOf(separator)+1);
+            String callingAET = path.substring(path.lastIndexOf(separator) + 1);
             path = path.substring(0, path.lastIndexOf(separator));
-            String calledAET = path.substring(path.lastIndexOf(separator)+1);
-            if (send)
-                LOG.info("Sent {} {} (={}MB) of study {} with SOPClassUIDs {} from {} to {} in {}s (={}MB/s)",
-                        new Object[] {  log.files - 1, 
-                        ((log.files - 1) > 1) ? "objects" : "object", 
-                        mb, 
-                        studyIUID,
-                        Arrays.toString(log.sopclassuid.toArray()), 
-                        callingAET, 
-                        calledAET, 
-                        time,
-                        (log.totalSize / 1048576F) / time });
+            String calledAET = path.substring(path.lastIndexOf(separator) + 1);
             Calendar timeStamp = new GregorianCalendar();
             timeStamp.setTimeInMillis(log.t2);
-            AuditMessage msg = (send) 
-                    ? createInstancesTransferedAuditMessage(log, studyIUID, calledAET, timeStamp)
-                    : createInstancesDeletedAuditMessage(log, studyIUID, callingAET, timeStamp);
+            AuditMessage msg = new AuditMessage();
+            if (transferred) {
+                writeSentServerLogMessage(log, mb, time, studyIUID, callingAET, calledAET);
+                msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
+                        EventID.DICOMInstancesTransferred, EventActionCode.Read);
+            } else
+                msg = createAuditMessage(log, studyIUID, ae.getAETitle(), ae.getConnections().get(0).getHostname(),
+                        callingAET, timeStamp, EventID.DICOMInstancesAccessed, EventActionCode.Delete);
             try {
                 LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
                 logger.write(timeStamp, msg);
@@ -165,18 +159,27 @@ public class AuditLog {
         }
     }
 
-    private AuditMessage createInstancesDeletedAuditMessage(Log log, String studyIUID, String callingAET,
-            Calendar timeStamp) {
+    private AuditMessage createAuditMessage(Log log, String studyIUID, String destinationAET, String destinationHostname,
+            String sourceAET, Calendar timeStamp, EventID eventID, String eventActionCode) {
         AuditMessage msg = new AuditMessage();
         msg.setEventIdentification(AuditMessages.createEventIdentification(
-                EventID.DICOMInstancesAccessed, 
-                EventActionCode.Delete, 
+                eventID, 
+                eventActionCode, 
                 timeStamp, 
                 EventOutcomeIndicator.Success, 
                 null));
         msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
-                ae.getConnections().get(0).getHostname(), 
-                AuditMessages.alternativeUserIDForAETitle(ae.getAETitle()), 
+                destinationHostname, 
+                AuditMessages.alternativeUserIDForAETitle(destinationAET), 
+                null, 
+                false, 
+                null, 
+                null, 
+                null, 
+                AuditMessages.RoleIDCode.Application));
+        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
+                log.hostname, 
+                AuditMessages.alternativeUserIDForAETitle(sourceAET), 
                 null, 
                 true, 
                 null, 
@@ -214,52 +217,18 @@ public class AuditLog {
         return msg;
     }
 
-    private AuditMessage createInstancesTransferedAuditMessage(Log log, String studyIUID, String calledAET, Calendar timeStamp) {
-        AuditMessage msg = new AuditMessage();
-        msg.setEventIdentification(AuditMessages.createEventIdentification(
-                EventID.DICOMInstancesTransferred, 
-                EventActionCode.Read, 
-                timeStamp, 
-                EventOutcomeIndicator.Success, 
-                null));
-        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
-                log.hostname, 
-                AuditMessages.alternativeUserIDForAETitle(calledAET), 
-                null, 
-                false, 
-                null, 
-                null, 
-                null, 
-                AuditMessages.RoleIDCode.Destination));
-        ParticipantObjectDescription pod = new ParticipantObjectDescription();
-        for (String sopClassUID : log.sopclassuid) {
-            SOPClass sc = new SOPClass();
-            sc.setUID(sopClassUID);
-            sc.setNumberOfInstances(log.files - 1);
-            pod.getSOPClass().add(sc);
-        }
-        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
-                studyIUID, 
-                AuditMessages.ParticipantObjectIDTypeCode.StudyInstanceUID, 
-                null, 
-                null, 
-                AuditMessages.ParticipantObjectTypeCode.SystemObject, 
-                AuditMessages.ParticipantObjectTypeCodeRole.Report, 
-                null, 
-                null, 
-                pod));
-        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
-                log.patientID,
-                AuditMessages.ParticipantObjectIDTypeCode.PatientNumber,
-                null,
-                null,
-                AuditMessages.ParticipantObjectTypeCode.Person,
-                AuditMessages.ParticipantObjectTypeCodeRole.Patient,
-                null,
-                null,
-                null));
-        msg.getAuditSourceIdentification().add(logger.createAuditSourceIdentification());
-        return msg;
+    private void writeSentServerLogMessage(Log log, float mb, float time, String studyIUID, String callingAET,
+            String calledAET) {
+        LOG.info("Sent {} {} (={}MB) of study {} with SOPClassUIDs {} from {} to {} in {}s (={}MB/s)",
+                new Object[] {  log.files - 1, 
+                ((log.files - 1) > 1) ? "objects" : "object", 
+                mb, 
+                studyIUID,
+                Arrays.toString(log.sopclassuid.toArray()), 
+                callingAET, 
+                calledAET, 
+                time,
+                (log.totalSize / 1048576F) / time });
     }
 
     private void readProperties(File file, Log log) {

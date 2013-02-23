@@ -124,7 +124,7 @@ public class ProxyDeviceExtension extends DeviceExtension {
         ProxyDeviceExtension proxyDevExt = (ProxyDeviceExtension) from;
         setForwardThreads(proxyDevExt.forwardThreads);
         setSchedulerInterval(proxyDevExt.schedulerInterval);
-        fileForwardingExecutor = (ThreadPoolExecutor) Executors
-                .newFixedThreadPool(forwardThreads);
+        fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads);
+        setConfigurationStaleTimeout(proxyDevExt.configurationStaleTimeout);
     }
 }

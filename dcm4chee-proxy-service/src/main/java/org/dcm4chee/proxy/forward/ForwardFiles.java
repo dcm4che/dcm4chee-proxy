@@ -270,7 +270,7 @@ public class ForwardFiles {
                 Attributes fmi = readFileMetaInformation(file);
                 String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
                 Attributes attrs = parse(file);
-                proxyAEE.createStartLogFile(false, callingAET, calledAET, attrs, null);
+                proxyAEE.createStartLogFile(false, callingAET, calledAET, attrs);
                 long length = file.length();
                 proxyAEE.writeLogFile(false, callingAET, calledAET, attrs, length);
             }
@@ -606,8 +606,8 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final Association asInvoked, final File file)
-            throws IOException, InterruptedException {
+    private void forwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final Association asInvoked,
+            final File file) throws IOException, InterruptedException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -757,7 +757,7 @@ public class ForwardFiles {
             proxyAEE.coerceAttributes(attrs, ac, as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
             ds[0] = attrs;
             if (proxyAEE.isEnableAuditLog())
-                proxyAEE.createStartLogFile(true, as.getCallingAET(), as.getCalledAET(), ds[0], as.getConnection().getHostname());
+                proxyAEE.createStartLogFile(true, as.getCallingAET(), as.getCalledAET(), ds[0]);
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);
