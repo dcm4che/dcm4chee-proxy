@@ -34,45 +34,6 @@
       <outputDirectory>etc</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>src/test/resources</directory>
-      <includes>
-        <include>cacerts.jks</include>
-      </includes>
-      <outputDirectory>etc</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>src/main/config/conf</directory>
-      <includes>
-        <include>dcm4chee-proxy-key.jks</include>
-      </includes>
-      <fileMode>0644</fileMode>
-      <outputDirectory>etc</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>src/main/config/ldap</directory>
-      <includes>
-        <include>**/*</include>
-      </includes>
-      <fileMode>0644</fileMode>
-      <outputDirectory>conf</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>src/main/config/prefs</directory>
-      <includes>
-        <include>sample-config.xml</include>
-      </includes>
-      <fileMode>0644</fileMode>
-      <outputDirectory>conf</outputDirectory>
-    </fileSet>
-    <fileSet>
-      <directory>src/main/filters</directory>
-      <includes>
-        <include>**/*</include>
-      </includes>
-      <fileMode>0644</fileMode>
-      <outputDirectory>conf</outputDirectory>
-    </fileSet>
-    <fileSet>
       <directory>target</directory>
       <includes>
         <include>dcm4chee-proxy-tool-*.jar</include>
@@ -92,6 +53,10 @@
         <include>org.dcm4che:dcm4che-conf-ldap-hl7</include>
         <include>org.dcm4che:dcm4che-conf-prefs</include>
         <include>org.dcm4che:dcm4che-conf-prefs-hl7</include>
+        <include>org.dcm4che:dcm4che-audit</include>
+        <include>org.dcm4che:dcm4che-net-audit</include>
+        <include>org.dcm4che:dcm4che-conf-ldap-audit</include>
+        <include>org.dcm4che:dcm4che-conf-prefs-audit</include>
         <include>org.dcm4che:dcm4che-core</include>
         <include>org.dcm4che:dcm4che-net</include>
         <include>org.dcm4che:dcm4che-net-hl7</include>

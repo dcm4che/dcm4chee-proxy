@@ -152,13 +152,21 @@
       <groupId>org.dcm4che</groupId>
       <artifactId>dcm4che-conf-ldap-audit</artifactId>
       <version>${dcm4che.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.dcm4che</groupId>
       <artifactId>dcm4che-conf-prefs-audit</artifactId>
       <version>${dcm4che.version}</version>
-      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>dcm4che-audit</artifactId>
+      <version>${dcm4che.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.dcm4che</groupId>
+      <artifactId>dcm4che-net-audit</artifactId>
+      <version>${dcm4che.version}</version>
     </dependency>
   </dependencies>
   <profiles>
