@@ -257,11 +257,9 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
     private Attributes storeToForwardRule(ForwardRule rule, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmForwardRule");
         storeForwardRuleDimse(attrs, rule.getDimse());
-        LdapUtils
-                .storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
+        LdapUtils.storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
         LdapUtils.storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
-        LdapUtils.storeNotEmpty(attrs, "labeledURI",
-                rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
+        LdapUtils.storeNotEmpty(attrs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         LdapUtils.storeNotNull(attrs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         LdapUtils.storeBoolean(attrs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC());
         LdapUtils.storeNotNull(attrs, "cn", rule.getCommonName());

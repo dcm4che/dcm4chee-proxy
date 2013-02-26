@@ -164,7 +164,7 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.3 NAME 'dcmRetry'
     dcmRetryNum $
     dcmDeleteAfterFinalRetry ) )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.4 NAME 'dcmForwardOption'
-  DESC 'Schedule configuration for AE'
+  DESC 'Forward AET options'
   SUP top
   STRUCTURAL
   MUST (

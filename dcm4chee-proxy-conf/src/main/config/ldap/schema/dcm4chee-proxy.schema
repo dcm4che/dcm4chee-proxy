@@ -214,7 +214,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.3
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.4 
   NAME 'dcmForwardOption'
-  DESC 'Forward Schedule configuration'
+  DESC 'Forward AET options'
   SUP top
   STRUCTURAL
   MUST (
