@@ -150,7 +150,7 @@ objectClass: dcmNetworkConnection
 dicomHostname: localhost
 cn: hl7
 dcmProtocol: HL7
-dicomPort: 2575
+dicomPort: 2576
 
 dn: hl7ApplicationName=HL7RCV^DCM4CHEE,dicomDeviceName=hl7rcv,cn=Devices,cn=
  DICOM Configuration,dc=example,dc=com
@@ -158,6 +158,29 @@ objectClass: hl7Application
 dicomNetworkConnectionReference: cn=hl7,dicomDeviceName=hl7rcv,cn=Devices,cn
  =DICOM Configuration,dc=example,dc=com
 hl7ApplicationName: HL7RCV^DCM4CHEE
+
+dn: dicomDeviceName=syslog,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
+ om
+objectClass: dicomDevice
+objectClass: dcmDevice
+dicomDeviceName: syslog
+dicomInstalled: TRUE
+
+dn: cn=audit-udp,dicomDeviceName=syslog,cn=Devices,cn=DICOM Configuration,dc
+ =example,dc=com
+objectClass: dicomNetworkConnection
+objectClass: dcmNetworkConnection
+dicomHostname: localhost
+cn: audit-udp
+dcmProtocol: SYSLOG_UDP
+dicomPort: 514
+
+dn: cn=Audit Record Repository,dicomDeviceName=syslog,cn=Devices,cn=DICOM Co
+ nfiguration,dc=example,dc=com
+objectClass: dcmAuditRecordRepository
+cn: Audit Record Repository
+dicomNetworkConnectionReference: cn=audit-udp,dicomDeviceName=syslog,cn=Devi
+ ces,cn=DICOM Configuration,dc=example,dc=com
 
 dn: dicomAETitle=DCM4CHEE-PROXY,cn=Unique AE Titles Registry,cn=DICOM Config
  uration,dc=example,dc=com
@@ -169,11 +192,11 @@ dn: dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
 objectClass: dicomDevice
 objectClass: dcmDevice
 objectClass: dcmProxyDevice
-dcmSchedulerInterval: 10
 dicomDeviceName: dcm4chee-proxy
 dicomInstalled: TRUE
 dcmForwardThreads: 1
 dcmProxyConfigurationStaleTimeout: 60
+dcmSchedulerInterval: 10
 
 dn: cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuratio
  n,dc=example,dc=com
@@ -195,22 +218,56 @@ cn: hl7
 dcmProtocol: HL7
 dicomPort: 22575
 
+dn: cn=audit-udp,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
+ ation,dc=example,dc=com
+objectClass: dicomNetworkConnection
+objectClass: dcmNetworkConnection
+dicomHostname: localhost
+cn: audit-udp
+dcmProtocol: SYSLOG_UDP
+
+dn: hl7ApplicationName=*,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM 
+ Configuration,dc=example,dc=com
+objectClass: hl7Application
+dicomNetworkConnectionReference: cn=hl7,dicomDeviceName=dcm4chee-proxy,cn=De
+ vices,cn=DICOM Configuration,dc=example,dc=com
+hl7ApplicationName: *
+hl7AcceptedMessageType: ADT^A02
+hl7AcceptedMessageType: ADT^A03
+hl7AcceptedMessageType: ADT^A06
+hl7AcceptedMessageType: ADT^A07
+hl7AcceptedMessageType: ADT^A08
+hl7AcceptedMessageType: ADT^A40
+hl7AcceptedMessageType: ORM^O01
+
+dn: cn=Audit Logger,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Confi
+ guration,dc=example,dc=com
+objectClass: dcmAuditLogger
+cn: Audit Logger
+dcmAuditRecordRepositoryDeviceReference: dicomDeviceName=syslog,cn=Devices,c
+ n=DICOM Configuration,dc=example,dc=com
+dicomNetworkConnectionReference: cn=audit-udp,dicomDeviceName=dcm4chee-proxy
+ ,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
+dcmAuditMessageSchemaURI: http://www.dcm4che.org/DICOM/audit-message.rnc
+dcmAuditSourceTypeCode: 4
+
 dn: dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn
  =DICOM Configuration,dc=example,dc=com
 objectClass: dicomNetworkAE
 objectClass: dcmNetworkAE
 objectClass: dcmProxyNetworkAE
-dcmAcceptDataOnFailedNegotiation: TRUE
-dcmEnableAuditLog: TRUE
-dcmSpoolDirectory: /tmp/proxy/
 dicomAETitle: DCM4CHEE-PROXY
 dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=
  Devices,cn=DICOM Configuration,dc=example,dc=com
+dcmAcceptDataOnFailedAssociation: TRUE
+dcmDeleteFailedDataWithoutRetryConfiguration: TRUE
+dcmDestinationAETitle: DCM4CHEE
+dcmEnableAuditLog: FALSE
+dcmSpoolDirectory: /tmp/proxy/
 hl7ProxyPIXConsumerApplication: HL7SND^DCM4CHEE-PROXY
 hl7RemotePIXManagerApplication: HL7RCV^DCM4CHEE
-dcmDeleteFailedDataWithoutRetryConfiguration: TRUE
 
 dn: cn=Standalone VOI LUT Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
@@ -274,6 +331,20 @@ dcmFuzzySemanticMatching: TRUE
 dcmRelationalQueries: TRUE
 dcmTimezoneQueryAdjustment: TRUE
 
+dn: cn=Patient Study Only Query Retrieve Information Model - MOVE (Retired) 
+ SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,c
+ n=DICOM Configuration,dc=example,dc=com
+objectClass: dicomTransferCapability
+objectClass: dcmTransferCapability
+dicomSOPClass: 1.2.840.10008.5.1.4.1.2.3.2
+dicomTransferRole: SCP
+dicomTransferSyntax: 1.2.840.10008.1.2
+cn: Patient Study Only Query Retrieve Information Model - MOVE (Retired) SCP
+dcmCombinedDateTimeMatching: TRUE
+dcmFuzzySemanticMatching: TRUE
+dcmRelationalQueries: TRUE
+dcmTimezoneQueryAdjustment: TRUE
+
 dn: cn=Patient Study Only Query Retrieve Information Model - FIND (Retired) 
  SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,c
  n=DICOM Configuration,dc=example,dc=com
@@ -297,6 +368,20 @@ dicomSOPClass: 1.2.840.10008.5.1.4.1.2.2.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
 cn: Study Root Query Retrieve Information Model - GET SCP
+dcmCombinedDateTimeMatching: TRUE
+dcmFuzzySemanticMatching: TRUE
+dcmRelationalQueries: TRUE
+dcmTimezoneQueryAdjustment: TRUE
+
+dn: cn=Study Root Query Retrieve Information Model - MOVE SCP,dicomAETitle=D
+ CM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configurat
+ ion,dc=example,dc=com
+objectClass: dicomTransferCapability
+objectClass: dcmTransferCapability
+dicomSOPClass: 1.2.840.10008.5.1.4.1.2.2.2
+dicomTransferRole: SCP
+dicomTransferSyntax: 1.2.840.10008.1.2
+cn: Study Root Query Retrieve Information Model - MOVE SCP
 dcmCombinedDateTimeMatching: TRUE
 dcmFuzzySemanticMatching: TRUE
 dcmRelationalQueries: TRUE
@@ -1168,6 +1253,20 @@ dicomSOPClass: 1.2.840.10008.5.1.4.1.2.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
 cn: Patient Root Query Retrieve Information Model - GET SCP
+dcmCombinedDateTimeMatching: TRUE
+dcmFuzzySemanticMatching: TRUE
+dcmRelationalQueries: TRUE
+dcmTimezoneQueryAdjustment: TRUE
+
+dn: cn=Patient Root Query Retrieve Information Model - MOVE SCP,dicomAETitle
+ =DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
+ ation,dc=example,dc=com
+objectClass: dicomTransferCapability
+objectClass: dcmTransferCapability
+dicomSOPClass: 1.2.840.10008.5.1.4.1.2.1.2
+dicomTransferRole: SCP
+dicomTransferSyntax: 1.2.840.10008.1.2
+cn: Patient Root Query Retrieve Information Model - MOVE SCP
 dcmCombinedDateTimeMatching: TRUE
 dcmFuzzySemanticMatching: TRUE
 dcmRelationalQueries: TRUE
@@ -3909,43 +4008,44 @@ dcmRetryObject: AssociationStateException
 
 dn: dcmDestinationAETitle=STORESCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa
  me=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dcmForwardSchedule
+objectClass: dcmForwardOption
+dicomDescription: Example ForwardOption for STORESCP
+dcmConvertEmf2Sf: TRUE
 dcmDestinationAETitle: STORESCP
 dcmScheduleDays: Wed
 dcmScheduleHours: 8-18
-dicomDescription: Example ForwardSchedule for STORESCP
 
 dn: cn=Public,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=
  Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
 cn: Public
+dicomDescription: Example ForwardRule
 labeledURI: aet:DCM4CHEE
 dcmExclusiveUseDefinedTC: FALSE
 dcmPIXQuery: TRUE
 dcmScheduleDays: Sun-Tue,Thu-Sat
 dcmScheduleHours: 0-23
-dicomDescription: Example ForwardRule
 
 dn: cn=MPPS2XrayDoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-
  proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
 cn: MPPS2XrayDoseSR
+dicomDescription: Example ForwardRule for MPPS to Dose SR conversion
 labeledURI: aet:DCM4CHEE
 dcmCallingAETitle: MPPSSCU
-dcmConversion: MPPS2DoseSR
-dcmConversionUri: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-pr
- oxy-mpps2xraydosesr.xsl
 dcmExclusiveUseDefinedTC: FALSE
+dcmMpps2DoseSrTemplateURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dc
+ m4chee-proxy-mpps2xraydosesr.xsl
 dcmPIXQuery: FALSE
 dcmScheduleDays: Sun-Sat
 dcmScheduleHours: 0-23
 dcmSOPClass: 1.2.840.10008.3.1.2.3.3
-dicomDescription: Example ForwardRule for MPPS to Dose SR conversion
 
 dn: cn=Private,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn
  =Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
 cn: Private
+dicomDescription: Example ForwardRule
 labeledURI: aet:STORESCP
 labeledURI: aet:DCM4CHEE
 dcmExclusiveUseDefinedTC: FALSE
@@ -3954,7 +4054,6 @@ dcmScheduleDays: Wed
 dcmScheduleHours: 9-18
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.2
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.4
-dicomDescription: Example ForwardRule
 
 dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
@@ -3975,20 +4074,4 @@ dicomTransferRole: SCU
 labeledURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nu
  llify-pn.xsl
 dicomAETitle: WITHOUT_PN
-
-dn: hl7ApplicationName=HL7SND^DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,
- cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: hl7Application
-objectClass: dcmProxyHL7Application
-dicomNetworkConnectionReference: cn=hl7,dicomDeviceName=dcm4chee-proxy,cn=De
- vices,cn=DICOM Configuration,dc=example,dc=com
-hl7ApplicationName: HL7SND^DCM4CHEE-PROXY
-hl7AcceptedMessageType: ADT^A02
-hl7AcceptedMessageType: ADT^A03
-hl7AcceptedMessageType: ADT^A06
-hl7AcceptedMessageType: ADT^A07
-hl7AcceptedMessageType: ADT^A08
-hl7AcceptedMessageType: ADT^A40
-hl7AcceptedMessageType: ORM^O01
-hl7DefaultCharacterSet: 8859/1
 

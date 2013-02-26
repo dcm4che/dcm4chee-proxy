@@ -304,31 +304,14 @@ public class ProxyDeviceTest {
         config.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
         return config;
     }
-    
-    private void cleanUp() throws Exception {
-        config.unregisterAETitle("DCM4CHEE-PROXY");
-        for (String aet : OTHER_AES)
-            config.unregisterAETitle(aet);
-        try {
-            config.removeDevice("dcm4chee-proxy");
-        } catch (ConfigurationNotFoundException e) {}
-        try {
-            config.removeDevice("hl7rcv");
-        } catch (ConfigurationNotFoundException e) {}
-        for (String name : OTHER_DEVICES)
-            try {
-                config.removeDevice(name);
-            }  catch (ConfigurationNotFoundException e) {}
-    }
-    
-    public static void cleanUp(DicomConfiguration config) throws ConfigurationException {
-        config.unregisterAETitle("DCM4CHEE-PROXY");
-        for (String aet : OTHER_AES)
-            config.unregisterAETitle(aet);
 
+    public void cleanUp() throws ConfigurationException {
+        config.unregisterAETitle("DCM4CHEE-PROXY");
+        for (String aet : OTHER_AES)
+            config.unregisterAETitle(aet);
         try {
             config.removeDevice("dcm4chee-proxy");
-        }  catch (ConfigurationNotFoundException e) {}
+        } catch (ConfigurationNotFoundException e) {}
         try {
             config.removeDevice("syslog");
         } catch (ConfigurationNotFoundException e) {}
@@ -338,9 +321,9 @@ public class ProxyDeviceTest {
         for (String name : OTHER_DEVICES)
             try {
                 config.removeDevice(name);
-            }  catch (ConfigurationNotFoundException e) {}
+            } catch (ConfigurationNotFoundException e) {}
     }
-    
+
     @Test
     public void test() throws Exception {
         for (int i = 0; i < OTHER_AES.length; i++) {
