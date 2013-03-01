@@ -38,14 +38,12 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
         <profile.dependencies>org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.prefs-hl7,org.dcm4che.emf,org.dcm4che.conf.ldap-hl7,org.dcm4che.conf.ldap-audit,org.dcm4che.conf.prefs-audit</profile.dependencies>
       </properties>
     </profile>
     <profile>
       <id>jdbc-prefs</id>
       <properties>
-        <config-class>org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfiguration</config-class>
         <profile.dependencies>org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.prefs-hl7,org.dcm4che.emf,org.dcm4che.conf.ldap-hl7,org.dcm4che.conf.ldap-audit,org.dcm4che.conf.prefs-audit,deployment.dcm4che-jdbc-prefs-1.0.0-SNAPSHOT.jar</profile.dependencies>
       </properties>
     </profile>

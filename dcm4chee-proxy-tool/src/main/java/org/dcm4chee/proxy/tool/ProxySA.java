@@ -64,7 +64,6 @@ import org.dcm4che.conf.prefs.PreferencesDicomConfigurationExtension;
 import org.dcm4che.conf.prefs.audit.PreferencesAuditLoggerConfiguration;
 import org.dcm4che.conf.prefs.audit.PreferencesAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
-import org.dcm4che.net.Device;
 import org.dcm4chee.proxy.Proxy;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
@@ -89,8 +88,7 @@ public class ProxySA {
                     : new PreferencesHL7Configuration();
             DicomConfiguration dicomConfig = configureDicomConfiguration(cl, hl7Config);
             String deviceName = cl.getOptionValue("device");
-            Device device = dicomConfig.findDevice(deviceName);
-            Proxy proxy = new Proxy(dicomConfig, hl7Config, device);
+            Proxy proxy = new Proxy(dicomConfig, hl7Config, deviceName);
             proxy.start();
         } catch (Exception e) {
             e.printStackTrace();

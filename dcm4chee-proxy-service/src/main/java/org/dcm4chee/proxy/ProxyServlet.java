@@ -49,9 +49,6 @@ import javax.management.ObjectName;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
@@ -63,7 +60,6 @@ import org.dcm4che.conf.prefs.PreferencesDicomConfiguration;
 import org.dcm4che.conf.prefs.audit.PreferencesAuditLoggerConfiguration;
 import org.dcm4che.conf.prefs.audit.PreferencesAuditRecordRepositoryConfiguration;
 import org.dcm4che.conf.prefs.hl7.PreferencesHL7Configuration;
-import org.dcm4che.net.Device;
 import org.dcm4che.util.SafeClose;
 import org.dcm4che.util.StringUtils;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
@@ -71,11 +67,10 @@ import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("serial")
-@Path("servlet")
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
+@SuppressWarnings("serial")
 public class ProxyServlet extends HttpServlet {
     
     private static final Logger LOG = LoggerFactory.getLogger(ProxyServlet.class);
@@ -122,8 +117,7 @@ public class ProxyServlet extends HttpServlet {
             } finally {
                 SafeClose.close(ldapConf);
             }
-            Device device = dicomConfig.findDevice(deviceName);
-            proxy = new Proxy(dicomConfig, hl7Config, device);
+            proxy = new Proxy(dicomConfig, hl7Config, deviceName);
             proxy.start();
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy, new ObjectName(jmxName));
         } catch (Exception e) {
@@ -146,14 +140,4 @@ public class ProxyServlet extends HttpServlet {
             dicomConfig.close();
     }
 
-    @POST
-    @Path("/reload/{name}")
-    public void reloadConfiguration(@PathParam("name") String name) {
-        try {
-            ManagementFactory.getPlatformMBeanServer().invoke(new ObjectName("dcm4che:service=" + name),
-                    "reloadConfiguration", null, null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

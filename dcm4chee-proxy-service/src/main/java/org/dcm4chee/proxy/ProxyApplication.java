@@ -16,7 +16,7 @@
  *
  * The Initial Developer of the Original Code is
  * Agfa Healthcare.
- * Portions created by the Initial Developer are Copyright (C) 2012
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -38,30 +38,21 @@
 
 package org.dcm4chee.proxy;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
+import java.util.Collections;
+import java.util.Set;
+
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
 /**
- * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-@Path("/")
-public interface ProxyMBean {
+@ApplicationPath("/application")
+public class ProxyApplication extends Application {
 
-    @GET
-    @Path("running")
-    boolean isRunning();
-
-    @GET
-    @Path("start")
-    void start() throws Exception;
-
-    @GET
-    @Path("stop")
-    void stop();
-
-    @GET
-    @Path("reload")
-    void reload() throws Exception;
+    @Override
+    public Set<Object> getSingletons() {
+        return Collections.singleton((Object) Proxy.getInstance());
+    }
 
 }

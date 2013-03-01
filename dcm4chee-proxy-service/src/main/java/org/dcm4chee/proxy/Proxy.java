@@ -50,10 +50,10 @@ import org.dcm4che.audit.AuditMessages.EventOutcomeIndicator;
 import org.dcm4che.audit.AuditMessages.EventTypeCode;
 import org.dcm4che.audit.AuditMessages.RoleIDCode;
 import org.dcm4che.conf.api.ApplicationEntityCache;
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
-import org.dcm4che.net.Device;
 import org.dcm4che.net.DeviceService;
 import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.net.service.DicomServiceRegistry;
@@ -78,6 +78,12 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(Proxy.class);
 
+    private static Proxy instance;
+
+    static Proxy getInstance() {
+        return instance;
+    }
+
     public static final String KS_TYPE = "org.dcm4chee.proxy.net.keyStoreType";
     public static final String KS_URL = "org.dcm4chee.proxy.net.keyStoreURL";
     public static final String KS_PASSWORD = "org.dcm4chee.proxy.net.storePassword";
@@ -96,8 +102,9 @@ public class Proxy extends DeviceService implements ProxyMBean {
     private final CMove cmove;
     private final Mpps mpps;
 
-    public Proxy(DicomConfiguration dicomConfiguration, HL7Configuration hl7configuration, Device device) {
-        init(device);
+    public Proxy(DicomConfiguration dicomConfiguration, HL7Configuration hl7configuration, String deviceName)
+            throws ConfigurationException {
+        init(dicomConfiguration.findDevice(deviceName));
         this.dicomConfiguration = dicomConfiguration;
         this.aeCache = new ApplicationEntityCache(dicomConfiguration);
         this.hl7AppCache = new HL7ApplicationCache(hl7configuration);
@@ -115,6 +122,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         device.setDimseRQHandler(serviceRegistry());
         device.setAssociationHandler(new ProxyAssociationHandler(aeCache));
         setConfigurationStaleTimeout();
+        Proxy.instance = this;
     }
 
     public PIXConsumer getPixConsumer() {
@@ -180,17 +188,12 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     @Override
-    public void reloadConfiguration() throws Exception {
+    public void reload() throws Exception {
         scheduler.stop();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
         device.rebindConnections();
         setConfigurationStaleTimeout();
         scheduler.start();
-    }
-
-    @Override
-    public Device unwrapDevice() {
-        return device;
     }
 
     private void setConfigurationStaleTimeout() {
