@@ -47,7 +47,7 @@ import javax.ws.rs.core.Application;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-@ApplicationPath("/application")
+@ApplicationPath("/proxy-application")
 public class ProxyApplication extends Application {
 
     @Override
