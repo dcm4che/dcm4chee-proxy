@@ -42,10 +42,7 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -56,8 +53,8 @@ import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4chee.proxy.common.RetryObject;
-import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardOption;
+import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
@@ -330,39 +327,31 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
 
         config.merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aePrefs);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aePrefs);
-        mergeForwardOptions(new ArrayList<ForwardOption>(pprev.getForwardOptions().values()), 
-                new ArrayList<ForwardOption>(pae.getForwardOptions().values()), aePrefs);
+        mergeForwardOptions(pprev.getForwardOptions().values(), pae.getForwardOptions().values(), aePrefs);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aePrefs);
     }
 
     private void mergeForwardRules(List<ForwardRule> prevForwardRules, List<ForwardRule> currForwardRules,
             Preferences aeNode) throws BackingStoreException {
         Preferences forwardRulesNode = aeNode.node("dcmForwardRule");
-        Collections.sort(prevForwardRules, forwardRuleComparator);
-        Collections.sort(currForwardRules, forwardRuleComparator);
-        List<String> currForwardRuleNames = new ArrayList<String>();
-        for (ForwardRule rule : currForwardRules)
-            currForwardRuleNames.add(rule.getCommonName());
-        for (ForwardRule prev : prevForwardRules) {
-            String prevForwardRuleName = prev.getCommonName();
-            if (!currForwardRuleNames.contains(prevForwardRuleName))
-                forwardRulesNode.node(prevForwardRuleName).removeNode();
-        }
-        Iterator<ForwardRule> prevIter = prevForwardRules.listIterator();
+        HashMap<String, ForwardRule> prevFwdRuleMap = new HashMap<String, ForwardRule>();
+        for (ForwardRule rule : prevForwardRules)
+            prevFwdRuleMap.put(rule.getCommonName(), rule);
         for (ForwardRule rule : currForwardRules) {
             Preferences ruleNode = forwardRulesNode.node(rule.getCommonName());
-            if (prevIter.hasNext())
-                storeForwardRuleDiffs(ruleNode, prevIter.next(), rule);
+            if (prevFwdRuleMap.containsKey(rule.getCommonName()))
+                storeForwardRuleDiffs(ruleNode, prevFwdRuleMap.get(rule.getCommonName()), rule);
             else
                 storeToForwardRule(rule, ruleNode);
         }
-    }
-
-    private static final Comparator<ForwardRule> forwardRuleComparator = new Comparator<ForwardRule>() {
-        public int compare(ForwardRule a, ForwardRule b) {
-            return (b.getCommonName().hashCode() - a.getCommonName().hashCode());
+        HashMap<String, ForwardRule> currFwdRulesMap = new HashMap<String, ForwardRule>();
+        for (ForwardRule rule : currForwardRules)
+            currFwdRulesMap.put(rule.getCommonName(), rule);
+        for (ForwardRule rule : prevForwardRules) {
+            if (!currFwdRulesMap.containsKey(rule.getCommonName()))
+                forwardRulesNode.node(rule.getCommonName()).removeNode();
         }
-    };
+    }
 
     private void storeForwardRuleDiffs(Preferences prefs, ForwardRule ruleA, ForwardRule ruleB) {
         List<String> dimseA = new ArrayList<String>();
@@ -394,34 +383,27 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeDiff(prefs, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
     }
 
-    private void mergeForwardOptions(ArrayList<ForwardOption> prevOptions,
-            ArrayList<ForwardOption> currOptions, Preferences parentNode) throws BackingStoreException {
+    private void mergeForwardOptions(Collection<ForwardOption> prevOptions, Collection<ForwardOption> currOptions,
+            Preferences parentNode) throws BackingStoreException {
         Preferences fwdOptionsNode = parentNode.node("dcmForwardOption");
-        Collections.sort(prevOptions, forwardOptionComparator);
-        Collections.sort(currOptions, forwardOptionComparator);
-        List<String> currFwdOptionNames = new ArrayList<String>();
-        for (ForwardOption fwdOption : currOptions)
-            currFwdOptionNames.add(fwdOption.getDestinationAET());
-        for (ForwardOption prev : prevOptions) {
-            String prevFwdRuleName = prev.getDestinationAET();
-            if (!currFwdOptionNames.contains(prevFwdRuleName))
-                fwdOptionsNode.node(prevFwdRuleName).removeNode();
-        }
-        Iterator<ForwardOption> prevIter = prevOptions.iterator();
-        for (ForwardOption fwdOption : currOptions) {
-            Preferences fwdOptionNode = fwdOptionsNode.node(fwdOption.getDestinationAET());
-            if (prevIter.hasNext())
-                storeForwardOptionDiffs(fwdOptionNode, prevIter.next(), fwdOption);
+        HashMap<String, ForwardOption> prevOptionsMap = new HashMap<String, ForwardOption>();
+        for (ForwardOption fo : prevOptions)
+            prevOptionsMap.put(fo.getDestinationAET(), fo);
+        for (ForwardOption fo : currOptions) {
+            Preferences fwdOptionNode = fwdOptionsNode.node(fo.getDestinationAET());
+            if (prevOptionsMap.containsKey(fo.getDestinationAET()))
+                storeForwardOptionDiffs(fwdOptionNode, prevOptionsMap.get(fo.getDestinationAET()), fo);
             else
-                storeToForwardOption(fwdOption, fwdOptionNode);
+                storeToForwardOption(fo, fwdOptionNode);
+        }
+        HashMap<String, ForwardOption> currOptionsMap = new HashMap<String, ForwardOption>();
+        for (ForwardOption fo : currOptions)
+            currOptionsMap.put(fo.getDestinationAET(), fo);
+        for (ForwardOption fo : prevOptions) {
+            if (!currOptionsMap.containsKey(fo.getDestinationAET()))
+                fwdOptionsNode.node(fo.getDestinationAET()).removeNode();
         }
     }
-
-    private static final Comparator<ForwardOption> forwardOptionComparator = new Comparator<ForwardOption>() {
-        public int compare(ForwardOption a, ForwardOption b) {
-            return (b.getDestinationAET().hashCode() - a.getDestinationAET().hashCode());
-        }
-    };
 
     private void storeForwardOptionDiffs(Preferences prefs, ForwardOption a, ForwardOption b) {
         PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
@@ -434,31 +416,26 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
     private void mergeRetries(List<Retry> prevRetries, List<Retry> currRetries, Preferences parentNode)
             throws BackingStoreException {
         Preferences retriesNode = parentNode.node("dcmRetry");
-        Collections.sort(prevRetries, retryComparator);
-        Collections.sort(currRetries, retryComparator);
-        List<String> currRetryObjects = new ArrayList<String>();
-        for (Retry retry : currRetries)
-            currRetryObjects.add(retry.getRetryObject().toString());
-        for (Retry prevRetry : prevRetries) {
-            String prevRetryObject = prevRetry.getRetryObject().toString();
-            if (!currRetryObjects.contains(prevRetryObject))
-                retriesNode.node(prevRetryObject).removeNode();
-        }
-        Iterator<Retry> prevIter = prevRetries.listIterator();
+        HashMap<String, Retry> prevRetriesMap = new HashMap<String, Retry>();
+        for (Retry retry : prevRetries)
+            prevRetriesMap.put(retry.getRetryObject().toString(), retry);
         for (Retry retry : currRetries) {
-            Preferences retryNode = retriesNode.node(retry.getRetryObject().toString());
-            if (prevIter.hasNext())
-                storeRetryDiffs(retryNode, prevIter.next(), retry);
+            String retryObject = retry.getRetryObject().toString();
+            Preferences retryNode = retriesNode.node(retryObject);
+            if (prevRetriesMap.containsKey(retryObject))
+                storeRetryDiffs(retryNode, prevRetriesMap.get(retryObject), retry);
             else
                 storeToRetry(retry, retryNode);
         }
-    }
-
-    private static final Comparator<Retry> retryComparator = new Comparator<Retry>() {
-        public int compare(Retry a, Retry b) {
-            return (b.getRetryObject().hashCode() - a.getRetryObject().hashCode());
+        HashMap<String, Retry> currRetriesMap = new HashMap<String, Retry>();
+        for (Retry retry : currRetries)
+            currRetriesMap.put(retry.getRetryObject().toString(), retry);
+        for (Retry retry : prevRetries) {
+            String retryObject = retry.getRetryObject().toString();
+            if (!currRetriesMap.containsKey(retryObject))
+                retriesNode.node(retryObject).removeNode();
         }
-    };
+    }
 
     private void storeRetryDiffs(Preferences prefs, Retry a, Retry b) {
         PreferencesUtils.storeDiff(prefs, "dcmRetryDelay", a.getDelay(), b.getDelay());
