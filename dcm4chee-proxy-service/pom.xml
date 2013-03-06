@@ -22,7 +22,7 @@
 						</manifest>
 						<manifestEntries>
 							<Implementation-Build>${buildNumber}</Implementation-Build>
-							<key>value</key>
+							<key>${buildNumber}</key>
 						</manifestEntries>
 					</archive>
 				</configuration>
