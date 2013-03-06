@@ -15,6 +15,29 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.4</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+              <Implementation-Build>${buildNumber}</Implementation-Build>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -86,4 +109,10 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+  <scm>
+   <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
+   <url>https://github.com/dcm4che/dcm4chee-proxy.git</url>
+   <tag>HEAD</tag>
+   <developerConnection>scm:git:git://github.com/dcm4che/dcm4chee-proxy.git</developerConnection>
+  </scm>
 </project>
