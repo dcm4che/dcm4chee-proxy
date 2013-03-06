@@ -43,6 +43,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -97,14 +98,26 @@ public class ProxyAssociationHandler extends AssociationHandler {
     }
 
     private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq, ProxyAEExtension proxyAEE) {
-        List<ForwardRule> list = new ArrayList<ForwardRule>();
+        List<ForwardRule> filterList = new ArrayList<ForwardRule>();
         for (ForwardRule rule : proxyAEE.getForwardRules()) {
             String callingAET = rule.getCallingAET();
             if ((callingAET == null || callingAET.equals(rq.getCallingAET()))
                     && rule.getReceiveSchedule().isNow(new GregorianCalendar()))
-                list.add(rule);
+                filterList.add(rule);
         }
-        as.setProperty(ProxyAEExtension.FORWARD_RULES, list);
+        List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
+        for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
+            ForwardRule rule = iterator.next();
+            for (ForwardRule fwr : filterList) {
+                if (rule.getCommonName().equals(fwr.getCommonName()))
+                    continue;
+                if (rule.getCallingAET() == null 
+                        && fwr.getCallingAET() != null 
+                        && fwr.getCallingAET().equals(rq.getCallingAET()))
+                    returnList.remove(rule);
+            }
+        }
+        as.setProperty(ProxyAEExtension.FORWARD_RULES, returnList);
     }
 
     @Override
@@ -137,6 +150,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
     private boolean sendNow(Association as, ProxyAEExtension proxyAEE) {
         List<ForwardRule> matchingForwardRules = proxyAEE.getCurrentForwardRules(as);
         return (matchingForwardRules.size() == 1
+                && !proxyAEE.isEnableAuditLog()
                 && !forwardBasedOnTemplates(matchingForwardRules)
                 && matchingForwardRules.get(0).getDimse().isEmpty()
                 && matchingForwardRules.get(0).getSopClass().isEmpty()
@@ -167,6 +181,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
         ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(as).get(0);
         String calledAET = forwardRule.getDestinationAETitles().get(0);
         AAssociateAC ac = new AAssociateAC();
+        ac.setCalledAET(rq.getCalledAET());
+        ac.setCallingAET(rq.getCallingAET());
         String callingAET = (forwardRule.getUseCallingAET() != null)
                 ? forwardRule.getUseCallingAET()
                 : (proxyAEE.getApplicationEntity().getAETitle().equals("*"))

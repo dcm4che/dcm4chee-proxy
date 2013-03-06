@@ -407,31 +407,30 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
-        List<ForwardRule> rules = new ArrayList<ForwardRule>();
+        List<ForwardRule> filterList = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getCurrentForwardRules(as)) {
             String rqSopClass = rq.getString(dimse.tagOfSOPClassUID());
             if (rule.getDimse().isEmpty() && rule.getSopClass().isEmpty()
                     || rule.getSopClass().contains(rqSopClass) && rule.getDimse().isEmpty()
                     || rule.getDimse().contains(dimse) 
                         && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rqSopClass)))
-                rules.add(rule);
+                filterList.add(rule);
         }
-        for (Iterator<ForwardRule> iterator = rules.iterator(); iterator.hasNext();) {
+        List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
+        for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
-            for (ForwardRule fwr : rules) {
+            for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
                 if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
-                    iterator.remove();
+                    returnList.remove(rule);
                     break;
                 }
-                if (rule.getSopClass().isEmpty() && !fwr.getSopClass().isEmpty()) {
-                    iterator.remove();
-                    break;
-                }
+                if (rule.getSopClass().isEmpty() && !fwr.getSopClass().isEmpty())
+                    returnList.remove(rule);
             }
         }
-        return rules;
+        return returnList;
     }
 
     public void coerceDataset(String remoteAET, Role role, Dimse dimse, Attributes attrs,
