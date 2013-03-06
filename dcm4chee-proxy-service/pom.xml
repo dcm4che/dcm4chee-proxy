@@ -21,7 +21,7 @@
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 						</manifest>
 						<manifestEntries>
-							<Proxy-Implementation-Build>${buildNumber}</Proxy-Implementation-Build>
+							<Implementation-Build>${buildNumber}</Implementation-Build>
 						</manifestEntries>
 					</archive>
 				</configuration>
