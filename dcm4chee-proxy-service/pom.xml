@@ -22,7 +22,6 @@
 						</manifest>
 						<manifestEntries>
 							<Implementation-Build>${buildNumber}</Implementation-Build>
-							<key>${buildNumber}</key>
 						</manifestEntries>
 					</archive>
 				</configuration>
