@@ -58,7 +58,6 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
-import org.dcm4che.data.Value;
 import org.dcm4che.emf.MultiframeExtractor;
 import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
@@ -80,8 +79,8 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
-import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardOption;
+import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 
 /**
@@ -220,7 +219,11 @@ public class CStore extends BasicCStoreSCP {
             for (ForwardRule rule : forwardRules) {
                 List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule);
                 for (String calledAET : destinationAETs) {
-                    File copy = createMappedFile(proxyAEE, asAccepted, file, calledAET);
+                    File copy;
+                    if (rule.getUseCallingAET() != null)
+                        copy = createMappedDicomCopy(proxyAEE, asAccepted, file, calledAET, rule.getUseCallingAET(), rq, pc);
+                    else
+                        copy = createMappedFileCopy(proxyAEE, asAccepted, file, calledAET);
                     rename(asAccepted, copy, ".dcm");
                 }
             }
@@ -228,6 +231,34 @@ public class CStore extends BasicCStoreSCP {
             Attributes cmd = Commands.mkCStoreRSP(rq, Status.Success);
             asAccepted.writeDimseRSP(pc, cmd);
         }
+    }
+
+    private File createMappedDicomCopy(ProxyAEExtension proxyAEE, Association asAccepted, File file, String calledAET,
+            String callingAET, Attributes rq, PresentationContext pc) throws DicomServiceException {
+        String separator = ProxyAEExtension.getSeparator();
+        String path = file.getPath();
+        String fileName = path.substring(path.lastIndexOf(separator) + 1, path.length());
+        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+        dir.mkdir();
+        File dst = new File(dir, fileName);
+        DicomOutputStream out = null;
+        DicomInputStream in = null;
+        try {
+            in = new DicomInputStream(file);
+            out = new DicomOutputStream(dst);
+            Attributes fmi = createFileMetaInformation(asAccepted, rq, pc.getTransferSyntax());
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, callingAET);
+            LOG.debug(asAccepted + ": copy " + file.getPath() + " to " + dst.getPath());
+            out.writeDataset(fmi, in.readDataset(-1, -1));
+        } catch (Exception e) {
+            LOG.debug(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
+            dst.delete();
+            throw new DicomServiceException(Status.OutOfResources, e);
+        } finally {
+            SafeClose.close(in);
+            SafeClose.close(out);
+        }
+        return dst;
     }
 
     private void processSingleForwardDestination(Association asAccepted, Object forwardAssociationProperty,
@@ -246,15 +277,35 @@ public class CStore extends BasicCStoreSCP {
                 else
                     forwardObject(asAccepted, asInvoked, pc, rq, file, fmi);
             } else {
-                storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET);
+                storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
             }
         } else {
-            storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET);
+            storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
         }
     }
 
     private void storeToCalledAETSpoolDir(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
-            Attributes rq, File file, String calledAET) throws IOException, DicomServiceException {
+            Attributes rq, File file, String calledAET, ForwardRule rule) throws IOException, DicomServiceException {
+        if (rule.getUseCallingAET() != null)
+            rewriteFile(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
+        else
+            renameFile(proxyAEE, asAccepted, pc, rq, file, calledAET);
+    }
+
+    private void rewriteFile(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes rq,
+            File file, String calledAET, ForwardRule rule) throws DicomServiceException, IOException {
+        File copy = createMappedDicomCopy(proxyAEE, asAccepted, file, calledAET, rule.getUseCallingAET(), rq, pc);
+        rename(asAccepted, copy, ".dcm");
+        if (file.delete()) {
+            asAccepted.writeDimseRSP(pc, Commands.mkCStoreRSP(rq, Status.Success));
+        } else {
+            LOG.error("{}: failed to delete {}", new Object[] { asAccepted, file });
+            throw new DicomServiceException(Status.OutOfResources);
+        }
+    }
+
+    private void renameFile(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes rq,
+            File file, String calledAET) throws IOException, DicomServiceException {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
         String fileName = file.getName();
@@ -393,7 +444,7 @@ public class CStore extends BasicCStoreSCP {
                     new Object[] { asAccepted, n, src.getString(Tag.SOPInstanceUID), t / 1000F });
     }
 
-    protected static File createMappedFile(ProxyAEExtension proxyAEE, Association as, File file, String calledAET)
+    protected static File createMappedFileCopy(ProxyAEExtension proxyAEE, Association as, File file, String calledAET)
             throws IOException {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
@@ -458,7 +509,7 @@ public class CStore extends BasicCStoreSCP {
                 Attributes cmd = new Attributes();
                 if (dataFile != null && proxyAEE.isAcceptDataOnFailedAssociation())
                     try {
-                        File copy = createMappedFile(proxyAEE, asAccepted, dataFile, calledAET);
+                        File copy = createMappedFileCopy(proxyAEE, asAccepted, dataFile, calledAET);
                         rename(as, copy, RetryObject.ConnectionException.getSuffix() + "1");
                         cmd = Commands.mkCStoreRSP(rq, Status.Success);
                     } catch (Exception e) {
