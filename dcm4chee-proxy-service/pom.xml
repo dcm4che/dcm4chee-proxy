@@ -114,7 +114,7 @@
 		</dependency>
 	</dependencies>
 	<scm>
-		<connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
-		<url>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</url>
+		<connection>scm:git:http://github.com/dcm4che/dcm4chee-proxy.git</connection>
+		<url>scm:git:http://github.com/dcm4che/dcm4chee-proxy.git</url>
 	</scm>
 </project>
