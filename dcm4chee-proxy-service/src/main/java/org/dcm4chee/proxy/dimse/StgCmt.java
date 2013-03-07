@@ -234,39 +234,32 @@ public class StgCmt extends DicomService {
         } catch (AAssociateRJ rj) {
             LOG.error(asAccepted + ": rejected association to forward AET", rj.getReason());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix() + "1");
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (IOException e) {
             LOG.error(asAccepted + ": unexpected exception: ", e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
-                    + "1");
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (ConfigurationException e) {
-            LOG.error(asAccepted + ": error loading AET {} from configuration ({})",
-                    new Object[] { calledAEString, e.getMessage() });
+            LOG.error(asAccepted + ": error loading AET {} from configuration ({})", new Object[] { calledAEString, e.getMessage() });
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
-                    + "1");
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (InterruptedException e) {
             LOG.error(asAccepted + ": unexpected exception: ", e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix()
-                    + "1");
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (IncompatibleConnectionException e) {
-            LOG.error(asAccepted + ": incompatible connection to forward AET {} ({})",
-                    new Object[] { calledAEString, e.getMessage() });
+            LOG.error(asAccepted + ": incompatible connection to forward AET {} ({})", new Object[] { calledAEString, e.getMessage() });
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX,
-                    RetryObject.IncompatibleConnectionException.getSuffix() + "1");
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.IncompatibleConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (GeneralSecurityException e) {
             LOG.error(asAccepted + ": error creating SSL context: " + e.getMessage());
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
-            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix()
-                    + "1");
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
             rename(asAccepted, file);
         } finally {
             SafeClose.close(dis);

@@ -228,7 +228,7 @@ public class ForwardFiles {
         File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + proxyAEE.getFallbackDestinationAET());
         dstDir.mkdir();
         String fileName = pathname.getName();
-        File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".dcm") + 4));
+        File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".")) + ".dcm");
         if (pathname.renameTo(dst))
             LOG.info("rename {} to {} {} and fallback AET is {}",
                     new Object[] { pathname, dst, reason, proxyAEE.getFallbackDestinationAET() });
@@ -579,7 +579,7 @@ public class ForwardFiles {
                 }
             }
         } catch (ConfigurationException ce) {
-            LOG.error("Unable to load configuration: " + ce.getMessage());
+            handleProcessForwardTaskException(ft, ce, RetryObject.ConfigurationException.getSuffix());
         } catch (AAssociateRJ rj) {
             handleProcessForwardTaskException(ft, rj, RetryObject.AAssociateRJ.getSuffix());
         } catch (AAbort aa) {

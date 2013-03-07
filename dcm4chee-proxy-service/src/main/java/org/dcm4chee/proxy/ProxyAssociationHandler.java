@@ -216,23 +216,23 @@ public class ProxyAssociationHandler extends AssociationHandler {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, rj, RetryObject.AAssociateRJ.getSuffix(),
+            return handleNegotiateConnectException(as, rq, ac, calledAET, rj, RetryObject.AAssociateRJ.getSuffix() + "0",
                     rj.getReason(), proxyAEE);
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, aa, RetryObject.AAbort.getSuffix(),
+            return handleNegotiateConnectException(as, rq, ac, calledAET, aa, RetryObject.AAbort.getSuffix() + "0",
                     aa.getReason(), proxyAEE);
         } catch (IOException e) {
             return handleNegotiateConnectException(as, rq, ac, calledAET, e,
-                    RetryObject.ConnectionException.getSuffix(), 0, proxyAEE);
+                    RetryObject.ConnectionException.getSuffix() + "0", 0, proxyAEE);
         } catch (InterruptedException e) {
             LOG.error("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
             return handleNegotiateConnectException(as, rq, ac, calledAET, e,
-                    RetryObject.IncompatibleConnectionException.getSuffix(), 0, proxyAEE);
+                    RetryObject.IncompatibleConnectionException.getSuffix() + "0", 0, proxyAEE);
         } catch (GeneralSecurityException e) {
             return handleNegotiateConnectException(as, rq, ac, calledAET, e,
-                    RetryObject.GeneralSecurityException.getSuffix(), 0, proxyAEE);
+                    RetryObject.GeneralSecurityException.getSuffix() + "0", 0, proxyAEE);
         }
     }
 

@@ -74,6 +74,7 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
+import org.dcm4chee.proxy.common.RetryObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -503,14 +504,19 @@ public class ProxyAEExtension extends AEExtension {
                         fwdAssocs.put(calledAET, asInvoked);
                 } catch (IncompatibleConnectionException e) {
                     LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
+                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.IncompatibleConnectionException.getSuffix() + "0");
                 } catch (GeneralSecurityException e) {
                     LOG.error("Failed to create SSL context: ", e.getMessage());
+                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
                 } catch (ConfigurationException e) {
                     LOG.error("Unable to load configuration for destination AET {}: {}", new Object[] { calledAET, e });
+                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConfigurationException.getSuffix() + "0");
                 } catch (ConnectException e) {
                     LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
+                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
                 } catch (Exception e) {
                     LOG.error("Unexpected exception: ", e);
+                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, ".err");
                 }
             }
         }

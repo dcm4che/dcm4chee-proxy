@@ -120,7 +120,7 @@ public class CStore extends BasicCStoreSCP {
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
-                asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "1");
+                asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
             }
         }
@@ -280,6 +280,7 @@ public class CStore extends BasicCStoreSCP {
                 storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
             }
         } else {
+            asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
             storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
         }
     }
@@ -295,7 +296,7 @@ public class CStore extends BasicCStoreSCP {
     private void rewriteFile(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes rq,
             File file, String calledAET, ForwardRule rule) throws DicomServiceException, IOException {
         File copy = createMappedDicomCopy(proxyAEE, asAccepted, file, calledAET, rule.getUseCallingAET(), rq, pc);
-        rename(asAccepted, copy, ".dcm");
+        rename(asAccepted, copy, (String) asAccepted.getProperty(ProxyAEExtension.FILE_SUFFIX));
         if (file.delete()) {
             asAccepted.writeDimseRSP(pc, Commands.mkCStoreRSP(rq, Status.Success));
         } else {
@@ -309,7 +310,8 @@ public class CStore extends BasicCStoreSCP {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
         String fileName = file.getName();
-        File dst = new File(dir, fileName.substring(0, fileName.lastIndexOf('.')).concat(".dcm"));
+        File dst = new File(dir, fileName.substring(0, fileName.lastIndexOf('.'))
+                .concat((String)asAccepted.getProperty(ProxyAEExtension.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             asAccepted.writeDimseRSP(pc, Commands.mkCStoreRSP(rq, Status.Success));
         } else {
@@ -346,10 +348,13 @@ public class CStore extends BasicCStoreSCP {
                     .openForwardAssociation(as, rule, callingAET, calledAET, rq, aeCache);
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context: ", e.getMessage());
+            as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
         } catch (ConfigurationException e) {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
+            as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConfigurationException.getSuffix() + "0");
         } catch (Exception e) {
-            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });;
+            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
+            as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
         }
         return asInvoked;
     }
@@ -510,7 +515,7 @@ public class CStore extends BasicCStoreSCP {
                 if (dataFile != null && proxyAEE.isAcceptDataOnFailedAssociation())
                     try {
                         File copy = createMappedFileCopy(proxyAEE, asAccepted, dataFile, calledAET);
-                        rename(as, copy, RetryObject.ConnectionException.getSuffix() + "1");
+                        rename(as, copy, RetryObject.ConnectionException.getSuffix() + "0");
                         cmd = Commands.mkCStoreRSP(rq, Status.Success);
                     } catch (Exception e) {
                         e.printStackTrace();
