@@ -71,7 +71,7 @@ public class Scheduler {
 
     public void start() {
         long period = device.getDeviceExtension(ProxyDeviceExtension.class).getSchedulerInterval();
-        timer = scheduledExecutor.scheduleAtFixedRate(new Runnable(){
+        timer = scheduledExecutor.scheduleAtFixedRate(new Runnable() {
 
             @Override
             public void run() {
@@ -81,7 +81,8 @@ public class Scheduler {
                         log.scanLogDir(ae);
                     }
                 }
-            }}, period, period, TimeUnit.SECONDS);
+            }
+        }, period, period, TimeUnit.SECONDS);
     }
 
     public void stop() {

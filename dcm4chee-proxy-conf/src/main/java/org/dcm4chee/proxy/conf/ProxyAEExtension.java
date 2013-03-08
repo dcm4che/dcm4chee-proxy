@@ -70,9 +70,12 @@ import org.dcm4che.net.AEExtension;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
+import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.slf4j.Logger;
@@ -147,21 +150,31 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public File getTransferredAuditDirectoryPath() {
-        File path = new File(getAuditDirectoryPath(), "transferred");
+        File path = new File(getAuditDirectoryPath(), AuditDirectory.TRANSFERRED.getDirectoryName());
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
-                ? new File(jbossServerDataDir, "transferred")
-                : new File(currentWorkingDir, "transferred");
+                ? new File(jbossServerDataDir, AuditDirectory.TRANSFERRED.getDirectoryName())
+                : new File(currentWorkingDir, AuditDirectory.TRANSFERRED.getDirectoryName());
         path.mkdirs();
         return path;
     }
 
     public File getDeleteAuditDirectoryPath() {
-        File path = new File(getAuditDirectoryPath(), "delete");
+        File path = new File(getAuditDirectoryPath(), AuditDirectory.DELETED.getDirectoryName());
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
-                ? new File(jbossServerDataDir, "delete")
-                : new File(currentWorkingDir, "delete");
+                ? new File(jbossServerDataDir, AuditDirectory.DELETED.getDirectoryName())
+                : new File(currentWorkingDir, AuditDirectory.DELETED.getDirectoryName());
+        path.mkdirs();
+        return path;
+    }
+
+    public File getFailedAuditDirectoryPath() {
+        File path = new File(getAuditDirectoryPath(), AuditDirectory.FAILED.getDirectoryName());
+        if (!path.isAbsolute())
+            path = jbossServerDataDir != null
+                ? new File(jbossServerDataDir, AuditDirectory.FAILED.getDirectoryName())
+                : new File(currentWorkingDir, AuditDirectory.FAILED.getDirectoryName());
         path.mkdirs();
         return path;
     }
@@ -277,12 +290,26 @@ public class ProxyAEExtension extends AEExtension {
         return (List<ForwardRule>) as.getProperty(FORWARD_RULES);
     }
 
-    private File getLogDir(boolean transferred, String callingAET, String calledAET, String studyIUID) {
-        File path = new File(
-                ((transferred) 
-                        ? getTransferredAuditDirectoryPath().getPath() 
-                        : getDeleteAuditDirectoryPath().getPath()) 
-                        + getSeparator() + calledAET + getSeparator() + callingAET + getSeparator() + studyIUID);
+    private File getLogDir(AuditDirectory auditDir, String callingAET, String calledAET, String studyIUID, Integer retry)
+            throws DicomServiceException {
+        File path = null;
+        String subDirs = getSeparator() + calledAET + getSeparator() + callingAET + getSeparator() + studyIUID;
+        switch (auditDir) {
+        case TRANSFERRED:
+            path = new File(getTransferredAuditDirectoryPath().getPath() + subDirs);
+            break;
+        case FAILED:
+            path = new File(getFailedAuditDirectoryPath().getPath()  + subDirs + getSeparator() + retry);
+            break;
+        case DELETED:
+            path = new File(getDeleteAuditDirectoryPath().getPath() + subDirs);
+            break;
+        default:
+            LOG.error("Unrecognized Audit Directory: " + auditDir.getDirectoryName());
+            break;
+        }
+        if (path == null)
+            throw new DicomServiceException(Status.UnableToProcess);
         path.mkdirs();
         return path;
     }
@@ -453,15 +480,17 @@ public class ProxyAEExtension extends AEExtension {
         attrs.addAll(modify);
     }
 
-    public void createStartLogFile(boolean transferred, String callingAET, String calledAET, Attributes attrs) {
+    public void createStartLogFile(AuditDirectory auditDir, String callingAET, String calledAET, String proxyHostname, 
+            Attributes attrs, Integer retry) throws DicomServiceException {
         final String studyIUID = attrs.getString(Tag.StudyInstanceUID);
-        File file = new File(getLogDir(transferred, callingAET, calledAET, studyIUID), "start.log");
+        File file = new File(getLogDir(auditDir, callingAET, calledAET, studyIUID, retry), "start.log");
         if (!file.exists()) {
             try {
                 Properties prop = new Properties();
                 prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
                 prop.setProperty("patientID", attrs.getString(Tag.PatientID));
                 prop.setProperty("hostname", attrs.getString(0x00030016));
+                prop.setProperty("proxyHostname", proxyHostname);
                 prop.store(new FileOutputStream(file), null);
             } catch (IOException e) {
                 LOG.debug("Failed to create log file : " + e.getMessage());
@@ -469,11 +498,11 @@ public class ProxyAEExtension extends AEExtension {
         }
     }
 
-    public File writeLogFile(boolean transferred, String callingAET, String calledAET, Attributes attrs, long size) {
+    public File writeLogFile(AuditDirectory auditDir, String callingAET, String calledAET, Attributes attrs, long size, Integer retry) {
         Properties prop = new Properties();
         File file = null;
         try {
-            file = new File(getLogDir(transferred, callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID)), attrs
+            file = new File(getLogDir(auditDir, callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID), retry), attrs
                     .getString(Tag.SOPInstanceUID).concat(".log"));
             prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
             prop.setProperty("size", String.valueOf(size));

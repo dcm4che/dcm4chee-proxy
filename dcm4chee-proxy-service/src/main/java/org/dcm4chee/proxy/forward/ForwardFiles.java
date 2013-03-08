@@ -73,6 +73,7 @@ import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
@@ -183,7 +184,7 @@ public class ForwardFiles {
                     Retry matchingRetry = getMatchingRetry(proxyAEE, suffix);
                     if (matchingRetry == null)
                         if (proxyAEE.isDeleteFailedDataWithoutRetryConfiguration())
-                            deleteFailedFile(proxyAEE, calledAET, file, ": delete files without retry configuration is ENABLED");
+                            deleteFailedFile(proxyAEE, calledAET, file, ": delete files without retry configuration is ENABLED", 0);
                         else
                             moveToNoRetryPath(proxyAEE, file, ": delete files without retry configuration is DISABLED");
                     else if (checkNumberOfRetries(proxyAEE, matchingRetry, suffix, file, calledAET)
@@ -200,8 +201,8 @@ public class ForwardFiles {
 
     private boolean checkNumberOfRetries(ProxyAEExtension proxyAEE, Retry retry, String suffix, File file,
             String calledAET) {
-        String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
         int currentRetries = 0;
+        String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
         if (!substring.isEmpty())
             try {
                 currentRetries = Integer.parseInt(substring);
@@ -216,7 +217,7 @@ public class ForwardFiles {
             if (sendToFallbackAET(proxyAEE, calledAET))
                 moveToFallbackAetDir(proxyAEE, file, calledAET, reason);
             else if (retry.deleteAfterFinalRetry)
-                deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED");
+                deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED", currentRetries);
             else
                 moveToNoRetryPath(proxyAEE, file, reason);
         }
@@ -264,15 +265,15 @@ public class ForwardFiles {
             LOG.error("Failed to rename {} to {}", new Object[] { pathname, dstFile });
     }
 
-    private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason) {
+    private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason, Integer retry) {
         try {
             if (proxyAEE.isEnableAuditLog()) {
                 Attributes fmi = readFileMetaInformation(file);
                 String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
                 Attributes attrs = parse(file);
-                proxyAEE.createStartLogFile(false, callingAET, calledAET, attrs);
-                long length = file.length();
-                proxyAEE.writeLogFile(false, callingAET, calledAET, attrs, length);
+                proxyAEE.createStartLogFile(AuditDirectory.DELETED, callingAET, calledAET, 
+                        proxyAEE.getApplicationEntity().getConnections().get(0).getHostname(), attrs, retry);
+                proxyAEE.writeLogFile(AuditDirectory.DELETED, callingAET, calledAET, attrs, file.length(), retry);
             }
         } catch (Exception e) {
             LOG.error("Failed to create log file: ", e.getMessage());
@@ -308,33 +309,35 @@ public class ForwardFiles {
                     public void run() {
                         try {
                             forwardScheduledMPPS(proxyAEE, files, destinationAETitle, protocol);
-                        } catch (DicomServiceException e) {
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
                 });
     }
 
-    protected void forwardScheduledMPPS(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle, String protocol) throws DicomServiceException {
+    protected void forwardScheduledMPPS(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle,
+            String protocol) throws IOException {
         for (File file : files) {
+            Attributes fmi = readFileMetaInformation(file);
+            String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
             try {
-                Attributes fmi = readFileMetaInformation(file);
                 if (protocol == "nset" && pendingNCreateForwarding(proxyAEE, destinationAETitle, fmi))
                     return;
 
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.ModalityPerformedProcedureStepSOPClass,
                         UID.ExplicitVRLittleEndian));
-                rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
+                rq.setCallingAET(callingAET);
                 rq.setCalledAET(destinationAETitle);
-                Association as = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
-                        rq);
+                Association as = proxyAEE.getApplicationEntity().connect(
+                        aeCache.findApplicationEntity(destinationAETitle), rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
-                        forwardScheduledMPPS(as, file, fmi, protocol);
+                        forwardScheduledMPPS(proxyAEE, as, file, fmi, protocol);
                     } else {
-                        File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
-                        rename(as, file, dst);
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET,
+                                destinationAETitle);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -350,20 +353,34 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
-                renameFile(RetryObject.ConnectionException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                renameFile(RetryObject.IncompatibleConnectionException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
+                        destinationAETitle);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
-                renameFile(RetryObject.ConfigurationException.getSuffix(), file);
-            } catch (IOException e) {
-                LOG.error("Unable to read from file: " + e.getMessage());
-                renameFile(RetryObject.ConnectionException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
+                        destinationAETitle);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
-                renameFile(RetryObject.GeneralSecurityException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
+                        destinationAETitle);
             }
+        }
+    }
+
+    private void writeFailedAuditLogMessage(ProxyAEExtension proxyAEE, File file, Attributes fmi, String calledAET)
+            throws IOException {
+        if (proxyAEE.isEnableAuditLog()) {
+            if (fmi == null)
+                fmi = readFileMetaInformation(file);
+            Attributes attrs = parse(file);
+            String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+            int retry = getCurrentRetries(proxyAEE, file);
+            proxyAEE.createStartLogFile(AuditDirectory.FAILED, sourceAET, calledAET, 
+                    proxyAEE.getApplicationEntity().getConnections().get(0).getHostname(), attrs, retry);
+            proxyAEE.writeLogFile(AuditDirectory.FAILED, sourceAET, calledAET, attrs, file.length(), retry);
         }
     }
 
@@ -381,8 +398,8 @@ public class ForwardFiles {
         return false;
     }
 
-    private void forwardScheduledMPPS(final Association as, final File file, Attributes fmi, String protocol)
-            throws IOException, InterruptedException {
+    private void forwardScheduledMPPS(final ProxyAEExtension proxyAEE, final Association as, final File file,
+            final Attributes fmi, String protocol) throws IOException, InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
         String tsuid = UID.ExplicitVRLittleEndian;
@@ -404,9 +421,9 @@ public class ForwardFiles {
                     LOG.debug("{}: failed to forward file {} with error status {}",
                             new Object[] { as, file, Integer.toHexString(status) + 'H' });
                     try {
-                        File dst = setFileSuffix(file, '.' + Integer.toHexString(status) + 'H');
-                        rename(as, file, dst);
-                    } catch (DicomServiceException e) {
+                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCallingAET(),
+                                as.getCalledAET());
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -432,31 +449,32 @@ public class ForwardFiles {
                     public void run() {
                         try {
                             forwardScheduledNAction(proxyAEE, files, destinationAETitle);
-                        } catch (DicomServiceException e) {
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
                 });
     }
 
-    private void forwardScheduledNAction(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle) 
-            throws DicomServiceException {
+    private void forwardScheduledNAction(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle)
+            throws IOException {
         for (File file : files) {
+            Attributes fmi = readFileMetaInformation(file);
+            String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
             try {
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
                         UID.ExplicitVRLittleEndian));
-                Attributes fmi = readFileMetaInformation(file);
-                rq.setCallingAET(fmi.getString(Tag.SourceApplicationEntityTitle));
+                rq.setCallingAET(callingAET);
                 rq.setCalledAET(destinationAETitle);
-                Association as = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(destinationAETitle),
-                        rq);
+                Association as = proxyAEE.getApplicationEntity().connect(
+                        aeCache.findApplicationEntity(destinationAETitle), rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(proxyAEE, as, file, fmi);
                     } else {
-                        File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
-                        rename(as, file, dst);
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET,
+                                destinationAETitle);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -472,25 +490,28 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
-                renameFile(RetryObject.ConnectionException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                renameFile(RetryObject.IncompatibleConnectionException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
+                        destinationAETitle);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
-                renameFile(RetryObject.ConfigurationException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
+                        destinationAETitle);
             } catch (IOException e) {
                 LOG.error("Unable to read from file: " + e.getMessage());
-                renameFile(RetryObject.ConnectionException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
-                renameFile(RetryObject.GeneralSecurityException.getSuffix(), file);
+                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
+                        destinationAETitle);
             }
         }
     }
 
     private void forwardScheduledNAction(final ProxyAEExtension proxyAEE, final Association as, final File file,
-            Attributes fmi) throws IOException, InterruptedException {
+            final Attributes fmi) throws IOException, InterruptedException {
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
         String tsuid = UID.ExplicitVRLittleEndian;
@@ -516,9 +537,9 @@ public class ForwardFiles {
                     LOG.debug("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
                             Integer.toHexString(status) + 'H' });
                     try {
-                        File dst = setFileSuffix(file, '.' + Integer.toHexString(status) + 'H');
-                        rename(as, file, dst);
-                    } catch (DicomServiceException e) {
+                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCallingAET(),
+                                as.getCalledAET());
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -550,13 +571,13 @@ public class ForwardFiles {
             for (ForwardTask ft : scanFiles(calledAET, files))
                 try {
                     processForwardTask(proxyAEE, ft);
-                } catch (DicomServiceException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
     }
 
     private void processForwardTask(ProxyAEExtension proxyAEE, ForwardTask ft)
-            throws DicomServiceException {
+            throws IOException {
         AAssociateRQ rq = ft.getAAssociateRQ();
         Association asInvoked = null;
         try {
@@ -566,32 +587,34 @@ public class ForwardFiles {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledCStoreFiles(proxyAEE, asInvoked, file);
                     } else {
-                        File dst = setFileSuffix(file, RetryObject.ConnectionException.getSuffix());
-                        rename(asInvoked, file, dst);
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, rq.getCallingAET(),
+                                rq.getCalledAET());
                     }
                 } catch (NoPresentationContextException npc) {
-                    handleForwardException(asInvoked, file, npc, RetryObject.NoPresentationContextException.getSuffix());
+                    handleForwardException(proxyAEE, asInvoked, file, npc,
+                            RetryObject.NoPresentationContextException.getSuffix());
                 } catch (AssociationStateException ass) {
-                    handleForwardException(asInvoked, file, ass, RetryObject.AssociationStateException.getSuffix());
+                    handleForwardException(proxyAEE, asInvoked, file, ass,
+                            RetryObject.AssociationStateException.getSuffix());
                 } catch (IOException ioe) {
-                    handleForwardException(asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix());
+                    handleForwardException(proxyAEE, asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix());
                     releaseAS(asInvoked);
                 }
             }
         } catch (ConfigurationException ce) {
-            handleProcessForwardTaskException(ft, ce, RetryObject.ConfigurationException.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, ce, RetryObject.ConfigurationException.getSuffix());
         } catch (AAssociateRJ rj) {
-            handleProcessForwardTaskException(ft, rj, RetryObject.AAssociateRJ.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, rj, RetryObject.AAssociateRJ.getSuffix());
         } catch (AAbort aa) {
-            handleProcessForwardTaskException(ft, aa, RetryObject.AAbort.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, aa, RetryObject.AAbort.getSuffix());
         } catch (IOException e) {
-            handleProcessForwardTaskException(ft, e, RetryObject.ConnectionException.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (InterruptedException e) {
-            handleProcessForwardTaskException(ft, e, RetryObject.ConnectionException.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.ConnectionException.getSuffix());
         } catch (IncompatibleConnectionException e) {
-            handleProcessForwardTaskException(ft, e, RetryObject.IncompatibleConnectionException.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.IncompatibleConnectionException.getSuffix());
         } catch (GeneralSecurityException e) {
-            handleProcessForwardTaskException(ft, e, RetryObject.GeneralSecurityException.getSuffix());
+            handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.GeneralSecurityException.getSuffix());
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {
@@ -628,17 +651,18 @@ public class ForwardFiles {
                     switch (status) {
                     case Status.Success:
                     case Status.CoercionOfDataElements:
-                        if (proxyAEE.isEnableAuditLog())
-                            proxyAEE.writeLogFile(true, callingAET, asInvoked.getRemoteAET(), ds[0], fileSize);
+                        if (proxyAEE.isEnableAuditLog()) {
+                            proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, callingAET, asInvoked.getRemoteAET(), ds[0], fileSize, -1);
+                        }
                         deleteSendFile(asInvoked, file);
                         break;
                     default: {
                         LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
                                 Integer.toHexString(status) + 'H' });
                         try {
-                            File dst = setFileSuffix(file, '.' + Integer.toHexString(status) + 'H');
-                            rename(asInvoked, file, dst);
-                        } catch (DicomServiceException e) {
+                            renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file,
+                                    asInvoked.getCallingAET(), asInvoked.getCalledAET());
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
@@ -651,6 +675,20 @@ public class ForwardFiles {
         }
     }
 
+    private Integer getCurrentRetries(ProxyAEExtension proxyAEE, File file){
+        String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
+        Retry matchingRetry = getMatchingRetry(proxyAEE, suffix);
+        if (matchingRetry != null) {
+            String substring = suffix.substring(matchingRetry.getRetryObject().getSuffix().length());
+            if (!substring.isEmpty())
+                try {
+                    return Integer.parseInt(substring);
+                } catch (NumberFormatException e) {
+                    LOG.error("Error parsing number of retries in suffix of file " + file.getName());
+                }
+        }
+        return 1;
+    }
     protected void releaseAS(Association asAccepted) {
         Association asInvoked = (Association) asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (asInvoked != null)
@@ -692,39 +730,30 @@ public class ForwardFiles {
         }
     }
 
-    private void handleForwardException(Association as, File file, Exception e, String suffix)
-            throws DicomServiceException {
+    private void handleForwardException(ProxyAEExtension proxyAEE, Association as, File file, Exception e, String suffix)
+            throws IOException {
         LOG.debug(as + ": error processing forward task: " + e.getMessage());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
-        File dst = setFileSuffix(file, suffix);
-        rename(as, file, dst);
+        renameFile(proxyAEE, suffix, file, as.getCalledAET(), as.getCalledAET());
     }
 
-    private void handleProcessForwardTaskException(ForwardTask ft, Exception e, String suffix)
-            throws DicomServiceException {
+    private void handleProcessForwardTaskException(ProxyAEExtension proxyAEE, AAssociateRQ rq, ForwardTask ft,
+            Exception e, String suffix) throws IOException {
         LOG.error("Unable to connect to {}: {}", new Object[] { ft.getAAssociateRQ().getCalledAET(), e.getMessage() });
-        for (File file : ft.getFiles())
-            renameFile(suffix, file);
-    }
-
-    private void renameFile(String suffix, File file) throws DicomServiceException {
-        File dst = setFileSuffix(file, suffix);
-        if (file.renameTo(dst)) {
-            dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: rename to {}", new Object[] { file, dst });
-        } else {
-            LOG.debug("{}: failed to rename to {}", new Object[] { file, dst });
-            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
+        for (File file : ft.getFiles()) {
+            renameFile(proxyAEE, suffix, file, rq.getCallingAET(), rq.getCalledAET());
         }
     }
 
-    private File rename(Association as, File file, File dst) throws DicomServiceException {
+    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String callingAET, String calledAET)
+            throws IOException {
+        File dst = setFileSuffix(file, suffix);
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: rename {} to {}", new Object[] { as, file, dst });
-            return dst;
+            LOG.debug("Rename {} to {}", new Object[] { file, dst });
+            writeFailedAuditLogMessage(proxyAEE, dst, null, calledAET);
         } else {
-            LOG.debug("{}: failed to rename {} to {}", new Object[] { as, file, dst });
+            LOG.error("Failed to rename {} to {}", new Object[] { file, dst });
             throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
@@ -739,8 +768,8 @@ public class ForwardFiles {
         int indexOfNextSuffix = path.indexOf('.', indexOfNewSuffix + 1);
         if (indexOfNextSuffix == -1) {
             String substring = path.substring(indexOfNumRetries);
-            int numRetries = Integer.parseInt(substring);
-            return new File(path.substring(0, indexOfNumRetries) + Integer.toString(numRetries + 1));
+            int previousNumRetries = Integer.parseInt(substring);
+            return new File(path.substring(0, indexOfNumRetries) + Integer.toString(previousNumRetries + 1));
         }
         int previousNumRetries = Integer.parseInt(path.substring(indexOfNumRetries, indexOfNextSuffix));
         String substringStart = path.substring(0, indexOfNewSuffix);
@@ -757,7 +786,8 @@ public class ForwardFiles {
             proxyAEE.coerceAttributes(attrs, ac, as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
             ds[0] = attrs;
             if (proxyAEE.isEnableAuditLog())
-                proxyAEE.createStartLogFile(true, as.getCallingAET(), as.getCalledAET(), ds[0]);
+                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, as.getCallingAET(), as.getCalledAET(), 
+                        as.getConnection().getHostname(), ds[0], 0);
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);

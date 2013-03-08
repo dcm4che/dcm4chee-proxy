@@ -62,6 +62,7 @@ import org.dcm4che.audit.SOPClass;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.slf4j.Logger;
@@ -85,34 +86,54 @@ public class AuditLog {
     public void scanLogDir(ApplicationEntity ae) {
         this.ae = ae;
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        File failedPath = proxyAEE.getFailedAuditDirectoryPath();
+        for (String calledAET : failedPath.list())
+            scanCalledAETDir(new File(failedPath, calledAET), AuditDirectory.FAILED);
         File transferredPath = proxyAEE.getTransferredAuditDirectoryPath();
         for (String calledAET : transferredPath.list())
-            scanCalledAETDir(new File(transferredPath, calledAET), true);
+            scanCalledAETDir(new File(transferredPath, calledAET), AuditDirectory.TRANSFERRED);
         File deletePath = proxyAEE.getDeleteAuditDirectoryPath();
         for (String calledAET : deletePath.list())
-            scanCalledAETDir(new File(deletePath, calledAET), false);
+            scanCalledAETDir(new File(deletePath, calledAET), AuditDirectory.DELETED);
     }
 
-    private void scanCalledAETDir(File calledAETDir, boolean transferred) {
+    private void scanCalledAETDir(File calledAETDir, AuditDirectory auditDir) {
         for (String callingAET : calledAETDir.list()) {
             File callingAETDir = new File(calledAETDir.getPath(), callingAET);
             for (String studyIUID : callingAETDir.list()) {
                 File studyIUIDDir = new File(callingAETDir.getPath(), studyIUID);
-                scanStudyDir(studyIUIDDir, transferred);
+                scanStudyDir(studyIUIDDir, auditDir);
             }
         }
     }
 
-    private void scanStudyDir(final File studyIUIDDir, final boolean transferred) {
+    private void scanStudyDir(final File studyIUIDDir, final AuditDirectory auditDir) {
         ae.getDevice().execute(new Runnable() {
             @Override
             public void run() {
-                writeLog(studyIUIDDir, transferred);
+                if (auditDir == AuditDirectory.FAILED)
+                    checkRetryLog(studyIUIDDir, auditDir);
+                else
+                    checkLog(studyIUIDDir, auditDir);
             }
         });
     }
 
-    private void writeLog(File studyIUIDDir, boolean transferred) {
+    private void checkRetryLog(File studyIUIDDir, AuditDirectory auditDir) {
+        for (String numRetry : studyIUIDDir.list()) {
+            String separator = System.getProperty("file.separator");
+            File startLog = new File(studyIUIDDir + separator + numRetry + separator + "start.log");
+            long lastModified = startLog.lastModified();
+            long now = System.currentTimeMillis();
+            ProxyDeviceExtension proxyDev = (ProxyDeviceExtension) ae.getDevice().getDeviceExtension(ProxyDeviceExtension.class);
+            if (!(now > lastModified + proxyDev.getSchedulerInterval() * 1000 * 2))
+                return;
+
+            writeFailedLogMessage(studyIUIDDir, numRetry, auditDir, separator);
+        }
+    }
+
+    private void checkLog(File studyIUIDDir, AuditDirectory auditDir) {
         String separator = System.getProperty("file.separator");
         File startLog = new File(studyIUIDDir + separator + "start.log");
         long lastModified = startLog.lastModified();
@@ -121,6 +142,10 @@ public class AuditLog {
         if (!(now > lastModified + proxyDev.getSchedulerInterval() * 1000 * 2))
             return;
 
+        writeLogMessage(studyIUIDDir, auditDir, separator);
+    }
+
+    private void writeLogMessage(File studyIUIDDir, AuditDirectory auditDir, String separator) {
         File[] logFiles = studyIUIDDir.listFiles(fileFilter());
         if (logFiles != null && logFiles.length > 1) {
             Log log = new Log();
@@ -138,13 +163,53 @@ public class AuditLog {
             Calendar timeStamp = new GregorianCalendar();
             timeStamp.setTimeInMillis(log.t2);
             AuditMessage msg = new AuditMessage();
-            if (transferred) {
-                writeSentServerLogMessage(log, mb, time, studyIUID, callingAET, calledAET);
-                msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
-                        EventID.DICOMInstancesTransferred, EventActionCode.Read);
-            } else
-                msg = createAuditMessage(log, studyIUID, ae.getAETitle(), ae.getConnections().get(0).getHostname(),
-                        callingAET, timeStamp, EventID.DICOMInstancesAccessed, EventActionCode.Delete);
+            try {
+                switch (auditDir) {
+                case TRANSFERRED:
+                    writeSentServerLogMessage(log, mb, time, studyIUID, callingAET, calledAET);
+                    msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
+                            EventID.DICOMInstancesTransferred, EventActionCode.Read, EventOutcomeIndicator.Success);
+                    break;
+                case DELETED:
+                    msg = createAuditMessage(log, studyIUID, ae.getAETitle(), ae.getConnections().get(0).getHostname(),
+                            callingAET, timeStamp, EventID.DICOMInstancesAccessed, EventActionCode.Delete,
+                            EventOutcomeIndicator.Success);
+                    break;
+                default:
+                    LOG.error("Unrecognized Audit Directory: " + auditDir.getDirectoryName());
+                    break;
+                }
+                LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
+                logger.write(timeStamp, msg);
+            } catch (Exception e) {
+                LOG.error("Failed to write audit log message: ", e);
+            }
+            for (File file : logFiles)
+                if (!file.delete())
+                    LOG.debug("Failed to delete " + file);
+            if (!studyIUIDDir.delete())
+                LOG.debug("Failed to delete " + studyIUIDDir);
+        }
+    }
+
+    private void writeFailedLogMessage(File studyIUIDDir, String retry, AuditDirectory auditDir, String separator) {
+        File retryDir = new File(studyIUIDDir + separator + retry);
+        File[] logFiles = retryDir.listFiles(fileFilter());
+        if (logFiles != null && logFiles.length > 1) {
+            Log log = new Log();
+            log.files = logFiles.length;
+            for (File file : logFiles)
+                readProperties(file, log);
+            String path = retryDir.getPath();
+            String studyIUID = path.substring(path.lastIndexOf(separator) + 1);
+            path = path.substring(0, path.lastIndexOf(separator));
+            String callingAET = path.substring(path.lastIndexOf(separator) + 1);
+            path = path.substring(0, path.lastIndexOf(separator));
+            String calledAET = path.substring(path.lastIndexOf(separator) + 1);
+            Calendar timeStamp = new GregorianCalendar();
+            timeStamp.setTimeInMillis(log.t2);
+            AuditMessage msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
+                    EventID.DICOMInstancesTransferred, EventActionCode.Read, EventOutcomeIndicator.SeriousFailure);
             try {
                 LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
                 logger.write(timeStamp, msg);
@@ -160,17 +225,26 @@ public class AuditLog {
     }
 
     private AuditMessage createAuditMessage(Log log, String studyIUID, String destinationAET, String destinationHostname,
-            String sourceAET, Calendar timeStamp, EventID eventID, String eventActionCode) {
+            String sourceAET, Calendar timeStamp, EventID eventID, String eventActionCode, String eventOutcomeIndicator) {
         AuditMessage msg = new AuditMessage();
         msg.setEventIdentification(AuditMessages.createEventIdentification(
                 eventID, 
                 eventActionCode, 
                 timeStamp, 
-                EventOutcomeIndicator.Success, 
+                eventOutcomeIndicator, 
                 null));
         msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
                 destinationHostname, 
                 AuditMessages.alternativeUserIDForAETitle(destinationAET), 
+                null, 
+                false, 
+                null, 
+                null, 
+                null, 
+                AuditMessages.RoleIDCode.Application));
+        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
+                log.proxyHostname, 
+                AuditMessages.alternativeUserIDForAETitle(ae.getAETitle()),
                 null, 
                 false, 
                 null, 
@@ -241,6 +315,7 @@ public class AuditLog {
                 log.sopclassuid.add(prop.getProperty("SOPClassUID"));
             } else {
                 log.hostname = prop.getProperty("hostname");
+                log.proxyHostname = prop.getProperty("proxyHostname");
                 log.patientID = prop.getProperty("patientID");
             }
             long time = Long.parseLong(prop.getProperty("time"));
@@ -265,8 +340,9 @@ public class AuditLog {
     }
 
     private class Log {
-        public String patientID;
-        public String hostname;
+        private String patientID;
+        private String hostname;
+        private String proxyHostname;
         private long totalSize;
         private int files;
         private long t1, t2;

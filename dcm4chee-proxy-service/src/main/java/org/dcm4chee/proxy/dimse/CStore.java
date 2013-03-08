@@ -77,6 +77,7 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
+import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -377,15 +378,19 @@ public class CStore extends BasicCStoreSCP {
         }
         Attributes attrs = parse(asAccepted, dataFile);
         File logFile = null;
-        if (proxyAEE.isEnableAuditLog()) {
-            String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-            proxyAEE.createStartLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs);
-            logFile = proxyAEE.writeLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs, dataFile.length());
-        }
         try {
+            if (proxyAEE.isEnableAuditLog()) {
+                String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), 
+                        asInvoked.getConnection().getHostname(), attrs, 0);
+                logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), attrs,
+                        dataFile.length(), 0);
+            }
             forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile);
         } catch (Exception e) {
             asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
+            if (logFile != null)
+                logFile.delete();
             LOG.error("{}: error forwarding object {}: {}", new Object[] { asAccepted, dataFile, e });
         }
     }
@@ -424,13 +429,14 @@ public class CStore extends BasicCStoreSCP {
             rq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
             rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             File logFile = null;
-            if (proxyAEE.isEnableAuditLog()) {
-                String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-                proxyAEE.createStartLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs);
-                logFile = proxyAEE.writeLogFile(true, sourceAET, asInvoked.getRemoteAET(), attrs,
-                        attrs.calcLength(DicomEncodingOptions.DEFAULT, true));
-            }
             try {
+                if (proxyAEE.isEnableAuditLog()) {
+                    String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+                    proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), 
+                            asInvoked.getConnection().getHostname(), attrs, 0);
+                    logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), attrs,
+                            attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
+                }
                 forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), i, logFile, null);
             } catch (Exception e) {
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
