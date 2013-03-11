@@ -258,14 +258,15 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
     private void storeForwardOptions(HashMap<String, ForwardOption> fwdOptions, Preferences parentNode) {
         Preferences fwdOptionsNode = parentNode.node("dcmForwardOption");
         for (Entry<String, ForwardOption> fwdOptionEntry : fwdOptions.entrySet())
-            storeToForwardOption(fwdOptionEntry.getValue(), fwdOptionsNode.node(fwdOptionEntry.getKey()));
+            storeToForwardOption(fwdOptionEntry, fwdOptionsNode.node(fwdOptionEntry.getKey()));
     }
 
-    private void storeToForwardOption(ForwardOption forwardOption, Preferences prefs) {
-        PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", forwardOption.getSchedule().getDays());
-        PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", forwardOption.getSchedule().getHours());
-        PreferencesUtils.storeNotNull(prefs, "dicomDescription", forwardOption.getDescription());
-        PreferencesUtils.storeNotNull(prefs, "dcmConvertEmf2Sf", forwardOption.isConvertEmf2Sf());
+    private void storeToForwardOption(Entry<String, ForwardOption> fwdOptionEntry, Preferences prefs) {
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", fwdOptionEntry.getValue().getSchedule().getDays());
+        PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", fwdOptionEntry.getValue().getSchedule().getHours());
+        PreferencesUtils.storeNotNull(prefs, "dicomDescription", fwdOptionEntry.getValue().getDescription());
+        PreferencesUtils.storeNotNull(prefs, "dcmConvertEmf2Sf", fwdOptionEntry.getValue().isConvertEmf2Sf());
+        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", fwdOptionEntry.getKey());
     }
 
     private void storeRetries(List<Retry> retries, Preferences parentNode) {
@@ -390,7 +391,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             if (prevOptions.containsKey(destinationAET))
                 storeForwardOptionDiffs(fwdOptionNode, prevOptions.get(destinationAET), entry.getValue());
             else
-                storeToForwardOption(entry.getValue(), fwdOptionNode);
+                storeToForwardOption(entry, fwdOptionNode);
         }
         for (Entry<String, ForwardOption> entry : prevOptions.entrySet()) {
             if (!currOptions.containsKey(entry.getKey()))

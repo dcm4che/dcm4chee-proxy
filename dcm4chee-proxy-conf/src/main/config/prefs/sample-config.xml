@@ -95,6 +95,7 @@
                 <node name="STORESCP">
                   <map>
                     <entry key="dcmConvertEmf2Sf" value="true"/>
+                    <entry key="dcmDestinationAETitle" value="STORESCP"/>
                     <entry key="dcmScheduleDays" value="Wed"/>
                     <entry key="dcmScheduleHours" value="8-18"/>
                     <entry key="dicomDescription" value="Example ForwardOption for STORESCP"/>
