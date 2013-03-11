@@ -403,7 +403,6 @@ public class ProxyDeviceTest {
         HashMap<String, ForwardOption> fwdOptions = new HashMap<String, ForwardOption>();
         
         ForwardOption fwdOptionStoreScp = new ForwardOption();
-        fwdOptionStoreScp.setDestinationAET("STORESCP");
         fwdOptionStoreScp.setDescription("Example ForwardOption for STORESCP");
         fwdOptionStoreScp.setConvertEmf2Sf(true);
         Schedule scheduleStoreScp = new Schedule();

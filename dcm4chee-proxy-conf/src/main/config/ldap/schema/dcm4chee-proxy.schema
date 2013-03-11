@@ -218,8 +218,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.4
   SUP top
   STRUCTURAL
   MUST (
-    dcmDestinationAETitle $
-    cn ) 
+    dcmDestinationAETitle )
   MAY (
     dcmScheduleDays $
     dcmScheduleHours $

@@ -346,7 +346,7 @@ objectclass: metaObjectClass
 objectclass: metaTop
 objectclass: top
 m-oid: 1.2.40.0.13.1.2.15.0.4.4
-m-name: dcmForwardSchedule
+m-name: dcmForwardOption
 m-description: Forward AET options
 m-must: dcmDestinationAETitle
 m-may: dcmScheduleDays

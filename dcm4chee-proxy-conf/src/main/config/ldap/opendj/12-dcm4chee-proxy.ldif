@@ -165,7 +165,7 @@ objectClasses: ( 1.2.40.0.13.1.2.15.0.4.4 NAME 'dcmForwardOption'
   SUP top
   STRUCTURAL
   MUST (
-    dcmDestinationAETitle ) 
+    dcmDestinationAETitle )
   MAY (
     dcmScheduleDays $
     dcmScheduleHours $

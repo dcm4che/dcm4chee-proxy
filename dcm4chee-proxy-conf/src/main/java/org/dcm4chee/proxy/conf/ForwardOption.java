@@ -48,17 +48,10 @@ public class ForwardOption implements Serializable {
 
     private static final long serialVersionUID = 3546841067921034079L;
 
-    private String destinationAET;
     private Schedule schedule;
     private String description;
     private boolean convertEmf2Sf;
 
-    public String getDestinationAET() {
-        return destinationAET;
-    }
-    public void setDestinationAET(String destinationAET) {
-        this.destinationAET = destinationAET;
-    }
     public Schedule getSchedule() {
         return schedule;
     }

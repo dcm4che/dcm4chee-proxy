@@ -41,9 +41,9 @@ package org.dcm4chee.proxy.conf.ldap;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -60,8 +60,8 @@ import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4chee.proxy.common.RetryObject;
-import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardOption;
+import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
@@ -195,14 +195,13 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
                 SearchResult sr = ne.next();
                 Attributes attrs = sr.getAttributes();
                 ForwardOption fwdOption = new ForwardOption();
-                fwdOption.setDestinationAET(LdapUtils.stringValue(attrs.get("dcmDestinationAETitle"), null));
                 fwdOption.setDescription(LdapUtils.stringValue(attrs.get("dicomDescription"), null));
                 fwdOption.setConvertEmf2Sf(LdapUtils.booleanValue(attrs.get("dcmConvertEmf2Sf"), false));
                 Schedule schedule = new Schedule();
                 schedule.setDays(LdapUtils.stringValue(attrs.get("dcmScheduleDays"), null));
                 schedule.setHours(LdapUtils.stringValue(attrs.get("dcmScheduleHours"), null));
                 fwdOption.setSchedule(schedule);
-                fwdOptions.put(fwdOption.getDestinationAET(), fwdOption);
+                fwdOptions.put(LdapUtils.stringValue(attrs.get("dcmDestinationAETitle"), null), fwdOption);
             }
             proxyAEE.setForwardOptions(fwdOptions);
         } finally {
@@ -236,7 +235,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
             return;
 
         storeRetries(proxyAEE.getRetries(), aeDN);
-        storeForwardOptions(proxyAEE.getForwardOptions().values(), aeDN);
+        storeForwardOptions(proxyAEE.getForwardOptions(), aeDN);
         storeForwardRules(proxyAEE.getForwardRules(), aeDN);
         config.store(proxyAEE.getAttributeCoercions(), aeDN);
     }
@@ -285,10 +284,10 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
             config.createSubcontext(dnOfRetry(retry, parentDN), storeToRetry(retry, new BasicAttributes(true)));
     }
 
-    private void storeForwardOptions(Collection<ForwardOption> fwdOptions, String parentDN) throws NamingException {
-        for (ForwardOption forwardOption : fwdOptions)
-            config.createSubcontext(dnOfForwardOption(forwardOption, parentDN),
-                    storeToForwardOption(forwardOption, new BasicAttributes(true)));
+    private void storeForwardOptions(HashMap<String, ForwardOption> fwdOptions, String parentDN) throws NamingException {
+        for (Entry<String, ForwardOption> forwardOptionEntry : fwdOptions.entrySet())
+            config.createSubcontext(dnOfForwardOption(forwardOptionEntry.getKey(), parentDN),
+                    storeToForwardOption(forwardOptionEntry, new BasicAttributes(true)));
     }
 
     private Attributes storeToRetry(Retry retry, BasicAttributes attrs) {
@@ -300,13 +299,13 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         return attrs;
     }
 
-    private Attributes storeToForwardOption(ForwardOption forwardOption, BasicAttributes attrs) {
+    private Attributes storeToForwardOption(Entry<String, ForwardOption> forwardOptionEntry, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmForwardOption");
-        LdapUtils.storeNotNull(attrs, "dcmDestinationAETitle", forwardOption.getDestinationAET());
-        LdapUtils.storeNotNull(attrs, "dcmScheduleDays", forwardOption.getSchedule().getDays());
-        LdapUtils.storeNotNull(attrs, "dcmScheduleHours", forwardOption.getSchedule().getHours());
-        LdapUtils.storeNotNull(attrs, "dicomDescription", forwardOption.getDescription());
-        LdapUtils.storeNotNull(attrs, "dcmConvertEmf2Sf", forwardOption.isConvertEmf2Sf());
+        LdapUtils.storeNotNull(attrs, "dcmScheduleDays", forwardOptionEntry.getValue().getSchedule().getDays());
+        LdapUtils.storeNotNull(attrs, "dcmScheduleHours", forwardOptionEntry.getValue().getSchedule().getHours());
+        LdapUtils.storeNotNull(attrs, "dicomDescription", forwardOptionEntry.getValue().getDescription());
+        LdapUtils.storeNotNull(attrs, "dcmConvertEmf2Sf", forwardOptionEntry.getValue().isConvertEmf2Sf());
+        LdapUtils.storeNotNull(attrs, "dcmDestinationAETitle", forwardOptionEntry.getKey());
         return attrs;
     }
 
@@ -317,9 +316,9 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         return sb.toString();
     }
 
-    private String dnOfForwardOption(ForwardOption fwdOption, String parentDN) {
+    private String dnOfForwardOption(String destinationAET, String parentDN) {
         StringBuilder sb = new StringBuilder();
-        sb.append("dcmDestinationAETitle=").append(fwdOption.getDestinationAET());
+        sb.append("dcmDestinationAETitle=").append(destinationAET);
         sb.append(',').append(parentDN);
         return sb.toString();
     }
@@ -367,7 +366,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
 
         config.merge(pprev.getAttributeCoercions(), pae.getAttributeCoercions(), aeDN);
         mergeRetries(pprev.getRetries(), pae.getRetries(), aeDN);
-        mergeForwardOptions(pprev.getForwardOptions().values(), pae.getForwardOptions().values(), aeDN);
+        mergeForwardOptions(pprev.getForwardOptions(), pae.getForwardOptions(), aeDN);
         mergeForwardRules(pprev.getForwardRules(), pae.getForwardRules(), aeDN);
     }
 
@@ -433,22 +432,21 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         }
     }
 
-    private void mergeForwardOptions(Collection<ForwardOption> prevOptions,
-            Collection<ForwardOption> currOptions, String parentDN) throws NamingException {
-        List<ForwardOption> prevList = new ArrayList<ForwardOption>(prevOptions);
-        List<ForwardOption> currList = new ArrayList<ForwardOption>(currOptions);
-        for (ForwardOption prev : prevList)
-            if (!currList.contains(prev))
-                config.destroySubcontext(dnOfForwardOption(prev, parentDN));
-        for (ForwardOption forwardOption : currList) {
-            String dn = dnOfForwardOption(forwardOption, parentDN);
-            Integer indexOfPrevOption = prevList.indexOf(forwardOption);
-            if (indexOfPrevOption == -1)
-                config.createSubcontext(dn, storeToForwardOption(forwardOption, new BasicAttributes(true)));
+    private void mergeForwardOptions(HashMap<String, ForwardOption> prevOptions,
+            HashMap<String, ForwardOption> currOptions, String parentDN) throws NamingException {
+        for (Entry<String, ForwardOption> prev : prevOptions.entrySet())
+            if (!currOptions.containsKey(prev.getKey()))
+                config.destroySubcontext(dnOfForwardOption(prev.getKey(), parentDN));
+        for (Entry<String, ForwardOption> forwardOptionEntry : currOptions.entrySet()) {
+            String destinationAET = forwardOptionEntry.getKey();
+            String dn = dnOfForwardOption(destinationAET, parentDN);
+            if (!prevOptions.containsKey(destinationAET))
+                config.createSubcontext(dn,
+                        storeToForwardOption(forwardOptionEntry, new BasicAttributes(true)));
             else
                 config.modifyAttributes(
                         dn,
-                        storeFwdOptionDiff(prevList.get(indexOfPrevOption), forwardOption,
+                        storeFwdOptionDiff(prevOptions.get(destinationAET), forwardOptionEntry.getValue(),
                                 new ArrayList<ModificationItem>()));
         }
     }
@@ -457,7 +455,6 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
             ArrayList<ModificationItem> mods) {
         LdapUtils.storeDiff(mods, "dcmScheduleDays", a.getSchedule().getDays(), b.getSchedule().getDays());
         LdapUtils.storeDiff(mods, "dcmScheduleHours", a.getSchedule().getHours(), b.getSchedule().getHours());
-        LdapUtils.storeDiff(mods, "dcmDestinationAETitle", a.getDestinationAET(), b.getDestinationAET());
         LdapUtils.storeDiff(mods, "dicomDescription", a.getDescription(), b.getDescription());
         LdapUtils.storeDiff(mods, "dcmConvertEmf2Sf", a.isConvertEmf2Sf(), b.isConvertEmf2Sf());
         return mods;
