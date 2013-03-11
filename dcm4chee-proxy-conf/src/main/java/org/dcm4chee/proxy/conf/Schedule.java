@@ -66,7 +66,7 @@ public class Schedule implements Serializable {
 
     public void setDays(String dayOfWeek) {
         if(dayOfWeek!=null)
-            set(days, dayOfWeek, DAYS, 1);
+            set(days, dayOfWeek, DAYS);
     }
     
     public String getDays() {
@@ -75,7 +75,7 @@ public class Schedule implements Serializable {
 
     public void setHours(String hour) {
         if(hour!=null)
-            set(hours, hour, HOURS, 1);
+            set(hours, hour, HOURS);
     }
     
     public String getHours() {
@@ -87,23 +87,25 @@ public class Schedule implements Serializable {
                 && hours.get(now.get(Calendar.HOUR_OF_DAY));
     }
 
-    private static void set(BitSet bs, String value, String[] a, int incEnd) {
+    private static void set(BitSet bs, String value, String[] a) {
         bs.clear();
         for (String s : StringUtils.split(value.trim(), ','))
-            set(bs, StringUtils.split(s.trim(), '-'), value, a, incEnd);
+            set(bs, StringUtils.split(s.trim(), '-'), value, a);
     }
 
-    private static void set(BitSet bs, String[] range, String value, String[] values, int incEnd) {
+    private static void set(BitSet bs, String[] range, String value, String[] values) {
         switch (range.length) {
         case 1:
             bs.set(indexOf(range[0], values, value));
             break;
         case 2:
-            for (int i = indexOf(range[0], values, value),
-                   end = indexOf(range[1], values, value) + incEnd;
-                    i != end; 
-                    i = (i + 1) % (values.length + incEnd))
-                bs.set(i);
+            int i = indexOf(range[0], values, value);
+            int end = (indexOf(range[1], values, value) + 1) % (values.length);
+            if (i == end)
+                bs.set(0, values.length);
+            else
+                for (;i != end; i = ++i % values.length)
+                    bs.set(i);
             break;
         default:
             throw new IllegalArgumentException(value);
@@ -120,7 +122,7 @@ public class Schedule implements Serializable {
     private String toString(BitSet bs, String[] values) {
         StringBuffer sb = new StringBuffer();
         boolean range = false;
-        for (int i = 0; i < bs.length(); i++) {
+        for (int i = 0; i < values.length; i++) {
             if (bs.get(i)) {
                 if (sb.length() == 0) {
                     sb.append(values[i]);
@@ -129,9 +131,13 @@ public class Schedule implements Serializable {
                 }
                 else {
                     if (range == false) {
-                        sb.append(",".concat(values[i]));
-                        if (bs.get(i + 1))
-                            range = true;
+                        if (i == values.length - 1 && bs.get(0))
+                            sb.replace(0, values[0].length(), values[i]);
+                        else {
+                            sb.append(",".concat(values[i]));
+                            if (bs.get(i + 1))
+                                range = true;
+                        }
                     } else if (range == true && !bs.get(i + 1)) {
                         sb.append("-".concat(values[i]));
                         range = false;
