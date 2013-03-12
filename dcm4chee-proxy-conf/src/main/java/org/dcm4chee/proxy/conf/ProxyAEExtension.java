@@ -50,9 +50,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
@@ -323,13 +321,13 @@ public class ProxyAEExtension extends AEExtension {
         return attributeCoercions;
     }
 
-    public List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule)
-            throws TransformerFactoryConfigurationError {
+    public List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule, Attributes data)
+            throws ConfigurationException {
         List<String> destinationAETs = new ArrayList<String>();
         if (rule.containsTemplateURI()) {
             ProxyDeviceExtension proxyDevExt = as.getApplicationEntity().getDevice()
                     .getDeviceExtension(ProxyDeviceExtension.class);
-            destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate(), proxyDevExt));
+            destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate(), proxyDevExt, data));
         } else
             destinationAETs.addAll(rule.getDestinationAETitles());
         LOG.info("{} : sending data to {} based on ForwardRule : {}",
@@ -337,7 +335,8 @@ public class ProxyAEExtension extends AEExtension {
         return destinationAETs;
     }
 
-    private List<String> getDestinationAETsFromTemplate(String uri, ProxyDeviceExtension proxyDevExt) {
+    private List<String> getDestinationAETsFromTemplate(String uri, ProxyDeviceExtension proxyDevExt, Attributes data)
+            throws ConfigurationException {
         final List<String> result = new ArrayList<String>();
         try {
             Templates templates = proxyDevExt.getTemplates(uri);
@@ -354,8 +353,15 @@ public class ProxyAEExtension extends AEExtension {
                 }
 
             }));
-        } catch (TransformerConfigurationException e) {
-            LOG.error("Error parsing template {} : {}", uri, e);
+            SAXWriter saxWriter = new SAXWriter(handler);
+            saxWriter.write(data);
+        } catch (Exception e) {
+            LOG.error("Error parsing template {}: {}", uri, e);
+            throw new ConfigurationException(e.getMessage());
+        }
+        if (result.isEmpty()) {
+            LOG.error("Parsing template {} returned no result", uri);
+            throw new ConfigurationException();
         }
         return result;
     }
@@ -519,12 +525,19 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public HashMap<String, Association> openForwardAssociations(Association asAccepted, List<ForwardRule> forwardRules,
-            ApplicationEntityCache aeCache) {
+            Attributes data, ApplicationEntityCache aeCache) {
         HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(forwardRules.size());
         for (ForwardRule rule : forwardRules) {
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule
                     .getUseCallingAET();
-            List<String> destinationAETs = getDestinationAETsFromForwardRule(asAccepted, rule);
+            List<String> destinationAETs = new ArrayList<String>();
+            try {
+                destinationAETs = getDestinationAETsFromForwardRule(asAccepted, rule, data);
+            } catch (ConfigurationException e) {
+                LOG.error("Failed to get destination AET from forward rule {}: {}", rule.getCommonName(), e);
+                asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConfigurationException.getSuffix() + "0");
+                return fwdAssocs;
+            }
             for (String calledAET : destinationAETs) {
                 try {
                     Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,

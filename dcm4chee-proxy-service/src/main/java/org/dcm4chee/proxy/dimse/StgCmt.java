@@ -126,7 +126,7 @@ public class StgCmt extends DicomService {
             throw new ConfigurationException("more than one matching forward rule");
         
         ForwardRule rule = forwardRules.get(0);
-        List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule);
+        List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule, data);
         switch (destinationAETs.size()) {
         case 0:
             throw new ConfigurationException("no destination");

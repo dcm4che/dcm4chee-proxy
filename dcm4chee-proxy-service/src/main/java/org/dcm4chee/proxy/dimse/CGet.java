@@ -85,7 +85,7 @@ public class CGet extends DicomService {
         if (forwardAssociationProperty == null) {
             List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(asAccepted, cmd, dimse);
             HashMap<String, Association> fwdAssocs = proxyAEE
-                    .openForwardAssociations(asAccepted, forwardRules, aeCache);
+                    .openForwardAssociations(asAccepted, forwardRules, data, aeCache);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
 

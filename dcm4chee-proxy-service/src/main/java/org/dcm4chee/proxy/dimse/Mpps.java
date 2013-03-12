@@ -136,7 +136,7 @@ public class Mpps extends DicomService {
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
         for (ForwardRule rule : forwardRules) {
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-            List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule);
+            List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule, data);
             processDestinationAETs(as, dimse, data, proxyAEE, iuid, fmi, rule, callingAET, destinationAETs);
         }
         try {
