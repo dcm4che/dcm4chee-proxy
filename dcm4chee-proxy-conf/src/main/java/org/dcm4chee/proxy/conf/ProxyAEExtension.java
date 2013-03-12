@@ -330,7 +330,7 @@ public class ProxyAEExtension extends AEExtension {
             destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate(), proxyDevExt, data));
         } else
             destinationAETs.addAll(rule.getDestinationAETitles());
-        LOG.info("{} : sending data to {} based on ForwardRule : {}",
+        LOG.info("{}: sending data to {} based on ForwardRule \"{}\"",
                 new Object[] { as, destinationAETs, rule.getCommonName() });
         return destinationAETs;
     }
@@ -499,7 +499,7 @@ public class ProxyAEExtension extends AEExtension {
                 prop.setProperty("proxyHostname", proxyHostname);
                 prop.store(new FileOutputStream(file), null);
             } catch (IOException e) {
-                LOG.debug("Failed to create log file : " + e.getMessage());
+                LOG.debug("Failed to create log file: " + e.getMessage());
             }
         }
     }
@@ -515,7 +515,7 @@ public class ProxyAEExtension extends AEExtension {
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);
         } catch (IOException e) {
-            LOG.debug("Failed to create log file : " + e.getMessage());
+            LOG.debug("Failed to create log file: " + e.getMessage());
         }
         return file;
     }

@@ -524,7 +524,7 @@ public class CStore extends BasicCStoreSCP {
                             cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
-                        LOG.debug(asInvoked + ": Failed to forward C-STORE RSP : " + e.getMessage());
+                        LOG.debug(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());
                     } finally {
                         if (cmd.getInt(Tag.Status, -1) == Status.Success && dataFile != null)
                             deleteFile(asAccepted, dataFile);

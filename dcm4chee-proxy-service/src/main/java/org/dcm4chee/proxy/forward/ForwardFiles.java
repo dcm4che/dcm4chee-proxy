@@ -231,7 +231,7 @@ public class ForwardFiles {
         String fileName = pathname.getName();
         File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".")) + ".dcm");
         if (pathname.renameTo(dst))
-            LOG.info("rename {} to {} {} and fallback AET is {}",
+            LOG.info("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { pathname, dst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { pathname, dst });
@@ -276,7 +276,7 @@ public class ForwardFiles {
                 proxyAEE.writeLogFile(AuditDirectory.DELETED, callingAET, calledAET, attrs, file.length(), retry);
             }
         } catch (Exception e) {
-            LOG.error("Failed to create log file: ", e.getMessage());
+            LOG.error("Failed to create log file: " + e.getMessage());
         }
         if (file.delete()) {
             LOG.info("Delete {} {}", file, reason);
@@ -621,9 +621,9 @@ public class ForwardFiles {
                     asInvoked.waitForOutstandingRSP();
                     asInvoked.release();
                 } catch (InterruptedException e) {
-                    LOG.error(asInvoked + ": unexpected exception: " + e.getMessage());
+                    LOG.error(asInvoked + ": unexpected exception", e);
                 } catch (IOException e) {
-                    LOG.error(asInvoked + ": failed to release association: " + e.getMessage());
+                    LOG.error(asInvoked + ": failed to release association", e);
                 }
             }
         }
@@ -695,7 +695,7 @@ public class ForwardFiles {
             try {
                 asInvoked.release();
             } catch (IOException e) {
-                LOG.debug("Failed to release {} ({})", new Object[] { asInvoked, e });
+                LOG.debug("Failed to release {}: {}", new Object[] { asInvoked, e.getMessage() });
             }
     }
 
@@ -717,7 +717,7 @@ public class ForwardFiles {
                 map.put(callingAET, forwardTask = new ForwardTask(callingAET, calledAET));
             forwardTask.addFile(file, cuid, tsuid);
         } catch (IOException e) {
-            LOG.debug("Failed to read {} ({})", new Object[] { file, e.getMessage() });
+            LOG.debug("Failed to read {}: {}", new Object[] { file, e.getMessage() });
         }
     }
 

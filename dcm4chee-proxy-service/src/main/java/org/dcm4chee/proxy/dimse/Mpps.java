@@ -220,7 +220,7 @@ public class Mpps extends DicomService {
             w.setIncludeKeyword(false);
             w.write(data);
         } catch (Exception e) {
-            LOG.error("Error converting MPPS to Dose SR", e);
+            LOG.error("Error converting MPPS to Dose SR: ", e);
             throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
         }
     }
@@ -232,7 +232,7 @@ public class Mpps extends DicomService {
             in = new DicomInputStream(ncreateFile);
             return in.readDataset(-1, -1);
         } catch (IOException e) {
-            LOG.error("Error reading N-CREATE file " + ncreateFile.getPath(), e.getMessage());
+            LOG.error("Error reading file {}: {}", ncreateFile.getPath(), e.getMessage());
             throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
         } finally {
             SafeClose.close(in);
@@ -249,9 +249,9 @@ public class Mpps extends DicomService {
         try {
             out = new DicomOutputStream(file);
             out.writeDataset(fmi, data);
-            LOG.info("{}: M-CREATE {}", new Object[] { as, file });
+            LOG.info("{}: create {}", new Object[] { as, file });
         } catch (IOException e) {
-            LOG.warn("{}: failed to M-CREATE {}", new Object[] { as, file });
+            LOG.warn("{}: failed to create {}", new Object[] { as, file });
             file.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getMessage());
         } finally {
