@@ -121,6 +121,7 @@ public class ProxyServlet extends HttpServlet {
             proxy.start();
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy, new ObjectName(jmxName));
         } catch (Exception e) {
+            LOG.debug(e.getMessage(), e);
             destroy();
             throw new ServletException(e);
         }

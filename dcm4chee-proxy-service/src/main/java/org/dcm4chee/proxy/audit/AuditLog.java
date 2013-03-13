@@ -182,13 +182,14 @@ public class AuditLog {
                 LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
                 logger.write(timeStamp, msg);
             } catch (Exception e) {
-                LOG.error("Failed to write audit log message: ", e);
+                LOG.error("Failed to write audit log message: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
             }
             for (File file : logFiles)
                 if (!file.delete())
-                    LOG.debug("Failed to delete " + file);
+                    LOG.error("Failed to delete " + file);
             if (!studyIUIDDir.delete())
-                LOG.debug("Failed to delete " + studyIUIDDir);
+                LOG.error("Failed to delete " + studyIUIDDir);
         }
     }
 
@@ -218,9 +219,9 @@ public class AuditLog {
             }
             for (File file : logFiles)
                 if (!file.delete())
-                    LOG.debug("Failed to delete " + file);
+                    LOG.error("Failed to delete " + file);
             if (!studyIUIDDir.delete())
-                LOG.debug("Failed to delete " + studyIUIDDir);
+                LOG.error("Failed to delete " + studyIUIDDir);
         }
     }
 
@@ -323,7 +324,8 @@ public class AuditLog {
             log.t1 = (log.t1 == 0 || log.t1 > time) ? time : log.t1;
             log.t2 = (log.t2 == 0 || log.t2 < time) ? time : log.t2;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error("Error reading properties from {}: {}", new Object[]{file.getPath(), e.getMessage()});
+            LOG.debug(e.getMessage(), e);
         }
     }
 

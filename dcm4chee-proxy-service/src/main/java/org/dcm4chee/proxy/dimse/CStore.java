@@ -119,7 +119,8 @@ public class CStore extends BasicCStoreSCP {
                 forward(proxyAEE, asAccepted, (Association) forwardAssociationProperty, pc, rq, 
                         new InputStreamDataWriter(data), -1, null, null);
             } catch (Exception e) {
-                LOG.debug(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
+                LOG.error(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
                 asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
@@ -145,11 +146,13 @@ public class CStore extends BasicCStoreSCP {
                 try {
                     processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
                 } catch (ConfigurationException c) {
-                    LOG.error("{}: configuration error while processing C-STORE-RQ: {}", asAccepted, c);
-                    throw new DicomServiceException(Status.UnableToProcess);
+                    LOG.error("{}: configuration error while processing C-STORE-RQ: {}", new Object[]{asAccepted, c.getMessage()});
+                    LOG.debug(e.getMessage(), e);
+                    throw new DicomServiceException(Status.UnableToProcess, c.getCause());
                 }
             else {
-                LOG.error("{}: error processing C-STORE-RQ: {}", asAccepted, e);
+                LOG.error("{}: error processing C-STORE-RQ: {}", new Object[]{asAccepted, e.getMessage()});
+                LOG.debug(e.getMessage(), e);
                 throw new DicomServiceException(Status.UnableToProcess);
             }
         }
@@ -184,7 +187,8 @@ public class CStore extends BasicCStoreSCP {
             return asInvoked;
         } catch (Exception e) {
             LOG.error("Unable to connect to {}: {}", cmoveInfoObject.getMoveDestinationAET(), e.getMessage());
-            throw new DicomServiceException(Status.UnableToProcess);
+            LOG.debug(e.getMessage(), e);
+            throw new DicomServiceException(Status.UnableToProcess, e.getCause());
         }
     }
 
@@ -249,9 +253,11 @@ public class CStore extends BasicCStoreSCP {
             LOG.debug(asAccepted + ": copy " + file.getPath() + " to " + dst.getPath());
             out.writeDataset(fmi, attrs);
         } catch (Exception e) {
-            LOG.debug(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
-            dst.delete();
-            throw new DicomServiceException(Status.OutOfResources, e);
+            LOG.error(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
+            LOG.debug(e.getMessage(), e);
+            if(dst.delete())
+                LOG.error(asAccepted + ": deleted " + dst.getPath());
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
             SafeClose.close(out);
         }
@@ -275,9 +281,11 @@ public class CStore extends BasicCStoreSCP {
             LOG.debug(asAccepted + ": copy " + file.getPath() + " to " + dst.getPath());
             out.writeDataset(fmi, in.readDataset(-1, -1));
         } catch (Exception e) {
-            LOG.debug(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
-            dst.delete();
-            throw new DicomServiceException(Status.OutOfResources, e);
+            LOG.error(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
+            LOG.debug(e.getMessage(), e);
+            if(dst.delete())
+                LOG.error(asAccepted + ": deleted " + file.getPath());
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
             SafeClose.close(in);
             SafeClose.close(out);
@@ -362,7 +370,7 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private Association newForwardAssociation(Association as, String callingAET, String calledAET, AAssociateRQ rq,
-            ProxyAEExtension pae, HashMap<String, Association> fwdAssocs, ForwardRule rule) {
+            ProxyAEExtension proxyAEE, HashMap<String, Association> fwdAssocs, ForwardRule rule) {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
         Association asInvoked = null;
@@ -371,12 +379,15 @@ public class CStore extends BasicCStoreSCP {
                     .openForwardAssociation(as, rule, callingAET, calledAET, rq, aeCache);
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context: ", e.getMessage());
+            LOG.debug(e.getMessage(), e);
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
         } catch (ConfigurationException e) {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
+            LOG.debug(e.getMessage(), e);
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConfigurationException.getSuffix() + "0");
         } catch (Exception e) {
-            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
+            LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
+            LOG.debug(e.getMessage(), e);
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
         }
         return asInvoked;
@@ -386,8 +397,9 @@ public class CStore extends BasicCStoreSCP {
         try {
             return File.createTempFile("dcm", ".part", proxyAEE.getCStoreDirectoryPath());
         } catch (Exception e) {
-            LOG.debug(as + ": failed to create temp file: " + e.getMessage());
-            throw new DicomServiceException(Status.OutOfResources, e);
+            LOG.error(as + ": failed to create temp file: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
         }
     }
 
@@ -413,7 +425,8 @@ public class CStore extends BasicCStoreSCP {
             asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
             if (logFile != null)
                 logFile.delete();
-            LOG.error("{}: error forwarding object {}: {}", new Object[] { asAccepted, dataFile, e });
+            LOG.error("{}: error forwarding object {}: {}", new Object[] { asAccepted, dataFile, e.getMessage() });
+            LOG.debug(e.getMessage(), e);
         }
     }
 
@@ -466,6 +479,7 @@ public class CStore extends BasicCStoreSCP {
                     logFile.delete();
                 LOG.error("{}: Error forwarding single-frame from multi-frame object: {}",
                         new Object[] { asAccepted, e.getMessage() });
+                LOG.debug(e.getMessage(), e);
                 log = false;
                 Attributes rsp = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
                 asAccepted.writeDimseRSP(pc, rsp);
@@ -524,7 +538,8 @@ public class CStore extends BasicCStoreSCP {
                             cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
-                        LOG.debug(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());
+                        LOG.error(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());
+                        LOG.debug(e.getMessage(), e);
                     } finally {
                         if (cmd.getInt(Tag.Status, -1) == Status.Success && dataFile != null)
                             deleteFile(asAccepted, dataFile);
@@ -545,7 +560,8 @@ public class CStore extends BasicCStoreSCP {
                         createMappedFileCopy(proxyAEE, asAccepted, dataFile, calledAET, suffix);
                         cmd = Commands.mkCStoreRSP(rq, Status.Success);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LOG.error("{}: error saving file {}: {}", new Object[]{as, dataFile.getPath(), e.getMessage()});
+                        LOG.debug(e.getMessage(), e);
                     }
                 else
                     cmd = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
@@ -555,7 +571,8 @@ public class CStore extends BasicCStoreSCP {
                 try {
                     asAccepted.writeDimseRSP(pc, cmd);
                 } catch (IOException e) {
-                    LOG.debug(as + ": Failed to forward C-STORE RSP: " + e.getMessage());
+                    LOG.error(as + ": Failed to forward C-STORE RSP: " + e.getMessage());
+                    LOG.debug(e.getMessage(), e);
                 }
             }
         };

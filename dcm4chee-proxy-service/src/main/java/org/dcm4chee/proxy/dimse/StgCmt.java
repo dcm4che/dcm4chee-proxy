@@ -106,14 +106,16 @@ public class StgCmt extends DicomService {
                 processNActionRQForwardRules(asAccepted, pc, dimse, rq, data);
             } catch (ConfigurationException e) {
                 LOG.error(asAccepted + ": error processing N-ACTION-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
         else
             try {
                 onNActionRQ(asAccepted, asInvoked, pc, rq, data);
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding N-ACTION-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
     }
 
@@ -151,12 +153,15 @@ public class StgCmt extends DicomService {
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
             processNActionRQ(asAccepted, pc, dimse, rq, data);
         } catch (InterruptedException e) {
-            LOG.error("Unexpected exception: ", e);
+            LOG.error("Unexpected exception: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
             LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e.getMessage() });
+            LOG.debug(e.getMessage(), e);
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
         }
     }
 
@@ -188,8 +193,9 @@ public class StgCmt extends DicomService {
             try {
                 onNEventReportRQ(asAccepted, asInvoked, pc, rq, data, transactionUIDFile);
             } catch (InterruptedException e) {
-                LOG.debug(asAccepted + ": error forwarding N-EVENT-REPORT-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+                LOG.error(asAccepted + ": error forwarding N-EVENT-REPORT-RQ: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
         }
     }
@@ -231,33 +237,39 @@ public class StgCmt extends DicomService {
                 rq.setCallingAET(ae.getAETitle());
             Association asInvoked = ae.connect(calledAE, rq);
             onNEventReportRQ(asAccepted, asInvoked, pc, data, eventInfo, file);
-        } catch (AAssociateRJ rj) {
-            LOG.error(asAccepted + ": rejected association to forward AET: " + rj.getReason());
+        } catch (AAssociateRJ e) {
+            LOG.error(asAccepted + ": rejected association to forward AET: " + e.getReason());
+            LOG.debug(e.getMessage(), e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.AAssociateRJ.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (IOException e) {
             LOG.error(asAccepted + ": unexpected exception: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (ConfigurationException e) {
             LOG.error(asAccepted + ": error loading AET {} from configuration: {}", new Object[] { calledAEString, e.getMessage() });
+            LOG.debug(e.getMessage(), e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (InterruptedException e) {
             LOG.error(asAccepted + ": unexpected exception: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (IncompatibleConnectionException e) {
             LOG.error(asAccepted + ": incompatible connection to forward AET {}: {}", new Object[] { calledAEString, e.getMessage() });
+            LOG.debug(e.getMessage(), e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.IncompatibleConnectionException.getSuffix() + "0");
             rename(asAccepted, file);
         } catch (GeneralSecurityException e) {
             LOG.error(asAccepted + ": error creating SSL context: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
             rename(asAccepted, file);
@@ -271,7 +283,8 @@ public class StgCmt extends DicomService {
             asAccepted.writeDimseRSP(pc, response, null);
             asAccepted.release();
         } catch (IOException e) {
-            LOG.debug(asAccepted + ": error forwarding storage commitment: " + e.getMessage());
+            LOG.error(asAccepted + ": error forwarding storage commitment: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
         }
     }
 
@@ -292,8 +305,9 @@ public class StgCmt extends DicomService {
                     asInvoked.release();
                 } catch (IOException e) {
                     int status = cmd.getInt(Tag.Status, -1);
-                    LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asAccepted, file,
+                    LOG.error("{}: failed to forward file {} with error status {}", new Object[] { asAccepted, file,
                             Integer.toHexString(status) + 'H' });
+                    LOG.debug(e.getMessage(), e);
                     asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     rename(asAccepted, file);
                 }
@@ -307,9 +321,9 @@ public class StgCmt extends DicomService {
         File dst = new File(path.concat((String) as.getProperty(ProxyAEExtension.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.info("{}: RENAME {} to {}", new Object[] { as, file, dst });
         } else
-            LOG.debug("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });
     }
 
     private void onNActionRQ(final Association asAccepted, Association asInvoked, final PresentationContext pc,
@@ -333,13 +347,14 @@ public class StgCmt extends DicomService {
                     File dest = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
-                        LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted, file, dest });
+                        LOG.info("{}: RENAME {} to {}", new Object[] { asAccepted, file, dest });
                     } else
-                        LOG.debug("{}: failed to RENAME {} to {}", new Object[] { asAccepted, file, dest });
+                        LOG.error("{}: failed to RENAME {} to {}", new Object[] { asAccepted, file, dest });
                     try {
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
-                        LOG.debug(asAccepted + ": failed to forward N-ACTION-RSP: " + e.getMessage());
+                        LOG.error(asAccepted + ": failed to forward N-ACTION-RSP: " + e.getMessage());
+                        LOG.debug(e.getMessage(), e);
                         asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
                         rename(asAccepted, file);
                     }
@@ -372,9 +387,10 @@ public class StgCmt extends DicomService {
             fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, as.getCallingAET());
             stream.writeDataset(fmi, data);
         } catch (Exception e) {
-            LOG.debug(as + ": Failed to create transaction UID file: " + e.getMessage());
+            LOG.error(as + ": Failed to create transaction UID file: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
             file.delete();
-            throw new DicomServiceException(Status.OutOfResources, e);
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
             SafeClose.close(stream);
         }
@@ -383,9 +399,9 @@ public class StgCmt extends DicomService {
 
     private void deleteTransactionUidFile(Association as, File file) {
         if (file.delete())
-            LOG.debug("{}: DELETE {}", new Object[] { as, file });
+            LOG.info("{}: DELETE {}", new Object[] { as, file });
         else {
-            LOG.debug("{}: failed to DELETE {}", new Object[] { as, file });
+            LOG.error("{}: failed to DELETE {}", new Object[] { as, file });
         }
     }
 }

@@ -94,8 +94,9 @@ public class CGet extends DicomService {
                 new ForwardDimseRQ(asAccepted, pc, cmd, data, dimse, pixConsumer, aeCache, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
-                LOG.error("Unexpected exception: ", e);
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                LOG.error("Error forwarding C-GET request: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
         } else
             try {
@@ -109,8 +110,9 @@ public class CGet extends DicomService {
                             .toArray(new Association[fwdAssocs.size()])).execute();
                 }
             } catch (InterruptedException e) {
-                LOG.error("Unexpected exception: ", e);
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                LOG.error("Error forwarding C-GET request: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
     }
 }

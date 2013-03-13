@@ -109,14 +109,16 @@ public class Mpps extends DicomService {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);
             } catch (ConfigurationException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
-                throw new DicomServiceException(Status.ProcessingFailure, e);
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
             }
         else
             try {
                 forwardNCreateRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
             } catch (InterruptedException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
-                throw new DicomServiceException(Status.ProcessingFailure, e);
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
     }
 
@@ -144,6 +146,7 @@ public class Mpps extends DicomService {
         } catch (AssociationStateException e) {
             Dimse dimseRSP = (dimse == Dimse.N_CREATE_RQ) ? Dimse.N_CREATE_RSP : Dimse.N_SET_RSP;
             LOG.warn("{} << {} failed: {}", new Object[] { as, dimseRSP.toString(), e.getMessage() });
+            LOG.debug(e.getMessage(), e);
         }
     }
 
@@ -220,8 +223,9 @@ public class Mpps extends DicomService {
             w.setIncludeKeyword(false);
             w.write(data);
         } catch (Exception e) {
-            LOG.error("Error converting MPPS to Dose SR: ", e);
-            throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+            LOG.error(as + ": error converting MPPS to Dose SR: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
+            throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
         }
     }
 
@@ -233,7 +237,8 @@ public class Mpps extends DicomService {
             return in.readDataset(-1, -1);
         } catch (IOException e) {
             LOG.error("Error reading file {}: {}", ncreateFile.getPath(), e.getMessage());
-            throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
+            LOG.debug(e.getMessage(), e);
+            throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
         } finally {
             SafeClose.close(in);
         }
@@ -252,8 +257,9 @@ public class Mpps extends DicomService {
             LOG.info("{}: create {}", new Object[] { as, file });
         } catch (IOException e) {
             LOG.warn("{}: failed to create {}", new Object[] { as, file });
+            LOG.debug(e.getMessage(), e);
             file.delete();
-            throw new DicomServiceException(Status.OutOfResources, e.getMessage());
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
             SafeClose.close(out);
         }
@@ -289,6 +295,7 @@ public class Mpps extends DicomService {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.error(asAccepted + ": error forwarding N-CREATE-RQ: " + e.getMessage());
+                    LOG.debug(e.getMessage(), e);
                 }
             }
         };
@@ -303,6 +310,7 @@ public class Mpps extends DicomService {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);
             } catch (ConfigurationException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
+                LOG.debug(e.getMessage(), e);
             }
         else
             try {
@@ -327,6 +335,7 @@ public class Mpps extends DicomService {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.error(asAccepted + ": error forwarding N-SET-RQ: ", e.getMessage());
+                    LOG.debug(e.getMessage(), e);
                 }
             }
         };

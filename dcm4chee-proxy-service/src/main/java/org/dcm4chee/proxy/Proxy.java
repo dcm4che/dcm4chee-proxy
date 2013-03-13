@@ -155,7 +155,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
             try {
                 logger.write(timeStamp, createApplicationActivityMessage(logger, timeStamp, eventType));
             } catch (Exception e) {
-                LOG.error("Failed to write audit log message: ", e);
+                LOG.error("Failed to write audit log message: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
             }
         }
     }

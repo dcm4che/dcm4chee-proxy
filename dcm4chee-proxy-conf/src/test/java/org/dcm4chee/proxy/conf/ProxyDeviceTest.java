@@ -360,8 +360,7 @@ public class ProxyDeviceTest {
 
         OutputStream os = new FileOutputStream(name);
         try {
-            ((PreferencesDicomConfiguration) config)
-                    .getDicomConfigurationRoot().exportSubtree(os);
+            ((PreferencesDicomConfiguration) config).getDicomConfigurationRoot().exportSubtree(os);
         } finally {
             SafeClose.close(os);
         }

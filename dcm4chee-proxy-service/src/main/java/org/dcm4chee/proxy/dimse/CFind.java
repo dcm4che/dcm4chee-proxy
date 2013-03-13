@@ -95,8 +95,9 @@ public class CFind extends DicomService {
                 new ForwardDimseRQ(asAccepted, pc, rq, data, dimse, pixConsumer, aeCache, fwdAssocs.values().toArray(
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
-                LOG.error("Unexpected exception: ", e);
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                LOG.error("Error forwarding C-FIND request: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
         } else
             try {
@@ -110,8 +111,9 @@ public class CFind extends DicomService {
                             .toArray(new Association[fwdAssocs.size()])).execute();
                 }
             } catch (InterruptedException e) {
-                LOG.error("Unexpected exception: ", e);
-                throw new DicomServiceException(Status.UnableToProcess, e);
+                LOG.error("Error forwarding C-FIND request: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
+                throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
     }
 }

@@ -184,7 +184,8 @@ public class ForwardDimseRQ {
                     }
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
-                    LOG.debug(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
+                    LOG.error(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
+                    LOG.debug(e.getMessage(), e);
                 }
             }
         };
@@ -195,7 +196,8 @@ public class ForwardDimseRQ {
                 try {
                     rspHandler.cancel(asInvoked);
                 } catch (IOException e) {
-                    LOG.error(asAccepted + ": unexpected exception: ", e);
+                    LOG.error(asAccepted + ": unexpected exception: " + e.getMessage());
+                    LOG.debug(e.getMessage(), e);
                 }
             }
         });
@@ -216,6 +218,7 @@ public class ForwardDimseRQ {
             }
         } catch (Exception e) {
             LOG.error("{}: unable to forward DIMSE request: {}", new Object[] { asInvoked, e.getMessage() });
+            LOG.debug(e.getMessage(), e);
             waitForOutstandingRSP.countDown();
             if (waitForOutstandingRSP.getCount() == 0)
                 sendFinalDimseRSP();
@@ -228,7 +231,8 @@ public class ForwardDimseRQ {
                 asAccepted.writeDimseRSP(pc, Commands.mkCFindRSP(rq, status));
                 return;
             } catch (IOException e) {
-                LOG.debug(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
+                LOG.error(asAccepted + ": failed to forward C-FIND-RSP: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
             }
         else if (dimse == Dimse.C_GET_RQ)
             try {
@@ -237,7 +241,8 @@ public class ForwardDimseRQ {
                 asAccepted.writeDimseRSP(pc, rsp);
                 return;
             } catch (IOException e) {
-                LOG.debug(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
+                LOG.error(asAccepted + ": failed to forward C-GET-RSP: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
             }
         else if (dimse == Dimse.C_MOVE_RQ)
             try {
@@ -246,7 +251,8 @@ public class ForwardDimseRQ {
                 asAccepted.writeDimseRSP(pc, rsp);
                 return;
             } catch (Exception e) {
-                LOG.debug(asAccepted + ": failed to forward C-MOVE-RSP: " + e.getMessage());
+                LOG.error(asAccepted + ": failed to forward C-MOVE-RSP: " + e.getMessage());
+                LOG.debug(e.getMessage(), e);
             }
     }
 
@@ -317,7 +323,8 @@ public class ForwardDimseRQ {
             if (pid != null)
                 pids = pixConsumer.pixQuery(pae, pid);
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error("Error getting other patient IDs: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
         }
         return pids;
     }

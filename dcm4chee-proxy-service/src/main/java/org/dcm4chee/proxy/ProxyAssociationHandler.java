@@ -214,6 +214,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             return ac;
         } catch (ConfigurationException e) {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
+            LOG.debug(e.getMessage(), e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(as, rq, ac, calledAET, rj, RetryObject.AAssociateRJ.getSuffix() + "0",
@@ -244,7 +245,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
             String destinationAETitle, Exception e, String suffix, int reason, ProxyAEExtension proxyAEE)
             throws IOException, AAbort {
         as.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
-        LOG.debug(as + ": unable to connect to {}: {}", new Object[] { destinationAETitle, e.getMessage() });
+        LOG.error(as + ": unable to connect to {}: {}", new Object[] { destinationAETitle, e.getMessage() });
+        LOG.debug(e.getMessage(), e);
         if (proxyAEE.isAcceptDataOnFailedAssociation()) {
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
             return super.makeAAssociateAC(as, rq, null);
