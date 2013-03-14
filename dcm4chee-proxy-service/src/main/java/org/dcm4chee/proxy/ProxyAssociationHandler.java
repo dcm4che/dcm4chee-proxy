@@ -45,7 +45,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -63,9 +62,10 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.pdu.UserIdentityAC;
 import org.dcm4chee.proxy.common.RetryObject;
-import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ForwardOption;
+import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.Schedule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,7 +150,6 @@ public class ProxyAssociationHandler extends AssociationHandler {
     private boolean sendNow(Association as, ProxyAEExtension proxyAEE) {
         List<ForwardRule> matchingForwardRules = proxyAEE.getCurrentForwardRules(as);
         return (matchingForwardRules.size() == 1
-                && !proxyAEE.isEnableAuditLog()
                 && !forwardBasedOnTemplates(matchingForwardRules)
                 && matchingForwardRules.get(0).getDimse().isEmpty()
                 && matchingForwardRules.get(0).getSopClass().isEmpty()
@@ -170,10 +169,12 @@ public class ProxyAssociationHandler extends AssociationHandler {
     }
 
     private boolean isAvailableDestinationAET(String destinationAET, ProxyAEExtension proxyAEE) {
-        for (Entry<String, ForwardOption> fwdSchedule : proxyAEE.getForwardOptions().entrySet())
-            if (fwdSchedule.getKey().equals(destinationAET))
-                return fwdSchedule.getValue().getSchedule().isNow(new GregorianCalendar());
-        return false;
+        HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
+        if (!forwardOptions.keySet().contains(destinationAET))
+            return true;
+
+        Schedule forwardAETSchedule = forwardOptions.get(destinationAET).getSchedule();
+        return forwardAETSchedule.isNow(new GregorianCalendar());
     }
 
     private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, ProxyAEExtension proxyAEE)
