@@ -88,8 +88,9 @@ public class ProxyAssociationHandler extends AssociationHandler {
         ProxyAEExtension proxyAEE = as.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
         filterForwardRulesOnNegotiationRQ(as, rq, proxyAEE);
         if (!proxyAEE.isAssociationFromDestinationAET(as) && sendNow(as, proxyAEE)) {
-            LOG.info("{} : directly forwarding connection based on rule : {}", as, proxyAEE.getForwardRules().get(0)
-                    .getCommonName());
+            ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(as).get(0);
+            LOG.info("{}: directly forwarding to {} based on forward rule \"{}\"", new Object[] { as,
+                    forwardRule.getDestinationAETitles(), forwardRule.getCommonName() });
             return forwardAAssociateRQ(as, rq, proxyAEE);
         }
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
@@ -102,8 +103,13 @@ public class ProxyAssociationHandler extends AssociationHandler {
         for (ForwardRule rule : proxyAEE.getForwardRules()) {
             String callingAET = rule.getCallingAET();
             if ((callingAET == null || callingAET.equals(rq.getCallingAET()))
-                    && rule.getReceiveSchedule().isNow(new GregorianCalendar()))
+                    && rule.getReceiveSchedule().isNow(new GregorianCalendar())) {
+                LOG.debug(
+                        "Adding forward rule \"{}\" based on i) Calling AET = {} and ii) receive schedule days = {}, hours = {}",
+                        new Object[] { rule.getCommonName(), rule.getCallingAET(), rule.getReceiveSchedule().getDays(),
+                                rule.getReceiveSchedule().getHours() });
                 filterList.add(rule);
+            }
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
         for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
@@ -111,10 +117,13 @@ public class ProxyAssociationHandler extends AssociationHandler {
             for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
-                if (rule.getCallingAET() == null 
-                        && fwr.getCallingAET() != null 
-                        && fwr.getCallingAET().equals(rq.getCallingAET()))
+                if (rule.getCallingAET() == null && fwr.getCallingAET() != null
+                        && fwr.getCallingAET().equals(rq.getCallingAET())) {
+                    LOG.debug(
+                            "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
+                            new Object[] { rule.getCommonName(), rule.getCallingAET() });
                     returnList.remove(rule);
+                }
             }
         }
         as.setProperty(ProxyAEExtension.FORWARD_RULES, returnList);
