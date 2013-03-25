@@ -135,6 +135,7 @@ public class StgCmt extends DicomService {
         case 1: {
             String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
             processNActionForwardRule(as, pc, dimse, rq, data, proxyAEE, callingAET, destinationAETs.get(0));
+            break;
         }
         default:
             throw new ConfigurationException("more than one destination");
@@ -327,7 +328,7 @@ public class StgCmt extends DicomService {
     }
 
     private void onNActionRQ(final Association asAccepted, Association asInvoked, final PresentationContext pc,
-            Attributes rq, Attributes data) throws IOException, InterruptedException {
+            final Attributes rq, Attributes data) throws IOException, InterruptedException {
         int actionTypeId = rq.getInt(Tag.ActionTypeID, 0);
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.RequestedSOPClassUID);
@@ -365,6 +366,12 @@ public class StgCmt extends DicomService {
                             file, Integer.toHexString(status) + 'H' });
                     asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, '.' + Integer.toHexString(status) + 'H');
                     rename(asAccepted, file);
+                    try {
+                        asAccepted.writeDimseRSP(pc, cmd);
+                    } catch (IOException e) {
+                        LOG.error(asAccepted + ": Failed to forward N-ACTION-RSP: " + e.getMessage());
+                        LOG.debug(e.getMessage(), e);
+                    }
                 }
                 }
             }
