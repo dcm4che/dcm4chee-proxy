@@ -142,14 +142,12 @@ public class ForwardFiles {
         for (String calledAET : proxyAEE.getNactionDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET))
-                startForwardScheduledNAction(proxyAEE, proxyAEE.getNactionDirectoryPath().listFiles(fileFilter(proxyAEE, calledAET)),
-                        calledAET);
+                startForwardScheduledNAction(proxyAEE, calledAET);
             else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet())
                     if (calledAET.equals(entry.getKey())
                             && entry.getValue().getSchedule().isNow(new GregorianCalendar()))
-                        startForwardScheduledNAction(proxyAEE,
-                                proxyAEE.getNactionDirectoryPath().listFiles(fileFilter(proxyAEE, calledAET)), calledAET);
+                        startForwardScheduledNAction(proxyAEE, calledAET);
         }
     }
 
@@ -193,7 +191,7 @@ public class ForwardFiles {
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
                     LOG.debug(e.getMessage(), e);
-                    moveToNoRetryPath(proxyAEE, file, ": error parsing suffix");
+                    moveToNoRetryPath(proxyAEE, file, "(error parsing suffix)");
                 }
                 return false;
             }
@@ -452,15 +450,14 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledNAction(final ProxyAEExtension proxyAEE, final File[] files,
-            final String destinationAETitle) {
+    private void startForwardScheduledNAction(final ProxyAEExtension proxyAEE, final String destinationAETitle) {
         ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class))
                 .getFileForwardingExecutor().execute(new Runnable() {
 
                     @Override
                     public void run() {
                         try {
-                            forwardScheduledNAction(proxyAEE, files, destinationAETitle);
+                            forwardScheduledNAction(proxyAEE, destinationAETitle);
                         } catch (IOException e) {
                             LOG.error("Error forwarding scheduled NAction: " + e.getMessage());
                             LOG.debug(e.getMessage(), e);
@@ -469,8 +466,13 @@ public class ForwardFiles {
                 });
     }
 
-    private void forwardScheduledNAction(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle)
+    private void forwardScheduledNAction(ProxyAEExtension proxyAEE, String calledAET)
             throws IOException {
+        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+        File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
+        if (files == null || files.length > 0)
+            return;
+
         for (File file : files) {
             Attributes fmi = readFileMetaInformation(file);
             String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
@@ -479,15 +481,15 @@ public class ForwardFiles {
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
                         UID.ExplicitVRLittleEndian));
                 rq.setCallingAET(callingAET);
-                rq.setCalledAET(destinationAETitle);
+                rq.setCalledAET(calledAET);
                 Association as = proxyAEE.getApplicationEntity().connect(
-                        aeCache.findApplicationEntity(destinationAETitle), rq);
+                        aeCache.findApplicationEntity(calledAET), rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(proxyAEE, as, file, fmi);
                     } else {
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET,
-                                destinationAETitle);
+                                calledAET);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -506,26 +508,26 @@ public class ForwardFiles {
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
                 LOG.debug(e.getMessage(), e);
-                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, calledAET);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
                 LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
-                        destinationAETitle);
+                        calledAET);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
                 LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
-                        destinationAETitle);
+                        calledAET);
             } catch (IOException e) {
                 LOG.error("Unable to read from file: " + e.getMessage());
                 LOG.debug(e.getMessage(), e);
-                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, calledAET);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
                 LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
-                        destinationAETitle);
+                        calledAET);
             }
         }
     }
