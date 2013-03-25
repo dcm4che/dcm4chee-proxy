@@ -108,6 +108,12 @@
       <version>${dcm4che.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-scm-plugin</artifactId>
+      <version>1.8.1</version>
+      <type>maven-plugin</type>
+    </dependency>
   </dependencies>
   <scm>
    <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
