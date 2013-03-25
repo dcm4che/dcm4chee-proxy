@@ -190,7 +190,6 @@ public class ForwardFiles {
                         return true;
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
-                    LOG.debug(e.getMessage(), e);
                     moveToNoRetryPath(proxyAEE, file, "(error parsing suffix)");
                 }
                 return false;
@@ -207,7 +206,6 @@ public class ForwardFiles {
                 currentRetries = Integer.parseInt(substring);
             } catch (NumberFormatException e) {
                 LOG.error("Error parsing number of retries in suffix of file " + file.getName());
-                LOG.debug(e.getMessage(), e);
                 moveToNoRetryPath(proxyAEE, file, ": error parsing suffix");
                 return false;
             }
@@ -312,7 +310,7 @@ public class ForwardFiles {
                         try {
                             forwardScheduledMPPS(proxyAEE, files, destinationAETitle, protocol);
                         } catch (IOException e) {
-                            LOG.error("Error forwarding scheduled MPPS: " + e.getMessage());
+                            LOG.error("Error forwarding scheduled MPPS " + e.getMessage());
                             LOG.debug(e.getMessage(), e);
                         }
                     }
@@ -322,7 +320,13 @@ public class ForwardFiles {
     protected void forwardScheduledMPPS(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle,
             String protocol) throws IOException {
         for (File file : files) {
-            Attributes fmi = readFileMetaInformation(file);
+            Attributes fmi = null;
+            try {
+                fmi = readFileMetaInformation(file);
+            } catch (IOException e) { 
+                LOG.debug("File {} already renamed or deleted by another thread", file.getPath());
+                return; 
+            }
             String callingAET = fmi.getString(Tag.SourceApplicationEntityTitle);
             try {
                 if (protocol == "nset" && pendingNCreateForwarding(proxyAEE, destinationAETitle, fmi))
@@ -356,23 +360,22 @@ public class ForwardFiles {
                         }
                     }
                 }
+            } catch (IOException e) {
+                LOG.error("Error connecting to {}: {} ", destinationAETitle,  e.getMessage());
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
                         destinationAETitle);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
                         destinationAETitle);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
                         destinationAETitle);
             }
@@ -507,25 +510,20 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, calledAET);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
                         calledAET);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
                         calledAET);
             } catch (IOException e) {
                 LOG.error("Unable to read from file: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, calledAET);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
                         calledAET);
             }
@@ -763,7 +761,6 @@ public class ForwardFiles {
     private void handleForwardException(ProxyAEExtension proxyAEE, Association as, File file, Exception e, String suffix)
             throws IOException {
         LOG.error(as + ": error processing forward task: " + e.getMessage());
-        LOG.debug(e.getMessage(), e);
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
         renameFile(proxyAEE, suffix, file, as.getCalledAET(), as.getCalledAET());
     }
@@ -771,7 +768,6 @@ public class ForwardFiles {
     private void handleProcessForwardTaskException(ProxyAEExtension proxyAEE, AAssociateRQ rq, ForwardTask ft,
             Exception e, String suffix) throws IOException {
         LOG.error("Unable to connect to {}: {}", new Object[] { ft.getAAssociateRQ().getCalledAET(), e.getMessage() });
-        LOG.debug(e.getMessage(), e);
         for (File file : ft.getFiles()) {
             renameFile(proxyAEE, suffix, file, rq.getCallingAET(), rq.getCalledAET());
         }
