@@ -279,7 +279,6 @@ public class ProxyAssociationHandler extends AssociationHandler {
             throws IOException, AAbort {
         as.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         LOG.error(as + ": unable to connect to {}: {}", new Object[] { destinationAETitle, e.getMessage() });
-        LOG.debug(e.getMessage(), e);
         if (proxyAEE.isAcceptDataOnFailedAssociation()) {
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
             return super.makeAAssociateAC(as, rq, null);
