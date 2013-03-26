@@ -174,7 +174,7 @@ public class ForwardFiles {
                 if (path.endsWith(".dcm"))
                     return true;
 
-                if (path.endsWith(".part"))
+                if (path.endsWith(".part") || path.endsWith(".snd"))
                     return false;
 
                 try {
@@ -187,13 +187,22 @@ public class ForwardFiles {
                         else
                             moveToNoRetryPath(proxyAEE, file, ": delete files without retry configuration is DISABLED");
                     else if (checkNumberOfRetries(proxyAEE, matchingRetry, suffix, file, calledAET)
-                            && (now > (file.lastModified() + (matchingRetry.delay * 1000))))
+                            && checkSendFileDelay(now, file, matchingRetry))
                         return true;
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
                     moveToNoRetryPath(proxyAEE, file, "(error parsing suffix)");
                 }
                 return false;
+            }
+
+            private boolean checkSendFileDelay(final long now, File file, Retry matchingRetry) {
+                boolean sendNow = now > (file.lastModified() + (matchingRetry.delay * 1000));
+                if (sendNow)
+                    LOG.debug(": ready to send now", file.getPath());
+                else
+                    LOG.debug(": wait until last send delay > {}sec", matchingRetry.delay);
+                return sendNow;
             }
         };
     }
@@ -356,8 +365,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledMPPS(proxyAEE, as, file, fmi, protocol);
                     } else {
-                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET,
-                                destinationAETitle);
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -375,22 +383,19 @@ public class ForwardFiles {
                 }
             } catch (IOException e) {
                 LOG.error("Error connecting to {}: {} ", destinationAETitle,  e.getMessage());
-                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle);
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, destinationAETitle);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
-                        destinationAETitle);
+                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, destinationAETitle);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
-                        destinationAETitle);
+                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, destinationAETitle);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
-                        destinationAETitle);
+                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, destinationAETitle);
             }
         }
     }
@@ -446,8 +451,7 @@ public class ForwardFiles {
                     LOG.debug("{}: failed to forward file {} with error status {}",
                             new Object[] { as, file, Integer.toHexString(status) + 'H' });
                     try {
-                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCallingAET(),
-                                as.getCalledAET());
+                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET());
                     } catch (IOException e) {
                         LOG.error(as + ": error renaming file: " + e.getMessage());
                         LOG.debug(e.getMessage(), e);
@@ -504,8 +508,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(proxyAEE, as, file, fmi);
                     } else {
-                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET,
-                                calledAET);
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -523,22 +526,19 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Connection exception: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, calledAET);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, callingAET,
-                        calledAET);
+                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, calledAET);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, callingAET,
-                        calledAET);
+                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, calledAET);
             } catch (IOException e) {
                 LOG.error("Unable to read from file: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, callingAET, calledAET);
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET);
             } catch (GeneralSecurityException e) {
                 LOG.error("Failed to create SSL context: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, callingAET,
-                        calledAET);
+                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, calledAET);
             }
         }
     }
@@ -570,8 +570,7 @@ public class ForwardFiles {
                     LOG.error("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
                             Integer.toHexString(status) + 'H' });
                     try {
-                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCallingAET(),
-                                as.getCalledAET());
+                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET());
                     } catch (IOException e) {
                         LOG.error("Error renaming file {}: {}", new Object[]{file.getPath(), e.getMessage()});
                         LOG.debug(e.getMessage(), e);
@@ -622,8 +621,7 @@ public class ForwardFiles {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledCStoreFiles(proxyAEE, asInvoked, file);
                     } else {
-                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, rq.getCallingAET(),
-                                rq.getCalledAET());
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, rq.getCalledAET());
                     }
                 } catch (NoPresentationContextException npc) {
                     handleForwardException(proxyAEE, asInvoked, file, npc,
@@ -697,8 +695,7 @@ public class ForwardFiles {
                         LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
                                 Integer.toHexString(status) + 'H' });
                         try {
-                            renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file,
-                                    asInvoked.getCallingAET(), asInvoked.getCalledAET());
+                            renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, asInvoked.getCalledAET());
                         } catch (Exception e) {
                             LOG.error("{}: error renaming file {}: {}", new Object[]{asInvoked, file.getPath(), e.getMessage()});
                             LOG.debug(e.getMessage(), e);
@@ -741,8 +738,11 @@ public class ForwardFiles {
 
     private Collection<ForwardTask> scanFiles(String calledAET, File[] files) {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
-        for (File file : files)
-            addFileTo(calledAET, file, map);
+        for (File file : files) {
+            File snd = new File(file.getPath() + ".snd");
+            file.renameTo(snd);
+            addFileTo(calledAET, snd, map);
+        }
         return map.values();
     }
 
@@ -775,20 +775,24 @@ public class ForwardFiles {
             throws IOException {
         LOG.error(as + ": error processing forward task: " + e.getMessage());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
-        renameFile(proxyAEE, suffix, file, as.getCalledAET(), as.getCalledAET());
+        renameFile(proxyAEE, suffix, file, as.getCalledAET());
     }
 
     private void handleProcessForwardTaskException(ProxyAEExtension proxyAEE, AAssociateRQ rq, ForwardTask ft,
             Exception e, String suffix) throws IOException {
         LOG.error("Unable to connect to {}: {}", new Object[] { ft.getAAssociateRQ().getCalledAET(), e.getMessage() });
         for (File file : ft.getFiles()) {
-            renameFile(proxyAEE, suffix, file, rq.getCallingAET(), rq.getCalledAET());
+            renameFile(proxyAEE, suffix, file, rq.getCalledAET());
         }
     }
 
-    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String callingAET, String calledAET)
+    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String calledAET)
             throws IOException {
-        File dst = setFileSuffix(file, suffix);
+        File dst;
+        if (file.getPath().endsWith(".snd"))
+            dst = setFileSuffix(file.getPath().substring(0, file.getPath().length() - 4), suffix);
+        else
+            dst = setFileSuffix(file.getPath(), suffix);
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.info("Rename {} to {}", new Object[] { file, dst });
@@ -799,8 +803,7 @@ public class ForwardFiles {
         }
     }
 
-    private File setFileSuffix(File file, String newSuffix) {
-        String path = file.getPath();
+    private File setFileSuffix(String path, String newSuffix) {
         int indexOfNewSuffix = path.lastIndexOf(newSuffix);
         if (indexOfNewSuffix == -1)
             return new File(path + newSuffix + "1");
