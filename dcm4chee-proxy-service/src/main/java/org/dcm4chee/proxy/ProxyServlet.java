@@ -67,8 +67,6 @@ import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jcabi.manifests.Manifests;
-
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
@@ -116,7 +114,6 @@ public class ProxyServlet extends HttpServlet {
                 prefsConfig.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
                 dicomConfig = prefsConfig;
                 this.hl7Config = hl7Conf;
-                LOG.info("Started proxy version [" + Manifests.read("Proxy-Implementation-Build") + "]" );
             } finally {
                 SafeClose.close(ldapConf);
             }

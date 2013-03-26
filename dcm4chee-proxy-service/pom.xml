@@ -114,11 +114,6 @@
       <version>1.8.1</version>
       <type>maven-plugin</type>
     </dependency>
-    <dependency>
-      <groupId>com.jcabi</groupId>
-      <artifactId>jcabi-manifests</artifactId>
-      <version>0.7.15</version>
-    </dependency>
   </dependencies>
   <scm>
     <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
