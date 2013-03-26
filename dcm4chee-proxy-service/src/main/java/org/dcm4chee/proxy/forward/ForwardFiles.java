@@ -178,6 +178,7 @@ public class ForwardFiles {
                     return false;
 
                 try {
+                    LOG.debug("get matching retry for file " + file.getPath());
                     String suffix = path.substring(path.lastIndexOf('.'));
                     Retry matchingRetry = getMatchingRetry(proxyAEE, suffix);
                     if (matchingRetry == null)
@@ -250,8 +251,9 @@ public class ForwardFiles {
         LOG.debug("get matching retry configuration for suffix \"{}\"", suffix);
         for (Retry retry : proxyAEE.getRetries()) {
             String retrySuffix = retry.getRetryObject().getSuffix();
-            LOG.debug(": comparing with \"{}\" ({})", retrySuffix, retry.getRetryObject());
-            if (suffix.startsWith(retrySuffix)) {
+            boolean startsWith = suffix.startsWith(retrySuffix);
+            LOG.debug(": \"{}\" starts with \"{}\" = {}", new Object[]{suffix, retrySuffix, startsWith});
+            if (startsWith) {
                 LOG.debug("found matching retry configuration: " + retry.getRetryObject());
                 return retry;
             }
@@ -400,7 +402,7 @@ public class ForwardFiles {
                 fmi = readFileMetaInformation(file);
             Attributes attrs = parse(file);
             String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-            int retry = getCurrentRetries(proxyAEE, file);
+            int retry = getPreviousRetries(proxyAEE, file);
             proxyAEE.createStartLogFile(AuditDirectory.FAILED, sourceAET, calledAET, 
                     proxyAEE.getApplicationEntity().getConnections().get(0).getHostname(), attrs, retry);
             proxyAEE.writeLogFile(AuditDirectory.FAILED, sourceAET, calledAET, attrs, file.length(), retry);
@@ -711,7 +713,7 @@ public class ForwardFiles {
         }
     }
 
-    private Integer getCurrentRetries(ProxyAEExtension proxyAEE, File file){
+    private Integer getPreviousRetries(ProxyAEExtension proxyAEE, File file){
         String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
         Retry matchingRetry = getMatchingRetry(proxyAEE, suffix);
         if (matchingRetry != null) {
