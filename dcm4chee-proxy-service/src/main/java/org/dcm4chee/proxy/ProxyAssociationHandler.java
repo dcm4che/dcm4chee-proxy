@@ -91,7 +91,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(as).get(0);
             LOG.info("{}: directly forwarding to {} based on forward rule \"{}\"", new Object[] { as,
                     forwardRule.getDestinationAETitles(), forwardRule.getCommonName() });
-            return forwardAAssociateRQ(as, rq, proxyAEE);
+            return forwardAAssociateRQ(as, copyOf(rq), proxyAEE);
         }
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
@@ -186,25 +186,24 @@ public class ProxyAssociationHandler extends AssociationHandler {
         return forwardAETSchedule.isNow(new GregorianCalendar());
     }
 
-    private AAssociateAC forwardAAssociateRQ(Association as, AAssociateRQ rq, ProxyAEExtension proxyAEE)
+    private AAssociateAC forwardAAssociateRQ(Association asAccepted, AAssociateRQ rq, ProxyAEExtension proxyAEE)
             throws IOException {
-        ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(as).get(0);
+        ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(asAccepted).get(0);
         String calledAET = forwardRule.getDestinationAETitles().get(0);
         AAssociateAC ac = new AAssociateAC();
         ac.setCalledAET(rq.getCalledAET());
         ac.setCallingAET(rq.getCallingAET());
-        String callingAET = (forwardRule.getUseCallingAET() != null)
-                ? forwardRule.getUseCallingAET()
-                : (proxyAEE.getApplicationEntity().getAETitle().equals("*"))
-                        ? rq.getCallingAET()
-                        : proxyAEE.getApplicationEntity().getAETitle();
+        String callingAET = (forwardRule.getUseCallingAET() != null) ? forwardRule.getUseCallingAET() : (proxyAEE
+                .getApplicationEntity().getAETitle().equals("*")) ? rq.getCallingAET() : proxyAEE
+                .getApplicationEntity().getAETitle();
         try {
-            Association asCalled = proxyAEE.openForwardAssociation(as, forwardRule, callingAET, calledAET, rq, aeCache);
-            as.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
-            asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, as);
+            Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET,
+                    rq, aeCache);
+            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
+            asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (forwardRule.isExclusiveUseDefinedTC()) {
-                AAssociateAC acProxy = super.makeAAssociateAC(as, rq, null);
+                AAssociateAC acProxy = super.makeAAssociateAC(asAccepted, rq, null);
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
                     ac.addPresentationContext(pcLocal.isAccepted() ? pcCalled : pcLocal);
@@ -227,24 +226,48 @@ public class ProxyAssociationHandler extends AssociationHandler {
             LOG.debug(e.getMessage(), e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, rj, RetryObject.AAssociateRJ.getSuffix() + "0",
-                    rj.getReason(), proxyAEE);
+            return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, rj,
+                    RetryObject.AAssociateRJ.getSuffix() + "0", rj.getReason(), proxyAEE);
         } catch (AAbort aa) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, aa, RetryObject.AAbort.getSuffix() + "0",
-                    aa.getReason(), proxyAEE);
+            return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, aa, RetryObject.AAbort.getSuffix()
+                    + "0", aa.getReason(), proxyAEE);
         } catch (IOException e) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
+            return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, e,
                     RetryObject.ConnectionException.getSuffix() + "0", 0, proxyAEE);
         } catch (InterruptedException e) {
             LOG.error("Unexpected exception: ", e);
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (IncompatibleConnectionException e) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
+            return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, e,
                     RetryObject.IncompatibleConnectionException.getSuffix() + "0", 0, proxyAEE);
         } catch (GeneralSecurityException e) {
-            return handleNegotiateConnectException(as, rq, ac, calledAET, e,
+            return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, e,
                     RetryObject.GeneralSecurityException.getSuffix() + "0", 0, proxyAEE);
         }
+    }
+
+    private AAssociateRQ copyOf(AAssociateRQ rq) {
+        AAssociateRQ copy = new AAssociateRQ();
+        for (PresentationContext pc : rq.getPresentationContexts())
+            copy.addPresentationContext(pc);
+        copy.setReservedBytes(rq.getReservedBytes());
+        copy.setProtocolVersion(rq.getProtocolVersion());
+        copy.setMaxPDULength(rq.getMaxPDULength());
+        copy.setMaxOpsInvoked(rq.getMaxOpsInvoked());
+        copy.setMaxOpsPerformed(rq.getMaxOpsPerformed());
+        copy.setCalledAET(rq.getCalledAET());
+        copy.setCallingAET(rq.getCallingAET());
+        copy.setApplicationContext(rq.getApplicationContext());
+        copy.setImplClassUID(rq.getImplClassUID());
+        copy.setImplVersionName(rq.getImplVersionName());
+        copy.setUserIdentityRQ(rq.getUserIdentityRQ());
+        for (RoleSelection rs : rq.getRoleSelections())
+            copy.addRoleSelection(rs);
+        for (ExtendedNegotiation en : rq.getExtendedNegotiations())
+            copy.addExtendedNegotiation(en);
+        for (CommonExtendedNegotiation cen : rq.getCommonExtendedNegotiations())
+            copy.addCommonExtendedNegotiation(cen);
+        return copy;
     }
 
     static int minZeroAsMax(int i1, int i2) {

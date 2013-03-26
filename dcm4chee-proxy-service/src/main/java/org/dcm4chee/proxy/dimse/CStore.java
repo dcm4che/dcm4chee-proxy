@@ -72,6 +72,7 @@ import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.PDVInputStream;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
@@ -83,6 +84,7 @@ import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -132,7 +134,7 @@ public class CStore extends BasicCStoreSCP {
             PDVInputStream data, Attributes rsp) throws IOException {
         File file = createSpoolFile(proxyAEE, asAccepted);
         MessageDigest digest = getMessageDigest(asAccepted);
-        Attributes fmi = processInputStream(asAccepted, pc, cmd, data, file, digest);
+        Attributes fmi = processInputStream(proxyAEE, asAccepted, pc, cmd, data, file, digest);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         try {
             if (forwardAssociationProperty == null && proxyAEE.isAssociationFromDestinationAET(asAccepted))
@@ -192,8 +194,9 @@ public class CStore extends BasicCStoreSCP {
         }
     }
 
-    private Attributes processInputStream(Association as, PresentationContext pc, Attributes rq, PDVInputStream data,
-            File file, MessageDigest digest) throws FileNotFoundException, IOException {
+    private Attributes processInputStream(ProxyAEExtension proxyAEE, Association as, PresentationContext pc,
+            Attributes rq, PDVInputStream data, File file, MessageDigest digest) throws FileNotFoundException,
+            IOException {
         LOG.debug("{}: write {}", as, file);
         FileOutputStream fout = new FileOutputStream(file);
         BufferedOutputStream bout = new BufferedOutputStream(digest == null ? fout : new DigestOutputStream(fout,
@@ -202,8 +205,12 @@ public class CStore extends BasicCStoreSCP {
         Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
         out.writeFileMetaInformation(fmi);
         out.writeAttribute(0x00030016, VR.SH, as.getConnection().getHostname().getBytes());
+        String tsuid = pc.getTransferSyntax();
+        Attributes attrs = data.readDataset(tsuid);
+        proxyAEE.coerceDataset(as.getCallingAET(), Role.SCU, Dimse.C_STORE_RQ, attrs, as.getApplicationEntity()
+                .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         try {
-            data.copyTo(out);
+            out.writeDataset(fmi, attrs);
         } finally {
             SafeClose.close(out);
         }
@@ -411,6 +418,8 @@ public class CStore extends BasicCStoreSCP {
             return;
         }
         Attributes attrs = parse(asAccepted, dataFile);
+        proxyAEE.coerceDataset(asInvoked.getCalledAET(), Role.SCP, Dimse.C_STORE_RQ, attrs, asInvoked
+                .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         File logFile = null;
         try {
             if (proxyAEE.isEnableAuditLog()) {

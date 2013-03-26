@@ -808,7 +808,7 @@ public class ForwardFiles {
 
     private DataWriter createDataWriter(ProxyAEExtension proxyAEE, DicomInputStream in, Association as, Attributes[] ds,
             String cuid) throws IOException {
-        AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getRemoteAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
+        AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getCalledAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
         if (ac != null || proxyAEE.isEnableAuditLog()) {
             Attributes attrs = in.readDataset(-1, -1);
             proxyAEE.coerceAttributes(attrs, ac, as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));

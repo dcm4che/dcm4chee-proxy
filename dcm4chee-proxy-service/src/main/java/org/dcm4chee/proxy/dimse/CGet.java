@@ -79,7 +79,7 @@ public class CGet extends DicomService {
 
         ApplicationEntity ae = asAccepted.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        proxyAEE.coerceDataset(asAccepted.getRemoteAET(), Role.SCU, dimse, data,
+        proxyAEE.coerceDataset(asAccepted.getCallingAET(), Role.SCU, dimse, data,
                 asAccepted.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {

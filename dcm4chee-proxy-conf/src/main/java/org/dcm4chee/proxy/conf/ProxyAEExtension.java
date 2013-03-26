@@ -97,6 +97,7 @@ public class ProxyAEExtension extends AEExtension {
     public static final String FILE_SUFFIX = ".part";
     public static final String FORWARD_RULES = "forward.rules";
     public static final String FORWARD_CMOVE_INFO = "forward.cmove.info";
+    public static final String CALLING_AET = "AET";
 
     private String spoolDirectory;
     private boolean acceptDataOnFailedAssociation;
