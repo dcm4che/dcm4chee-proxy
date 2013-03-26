@@ -67,8 +67,6 @@ import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jcabi.manifests.Manifests;
-
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
@@ -122,7 +120,6 @@ public class ProxyServlet extends HttpServlet {
             proxy = new Proxy(dicomConfig, hl7Config, deviceName);
             proxy.start();
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy, new ObjectName(jmxName));
-            LOG.info("Started proxy version [" + Manifests.read("Proxy-Implementation-Build") + "]");
         } catch (Exception e) {
             LOG.debug(e.getMessage(), e);
             destroy();
