@@ -199,23 +199,27 @@ public class ForwardFiles {
 
     private boolean checkNumberOfRetries(ProxyAEExtension proxyAEE, Retry retry, String suffix, File file,
             String calledAET) {
-        int currentRetries = 0;
+        LOG.debug("check number of previous retries for file " + file.getPath());
+        int prevRetries = 0;
         String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
         if (!substring.isEmpty())
             try {
-                currentRetries = Integer.parseInt(substring);
+                prevRetries = Integer.parseInt(substring);
+                LOG.debug(": previous retries = " + prevRetries);
             } catch (NumberFormatException e) {
                 LOG.error("Error parsing number of retries in suffix of file " + file.getName());
                 moveToNoRetryPath(proxyAEE, file, ": error parsing suffix");
                 return false;
             }
-        boolean send = currentRetries < retry.numberOfRetries;
+        boolean send = prevRetries < retry.numberOfRetries;
+        LOG.debug(": send file again = {} (max number of retries for {} = {})",
+                new Object[] { send, retry.getRetryObject(), retry.numberOfRetries });
         if (!send) {
             String reason = ": max number of retries = " + retry.getNumberOfRetries();
             if (sendToFallbackAET(proxyAEE, calledAET))
                 moveToFallbackAetDir(proxyAEE, file, calledAET, reason);
             else if (retry.deleteAfterFinalRetry)
-                deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED", currentRetries);
+                deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED", prevRetries);
             else
                 moveToNoRetryPath(proxyAEE, file, reason);
         }
@@ -243,9 +247,16 @@ public class ForwardFiles {
     }
 
     protected Retry getMatchingRetry(ProxyAEExtension proxyAEE, String suffix) {
-        for (Retry retry : proxyAEE.getRetries())
-            if (suffix.startsWith(retry.getRetryObject().getSuffix()))
+        LOG.debug("get matching retry configuration for suffix \"{}\"", suffix);
+        for (Retry retry : proxyAEE.getRetries()) {
+            String retrySuffix = retry.getRetryObject().getSuffix();
+            LOG.debug(": comparing with \"{}\" ({})", retrySuffix, retry.getRetryObject());
+            if (suffix.startsWith(retrySuffix)) {
+                LOG.debug("found matching retry configuration: " + retry.getRetryObject());
                 return retry;
+            }
+        }
+        LOG.debug("found no matching retry configuration");
         return null;
     }
 
