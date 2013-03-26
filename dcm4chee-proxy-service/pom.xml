@@ -21,7 +21,7 @@
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
             <manifestEntries>
-              <Implementation-Build>${buildNumber}</Implementation-Build>
+              <Proxy-Implementation-Build>${buildNumber}</Proxy-Implementation-Build>
             </manifestEntries>
           </archive>
         </configuration>
@@ -114,11 +114,16 @@
       <version>1.8.1</version>
       <type>maven-plugin</type>
     </dependency>
+    <dependency>
+      <groupId>com.jcabi</groupId>
+      <artifactId>jcabi-manifests</artifactId>
+      <version>0.7.14</version>
+    </dependency>
   </dependencies>
   <scm>
-   <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
-   <url>https://github.com/dcm4che/dcm4chee-proxy.git</url>
-   <tag>HEAD</tag>
-   <developerConnection>scm:git:git://github.com/dcm4che/dcm4chee-proxy.git</developerConnection>
+    <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
+    <url>https://github.com/dcm4che/dcm4chee-proxy.git</url>
+    <tag>HEAD</tag>
+    <developerConnection>scm:git:git://github.com/dcm4che/dcm4chee-proxy.git</developerConnection>
   </scm>
 </project>
