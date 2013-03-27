@@ -39,6 +39,7 @@
 package org.dcm4chee.proxy.conf;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -60,7 +61,6 @@ import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
@@ -73,6 +73,7 @@ import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
@@ -323,7 +324,7 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule, Attributes data)
-            throws ConfigurationException {
+            throws ConfigurationException, DicomServiceException {
         List<String> destinationAETs = new ArrayList<String>();
         if (rule.containsTemplateURI()) {
             ProxyDeviceExtension proxyDevExt = as.getApplicationEntity().getDevice()
@@ -488,15 +489,15 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public void createStartLogFile(AuditDirectory auditDir, String callingAET, String calledAET, String proxyHostname, 
-            Attributes attrs, Integer retry) throws DicomServiceException {
-        final String studyIUID = attrs.getString(Tag.StudyInstanceUID);
+            Properties fileInfo, Integer retry) throws DicomServiceException {
+        final String studyIUID = fileInfo.getProperty("study-iuid");
         File file = new File(getLogDir(auditDir, callingAET, calledAET, studyIUID, retry), "start.log");
         if (!file.exists()) {
             try {
                 Properties prop = new Properties();
                 prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
-                prop.setProperty("patientID", attrs.getString(Tag.PatientID));
-                prop.setProperty("hostname", attrs.getString(0x00030016));
+                prop.setProperty("patientID", fileInfo.getProperty("patient-id"));
+                prop.setProperty("hostname", fileInfo.getProperty("hostname"));
                 prop.setProperty("proxyHostname", proxyHostname);
                 prop.store(new FileOutputStream(file), null);
             } catch (IOException e) {
@@ -505,13 +506,14 @@ public class ProxyAEExtension extends AEExtension {
         }
     }
 
-    public File writeLogFile(AuditDirectory auditDir, String callingAET, String calledAET, Attributes attrs, long size, Integer retry) {
+    public File writeLogFile(AuditDirectory auditDir, String callingAET, String calledAET, Properties fileInfo, 
+            long size, Integer retry) {
         Properties prop = new Properties();
         File file = null;
         try {
-            file = new File(getLogDir(auditDir, callingAET, calledAET, attrs.getString(Tag.StudyInstanceUID), retry), attrs
-                    .getString(Tag.SOPInstanceUID).concat(".log"));
-            prop.setProperty("SOPClassUID", attrs.getString(Tag.SOPClassUID));
+            file = new File(getLogDir(auditDir, callingAET, calledAET, fileInfo.getProperty("study-iuid") , retry), 
+                    fileInfo.getProperty("sop-instance-uid").concat(".log"));
+            prop.setProperty("SOPClassUID", fileInfo.getProperty("sop-class-uid"));
             prop.setProperty("size", String.valueOf(size));
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);
@@ -525,8 +527,20 @@ public class ProxyAEExtension extends AEExtension {
         attributeCoercions.add(ac);
     }
 
+    public Properties getFileInfoProperties(File file) throws IOException {
+        Properties prop = new Properties();
+        FileInputStream inStream = null;
+        try {
+            inStream = new FileInputStream(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+            prop.load(inStream);
+        } finally {
+            SafeClose.close(inStream);
+        }
+        return prop;
+    }
+
     public HashMap<String, Association> openForwardAssociations(Association asAccepted, List<ForwardRule> forwardRules,
-            Attributes data, ApplicationEntityCache aeCache) {
+            Attributes data, ApplicationEntityCache aeCache) throws DicomServiceException {
         HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(forwardRules.size());
         for (ForwardRule rule : forwardRules) {
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule

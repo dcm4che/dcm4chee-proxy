@@ -48,9 +48,11 @@ import java.nio.channels.FileChannel;
 import java.security.DigestOutputStream;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -148,10 +150,12 @@ public class CStore extends BasicCStoreSCP {
                     processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
                 } catch (ConfigurationException c) {
                     LOG.error("{}: configuration error while processing C-STORE-RQ: {}", new Object[]{asAccepted, c.getMessage()});
+                    deleteFile(asAccepted, file);
                     throw new DicomServiceException(Status.UnableToProcess, c.getCause());
                 }
             else {
                 LOG.error("{}: error processing C-STORE-RQ: {}", new Object[]{asAccepted, e.getMessage()});
+                deleteFile(asAccepted, file);
                 throw new DicomServiceException(Status.UnableToProcess);
             }
         }
@@ -162,6 +166,11 @@ public class CStore extends BasicCStoreSCP {
             LOG.debug("{}: delete {}", as, file);
         else
             LOG.debug("{}: failed to delete {}", as, file);
+        File info = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+        if (info.delete())
+            LOG.debug("{}: delete {}", as, info);
+        else
+            LOG.debug("{}: failed to delete {}", as, info);
     }
 
     private Association getCMoveDestinationAS(ProxyAEExtension proxyAEE, Association asAccepted, Attributes cmd)
@@ -199,18 +208,55 @@ public class CStore extends BasicCStoreSCP {
                 digest));
         DicomOutputStream out = new DicomOutputStream(bout, UID.ExplicitVRLittleEndian);
         Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
-        out.writeFileMetaInformation(fmi);
-        out.writeAttribute(0x00030016, VR.SH, as.getConnection().getHostname().getBytes());
         String tsuid = pc.getTransferSyntax();
         Attributes attrs = data.readDataset(tsuid);
         proxyAEE.coerceDataset(as.getCallingAET(), Role.SCU, Dimse.C_STORE_RQ, attrs, as.getApplicationEntity()
                 .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+        Properties prop = new Properties();
+        prop.setProperty("hostname", as.getConnection().getHostname());
+        prop.setProperty("patient-id", attrs.getString(Tag.PatientID));
+        prop.setProperty("study-iuid", attrs.getString(Tag.StudyInstanceUID));
+        prop.setProperty("sop-instance-uid", attrs.getString(Tag.SOPInstanceUID));
+        prop.setProperty("sop-class-uid", attrs.getString(Tag.SOPClassUID));
+        prop.setProperty("transfer-syntax-uid", fmi.getString(Tag.TransferSyntaxUID));
+        prop.setProperty("source-aet", as.getCallingAET());
+        String path = file.getPath();
+        File info = new File(path.substring(0, path.length() - 5) + ".info");
+        FileOutputStream infoOut = new FileOutputStream(info);
         try {
             out.writeDataset(fmi, attrs);
+            prop.store(infoOut, null);
+        } finally {
+            SafeClose.close(out);
+            SafeClose.close(bout);
+            SafeClose.close(fout);
+            SafeClose.close(infoOut);
+        }
+        return fmi;
+    }
+
+    private void addFileInfo(String path, String key, String value) {
+        File info = new File(path.substring(0, path.length() - 5) + ".info");
+        Properties prop = new Properties();
+        FileInputStream inStream = null;
+        try {
+            inStream = new FileInputStream(info);
+            prop.load(inStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            SafeClose.close(inStream);
+        }
+        prop.setProperty(key, value);
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(info);
+            prop.store(out, null);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             SafeClose.close(out);
         }
-        return fmi;
     }
 
     private void processForwardRules(ProxyAEExtension proxyAEE, Association asAccepted,
@@ -225,15 +271,16 @@ public class CStore extends BasicCStoreSCP {
                     forwardRules.get(0));
         else {
             for (ForwardRule rule : forwardRules) {
-                Attributes attrs = parse(asAccepted, file);
-                List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, attrs);
+                List<String> destinationAETs = new ArrayList<String>();
+                if (rule.containsTemplateURI()) {
+                    Attributes data = parse(asAccepted, file);
+                    destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, data);
+                } else
+                    destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, null);
                 for (String calledAET : destinationAETs) {
-                    if (rule.getUseCallingAET() != null) {
-                        fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, rule.getUseCallingAET());
-                        writeNewFile(proxyAEE, asAccepted, file, calledAET, rq, pc, fmi, attrs);
-                    }
-                    else
-                        createMappedFileCopy(proxyAEE, asAccepted, file, calledAET, ".dcm");
+                    if (rule.getUseCallingAET() != null)
+                        addFileInfo(file.getPath(), "use-calling-aet", rule.getUseCallingAET());
+                    createMappedFileCopy(proxyAEE, asAccepted, file, calledAET, ".dcm");
                 }
             }
             deleteFile(asAccepted, file);
@@ -242,62 +289,11 @@ public class CStore extends BasicCStoreSCP {
         }
     }
 
-    private void writeNewFile(ProxyAEExtension proxyAEE, Association asAccepted, File file, String calledAET,
-            Attributes rq, PresentationContext pc, Attributes fmi, Attributes attrs) throws DicomServiceException {
-        String separator = ProxyAEExtension.getSeparator();
-        String path = file.getPath();
-        String fileName = path.substring(path.lastIndexOf(separator) + 1, path.length());
-        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
-        dir.mkdir();
-        File dst = new File(dir, fileName);
-        DicomOutputStream out = null;
-        try {
-            out = new DicomOutputStream(dst);
-            LOG.debug(asAccepted + ": copy " + file.getPath() + " to " + dst.getPath());
-            out.writeDataset(fmi, attrs);
-        } catch (Exception e) {
-            LOG.error(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
-            LOG.debug(e.getMessage(), e);
-            if(dst.delete())
-                LOG.error(asAccepted + ": deleted " + dst.getPath());
-            throw new DicomServiceException(Status.OutOfResources, e.getCause());
-        } finally {
-            SafeClose.close(out);
-        }
-    }
-
-    private void createMappedDicomCopy(ProxyAEExtension proxyAEE, Association asAccepted, File file, String calledAET,
-            String callingAET, Attributes rq, PresentationContext pc, String suffix) throws DicomServiceException {
-        String separator = ProxyAEExtension.getSeparator();
-        String path = file.getPath();
-        String fileName = path.substring(path.lastIndexOf(separator) + 1, path.lastIndexOf('.')).concat(suffix);
-        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
-        dir.mkdir();
-        File dst = new File(dir, fileName);
-        DicomOutputStream out = null;
-        DicomInputStream in = null;
-        try {
-            in = new DicomInputStream(file);
-            out = new DicomOutputStream(dst);
-            Attributes fmi = createFileMetaInformation(asAccepted, rq, pc.getTransferSyntax());
-            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, callingAET);
-            LOG.debug(asAccepted + ": copy " + file.getPath() + " to " + dst.getPath());
-            out.writeDataset(fmi, in.readDataset(-1, -1));
-        } catch (Exception e) {
-            LOG.error(asAccepted + ": failed to copy " + file.getPath() + " to " + dst.getPath());
-            LOG.debug(e.getMessage(), e);
-            if(dst.delete())
-                LOG.error(asAccepted + ": deleted " + file.getPath());
-            throw new DicomServiceException(Status.OutOfResources, e.getCause());
-        } finally {
-            SafeClose.close(in);
-            SafeClose.close(out);
-        }
-    }
-
     private void processSingleForwardDestination(Association asAccepted, Object forwardAssociationProperty,
             PresentationContext pc, Attributes rq, File file, Attributes fmi, ProxyAEExtension proxyAEE,
             ForwardRule rule) throws DicomServiceException, IOException {
+        if (rule.getUseCallingAET() != null)
+            addFileInfo(file.getPath(), "use-calling-aet", rule.getUseCallingAET());
         String calledAET = rule.getDestinationAETitles().get(0);
         ForwardOption forwardOption = proxyAEE.getForwardOptions().get(calledAET);
         if (forwardOption == null || forwardOption.getSchedule().isNow(new GregorianCalendar())) {
@@ -321,32 +317,17 @@ public class CStore extends BasicCStoreSCP {
 
     private void storeToCalledAETSpoolDir(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
             Attributes rq, File file, String calledAET, ForwardRule rule) throws IOException, DicomServiceException {
-        if (rule.getUseCallingAET() != null)
-            rewriteFile(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
-        else
-            renameFile(proxyAEE, asAccepted, pc, rq, file, calledAET);
-    }
-
-    private void rewriteFile(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes rq,
-            File file, String calledAET, ForwardRule rule) throws DicomServiceException, IOException {
-        String suffix = (String) asAccepted.getProperty(ProxyAEExtension.FILE_SUFFIX);
-        createMappedDicomCopy(proxyAEE, asAccepted, file, calledAET, rule.getUseCallingAET(), rq, pc, suffix);
-        if (file.delete()) {
-            asAccepted.writeDimseRSP(pc, Commands.mkCStoreRSP(rq, Status.Success));
-        } else {
-            LOG.error("{}: failed to delete {}", new Object[] { asAccepted, file });
-            throw new DicomServiceException(Status.OutOfResources);
-        }
-    }
-
-    private void renameFile(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes rq,
-            File file, String calledAET) throws IOException, DicomServiceException {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
         String fileName = file.getName();
-        File dst = new File(dir, fileName.substring(0, fileName.lastIndexOf('.'))
-                .concat((String)asAccepted.getProperty(ProxyAEExtension.FILE_SUFFIX)));
+        File dst = new File(dir, fileName.substring(0, fileName.lastIndexOf('.')).concat(
+                (String) asAccepted.getProperty(ProxyAEExtension.FILE_SUFFIX)));
+        LOG.info("{}: rename {} to {}", new Object[]{asAccepted, file.getPath(), dst.getPath()});
         if (file.renameTo(dst)) {
+            File infoFile = new File(proxyAEE.getCStoreDirectoryPath(), file.getName().substring(0,
+                    file.getName().indexOf('.')) + ".info");
+            File infoDst = new File(dir, infoFile.getName());
+            infoFile.renameTo(infoDst);
             asAccepted.writeDimseRSP(pc, Commands.mkCStoreRSP(rq, Status.Success));
         } else {
             LOG.error("{}: failed to rename {} to {}", new Object[] { asAccepted, file, dst });
@@ -410,16 +391,17 @@ public class CStore extends BasicCStoreSCP {
             processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, dataFile, fmi);
             return;
         }
-        Attributes attrs = parse(asAccepted, dataFile);
+        Attributes attrs = parseWithPixelData(asAccepted, dataFile);
         proxyAEE.coerceDataset(asInvoked.getCalledAET(), Role.SCP, Dimse.C_STORE_RQ, attrs, asInvoked
                 .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         File logFile = null;
         try {
             if (proxyAEE.isEnableAuditLog()) {
                 String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
+                Properties prop = proxyAEE.getFileInfoProperties(dataFile);
                 proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), 
-                        asInvoked.getConnection().getHostname(), attrs, 0);
-                logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), attrs,
+                        asInvoked.getConnection().getHostname(), prop, 0);
+                logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), prop,
                         dataFile.length(), 0);
             }
             forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile);
@@ -428,6 +410,21 @@ public class CStore extends BasicCStoreSCP {
             if (logFile != null)
                 logFile.delete();
             LOG.error("{}: error forwarding object {}: {}", new Object[] { asAccepted, dataFile, e.getMessage() });
+        }
+    }
+
+    public Attributes parseWithPixelData(Association as, File file)
+            throws DicomServiceException {
+        DicomInputStream in = null;
+        try {
+            in = new DicomInputStream(file);
+            in.setIncludeBulkData(IncludeBulkData.YES);
+            return in.readDataset(-1, -1);
+        } catch (IOException e) {
+            LOG.warn(as + ": Failed to decode dataset:", e);
+            throw new DicomServiceException(Status.CannotUnderstand);
+        } finally {
+            SafeClose.close(in);
         }
     }
 
@@ -467,11 +464,12 @@ public class CStore extends BasicCStoreSCP {
             File logFile = null;
             try {
                 if (proxyAEE.isEnableAuditLog()) {
-                    String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-                    proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), 
-                            asInvoked.getConnection().getHostname(), attrs, 0);
-                    logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), attrs,
-                            attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
+                    Properties prop = proxyAEE.getFileInfoProperties(dataFile);
+                    String sourceAET = prop.getProperty("source-aet");
+                    proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
+                            asInvoked.getConnection().getHostname(), prop, 0);
+                    logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
+                            prop, attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
                 }
                 forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), i, logFile, null);
             } catch (Exception e) {
@@ -580,20 +578,5 @@ public class CStore extends BasicCStoreSCP {
                     rspHandler);
         else
             asInvoked.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
-    }
-
-    protected static void rename(Association as, File file, String suffix) throws DicomServiceException {
-        String path = file.getPath();
-        if (file.exists()) {
-            File dst = new File(path.substring(0, path.lastIndexOf('.')).concat(suffix));
-            if (file.renameTo(dst)) {
-                dst.setLastModified(System.currentTimeMillis());
-                LOG.info("{}: rename {} to {}", new Object[] { as, file, dst });
-            } else {
-                LOG.error("{}: failed to rename {} to {}", new Object[] { as, file, dst });
-                throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
-            }
-        } else
-            LOG.error("{}: failed to rename {}: file doesn't exist", as, file.getPath());
     }
 }

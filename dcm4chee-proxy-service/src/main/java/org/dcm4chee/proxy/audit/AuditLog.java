@@ -185,12 +185,39 @@ public class AuditLog {
                 LOG.error("Failed to write audit log message: " + e.getMessage());
                 LOG.debug(e.getMessage(), e);
             }
-            for (File file : logFiles)
-                if (!file.delete())
-                    LOG.error("Failed to delete " + file);
-            if (!studyIUIDDir.delete())
-                LOG.error("Failed to delete " + studyIUIDDir);
+            boolean deleteStudyDir = deleteLogFiles(logFiles);
+            if (deleteStudyDir)
+                deleteStudyDir(studyIUIDDir, separator);
         }
+    }
+
+    private void deleteStudyDir(File studyIUIDDir, String separator) {
+        for (String dir : studyIUIDDir.list()) {
+            File subDir = new File(studyIUIDDir + separator + dir);
+            if (subDir.listFiles().length > 0)
+                return;
+
+            LOG.debug("Delete dir " + subDir.getAbsolutePath());
+            if (!subDir.delete())
+                LOG.error("Failed to delete " + subDir.getAbsolutePath());
+        }
+        if (studyIUIDDir.list().length == 0) {
+            LOG.debug("Delete dir " + studyIUIDDir.getAbsolutePath());
+            if (!studyIUIDDir.delete())
+                LOG.error("Failed to delete " + studyIUIDDir.getAbsolutePath());
+        }
+    }
+
+    private boolean deleteLogFiles(File[] logFiles) {
+        boolean deleteStudyDir = true;
+        for (File file : logFiles) {
+            LOG.debug("Delete log file " + file.getAbsolutePath());
+            if (!file.delete()) {
+                LOG.error("Failed to delete " + file.getAbsolutePath());
+                deleteStudyDir = false;
+            }
+        }
+        return deleteStudyDir;
     }
 
     private void writeFailedLogMessage(File studyIUIDDir, String retry, AuditDirectory auditDir, String separator) {
@@ -217,11 +244,9 @@ public class AuditLog {
             } catch (Exception e) {
                 LOG.error("Failed to write audit log message: ", e);
             }
-            for (File file : logFiles)
-                if (!file.delete())
-                    LOG.error("Failed to delete " + file);
-            if (!studyIUIDDir.delete())
-                LOG.error("Failed to delete " + studyIUIDDir);
+            boolean deleteStudyDir = deleteLogFiles(logFiles);
+            if (deleteStudyDir)
+                deleteStudyDir(studyIUIDDir, separator);
         }
     }
 
@@ -308,8 +333,9 @@ public class AuditLog {
 
     private void readProperties(File file, Log log) {
         Properties prop = new Properties();
+        FileInputStream inStream = null;
         try {
-            final FileInputStream inStream = new FileInputStream(file);
+            inStream = new FileInputStream(file);
             prop.load(inStream);
             if (!file.getPath().endsWith("start.log")) {
                 log.totalSize = log.totalSize + Long.parseLong(prop.getProperty("size"));
@@ -320,12 +346,13 @@ public class AuditLog {
                 log.patientID = prop.getProperty("patientID");
             }
             long time = Long.parseLong(prop.getProperty("time"));
-            SafeClose.close(inStream);
             log.t1 = (log.t1 == 0 || log.t1 > time) ? time : log.t1;
             log.t2 = (log.t2 == 0 || log.t2 < time) ? time : log.t2;
         } catch (IOException e) {
             LOG.error("Error reading properties from {}: {}", new Object[]{file.getPath(), e.getMessage()});
             LOG.debug(e.getMessage(), e);
+        } finally {
+            SafeClose.close(inStream);
         }
     }
 
