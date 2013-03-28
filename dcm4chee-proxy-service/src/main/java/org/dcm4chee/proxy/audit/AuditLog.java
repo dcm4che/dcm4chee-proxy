@@ -81,6 +81,7 @@ public class AuditLog {
 
     public AuditLog(AuditLogger logger) {
         AuditLog.logger = logger;
+        AuditLogger.setDefaultLogger(logger);
     }
 
     public void scanLogDir(ApplicationEntity ae) {

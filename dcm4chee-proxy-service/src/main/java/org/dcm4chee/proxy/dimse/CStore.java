@@ -491,14 +491,22 @@ public class CStore extends BasicCStoreSCP {
 
     protected static void createMappedFileCopy(ProxyAEExtension proxyAEE, Association as, File file, String calledAET,
             String suffix) throws IOException {
-        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
-        dir.mkdir();
-        File dst = new File(dir, file.getName().substring(0, file.getName().lastIndexOf('.')).concat(suffix));
         FileChannel source = null;
         FileChannel destination = null;
         try {
+            File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+            dir.mkdir();
+            File dst = new File(dir, file.getName().substring(0, file.getName().lastIndexOf('.')).concat(suffix));
+            LOG.debug("{}: copy {} to {}", new Object[] { as, file.getPath(), dst.getPath() });
             source = new FileInputStream(file).getChannel();
             destination = new FileOutputStream(dst).getChannel();
+            destination.transferFrom(source, 0, source.size());
+            File infoFile = new File(proxyAEE.getCStoreDirectoryPath(), file.getName().substring(0,
+                    file.getName().indexOf('.')) + ".info");
+            File infoDst = new File(dir, infoFile.getName());
+            LOG.debug("{}: copy {} to {}", new Object[] { as, infoFile.getPath(), infoDst.getPath() });
+            source = new FileInputStream(infoFile).getChannel();
+            destination = new FileOutputStream(infoDst).getChannel();
             destination.transferFrom(source, 0, source.size());
         } finally {
             SafeClose.close(source);

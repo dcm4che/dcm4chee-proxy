@@ -102,7 +102,7 @@ public class ForwardRule implements Serializable {
         List<String> aets = new ArrayList<String>();
         for (String aet : destinationURI)
             if (aet.startsWith("aet:"))
-                aets.add(aet.substring(4));
+                aets.add(aet.substring(4).trim());
         return aets;
     }
 
