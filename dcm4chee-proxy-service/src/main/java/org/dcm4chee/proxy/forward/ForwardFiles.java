@@ -715,7 +715,7 @@ public class ForwardFiles {
                     }
                 }
             };
-            asInvoked.cstore(cuid, iuid, 0, createDataWriter(proxyAEE, in, asInvoked, ds, cuid), tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, 0, createDataWriter(proxyAEE, in, asInvoked, ds, cuid, prop), tsuid, rspHandler);
         } finally {
             SafeClose.close(in);
         }
@@ -837,15 +837,13 @@ public class ForwardFiles {
     }
 
     private DataWriter createDataWriter(ProxyAEExtension proxyAEE, DicomInputStream in, Association as,
-            Attributes[] ds, String cuid) throws IOException {
+            Attributes[] ds, String cuid, Properties prop) throws IOException {
         AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getCalledAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
         if (ac != null || proxyAEE.isEnableAuditLog()) {
             Attributes attrs = in.readDataset(-1, -1);
             proxyAEE.coerceAttributes(attrs, ac,
                     as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
             if (proxyAEE.isEnableAuditLog()) {
-                Properties prop = new Properties();
-                prop.setProperty("study-iuid", attrs.getString(Tag.StudyInstanceUID));
                 proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, as.getCallingAET(), as.getCalledAET(), as
                         .getConnection().getHostname(), prop, 0);
             }

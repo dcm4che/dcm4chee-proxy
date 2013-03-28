@@ -204,8 +204,10 @@ public class ProxyAssociationHandler extends AssociationHandler {
             AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (forwardRule.isExclusiveUseDefinedTC()) {
                 AAssociateAC acProxy = super.makeAAssociateAC(asAccepted, rq, null);
+                LOG.debug("{}: generating subset of transfer capabilities", asAccepted);
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
+                    LOG.debug("{}: use {} : {}", new Object[]{asAccepted, pcCalled.getTransferSyntaxes(), pcLocal.isAccepted() });
                     ac.addPresentationContext(pcLocal.isAccepted() ? pcCalled : pcLocal);
                 }
             } else
