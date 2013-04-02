@@ -39,9 +39,11 @@
 package org.dcm4chee.proxy.dimse;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Properties;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -128,7 +130,7 @@ public class Mpps extends DicomService {
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(as, cmd, dimse);
         if (forwardRules.size() == 0)
-            throw new ConfigurationException("no destination");
+            throw new ConfigurationException("no matching forward rule");
 
         Attributes rsp = (dimse == Dimse.N_CREATE_RQ) ? Commands.mkNCreateRSP(cmd, Status.Success) : Commands
                 .mkNSetRSP(cmd, Status.Success);
@@ -137,9 +139,8 @@ public class Mpps extends DicomService {
         String tsuid = UID.ExplicitVRLittleEndian;
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
         for (ForwardRule rule : forwardRules) {
-            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
             List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule, data);
-            processDestinationAETs(as, dimse, data, proxyAEE, iuid, fmi, rule, callingAET, destinationAETs);
+            processDestinationAETs(as, dimse, data, proxyAEE, iuid, fmi, rule, destinationAETs);
         }
         try {
             as.writeDimseRSP(pc, rsp, data);
@@ -151,16 +152,16 @@ public class Mpps extends DicomService {
     }
 
     private void processDestinationAETs(Association as, Dimse dimse, Attributes data, ProxyAEExtension pae,
-            String iuid, Attributes fmi, ForwardRule rule, String callingAET, List<String> destinationAETs)
-            throws DicomServiceException {
+            String iuid, Attributes fmi, ForwardRule rule, List<String> destinationAETs)
+            throws TransformerFactoryConfigurationError, IOException {
         for (String calledAET : destinationAETs) {
             if (rule.getMpps2DoseSrTemplateURI() != null) {
                 File dir = pae.getDoseSrPath();
-                processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, calledAET, callingAET, rule);
+                processMpps2DoseSRConversion(as, dimse, data, iuid, fmi, dir, calledAET, rule);
             } else {
                 File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae
                         .getNSetDirectoryPath();
-                File file = createFile(as, dimse, data, iuid, fmi, dir, calledAET, callingAET);
+                File file = createFile(as, dimse, data, iuid, fmi, dir, calledAET, rule);
                 as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
                 rename(as, file);
             }
@@ -168,19 +169,18 @@ public class Mpps extends DicomService {
     }
 
     private void processMpps2DoseSRConversion(Association as, Dimse dimse, Attributes data, String iuid,
-            Attributes fmi, File baseDir, String calledAET, String callingAET, ForwardRule rule)
-            throws DicomServiceException {
+            Attributes fmi, File baseDir, String calledAET, ForwardRule rule)
+            throws TransformerFactoryConfigurationError, IOException {
         if (dimse == Dimse.N_CREATE_RQ) {
-            File file = createFile(as, dimse, data, iuid, fmi, baseDir, calledAET, callingAET);
+            File file = createFile(as, dimse, data, iuid, fmi, baseDir, calledAET, rule);
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".ncreate");
             rename(as, file);
         } else
-            processNSetMpps2DoseSR(as, dimse, data, iuid, fmi, baseDir, calledAET, callingAET, rule);
+            processNSetMpps2DoseSR(as, dimse, data, iuid, fmi, baseDir, calledAET, rule);
     }
 
     private void processNSetMpps2DoseSR(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi,
-            File baseDir, String calledAET, String callingAET, ForwardRule rule) throws DicomServiceException,
-            TransformerFactoryConfigurationError {
+            File baseDir, String calledAET, ForwardRule rule) throws TransformerFactoryConfigurationError, IOException {
         ApplicationEntity ae = as.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         File ncreateDir = new File(baseDir, calledAET);
@@ -196,11 +196,23 @@ public class Mpps extends DicomService {
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
         doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
         doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, proxyAEE.getCStoreDirectoryPath(), calledAET,
-                callingAET);
+        File doseSrFile = createFile(as, dimse, doseSrData, iuid, doseSrFmi, proxyAEE.getCStoreDirectoryPath(), calledAET, rule);
+        LOG.info("{}: created Dose SR file {}", as, doseSrFile.getPath());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
-        delete(as, ncreateFile);
+        deleteFile(as, ncreateFile);
+    }
+
+    private void deleteFile(Association as, File file) {
+        if(file.delete())
+            LOG.debug("{}: delete {}", as, file.getPath());
+        else
+            LOG.error("{}: failed to delete {}", as, file.getPath());
+        File info = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+        if (info.delete())
+            LOG.debug("{}: delete {}", as, info);
+        else
+            LOG.debug("{}: failed to delete {}", as, info);
     }
 
     private void transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String iuid,
@@ -245,23 +257,33 @@ public class Mpps extends DicomService {
     }
 
     protected File createFile(Association as, Dimse dimse, Attributes data, String iuid, Attributes fmi, File baseDir,
-            String destinationAET, String callingAET) throws DicomServiceException {
+            String destinationAET, ForwardRule rule) throws IOException {
         File dir = new File(baseDir, destinationAET);
         dir.mkdir();
-        File file = new File(dir, iuid + ".part");
-        fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, callingAET);
+        File file = File.createTempFile("dcm", ".part", dir);
         DicomOutputStream out = null;
+        Properties prop = new Properties();
+        prop.setProperty("source-aet", as.getCallingAET());
+        if (rule.getUseCallingAET() != null)
+            prop.setProperty("use-calling-aet", rule.getUseCallingAET());
+        String path = file.getPath();
+        File info = new File(path.substring(0, path.length() - 5) + ".info");
+        FileOutputStream infoOut = new FileOutputStream(info);
         try {
+            LOG.info("{}: create {}", new Object[] { as, file });
             out = new DicomOutputStream(file);
             out.writeDataset(fmi, data);
-            LOG.info("{}: create {}", new Object[] { as, file });
+            LOG.debug("{}: create {}", as, info.getPath());
+            prop.store(infoOut, null);
         } catch (IOException e) {
             LOG.warn("{}: failed to create {}", new Object[] { as, file });
             LOG.debug(e.getMessage(), e);
             file.delete();
+            info.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
             SafeClose.close(out);
+            SafeClose.close(infoOut);
         }
         return file;
     }

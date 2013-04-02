@@ -230,8 +230,7 @@ public class ForwardFiles {
             String reason = ": max number of retries = " + retry.getNumberOfRetries();
             if (sendToFallbackAET(proxyAEE, calledAET)) {
                 moveToFallbackAetDir(proxyAEE, file, calledAET, reason);
-            }
-            else if (retry.deleteAfterFinalRetry)
+            } else if (retry.deleteAfterFinalRetry)
                 deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED",
                         prevRetries);
             else {
@@ -289,8 +288,7 @@ public class ForwardFiles {
         String path = file.getPath();
         String spoolDirPath = proxyAEE.getSpoolDirectoryPath().getPath();
         String fileName = file.getName();
-        String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(),
-                path.indexOf(fileName));
+        String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(), path.indexOf(fileName));
         File dstDir = new File(proxyAEE.getNoRetryPath().getPath() + subPath);
         dstDir.mkdirs();
         File dstFile = new File(dstDir, fileName);
@@ -309,7 +307,8 @@ public class ForwardFiles {
 
     private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason, Integer retry) {
         try {
-            if (proxyAEE.isEnableAuditLog()) {
+            String path = file.getPath();
+            if (proxyAEE.isEnableAuditLog() && path.contains("cstore")) {
                 Properties prop = proxyAEE.getFileInfoProperties(file);
                 String callingAET = prop.getProperty("source-aet");
                 proxyAEE.createStartLogFile(AuditDirectory.DELETED, callingAET, calledAET, proxyAEE
@@ -352,8 +351,8 @@ public class ForwardFiles {
             String protocol) throws IOException {
         for (File file : files) {
             Properties prop = proxyAEE.getFileInfoProperties(file);
-            String callingAET = prop.containsKey("use-calling-aet") 
-                    ? prop.getProperty("use-calling-aet") : prop.getProperty("source-aet");
+            String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
+                    .getProperty("source-aet");
             try {
                 Attributes fmi = readFileMetaInformation(file);
                 if (protocol == "nset" && pendingNCreateForwarding(proxyAEE, destinationAETitle, fmi))
@@ -370,7 +369,8 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledMPPS(proxyAEE, as, file, fmi, protocol, prop);
                     } else {
-                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle, prop);
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle,
+                                prop);
                     }
                 } finally {
                     if (as != null && as.isReadyForDataTransfer()) {
@@ -394,7 +394,8 @@ public class ForwardFiles {
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle, prop);
             } catch (IncompatibleConnectionException e) {
                 LOG.error("Incompatible connection: " + e.getMessage());
-                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, destinationAETitle, prop);
+                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, destinationAETitle,
+                        prop);
             } catch (ConfigurationException e) {
                 LOG.error("Unable to load configuration: " + e.getMessage());
                 renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, destinationAETitle, prop);
@@ -406,9 +407,8 @@ public class ForwardFiles {
     }
 
     private void writeFailedAuditLogMessage(ProxyAEExtension proxyAEE, File file, Attributes fmi, String calledAET,
-            Properties prop)
-            throws IOException {
-        if (proxyAEE.isEnableAuditLog()) {
+            Properties prop) throws IOException {
+        if (proxyAEE.isEnableAuditLog() && file.getPath().contains("cstore")) {
             String sourceAET = prop.getProperty("source-aet");
             int retry = getPreviousRetries(proxyAEE, file);
             proxyAEE.createStartLogFile(AuditDirectory.FAILED, sourceAET, calledAET, proxyAEE.getApplicationEntity()
@@ -490,15 +490,15 @@ public class ForwardFiles {
     }
 
     private void forwardScheduledNAction(ProxyAEExtension proxyAEE, String calledAET) throws IOException {
-        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+        File dir = new File(proxyAEE.getNactionDirectoryPath(), calledAET);
         File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
-        if (files == null || files.length > 0)
+        if (files == null || files.length == 0)
             return;
 
         for (File file : files) {
             Properties prop = proxyAEE.getFileInfoProperties(file);
-            String callingAET = prop.containsKey("use-calling-aet") 
-                    ? prop.getProperty("use-calling-aet") : prop.getProperty("source-aet");
+            String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
+                    .getProperty("source-aet");
             try {
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
@@ -510,7 +510,7 @@ public class ForwardFiles {
                     if (as.isReadyForDataTransfer()) {
                         forwardScheduledNAction(proxyAEE, as, file, prop);
                     } else {
-                        
+
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
                     }
                 } finally {
@@ -629,17 +629,19 @@ public class ForwardFiles {
                     }
                 } catch (NoPresentationContextException npc) {
                     handleForwardException(proxyAEE, asInvoked, file, npc,
-                            RetryObject.NoPresentationContextException.getSuffix(), prop);
+                            RetryObject.NoPresentationContextException.getSuffix(), prop, true);
                 } catch (AssociationStateException ass) {
                     handleForwardException(proxyAEE, asInvoked, file, ass,
-                            RetryObject.AssociationStateException.getSuffix(), prop);
+                            RetryObject.AssociationStateException.getSuffix(), prop, true);
                 } catch (IOException ioe) {
-                    handleForwardException(proxyAEE, asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix(), prop);
+                    handleForwardException(proxyAEE, asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix(),
+                            prop, true);
                     releaseAS(asInvoked);
                 }
             }
         } catch (ConfigurationException ce) {
-            handleProcessForwardTaskException(proxyAEE, rq, ft, ce, RetryObject.ConfigurationException.getSuffix(), prop);
+            handleProcessForwardTaskException(proxyAEE, rq, ft, ce, RetryObject.ConfigurationException.getSuffix(),
+                    prop);
         } catch (AAssociateRJ rj) {
             handleProcessForwardTaskException(proxyAEE, rq, ft, rj, RetryObject.AAssociateRJ.getSuffix(), prop);
         } catch (AAbort aa) {
@@ -652,7 +654,8 @@ public class ForwardFiles {
             handleProcessForwardTaskException(proxyAEE, rq, ft, e,
                     RetryObject.IncompatibleConnectionException.getSuffix(), prop);
         } catch (GeneralSecurityException e) {
-            handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.GeneralSecurityException.getSuffix(), prop);
+            handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.GeneralSecurityException.getSuffix(),
+                    prop);
         } finally {
             if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                 try {
@@ -715,7 +718,8 @@ public class ForwardFiles {
                     }
                 }
             };
-            asInvoked.cstore(cuid, iuid, 0, createDataWriter(proxyAEE, in, asInvoked, ds, cuid, prop), tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, 0, createDataWriter(proxyAEE, in, asInvoked, ds, cuid, prop), tsuid,
+                    rspHandler);
         } finally {
             SafeClose.close(in);
         }
@@ -761,8 +765,8 @@ public class ForwardFiles {
     private void addFileTo(ProxyAEExtension proxyAEE, String calledAET, File file, HashMap<String, ForwardTask> map) {
         try {
             Properties prop = proxyAEE.getFileInfoProperties(file);
-            String callingAET = prop.containsKey("use-calling-aet") 
-                    ? prop.getProperty("use-calling-aet") : prop.getProperty("source-aet");
+            String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
+                    .getProperty("source-aet");
             String cuid = prop.getProperty("sop-class-uid");
             String tsuid = prop.getProperty("transfer-syntax-uid");
             ForwardTask forwardTask = map.get(callingAET);
@@ -784,9 +788,8 @@ public class ForwardFiles {
         }
     }
 
-    private void handleForwardException(ProxyAEExtension proxyAEE, Association as, File file, Exception e, String suffix, 
-            Properties prop)
-            throws IOException {
+    private void handleForwardException(ProxyAEExtension proxyAEE, Association as, File file, Exception e,
+            String suffix, Properties prop, boolean writeAuditLogMessage) throws IOException {
         LOG.error(as + ": error processing forward task: " + e.getMessage());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
         renameFile(proxyAEE, suffix, file, as.getCalledAET(), prop);
@@ -800,13 +803,14 @@ public class ForwardFiles {
         }
     }
 
-    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String calledAET, Properties prop) 
+    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String calledAET, Properties prop)
             throws IOException {
         File dst;
-        if (file.getPath().endsWith(".snd"))
-            dst = setFileSuffix(file.getPath().substring(0, file.getPath().length() - 4), suffix);
+        String path = file.getPath();
+        if (path.endsWith(".snd"))
+            dst = setFileSuffix(path.substring(0, path.length() - 4), suffix);
         else
-            dst = setFileSuffix(file.getPath(), suffix);
+            dst = setFileSuffix(path, suffix);
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.info("Rename {} to {}", new Object[] { file, dst });
