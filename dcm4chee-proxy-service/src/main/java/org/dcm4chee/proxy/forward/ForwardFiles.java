@@ -108,7 +108,7 @@ public class ForwardFiles {
         for (String calledAET : proxyAEE.getNSetDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET)) {
-                LOG.debug("No forward schedule for {}, sending existing N-SET data now.", calledAET);
+                LOG.debug("No forward schedule for {}, sending existing N-SET data now", calledAET);
                 startForwardScheduledMPPS(
                         proxyAEE,
                         new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET)),
@@ -117,12 +117,12 @@ public class ForwardFiles {
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
-                        LOG.debug("Found currently active forward schedule for {}, sending N-SET data now.", calledAET);
+                        LOG.debug("Found currently active forward schedule for {}, sending N-SET data now", calledAET);
                         startForwardScheduledMPPS(proxyAEE,
                                 new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                                         calledAET)), calledAET, "nset");
                     } else if (isMatchingAET) {
-                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={}).", new Object[] {
+                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={})", new Object[] {
                                 calledAET, entry.getValue().getSchedule().getDays(),
                                 entry.getValue().getSchedule().getHours() });
                     }
@@ -134,7 +134,7 @@ public class ForwardFiles {
         for (String calledAET : proxyAEE.getNCreateDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET)) {
-                LOG.debug("No forward schedule for {}, sending existing N-CREATE data now.", calledAET);
+                LOG.debug("No forward schedule for {}, sending existing N-CREATE data now", calledAET);
                 startForwardScheduledMPPS(proxyAEE,
                         new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                                 calledAET)), calledAET, "ncreate");
@@ -143,13 +143,13 @@ public class ForwardFiles {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
                         LOG.debug(
-                                "Found currently active forward schedule for {}, sending existing N-CREATE data now.",
+                                "Found currently active forward schedule for {}, sending existing N-CREATE data now",
                                 calledAET);
                         startForwardScheduledMPPS(proxyAEE,
                                 new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                                         calledAET)), calledAET, "ncreate");
                     } else if (isMatchingAET) {
-                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={}).", new Object[] {
+                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={})", new Object[] {
                                 calledAET, entry.getValue().getSchedule().getDays(),
                                 entry.getValue().getSchedule().getHours() });
                     }
@@ -161,18 +161,18 @@ public class ForwardFiles {
         for (String calledAET : proxyAEE.getNactionDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET)) {
-                LOG.debug("No forward schedule for {}, sending existing N-ACTION data now.", calledAET);
+                LOG.debug("No forward schedule for {}, sending existing N-ACTION data now", calledAET);
                 startForwardScheduledNAction(proxyAEE, calledAET);
             } else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
                         LOG.debug(
-                                "Found currently active forward schedule for {}, sending existing N-ACTION data now.",
+                                "Found currently active forward schedule for {}, sending existing N-ACTION data now",
                                 calledAET);
                         startForwardScheduledNAction(proxyAEE, calledAET);
                     } else if (isMatchingAET) {
-                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={}).", new Object[] {
+                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={})", new Object[] {
                                 calledAET, entry.getValue().getSchedule().getDays(),
                                 entry.getValue().getSchedule().getHours() });
                     }
@@ -184,17 +184,17 @@ public class ForwardFiles {
         for (String calledAET : proxyAEE.getCStoreDirectoryPath().list()) {
             // process destinations without forward schedule
             if (!forwardSchedules.keySet().contains(calledAET)) {
-                LOG.debug("No forward schedule for {}, sending existing C-STORE data now.", calledAET);
+                LOG.debug("No forward schedule for {}, sending existing C-STORE data now", calledAET);
                 startForwardScheduledCStoreFiles(proxyAEE, calledAET);
             } else
                 for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
-                        LOG.debug("Found currently active forward schedule for {}, sending existing C-STORE data now.",
+                        LOG.debug("Found currently active forward schedule for {}, sending existing C-STORE data now",
                                 calledAET);
                         startForwardScheduledCStoreFiles(proxyAEE, calledAET);
                     } else if (isMatchingAET) {
-                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={}).", new Object[] {
+                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={})", new Object[] {
                                 calledAET, entry.getValue().getSchedule().getDays(),
                                 entry.getValue().getSchedule().getHours() });
                     }
@@ -813,7 +813,13 @@ public class ForwardFiles {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
         for (File file : files) {
             File snd = new File(file.getPath() + ".snd");
-            file.renameTo(snd);
+            String prevFilePath = file.getPath();
+            if(file.renameTo(snd))
+                LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
+            else {
+                LOG.error("Error renaming {} to {}", prevFilePath, snd.getPath());
+                throw new RuntimeException();
+            }
             addFileTo(proxyAEE, calledAET, snd, map);
         }
         return map.values();
@@ -899,15 +905,14 @@ public class ForwardFiles {
 
     private DataWriter createDataWriter(ProxyAEExtension proxyAEE, DicomInputStream in, Association as,
             Attributes[] ds, String cuid, Properties prop) throws IOException {
+        if (proxyAEE.isEnableAuditLog())
+            proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, as.getCallingAET(), as.getCalledAET(), as
+                    .getConnection().getHostname(), prop, 0);
         AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getCalledAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
-        if (ac != null || proxyAEE.isEnableAuditLog()) {
+        if (ac != null) {
             Attributes attrs = in.readDataset(-1, -1);
             proxyAEE.coerceAttributes(attrs, ac,
                     as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
-            if (proxyAEE.isEnableAuditLog()) {
-                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, as.getCallingAET(), as.getCalledAET(), as
-                        .getConnection().getHostname(), prop, 0);
-            }
             return new DataWriterAdapter(attrs);
         }
         return new InputStreamDataWriter(in);

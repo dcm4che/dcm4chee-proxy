@@ -109,7 +109,7 @@ public class ProxyAEExtension extends AEExtension {
     private HashMap<String, ForwardOption> forwardOptions = new HashMap<String, ForwardOption>();
     private List<Retry> retries = new ArrayList<Retry>();
     private List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
-    private final AttributeCoercions attributeCoercions = new AttributeCoercions();
+    private AttributeCoercions attributeCoercions = new AttributeCoercions();
     private String proxyPIXConsumerApplication;
     private String remotePIXManagerApplication;
     private boolean deleteFailedDataWithoutRetryConfiguration;
@@ -443,6 +443,9 @@ public class ProxyAEExtension extends AEExtension {
         setRemotePIXManagerApplication(proxyAEE.remotePIXManagerApplication);
         setDeleteFailedDataWithoutRetryConfiguration(proxyAEE.deleteFailedDataWithoutRetryConfiguration);
         setFallbackDestinationAET(proxyAEE.fallbackDestinationAET);
+        attributeCoercions.clear();
+        for (AttributeCoercion ac : proxyAEE.getAttributeCoercions().getAll())
+            addAttributeCoercion(ac);
     }
 
     public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
@@ -536,7 +539,9 @@ public class ProxyAEExtension extends AEExtension {
         Properties prop = new Properties();
         FileInputStream inStream = null;
         try {
-            inStream = new FileInputStream(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+            String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
+            inStream = new FileInputStream(infoFileName);
+            LOG.debug("Loading info file {}", infoFileName);
             prop.load(inStream);
         } finally {
             SafeClose.close(inStream);
