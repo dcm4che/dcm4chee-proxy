@@ -205,14 +205,14 @@ public class Mpps extends DicomService {
 
     private void deleteFile(Association as, File file) {
         if(file.delete())
-            LOG.debug("{}: delete {}", as, file.getPath());
+            LOG.debug("{}: DELETE {}", as, file.getPath());
         else
-            LOG.error("{}: failed to delete {}", as, file.getPath());
+            LOG.error("{}: failed to DELETE {}", as, file.getPath());
         File info = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
         if (info.delete())
-            LOG.debug("{}: delete {}", as, info);
+            LOG.debug("{}: DELETE {}", as, info);
         else
-            LOG.debug("{}: failed to delete {}", as, info);
+            LOG.debug("{}: failed to DELETE {}", as, info);
     }
 
     private void transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String iuid,
@@ -276,7 +276,7 @@ public class Mpps extends DicomService {
             LOG.debug("{}: create {}", as, info.getPath());
             prop.store(infoOut, null);
         } catch (IOException e) {
-            LOG.warn("{}: failed to create {}", new Object[] { as, file });
+            LOG.warn("{}: failed to create {} and/or {}", new Object[] { as, file.getPath(), info.getPath() });
             LOG.debug(e.getMessage(), e);
             file.delete();
             info.delete();

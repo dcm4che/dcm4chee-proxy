@@ -505,42 +505,46 @@ public class ForwardFiles {
                         UID.ExplicitVRLittleEndian));
                 rq.setCallingAET(callingAET);
                 rq.setCalledAET(calledAET);
-                Association as = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
+                Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
                 try {
-                    if (as.isReadyForDataTransfer()) {
-                        forwardScheduledNAction(proxyAEE, as, file, prop);
+                    if (asInvoked.isReadyForDataTransfer()) {
+                        forwardScheduledNAction(proxyAEE, asInvoked, file, prop);
                     } else {
-
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
                     }
                 } finally {
-                    if (as != null && as.isReadyForDataTransfer()) {
+                    if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
                         try {
-                            as.waitForOutstandingRSP();
-                            as.release();
+                            asInvoked.waitForOutstandingRSP();
+                            asInvoked.release();
                         } catch (InterruptedException e) {
-                            LOG.error(as + ": unexpected exception: " + e.getMessage());
+                            LOG.error(asInvoked + ": unexpected exception: " + e.getMessage());
                             LOG.debug(e.getMessage(), e);
                         } catch (IOException e) {
-                            LOG.error(as + ": failed to release association: " + e.getMessage());
+                            LOG.error(asInvoked + ": failed to release association: " + e.getMessage());
                             LOG.debug(e.getMessage(), e);
                         }
                     }
                 }
             } catch (InterruptedException e) {
-                LOG.error("Connection exception: " + e.getMessage());
+                LOG.error(e.getMessage());
+                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
             } catch (IncompatibleConnectionException e) {
-                LOG.error("Incompatible connection: " + e.getMessage());
+                LOG.error(e.getMessage());
+                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, calledAET, prop);
             } catch (ConfigurationException e) {
-                LOG.error("Unable to load configuration: " + e.getMessage());
+                LOG.error(e.getMessage());
+                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, calledAET, prop);
             } catch (IOException e) {
-                LOG.error("Unable to read from file: " + e.getMessage());
+                LOG.error(e.getMessage());
+                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
             } catch (GeneralSecurityException e) {
-                LOG.error("Failed to create SSL context: " + e.getMessage());
+                LOG.error(e.getMessage());
+                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, calledAET, prop);
             }
         }
@@ -553,20 +557,33 @@ public class ForwardFiles {
         String tsuid = UID.ExplicitVRLittleEndian;
         DicomInputStream in = new DicomInputStream(file);
         Attributes attrs = in.readDataset(-1, -1);
-        final String transactionUID = attrs.getString(Tag.TransactionUID);
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override
-            public void onDimseRSP(Association asDestinationAET, Attributes cmd, Attributes data) {
-                super.onDimseRSP(asDestinationAET, cmd, data);
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asInvoked, cmd, data);
                 int status = cmd.getInt(Tag.Status, -1);
                 switch (status) {
                 case Status.Success: {
-                    File dest = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
+                    String fileName = file.getName();
+                    String filePath = file.getPath();
+                    File destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
+                            + asInvoked.getCalledAET());
+                    destDir.mkdirs();
+                    File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
+                            + ".naction");
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
-                        LOG.info("{}: rename {} to {}", new Object[] { as, file, dest });
+                        LOG.info("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
+                        File infoFile = new File(filePath.substring(0, filePath.indexOf('.'))  + ".info");
+                        File infoFileDest = new File(destDir, infoFile.getName());
+                        if (infoFile.renameTo(infoFileDest))
+                            LOG.debug("{}: RENAME {} to {}",
+                                    new Object[] { as, infoFile.getPath(), infoFileDest.getPath() });
+                        else
+                            LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, infoFile.getPath(),
+                                    infoFileDest.getPath() });
                     } else
-                        LOG.error("{}: failed to rename {} to {}", new Object[] { as, file, dest });
+                        LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
                     break;
                 }
                 default: {

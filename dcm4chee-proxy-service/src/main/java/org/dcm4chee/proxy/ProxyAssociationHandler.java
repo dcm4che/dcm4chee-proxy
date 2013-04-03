@@ -189,6 +189,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
     private AAssociateAC forwardAAssociateRQ(Association asAccepted, AAssociateRQ rq, ProxyAEExtension proxyAEE)
             throws IOException {
         ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(asAccepted).get(0);
+        asAccepted.setProperty(ProxyAEExtension.FORWARD_RULES, forwardRule);
         String calledAET = forwardRule.getDestinationAETitles().get(0);
         AAssociateAC ac = new AAssociateAC();
         ac.setCalledAET(rq.getCalledAET());

@@ -71,7 +71,10 @@ import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.net.pdu.CommonExtendedNegotiation;
+import org.dcm4che.net.pdu.ExtendedNegotiation;
 import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.AuditDirectory;
@@ -629,6 +632,30 @@ public class ProxyAEExtension extends AEExtension {
         if (imageStorageTS != null)
             if (!as_ts.containsKey(tsB))
                 newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, tsB, imageStorageTS));
+    }
+
+    public AAssociateRQ copyOf(AAssociateRQ rq) {
+        AAssociateRQ copy = new AAssociateRQ();
+        for (PresentationContext pc : rq.getPresentationContexts())
+            copy.addPresentationContext(pc);
+        copy.setReservedBytes(rq.getReservedBytes());
+        copy.setProtocolVersion(rq.getProtocolVersion());
+        copy.setMaxPDULength(rq.getMaxPDULength());
+        copy.setMaxOpsInvoked(rq.getMaxOpsInvoked());
+        copy.setMaxOpsPerformed(rq.getMaxOpsPerformed());
+        copy.setCalledAET(rq.getCalledAET());
+        copy.setCallingAET(rq.getCallingAET());
+        copy.setApplicationContext(rq.getApplicationContext());
+        copy.setImplClassUID(rq.getImplClassUID());
+        copy.setImplVersionName(rq.getImplVersionName());
+        copy.setUserIdentityRQ(rq.getUserIdentityRQ());
+        for (RoleSelection rs : rq.getRoleSelections())
+            copy.addRoleSelection(rs);
+        for (ExtendedNegotiation en : rq.getExtendedNegotiations())
+            copy.addExtendedNegotiation(en);
+        for (CommonExtendedNegotiation cen : rq.getCommonExtendedNegotiations())
+            copy.addCommonExtendedNegotiation(cen);
+        return copy;
     }
 
 }
