@@ -660,14 +660,23 @@ public class ForwardFiles {
     private void forwardScheduledCStoreFiles(ProxyAEExtension proxyAEE, String calledAET) {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
-        if (files != null && files.length > 0)
-            for (ForwardTask ft : scanFiles(proxyAEE, calledAET, files))
+        if (files != null && files.length > 0) {
+            Collection<ForwardTask> forwardTasks = null;
+            try {
+                forwardTasks = scanFiles(proxyAEE, calledAET, files);
+            } catch (IOException e) {
+                LOG.error("Error generating C-STORE forward task list: {}", e.getMessage());
+                e.printStackTrace();
+                return;
+            }
+            for (ForwardTask ft : forwardTasks)
                 try {
                     processForwardTask(proxyAEE, ft);
                 } catch (IOException e) {
                     LOG.error("Error processing forwarding files: " + e.getMessage());
                     LOG.debug(e.getMessage(), e);
                 }
+        }
     }
 
     private void processForwardTask(ProxyAEExtension proxyAEE, ForwardTask ft) throws IOException {
@@ -809,12 +818,13 @@ public class ForwardFiles {
             }
     }
 
-    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) {
+    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files)
+            throws IOException {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
         for (File file : files) {
             File snd = new File(file.getPath() + ".snd");
             String prevFilePath = file.getPath();
-            if(file.renameTo(snd))
+            if (file.renameTo(snd))
                 LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
             else {
                 LOG.error("Error renaming {} to {}", prevFilePath, snd.getPath());
@@ -825,21 +835,17 @@ public class ForwardFiles {
         return map.values();
     }
 
-    private void addFileTo(ProxyAEExtension proxyAEE, String calledAET, File file, HashMap<String, ForwardTask> map) {
-        try {
-            Properties prop = proxyAEE.getFileInfoProperties(file);
-            String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
-                    .getProperty("source-aet");
-            String cuid = prop.getProperty("sop-class-uid");
-            String tsuid = prop.getProperty("transfer-syntax-uid");
-            ForwardTask forwardTask = map.get(callingAET);
-            if (forwardTask == null)
-                map.put(callingAET, forwardTask = new ForwardTask(callingAET, calledAET));
-            forwardTask.addFile(file, cuid, tsuid);
-        } catch (IOException e) {
-            LOG.debug("Failed to read {}: {}", new Object[] { file, e.getMessage() });
-            LOG.debug(e.getMessage(), e);
-        }
+    private void addFileTo(ProxyAEExtension proxyAEE, String calledAET, File file, HashMap<String, ForwardTask> map)
+            throws IOException {
+        Properties prop = proxyAEE.getFileInfoProperties(file);
+        String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
+                .getProperty("source-aet");
+        String cuid = prop.getProperty("sop-class-uid");
+        String tsuid = prop.getProperty("transfer-syntax-uid");
+        ForwardTask forwardTask = map.get(callingAET);
+        if (forwardTask == null)
+            map.put(callingAET, forwardTask = new ForwardTask(callingAET, calledAET));
+        forwardTask.addFile(file, cuid, tsuid);
     }
 
     private static Attributes readFileMetaInformation(File file) throws IOException {
