@@ -501,9 +501,9 @@ public class ProxyAEExtension extends AEExtension {
             try {
                 Properties prop = new Properties();
                 prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
-                prop.setProperty("patientID", fileInfo.getProperty("patient-id"));
+                prop.setProperty("patient-id", fileInfo.getProperty("patient-id"));
                 prop.setProperty("hostname", fileInfo.getProperty("hostname"));
-                prop.setProperty("proxyHostname", proxyHostname);
+                prop.setProperty("proxy-hostname", proxyHostname);
                 prop.store(new FileOutputStream(file), null);
             } catch (IOException e) {
                 LOG.debug("Failed to create log file: " + e.getMessage());
@@ -518,7 +518,7 @@ public class ProxyAEExtension extends AEExtension {
         try {
             file = new File(getLogDir(auditDir, callingAET, calledAET, fileInfo.getProperty("study-iuid") , retry), 
                     fileInfo.getProperty("sop-instance-uid").concat(".log"));
-            prop.setProperty("SOPClassUID", fileInfo.getProperty("sop-class-uid"));
+            prop.setProperty("sop-class-uid", fileInfo.getProperty("sop-class-uid"));
             prop.setProperty("size", String.valueOf(size));
             prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
             prop.store(new FileOutputStream(file), null);

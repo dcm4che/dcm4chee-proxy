@@ -171,6 +171,9 @@ public class CStore extends BasicCStoreSCP {
             LOG.debug("{}: delete {}", as, info);
         else
             LOG.debug("{}: failed to delete {}", as, info);
+        File path = new File(file.getParent());
+        if (path.list().length == 0)
+            path.delete();
     }
 
     private Association getCMoveDestinationAS(ProxyAEExtension proxyAEE, Association asAccepted, Attributes cmd)
@@ -214,7 +217,7 @@ public class CStore extends BasicCStoreSCP {
                 .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         Properties prop = new Properties();
         prop.setProperty("hostname", as.getConnection().getHostname());
-        prop.setProperty("patient-id", attrs.getString(Tag.PatientID));
+        prop.setProperty("patient-id", attrs.contains(Tag.PatientID) ? attrs.getString(Tag.PatientID) : "<NONE>");
         prop.setProperty("study-iuid", attrs.getString(Tag.StudyInstanceUID));
         prop.setProperty("sop-instance-uid", attrs.getString(Tag.SOPInstanceUID));
         prop.setProperty("sop-class-uid", attrs.getString(Tag.SOPClassUID));

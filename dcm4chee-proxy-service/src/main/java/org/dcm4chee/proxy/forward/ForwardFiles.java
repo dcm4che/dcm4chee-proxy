@@ -619,6 +619,9 @@ public class ForwardFiles {
                         else
                             LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, infoFile.getPath(),
                                     infoFileDest.getPath() });
+                        File path = new File(file.getParent());
+                        if (path.list().length == 0)
+                            path.delete();
                     } else
                         LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
                     break;
@@ -920,5 +923,8 @@ public class ForwardFiles {
             LOG.debug("{}: delete {}", as, infoFile);
         else
             LOG.debug("{}: failed to delete {}", as, infoFile);
+        File path = new File(file.getParent());
+        if (path.list().length == 0)
+            path.delete();
     }
 }

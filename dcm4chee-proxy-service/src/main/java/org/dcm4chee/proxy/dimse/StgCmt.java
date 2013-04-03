@@ -400,6 +400,9 @@ public class StgCmt extends DicomService {
                         else
                             LOG.error("{}: failed to RENAME {} to {}", new Object[] { asAccepted, infoFile.getPath(),
                                     infoFileDest.getPath() });
+                        File path = new File(file.getParent());
+                        if (path.list().length == 0)
+                            path.delete();
                     } else
                         LOG.error("{}: failed to RENAME {} to {}", new Object[] { asAccepted, file.getPath(), dest.getPath() });
                     try {
@@ -477,5 +480,8 @@ public class StgCmt extends DicomService {
             LOG.debug("{}: DELETE {}", as, info);
         else
             LOG.debug("{}: failed to DELETE {}", as, info);
+        File path = new File(file.getParent());
+        if (path.list().length == 0)
+            path.delete();
     }
 }

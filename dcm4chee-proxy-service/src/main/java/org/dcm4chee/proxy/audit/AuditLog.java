@@ -121,12 +121,16 @@ public class AuditLog {
     }
 
     private void checkRetryLog(File studyIUIDDir, AuditDirectory auditDir) {
+        if (!studyIUIDDir.exists())
+            return;
+
         for (String numRetry : studyIUIDDir.list()) {
             String separator = System.getProperty("file.separator");
             File startLog = new File(studyIUIDDir + separator + numRetry + separator + "start.log");
             long lastModified = startLog.lastModified();
             long now = System.currentTimeMillis();
-            ProxyDeviceExtension proxyDev = (ProxyDeviceExtension) ae.getDevice().getDeviceExtension(ProxyDeviceExtension.class);
+            ProxyDeviceExtension proxyDev = (ProxyDeviceExtension) ae.getDevice().getDeviceExtension(
+                    ProxyDeviceExtension.class);
             if (!(now > lastModified + proxyDev.getSchedulerInterval() * 1000 * 2))
                 return;
 
@@ -135,6 +139,9 @@ public class AuditLog {
     }
 
     private void checkLog(File studyIUIDDir, AuditDirectory auditDir) {
+        if (!studyIUIDDir.exists())
+            return;
+
         String separator = System.getProperty("file.separator");
         File startLog = new File(studyIUIDDir + separator + "start.log");
         long lastModified = startLog.lastModified();
@@ -340,11 +347,11 @@ public class AuditLog {
             prop.load(inStream);
             if (!file.getPath().endsWith("start.log")) {
                 log.totalSize = log.totalSize + Long.parseLong(prop.getProperty("size"));
-                log.sopclassuid.add(prop.getProperty("SOPClassUID"));
+                log.sopclassuid.add(prop.getProperty("sop-class-uid"));
             } else {
                 log.hostname = prop.getProperty("hostname");
-                log.proxyHostname = prop.getProperty("proxyHostname");
-                log.patientID = prop.getProperty("patientID");
+                log.proxyHostname = prop.getProperty("proxy-hostname");
+                log.patientID = prop.getProperty("patient-id");
             }
             long time = Long.parseLong(prop.getProperty("time"));
             log.t1 = (log.t1 == 0 || log.t1 > time) ? time : log.t1;
