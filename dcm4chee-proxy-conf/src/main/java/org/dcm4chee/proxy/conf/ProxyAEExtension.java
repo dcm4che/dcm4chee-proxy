@@ -496,7 +496,7 @@ public class ProxyAEExtension extends AEExtension {
 
     public void createStartLogFile(AuditDirectory auditDir, String callingAET, String calledAET, String proxyHostname, 
             Properties fileInfo, Integer retry) throws DicomServiceException {
-        final String studyIUID = fileInfo.contains("study-iuid") 
+        String studyIUID = fileInfo.containsKey("study-iuid") 
                 ? fileInfo.getProperty("study-iuid")
                 : fileInfo.getProperty("sop-instance-uid");
         File file = new File(getLogDir(auditDir, callingAET, calledAET, studyIUID, retry), "start.log");
@@ -519,7 +519,10 @@ public class ProxyAEExtension extends AEExtension {
         Properties prop = new Properties();
         File file = null;
         try {
-            file = new File(getLogDir(auditDir, callingAET, calledAET, fileInfo.getProperty("study-iuid") , retry), 
+            String studyIUID = fileInfo.containsKey("study-iuid") 
+                    ? fileInfo.getProperty("study-iuid")
+                    : fileInfo.getProperty("sop-instance-uid");
+            file = new File(getLogDir(auditDir, callingAET, calledAET, studyIUID , retry), 
                     fileInfo.getProperty("sop-instance-uid").concat(".log"));
             prop.setProperty("sop-class-uid", fileInfo.getProperty("sop-class-uid"));
             prop.setProperty("size", String.valueOf(size));
