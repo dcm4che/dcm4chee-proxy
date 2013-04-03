@@ -666,7 +666,7 @@ public class ForwardFiles {
                 forwardTasks = scanFiles(proxyAEE, calledAET, files);
             } catch (IOException e) {
                 LOG.error("Error generating C-STORE forward task list: {}", e.getMessage());
-                e.printStackTrace();
+                LOG.debug(e.getMessage(), e);
                 return;
             }
             for (ForwardTask ft : forwardTasks)
@@ -818,33 +818,50 @@ public class ForwardFiles {
             }
     }
 
-    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files)
-            throws IOException {
+    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) throws IOException {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
         for (File file : files) {
-            File snd = new File(file.getPath() + ".snd");
             String prevFilePath = file.getPath();
+            File snd = new File(prevFilePath + ".snd");
             if (file.renameTo(snd))
                 LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
             else {
                 LOG.error("Error renaming {} to {}", prevFilePath, snd.getPath());
                 throw new RuntimeException();
             }
-            addFileTo(proxyAEE, calledAET, snd, map);
+            try {
+                addFileToFwdTaskMap(proxyAEE, calledAET, snd, map);
+            } catch (Exception e) {
+                File prev = new File(prevFilePath);
+                if (snd.renameTo(prev))
+                    LOG.debug("Rename {} to {}", snd.getPath(), prev.getPath());
+                else
+                    LOG.debug("Error renaming {} to {}", snd.getPath(), prev.getPath());
+            }
         }
         return map.values();
     }
 
-    private void addFileTo(ProxyAEExtension proxyAEE, String calledAET, File file, HashMap<String, ForwardTask> map)
+    private void addFileToFwdTaskMap(ProxyAEExtension proxyAEE, String calledAET, File file, HashMap<String, ForwardTask> map)
             throws IOException {
         Properties prop = proxyAEE.getFileInfoProperties(file);
-        String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
-                .getProperty("source-aet");
+        String callingAET = prop.containsKey("use-calling-aet") 
+                ? prop.getProperty("use-calling-aet") 
+                : prop.getProperty("source-aet");
         String cuid = prop.getProperty("sop-class-uid");
         String tsuid = prop.getProperty("transfer-syntax-uid");
         ForwardTask forwardTask = map.get(callingAET);
-        if (forwardTask == null)
-            map.put(callingAET, forwardTask = new ForwardTask(callingAET, calledAET));
+        if (forwardTask == null) {
+            LOG.debug("Creating new forward task for Calling AET {} and Called AET {}", callingAET, calledAET);
+            forwardTask = new ForwardTask(callingAET, calledAET);
+            map.put(callingAET, forwardTask);
+        } else {
+            LOG.debug("Loaded forward task for Calling AET {} and Called AET {}", callingAET, forwardTask
+                    .getAAssociateRQ().getCalledAET());
+        }
+        LOG.debug(
+                "Add file {} to forward task for Calling AET {} and Called AET {} with SOP Class UID = {} and Transfer Syntax UID = {}",
+                new Object[] { file.getPath(), callingAET, forwardTask.getAAssociateRQ().getCalledAET(), cuid, tsuid });
         forwardTask.addFile(file, cuid, tsuid);
     }
 
