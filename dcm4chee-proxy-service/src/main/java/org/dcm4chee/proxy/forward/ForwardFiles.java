@@ -662,13 +662,7 @@ public class ForwardFiles {
         File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
         if (files != null && files.length > 0) {
             Collection<ForwardTask> forwardTasks = null;
-            try {
-                forwardTasks = scanFiles(proxyAEE, calledAET, files);
-            } catch (IOException e) {
-                LOG.error("Error generating C-STORE forward task list: {}", e.getMessage());
-                LOG.debug(e.getMessage(), e);
-                return;
-            }
+            forwardTasks = scanFiles(proxyAEE, calledAET, files);
             for (ForwardTask ft : forwardTasks)
                 try {
                     processForwardTask(proxyAEE, ft);
@@ -818,7 +812,7 @@ public class ForwardFiles {
             }
     }
 
-    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) throws IOException {
+    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
         for (File file : files) {
             String prevFilePath = file.getPath();
