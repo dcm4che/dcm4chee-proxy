@@ -213,9 +213,6 @@ public class Mpps extends DicomService {
             LOG.debug("{}: DELETE {}", as, info);
         else
             LOG.debug("{}: failed to DELETE {}", as, info);
-        File path = new File(file.getParent());
-        if (path.list().length == 0)
-            path.delete();
     }
 
     private void transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String iuid,

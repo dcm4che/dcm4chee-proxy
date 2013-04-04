@@ -543,7 +543,7 @@ public class ProxyAEExtension extends AEExtension {
         FileInputStream inStream = null;
         try {
             String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
-            LOG.debug("Loading info file {} (file exists = {})", infoFileName, new File(infoFileName).exists());
+            LOG.debug("Loading info file {}", infoFileName);
             inStream = new FileInputStream(infoFileName);
             prop.load(inStream);
         } finally {

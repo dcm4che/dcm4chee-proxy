@@ -380,10 +380,10 @@ public class StgCmt extends DicomService {
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
                 int status = cmd.getInt(Tag.Status, -1);
+                String filePath = file.getPath();
                 switch (status) {
                 case Status.Success: {
                     String fileName = file.getName();
-                    String filePath = file.getPath();
                     File destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
                             + asInvoked.getCalledAET());
                     destDir.mkdirs();
@@ -416,6 +416,12 @@ public class StgCmt extends DicomService {
                 default: {
                     LOG.warn("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { asAccepted,
                             file, Integer.toHexString(status) + 'H' });
+                    File error = new File(filePath + '.' + Integer.toHexString(status) + 'H');
+                    if (file.renameTo(error))
+                        LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted, filePath, error.getPath() });
+                    else
+                        LOG.debug("{}: failed to RENAME {} to {}",
+                                new Object[] { asAccepted, filePath, error.getPath() });
                     try {
                         asAccepted.writeDimseRSP(pc, cmd);
                     } catch (IOException e) {
@@ -480,8 +486,5 @@ public class StgCmt extends DicomService {
             LOG.debug("{}: DELETE {}", as, info);
         else
             LOG.debug("{}: failed to DELETE {}", as, info);
-        File path = new File(file.getParent());
-        if (path.list().length == 0)
-            path.delete();
     }
 }

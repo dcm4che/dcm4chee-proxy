@@ -171,9 +171,6 @@ public class CStore extends BasicCStoreSCP {
             LOG.debug("{}: delete {}", as, info);
         else
             LOG.debug("{}: failed to delete {}", as, info);
-        File path = new File(file.getParent());
-        if (path.list().length == 0)
-            path.delete();
     }
 
     private Association getCMoveDestinationAS(ProxyAEExtension proxyAEE, Association asAccepted, Attributes cmd)
