@@ -187,7 +187,8 @@ public class AuditLog {
                     LOG.error("Unrecognized Audit Directory: " + auditDir.getDirectoryName());
                     break;
                 }
-                LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
+                if (LOG.isDebugEnabled())
+                    LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
                 logger.write(timeStamp, msg);
             } catch (Exception e) {
                 LOG.error("Failed to write audit log message: " + e.getMessage());
@@ -247,7 +248,8 @@ public class AuditLog {
             AuditMessage msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
                     EventID.DICOMInstancesTransferred, EventActionCode.Read, EventOutcomeIndicator.SeriousFailure);
             try {
-                LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
+                if (LOG.isDebugEnabled())
+                    LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
                 logger.write(timeStamp, msg);
             } catch (Exception e) {
                 LOG.error("Failed to write audit log message: ", e);
