@@ -149,8 +149,9 @@ public class ProxyAssociationHandler extends AssociationHandler {
         for (Association assoc : asInvoked) {
             if (assoc != null && assoc.isRequestor())
                 try {
+                    assoc.waitForOutstandingRSP();
                     assoc.release();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.debug("Failed to release {} ({})", new Object[] { assoc, e.getMessage() });
                 }
         }
@@ -189,7 +190,9 @@ public class ProxyAssociationHandler extends AssociationHandler {
     private AAssociateAC forwardAAssociateRQ(Association asAccepted, AAssociateRQ rq, ProxyAEExtension proxyAEE)
             throws IOException {
         ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(asAccepted).get(0);
-        asAccepted.setProperty(ProxyAEExtension.FORWARD_RULES, forwardRule);
+        List<ForwardRule> fwrList = new ArrayList<ForwardRule>();
+        fwrList.add(forwardRule);
+        asAccepted.setProperty(ProxyAEExtension.FORWARD_RULES, fwrList);
         String calledAET = forwardRule.getDestinationAETitles().get(0);
         AAssociateAC ac = new AAssociateAC();
         ac.setCalledAET(rq.getCalledAET());

@@ -97,25 +97,26 @@ public class ForwardFiles {
 
     public void execute(ApplicationEntity ae) {
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        HashMap<String, ForwardOption> forwardSchedules = proxyAEE.getForwardOptions();
-        processCStore(proxyAEE, forwardSchedules);
-        processNAction(proxyAEE, forwardSchedules);
-        processNCreate(proxyAEE, forwardSchedules);
-        processNSet(proxyAEE, forwardSchedules);
+        HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
+        processCStore(proxyAEE, forwardOptions);
+        processNAction(proxyAEE, forwardOptions);
+        processNCreate(proxyAEE, forwardOptions);
+        processNSet(proxyAEE, forwardOptions);
     }
 
-    private void processNSet(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+    private void processNSet(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
         for (String calledAET : proxyAEE.getNSetDirectoryPath().list()) {
             File[] files = new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
                 return;
 
-            if (!forwardSchedules.keySet().contains(calledAET)) {
+            LOG.debug("Processing schedule N-SET data ...");
+            if (!forwardOptions.keySet().contains(calledAET)) {
                 // process destinations without forward schedule
                 LOG.debug("No forward schedule for {}, sending existing N-SET data now", calledAET);
                 startForwardScheduledMPPS(proxyAEE, files, calledAET, "nset");
             } else
-                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
+                for (Entry<String, ForwardOption> entry : forwardOptions.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
                         LOG.debug("Found currently active forward schedule for {}, sending N-SET data now", calledAET);
@@ -129,19 +130,20 @@ public class ForwardFiles {
         }
     }
 
-    private void processNCreate(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+    private void processNCreate(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
         for (String calledAET : proxyAEE.getNCreateDirectoryPath().list()) {
             File[] files = new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                     calledAET));
             if (files == null || files.length == 0)
                 return;
 
-            if (!forwardSchedules.keySet().contains(calledAET)) {
+            LOG.debug("Processing schedule N-CREATE data ...");
+            if (!forwardOptions.keySet().contains(calledAET)) {
                 // process destinations without forward schedule
                 LOG.debug("No forward schedule for {}, sending existing N-CREATE data now", calledAET);
                 startForwardScheduledMPPS(proxyAEE, files, calledAET, "ncreate");
             } else
-                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
+                for (Entry<String, ForwardOption> entry : forwardOptions.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
                         LOG.debug("Found currently active forward schedule for {}, sending existing N-CREATE data now",
@@ -156,19 +158,20 @@ public class ForwardFiles {
         }
     }
 
-    private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+    private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
         for (String calledAET : proxyAEE.getNactionDirectoryPath().list()) {
             File dir = new File(proxyAEE.getNactionDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
                 return;
-            
-            if (!forwardSchedules.keySet().contains(calledAET)) {
+
+            LOG.debug("Processing schedule N-ACTION data ...");
+            if (!forwardOptions.keySet().contains(calledAET)) {
                 // process destinations without forward schedule
                 LOG.debug("No forward schedule for {}, sending existing N-ACTION data now", calledAET);
                 startForwardScheduledNAction(proxyAEE, calledAET, files);
             } else
-                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
+                for (Entry<String, ForwardOption> entry : forwardOptions.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
                         LOG.debug("Found currently active forward schedule for {}, sending existing N-ACTION data now",
@@ -183,19 +186,20 @@ public class ForwardFiles {
         }
     }
 
-    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardSchedules) {
+    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
         for (String calledAET : proxyAEE.getCStoreDirectoryPath().list()) {
             File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
                 return;
 
-            if (!forwardSchedules.keySet().contains(calledAET)) {
+            LOG.debug("Processing schedule C-STORE data ...");
+            if (!forwardOptions.keySet().contains(calledAET)) {
                 // process destinations without forward schedule
                 LOG.debug("No forward schedule for {}, sending existing C-STORE data now", calledAET);
                 startForwardScheduledCStoreFiles(proxyAEE, calledAET, files);
             } else
-                for (Entry<String, ForwardOption> entry : forwardSchedules.entrySet()) {
+                for (Entry<String, ForwardOption> entry : forwardOptions.entrySet()) {
                     boolean isMatchingAET = calledAET.equals(entry.getKey());
                     if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
                         LOG.debug("Found currently active forward schedule for {}, sending existing C-STORE data now",
@@ -424,7 +428,7 @@ public class ForwardFiles {
                                 prop);
                     }
                 } finally {
-                    if (as != null && as.isReadyForDataTransfer()) {
+                    if (as != null && as.isRequestor()) {
                         try {
                             as.waitForOutstandingRSP();
                             as.release();
@@ -559,7 +563,7 @@ public class ForwardFiles {
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
                     }
                 } finally {
-                    if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
+                    if (asInvoked != null && asInvoked.isRequestor()) {
                         try {
                             asInvoked.waitForOutstandingRSP();
                             asInvoked.release();
@@ -574,23 +578,18 @@ public class ForwardFiles {
                 }
             } catch (InterruptedException e) {
                 LOG.error(e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
             } catch (IncompatibleConnectionException e) {
                 LOG.error(e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, calledAET, prop);
             } catch (ConfigurationException e) {
                 LOG.error(e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, calledAET, prop);
             } catch (IOException e) {
                 LOG.error(e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
             } catch (GeneralSecurityException e) {
                 LOG.error(e.getMessage());
-                LOG.debug(e.getMessage(), e);
                 renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, calledAET, prop);
             }
         }
@@ -723,7 +722,7 @@ public class ForwardFiles {
             handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.GeneralSecurityException.getSuffix(),
                     prop);
         } finally {
-            if (asInvoked != null && asInvoked.isReadyForDataTransfer()) {
+            if (asInvoked != null && asInvoked.isRequestor()) {
                 try {
                     asInvoked.waitForOutstandingRSP();
                     asInvoked.release();
