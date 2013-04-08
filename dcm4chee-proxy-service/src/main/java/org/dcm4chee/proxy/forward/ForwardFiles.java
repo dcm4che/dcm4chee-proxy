@@ -825,8 +825,8 @@ public class ForwardFiles {
             if (file.renameTo(snd))
                 LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
             else {
-                LOG.error("Error renaming {} to {}", prevFilePath, snd.getPath());
-                throw new RuntimeException();
+                LOG.error("Error renaming {} to {}. Skip file for now and try again on next scheduler run.", prevFilePath, snd.getPath());
+                continue;
             }
             try {
                 addFileToFwdTaskMap(proxyAEE, calledAET, snd, map);
