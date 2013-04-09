@@ -40,6 +40,7 @@ package org.dcm4chee.proxy.forward;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
@@ -105,7 +106,7 @@ public class ForwardFiles {
     }
 
     private void processNSet(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
-        for (String calledAET : proxyAEE.getNSetDirectoryPath().list()) {
+        for (String calledAET : proxyAEE.getNSetDirectoryPath().list(dirFilter())) {
             File[] files = new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
                 return;
@@ -131,7 +132,7 @@ public class ForwardFiles {
     }
 
     private void processNCreate(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
-        for (String calledAET : proxyAEE.getNCreateDirectoryPath().list()) {
+        for (String calledAET : proxyAEE.getNCreateDirectoryPath().list(dirFilter())) {
             File[] files = new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                     calledAET));
             if (files == null || files.length == 0)
@@ -159,7 +160,7 @@ public class ForwardFiles {
     }
 
     private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
-        for (String calledAET : proxyAEE.getNactionDirectoryPath().list()) {
+        for (String calledAET : proxyAEE.getNactionDirectoryPath().list(dirFilter())) {
             File dir = new File(proxyAEE.getNactionDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
@@ -187,7 +188,7 @@ public class ForwardFiles {
     }
 
     private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
-        for (String calledAET : proxyAEE.getCStoreDirectoryPath().list()) {
+        for (String calledAET : proxyAEE.getCStoreDirectoryPath().list(dirFilter())) {
             File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
@@ -217,7 +218,7 @@ public class ForwardFiles {
     private FileFilter fileFilter(final ProxyAEExtension proxyAEE, final String calledAET) {
         final long now = System.currentTimeMillis();
         return new FileFilter() {
-
+    
             @Override
             public boolean accept(File file) {
                 String path = file.getPath();
@@ -229,10 +230,10 @@ public class ForwardFiles {
                     else
                         return false;
                 }
-
+    
                 if (path.endsWith(".part") || path.endsWith(".snd") || path.endsWith(".info"))
                     return false;
-
+    
                 try {
                     LOG.debug("get matching retry for file " + file.getPath());
                     String suffix = path.substring(path.lastIndexOf('.'));
@@ -252,7 +253,7 @@ public class ForwardFiles {
                 }
                 return false;
             }
-
+    
             private boolean checkSendFileDelay(final long now, File file, Retry matchingRetry) {
                 boolean sendNow = now > (file.lastModified() + (matchingRetry.delay * 1000));
                 if (sendNow)
@@ -262,6 +263,17 @@ public class ForwardFiles {
                 return sendNow;
             }
         };
+    }
+
+    private FilenameFilter dirFilter() {
+        return new FilenameFilter() {
+            
+            @Override
+            public boolean accept(File dir, String name) {
+                return new File(dir, name).isDirectory();
+            }
+        };
+            
     }
 
     private boolean checkNumberOfRetries(ProxyAEExtension proxyAEE, Retry retry, String suffix, File file,

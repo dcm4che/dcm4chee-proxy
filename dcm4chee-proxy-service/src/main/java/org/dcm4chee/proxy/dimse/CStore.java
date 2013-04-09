@@ -204,14 +204,23 @@ public class CStore extends BasicCStoreSCP {
             IOException {
         LOG.debug("{}: write {}", as, file);
         FileOutputStream fout = new FileOutputStream(file);
-        BufferedOutputStream bout = new BufferedOutputStream(digest == null ? fout : new DigestOutputStream(fout,
-                digest));
+        DigestOutputStream digestOutputStream = new DigestOutputStream(fout, digest);
+        BufferedOutputStream bout = new BufferedOutputStream(digest == null ? fout : digestOutputStream);
         DicomOutputStream out = new DicomOutputStream(bout, UID.ExplicitVRLittleEndian);
         Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
         String tsuid = pc.getTransferSyntax();
         Attributes attrs = data.readDataset(tsuid);
         proxyAEE.coerceDataset(as.getCallingAET(), Role.SCU, Dimse.C_STORE_RQ, attrs, as.getApplicationEntity()
                 .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+        try {
+            out.writeDataset(fmi, attrs);
+            fout.flush();
+            fout.getFD().sync();
+        } finally {
+            out.close();
+            bout.close();
+            digestOutputStream.close();
+        }
         Properties prop = new Properties();
         prop.setProperty("hostname", as.getConnection().getHostname());
         prop.setProperty("patient-id", attrs.contains(Tag.PatientID) ? attrs.getString(Tag.PatientID) : "<NONE>");
@@ -224,13 +233,10 @@ public class CStore extends BasicCStoreSCP {
         File info = new File(path.substring(0, path.length() - 5) + ".info");
         FileOutputStream infoOut = new FileOutputStream(info);
         try {
-            out.writeDataset(fmi, attrs);
             prop.store(infoOut, null);
+            infoOut.flush();
         } finally {
-            SafeClose.close(out);
-            SafeClose.close(bout);
-            SafeClose.close(fout);
-            SafeClose.close(infoOut);
+            infoOut.close();
         }
         return fmi;
     }

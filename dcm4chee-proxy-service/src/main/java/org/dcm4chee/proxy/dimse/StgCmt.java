@@ -490,12 +490,6 @@ public class StgCmt extends DicomService {
             LOG.debug("{}: DELETE {}", as, info);
         else
             LOG.debug("{}: failed to DELETE {}", as, info);
-        File path = new File(file.getParent());
-        if (path.listFiles().length == 0)
-            if (path.delete())
-                LOG.debug("{}: DELETE {}", as, path);
-            else
-                LOG.debug("{}: failed to DELETE {}", as, path);
     }
 
 }
