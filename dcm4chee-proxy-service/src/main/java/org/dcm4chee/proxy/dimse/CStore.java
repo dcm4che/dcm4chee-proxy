@@ -234,7 +234,6 @@ public class CStore extends BasicCStoreSCP {
         FileOutputStream infoOut = new FileOutputStream(info);
         try {
             prop.store(infoOut, null);
-            infoOut.flush();
         } finally {
             infoOut.close();
         }

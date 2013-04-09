@@ -109,7 +109,7 @@ public class ForwardFiles {
         for (String calledAET : proxyAEE.getNSetDirectoryPath().list(dirFilter())) {
             File[] files = new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
-                return;
+                continue;
 
             LOG.debug("Processing schedule N-SET data ...");
             if (!forwardOptions.keySet().contains(calledAET)) {
@@ -136,7 +136,7 @@ public class ForwardFiles {
             File[] files = new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                     calledAET));
             if (files == null || files.length == 0)
-                return;
+                continue;
 
             LOG.debug("Processing schedule N-CREATE data ...");
             if (!forwardOptions.keySet().contains(calledAET)) {
@@ -164,7 +164,7 @@ public class ForwardFiles {
             File dir = new File(proxyAEE.getNactionDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
-                return;
+                continue;
 
             LOG.debug("Processing schedule N-ACTION data ...");
             if (!forwardOptions.keySet().contains(calledAET)) {
@@ -192,7 +192,7 @@ public class ForwardFiles {
             File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
-                return;
+                continue;
 
             LOG.debug("Processing schedule C-STORE data ...");
             if (!forwardOptions.keySet().contains(calledAET)) {
@@ -302,8 +302,6 @@ public class ForwardFiles {
                         prevRetries);
             else {
                 moveToNoRetryPath(proxyAEE, file, reason);
-                moveToNoRetryPath(proxyAEE,
-                        new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info"), reason);
             }
         }
         return send;
@@ -360,7 +358,8 @@ public class ForwardFiles {
         dstDir.mkdirs();
         File dstFile = new File(dstDir, fileName);
         if (file.renameTo(dstFile))
-            LOG.info("rename {} to {} {}", new Object[] { file, dstFile, reason });
+            LOG.info("Rename {} to {} {} and fallback AET is {}",
+                    new Object[] { file, dstFile, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dstFile });
         File infoFile = new File(path.substring(0, path.indexOf('.')) + ".info");
