@@ -87,12 +87,16 @@ import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backaus@agfa.com>
  */
 public class CStore extends BasicCStoreSCP {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(CStore.class);
 
     private ApplicationEntityCache aeCache;
     

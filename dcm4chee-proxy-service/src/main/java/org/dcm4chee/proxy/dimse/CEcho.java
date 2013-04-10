@@ -50,12 +50,16 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCEchoSCP;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class CEcho extends BasicCEchoSCP {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(CEcho.class);
 
     @Override
     public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd,

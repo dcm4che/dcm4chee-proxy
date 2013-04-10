@@ -439,7 +439,7 @@ public class ForwardFiles {
                                 prop);
                     }
                 } finally {
-                    if (as != null && as.isRequestor()) {
+                    if (as != null) {
                         try {
                             as.waitForOutstandingRSP();
                             as.release();
@@ -574,7 +574,7 @@ public class ForwardFiles {
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
                     }
                 } finally {
-                    if (asInvoked != null && asInvoked.isRequestor()) {
+                    if (asInvoked != null) {
                         try {
                             asInvoked.waitForOutstandingRSP();
                             asInvoked.release();
@@ -733,7 +733,7 @@ public class ForwardFiles {
             handleProcessForwardTaskException(proxyAEE, rq, ft, e, RetryObject.GeneralSecurityException.getSuffix(),
                     prop);
         } finally {
-            if (asInvoked != null && asInvoked.isRequestor()) {
+            if (asInvoked != null) {
                 try {
                     asInvoked.waitForOutstandingRSP();
                     asInvoked.release();

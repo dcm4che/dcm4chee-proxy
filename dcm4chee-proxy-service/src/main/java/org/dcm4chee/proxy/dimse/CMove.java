@@ -56,11 +56,15 @@ import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.pix.PIXConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class CMove extends DicomService {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(CMove.class);
 
     private PIXConsumer pixConsumer;
     private ApplicationEntityCache aeCache;

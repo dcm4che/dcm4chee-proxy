@@ -76,12 +76,16 @@ import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
 public class StgCmt extends DicomService {
-    
+
+    protected static final Logger LOG = LoggerFactory.getLogger(StgCmt.class);
+
     private ApplicationEntityCache aeCache;
 
     public StgCmt(ApplicationEntityCache aeCache) {
