@@ -234,6 +234,8 @@ public class CStore extends BasicCStoreSCP {
         FileOutputStream infoOut = new FileOutputStream(info);
         try {
             prop.store(infoOut, null);
+            infoOut.flush();
+            infoOut.getFD().sync();
         } finally {
             infoOut.close();
         }
@@ -498,24 +500,39 @@ public class CStore extends BasicCStoreSCP {
             String suffix) throws IOException {
         FileChannel source = null;
         FileChannel destination = null;
+        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+        dir.mkdir();
+        File dst = new File(dir, file.getName().substring(0, file.getName().lastIndexOf('.')).concat(suffix));
+        LOG.debug("{}: copy {} to {}", new Object[] { as, file.getPath(), dst.getPath() });
+        FileInputStream in = new FileInputStream(file);
+        source = in.getChannel();
+        FileOutputStream out = new FileOutputStream(dst);
+        destination = out.getChannel();
         try {
-            File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
-            dir.mkdir();
-            File dst = new File(dir, file.getName().substring(0, file.getName().lastIndexOf('.')).concat(suffix));
-            LOG.debug("{}: copy {} to {}", new Object[] { as, file.getPath(), dst.getPath() });
-            source = new FileInputStream(file).getChannel();
-            destination = new FileOutputStream(dst).getChannel();
             destination.transferFrom(source, 0, source.size());
-            File infoFile = new File(proxyAEE.getCStoreDirectoryPath(), file.getName().substring(0,
-                    file.getName().indexOf('.')) + ".info");
-            File infoDst = new File(dir, infoFile.getName());
-            LOG.debug("{}: copy {} to {}", new Object[] { as, infoFile.getPath(), infoDst.getPath() });
-            source = new FileInputStream(infoFile).getChannel();
-            destination = new FileOutputStream(infoDst).getChannel();
-            destination.transferFrom(source, 0, source.size());
+            out.flush();
+            out.getFD().sync();
         } finally {
-            SafeClose.close(source);
-            SafeClose.close(destination);
+            destination.close();
+            out.close();
+            in.close();
+        }
+        File infoFile = new File(proxyAEE.getCStoreDirectoryPath(), file.getName().substring(0,
+                file.getName().indexOf('.')) + ".info");
+        File infoDst = new File(dir, infoFile.getName());
+        LOG.debug("{}: copy {} to {}", new Object[] { as, infoFile.getPath(), infoDst.getPath() });
+        FileInputStream infoIn = new FileInputStream(infoFile);
+        source = infoIn.getChannel();
+        FileOutputStream infoOut = new FileOutputStream(infoDst);
+        destination = infoOut.getChannel();
+        try {
+            destination.transferFrom(source, 0, source.size());
+            infoOut.flush();
+            infoOut.getFD().sync();
+        } finally {
+            destination.close();
+            infoOut.close();
+            infoIn.close();
         }
     }
 
