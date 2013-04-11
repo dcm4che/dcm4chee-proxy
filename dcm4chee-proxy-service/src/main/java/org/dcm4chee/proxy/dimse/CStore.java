@@ -214,8 +214,8 @@ public class CStore extends BasicCStoreSCP {
         Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
         String tsuid = pc.getTransferSyntax();
         Attributes attrs = data.readDataset(tsuid);
-        proxyAEE.coerceDataset(as.getCallingAET(), Role.SCU, Dimse.C_STORE_RQ, attrs, as.getApplicationEntity()
-                .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+        proxyAEE.coerceDataset(as, Role.SCU, Dimse.C_STORE_RQ, attrs, as.getApplicationEntity().getDevice()
+                .getDeviceExtension(ProxyDeviceExtension.class));
         try {
             out.writeDataset(fmi, attrs);
             fout.flush();
@@ -403,7 +403,7 @@ public class CStore extends BasicCStoreSCP {
             return;
         }
         Attributes attrs = parseWithPixelData(asAccepted, dataFile);
-        proxyAEE.coerceDataset(asInvoked.getCalledAET(), Role.SCP, Dimse.C_STORE_RQ, attrs, asInvoked
+        proxyAEE.coerceDataset(asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, asInvoked
                 .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         File logFile = null;
         try {

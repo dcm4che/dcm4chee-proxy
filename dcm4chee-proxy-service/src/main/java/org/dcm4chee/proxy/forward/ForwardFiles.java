@@ -944,7 +944,7 @@ public class ForwardFiles {
         AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getCalledAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
         if (ac != null) {
             Attributes attrs = in.readDataset(-1, -1);
-            proxyAEE.coerceAttributes(attrs, ac,
+            proxyAEE.coerceAttributes(as, attrs, ac,
                     as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
             return new DataWriterAdapter(attrs);
         }

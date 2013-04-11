@@ -159,7 +159,7 @@ public class ForwardDimseRQ {
                     if (data != null) {
                         if (dimse == Dimse.C_FIND_RQ)
                             proxyAEE.coerceDataset(
-                                    asAccepted.getCallingAET(),
+                                    asAccepted,
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
                                     data,
@@ -167,7 +167,7 @@ public class ForwardDimseRQ {
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                         else if (dimse == Dimse.C_GET_RQ)
                             proxyAEE.coerceDataset(
-                                    asAccepted.getCallingAET(),
+                                    asAccepted,
                                     Role.SCU,
                                     Dimse.C_GET_RSP,
                                     data,
@@ -175,7 +175,7 @@ public class ForwardDimseRQ {
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                         else if (dimse == Dimse.C_MOVE_RQ)
                             proxyAEE.coerceDataset(
-                                    asAccepted.getCallingAET(),
+                                    asAccepted,
                                     Role.SCU,
                                     Dimse.C_MOVE_RSP,
                                     data,
@@ -287,9 +287,10 @@ public class ForwardDimseRQ {
         }
     }
 
-    private void coerceAndForward(ProxyAEExtension pae, Association fwdAssoc) throws IOException, InterruptedException {
-        pae.coerceDataset(fwdAssoc.getCalledAET(), Role.SCP, dimse, data, asAccepted.getApplicationEntity().getDevice()
-                .getDeviceExtension(ProxyDeviceExtension.class));
+    private void coerceAndForward(ProxyAEExtension pae, Association fwdAssoc) throws IOException,
+            InterruptedException {
+        pae.coerceDataset(fwdAssoc, Role.SCP, dimse, data, asAccepted.getApplicationEntity()
+                .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         forwardDimseRQ(fwdAssoc);
     }
 

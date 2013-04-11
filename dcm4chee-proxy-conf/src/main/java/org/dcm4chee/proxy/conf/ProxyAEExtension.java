@@ -475,14 +475,25 @@ public class ProxyAEExtension extends AEExtension {
         return returnList;
     }
 
-    public void coerceDataset(String remoteAET, Role role, Dimse dimse, Attributes attrs,
-            ProxyDeviceExtension proxyDevExt) throws IOException {
-        AttributeCoercion ac = getAttributeCoercion(remoteAET, attrs.getString(dimse.tagOfSOPClassUID()), role, dimse);
+    public void coerceDataset(Association as, Role role, Dimse dimse, Attributes attrs, ProxyDeviceExtension proxyDevExt)
+            throws IOException {
+        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), attrs.getString(dimse.tagOfSOPClassUID()), role,
+                dimse);
         if (ac != null)
-            coerceAttributes(attrs, ac, proxyDevExt);
+            coerceAttributes(as, attrs, ac, proxyDevExt);
     }
 
-    public void coerceAttributes(Attributes attrs, AttributeCoercion ac, ProxyDeviceExtension proxyDevExt) {
+    public void coerceAttributes(Association as, Attributes attrs, AttributeCoercion ac,
+            ProxyDeviceExtension proxyDevExt) {
+        LOG.debug("{}: apply attribute coercion {} (dimse={}, role={}{}{})",
+                new Object[] { 
+                    as, 
+                    ac.getURI(), 
+                    ac.getDimse(), 
+                    ac.getRole(), 
+                    ac.getAETitle() == null ? "" : ", aet=" + ac.getAETitle(),
+                    ac.getSopClass() == null ? "" : ", sopClass=" + ac.getSopClass()
+        });
         Attributes modify = new Attributes();
         try {
             SAXWriter w = SAXTransformer.getSAXWriter(proxyDevExt.getTemplates(ac.getURI()), modify);
