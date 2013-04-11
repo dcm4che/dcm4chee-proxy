@@ -333,7 +333,7 @@ public class CStore extends BasicCStoreSCP {
         String fileName = file.getName();
         File dst = new File(dir, fileName.substring(0, fileName.lastIndexOf('.')).concat(
                 (String) asAccepted.getProperty(ProxyAEExtension.FILE_SUFFIX)));
-        LOG.info("{}: rename {} to {}", new Object[]{asAccepted, file.getPath(), dst.getPath()});
+        LOG.debug("{}: rename {} to {}", new Object[]{asAccepted, file.getPath(), dst.getPath()});
         if (file.renameTo(dst)) {
             File infoFile = new File(proxyAEE.getCStoreDirectoryPath(), file.getName().substring(0,
                     file.getName().indexOf('.')) + ".info");
@@ -496,7 +496,7 @@ public class CStore extends BasicCStoreSCP {
             }
         }
         if (log)
-            LOG.info("{}: extracted {} frames from {} in {}sec",
+            LOG.info("{}: extracted {} frames from multi-frame object {} in {}sec",
                     new Object[] { asAccepted, n, src.getString(Tag.SOPInstanceUID), t / 1000F });
     }
 

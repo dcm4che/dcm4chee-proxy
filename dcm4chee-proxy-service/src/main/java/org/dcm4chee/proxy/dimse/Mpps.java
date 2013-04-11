@@ -274,7 +274,7 @@ public class Mpps extends DicomService {
         File info = new File(path.substring(0, path.length() - 5) + ".info");
         FileOutputStream infoOut = new FileOutputStream(info);
         try {
-            LOG.info("{}: create {}", new Object[] { as, file });
+            LOG.debug("{}: create {}", new Object[] { as, file });
             out = new DicomOutputStream(file);
             out.writeDataset(fmi, data);
             LOG.debug("{}: create {}", as, info.getPath());
@@ -298,7 +298,7 @@ public class Mpps extends DicomService {
                 (String) as.getProperty(ProxyAEExtension.FILE_SUFFIX)));
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
-            LOG.info("{}: RENAME {} to {}", new Object[] { as, file, dst });
+            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file, dst });
             return dst;
         } else {
             LOG.warn("{}: failed to RENAME {} to {}", new Object[] { as, file, dst });

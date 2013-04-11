@@ -174,11 +174,12 @@ public class AuditLog {
             try {
                 switch (auditDir) {
                 case TRANSFERRED:
-                    writeSentServerLogMessage(log, mb, time, studyIUID, callingAET, calledAET);
+                    writeTransferredServerLogMessage(log, mb, time, studyIUID, callingAET, calledAET);
                     msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
                             EventID.DICOMInstancesTransferred, EventActionCode.Read, EventOutcomeIndicator.Success);
                     break;
                 case DELETED:
+                    writeDeleteServerLogMessage(log, studyIUID, studyIUIDDir.getPath());
                     msg = createAuditMessage(log, studyIUID, ae.getAETitle(), ae.getConnections().get(0).getHostname(),
                             callingAET, timeStamp, EventID.DICOMInstancesAccessed, EventActionCode.Delete,
                             EventOutcomeIndicator.Success);
@@ -237,16 +238,19 @@ public class AuditLog {
             log.files = logFiles.length;
             for (File file : logFiles)
                 readProperties(file, log);
-            String path = retryDir.getPath();
-            String studyIUID = path.substring(path.lastIndexOf(separator) + 1);
-            path = path.substring(0, path.lastIndexOf(separator));
-            String callingAET = path.substring(path.lastIndexOf(separator) + 1);
-            path = path.substring(0, path.lastIndexOf(separator));
-            String calledAET = path.substring(path.lastIndexOf(separator) + 1);
+            String retryPath = retryDir.getPath();
+            String numRetry = retryPath.substring(retryPath.lastIndexOf(separator) + 1);
+            String studyPath = studyIUIDDir.getPath();
+            String studyIUID = studyPath.substring(studyPath.lastIndexOf(separator) + 1);
+            String callingAETPath = studyPath.substring(0, studyPath.lastIndexOf(separator));
+            String callingAET = callingAETPath.substring(callingAETPath.lastIndexOf(separator) + 1);
+            String calledAETPath = callingAETPath.substring(0, callingAETPath.lastIndexOf(separator));
+            String calledAET = calledAETPath.substring(calledAETPath.lastIndexOf(separator) + 1);
             Calendar timeStamp = new GregorianCalendar();
             timeStamp.setTimeInMillis(log.t2);
             AuditMessage msg = createAuditMessage(log, studyIUID, calledAET, log.hostname, callingAET, timeStamp,
                     EventID.DICOMInstancesTransferred, EventActionCode.Read, EventOutcomeIndicator.SeriousFailure);
+            writeFailedServerLogMessage(log, studyIUID, callingAET, calledAET, numRetry);
             try {
                 if (LOG.isDebugEnabled())
                     LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
@@ -327,7 +331,7 @@ public class AuditLog {
         return msg;
     }
 
-    private void writeSentServerLogMessage(Log log, float mb, float time, String studyIUID, String callingAET,
+    private void writeTransferredServerLogMessage(Log log, float mb, float time, String studyIUID, String callingAET,
             String calledAET) {
         LOG.info("Sent {} {} (={}MB) of study {} with SOPClassUIDs {} from {} to {} in {}s (={}MB/s)",
                 new Object[] {  log.files - 1, 
@@ -339,6 +343,27 @@ public class AuditLog {
                 calledAET, 
                 time,
                 (log.totalSize / 1048576F) / time });
+    }
+
+    private void writeDeleteServerLogMessage(Log log, String studyIUID, String path) {
+        LOG.info("Deleted {} {} of study {} with SOPClassUIDs {} from {}",new Object[] {
+                log.files - 1,
+                ((log.files - 1) > 1) ? "objects" : "object",
+                studyIUID,
+                Arrays.toString(log.sopclassuid.toArray()),
+                path });
+    }
+
+    private void writeFailedServerLogMessage(Log log, String studyIUID, String callingAET, String calledAET, String numRetry) {
+        LOG.info("Failed to send {} {} of study {} with SOPClassUIDs {} from {} to {} (Retry {})", new Object[]{
+                log.files - 1, 
+                ((log.files - 1) > 1) ? "objects" : "object",
+                studyIUID,
+                Arrays.toString(log.sopclassuid.toArray()),
+                callingAET,
+                calledAET,
+                numRetry
+        });
     }
 
     private void readProperties(File file, Log log) {

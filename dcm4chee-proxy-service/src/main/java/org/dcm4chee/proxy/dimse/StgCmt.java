@@ -399,7 +399,7 @@ public class StgCmt extends DicomService {
                             + ".naction");
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
-                        LOG.info("{}: RENAME {} to {}", new Object[] { asAccepted, file.getPath(), dest.getPath() });
+                        LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted, file.getPath(), dest.getPath() });
                         File infoFile = new File(filePath.substring(0, filePath.indexOf('.'))  + ".info");
                         File infoFileDest = new File(destDir, infoFile.getName());
                         if (infoFile.renameTo(infoFileDest))
@@ -466,7 +466,7 @@ public class StgCmt extends DicomService {
             String tsuid = UID.ExplicitVRLittleEndian;
             Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
             fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, asAccepted.getCallingAET());
-            LOG.info("{}: create {}", asAccepted, file.getPath());
+            LOG.debug("{}: create {}", asAccepted, file.getPath());
             stream.writeDataset(fmi, data);
             LOG.debug("{}: create {}", asAccepted, info.getPath());
             prop.store(infoOut, null);
