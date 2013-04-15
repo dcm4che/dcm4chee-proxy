@@ -111,8 +111,12 @@ public class ForwardDimseRQ {
         final int msgId = rq.getInt(Tag.MessageID, 0);
         int rspMsgId = msgId;
         if (dimse == Dimse.C_MOVE_RQ) {
-            CMoveInfoObject infoObject = new CMoveInfoObject(asAccepted.getRemoteAET(),
-                    rq.getString(Tag.MoveDestination), asInvoked.getRemoteAET(), rq.getInt(Tag.MessageID, 0),
+            CMoveInfoObject infoObject = new CMoveInfoObject(
+                    asAccepted.getRemoteAET(),
+                    rq.getString(Tag.MoveDestination), 
+                    asInvoked.getCalledAET(), 
+                    asInvoked.getCallingAET(),
+                    rq.getInt(Tag.MessageID, 0),
                     (ForwardRule) asInvoked.getProperty(ForwardRule.class.getName()));
             int newMsgId = proxyAEE.getNewCMoveMessageID(infoObject);
             if (newMsgId == -1) {
@@ -210,7 +214,7 @@ public class ForwardDimseRQ {
                 asInvoked.cget(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
                 break;
             case C_MOVE_RQ:
-                asInvoked.cmove(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, ae.getAETitle(),
+                asInvoked.cmove(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, getMoveDestination(proxyAEE),
                         rspHandler);
                 break;
             default:
@@ -223,6 +227,12 @@ public class ForwardDimseRQ {
             if (waitForOutstandingRSP.getCount() == 0)
                 sendFinalDimseRSP();
         }
+    }
+
+    private String getMoveDestination(ProxyAEExtension proxyAEE) {
+        return proxyAEE.getApplicationEntity().getAETitle().equals("*")
+                ? rq.getString(Tag.MoveDestination)
+                : proxyAEE.getApplicationEntity().getAETitle();
     }
 
     private void sendFinalDimseRSP() {

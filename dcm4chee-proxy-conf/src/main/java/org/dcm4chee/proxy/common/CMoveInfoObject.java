@@ -48,14 +48,16 @@ public class CMoveInfoObject {
     private String moveOriginatorAET;
     private String moveDestinationAET;
     private String calledAET;
+    private String callingAET;
     private int sourceMsgId;
     private ForwardRule rule;
 
-    public CMoveInfoObject(String moveOriginatorAET, String moveDestinationAET, String calledAET, int sourceMsgId,
-            ForwardRule rule) {
+    public CMoveInfoObject(String moveOriginatorAET, String moveDestinationAET, String calledAET, String callingAET,
+            int sourceMsgId, ForwardRule rule) {
         this.moveOriginatorAET = moveOriginatorAET;
         this.moveDestinationAET = moveDestinationAET;
         this.calledAET = calledAET;
+        this.callingAET = callingAET;
         this.sourceMsgId = sourceMsgId;
         this.rule = rule;
     }
@@ -82,6 +84,14 @@ public class CMoveInfoObject {
 
     public void setCalledAET(String calledAET) {
         this.calledAET = calledAET;
+    }
+
+    public String getCallingAET() {
+        return callingAET;
+    }
+
+    public void setCallingAET(String callingAET) {
+        this.callingAET = callingAET;
     }
 
     public int getSourceMsgId() {

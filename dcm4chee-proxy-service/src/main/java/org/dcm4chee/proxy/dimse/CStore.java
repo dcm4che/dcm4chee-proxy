@@ -180,10 +180,10 @@ public class CStore extends BasicCStoreSCP {
     private Association getCMoveDestinationAS(ProxyAEExtension proxyAEE, Association asAccepted, Attributes cmd)
             throws DicomServiceException {
         int moveOriMsgId = cmd.getInt(Tag.MoveOriginatorMessageID, 0);
-        String moveOriAET = cmd.getString(Tag.MoveOriginatorApplicationEntityTitle);
+        String originatorCallingAET = cmd.getString(Tag.MoveOriginatorApplicationEntityTitle);
         CMoveInfoObject cmoveInfoObject = proxyAEE.getCMoveInfoObject(moveOriMsgId);
         if (cmoveInfoObject == null 
-                || !cmoveInfoObject.getMoveOriginatorAET().equals(moveOriAET)
+                || !cmoveInfoObject.getCallingAET().equals(originatorCallingAET)
                 || !cmoveInfoObject.getCalledAET().equals(asAccepted.getRemoteAET()))
             return null;
 
@@ -196,6 +196,7 @@ public class CStore extends BasicCStoreSCP {
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_CMOVE_INFO, cmoveInfoObject);
             asAccepted.setProperty(ForwardRule.class.getName(), rule);
+            proxyAEE.removeCMoveInfoObject(moveOriMsgId);
             return asInvoked;
         } catch (Exception e) {
             LOG.error("Unable to connect to {}: {}", cmoveInfoObject.getMoveDestinationAET(), e.getMessage());
