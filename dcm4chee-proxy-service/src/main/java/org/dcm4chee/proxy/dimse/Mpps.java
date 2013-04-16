@@ -325,7 +325,7 @@ public class Mpps extends DicomService {
                 }
             }
         };
-        asInvoked.ncreate(cuid, iuid, data, tsuid, rspHandler);
+        asInvoked.ncreate(cuid, iuid, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 
     private void onNSetRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
@@ -365,6 +365,6 @@ public class Mpps extends DicomService {
                 }
             }
         };
-        asInvoked.nset(cuid, iuid, data, tsuid, rspHandler);
+        asInvoked.nset(cuid, iuid, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 }

@@ -40,6 +40,7 @@ package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
@@ -206,16 +207,19 @@ public class ForwardDimseRQ {
             }
         });
         try {
+            String cuid = rq.getString(dimse.tagOfSOPClassUID());
             switch (dimse) {
             case C_FIND_RQ:
-                asInvoked.cfind(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
+                asInvoked.cfind(cuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                        rspHandler);
                 break;
             case C_GET_RQ:
-                asInvoked.cget(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, rspHandler);
+                asInvoked.cget(cuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                        rspHandler);
                 break;
             case C_MOVE_RQ:
-                asInvoked.cmove(rq.getString(dimse.tagOfSOPClassUID()), priority, data, tsuid, getMoveDestination(proxyAEE),
-                        rspHandler);
+                asInvoked.cmove(cuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                        getMoveDestination(proxyAEE), rspHandler);
                 break;
             default:
                 throw new DicomServiceException(Status.UnrecognizedOperation);

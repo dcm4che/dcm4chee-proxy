@@ -370,7 +370,8 @@ public class StgCmt extends DicomService {
                 }
             }
         };
-        asInvoked.neventReport(cuid, iuid, eventTypeId, data, tsuid, rspHandler);
+        asInvoked.neventReport(cuid, iuid, eventTypeId, data,
+                ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 
     private void onNActionRQ(final Association asAccepted, Association asInvoked, final PresentationContext pc,
@@ -440,7 +441,8 @@ public class StgCmt extends DicomService {
                 }
             }
         };
-        asInvoked.naction(cuid, iuid, actionTypeId, data, tsuid, rspHandler);
+        asInvoked.naction(cuid, iuid, actionTypeId, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                rspHandler);
     }
 
     protected File createTransactionUidFile(ProxyAEExtension proxyAE, Association asAccepted, Attributes rq,

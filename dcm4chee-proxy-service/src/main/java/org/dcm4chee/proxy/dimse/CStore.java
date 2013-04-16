@@ -609,9 +609,10 @@ public class CStore extends BasicCStoreSCP {
         };
 
         if (info != null)
-            asInvoked.cstore(cuid, iuid, priority, info.getMoveOriginatorAET(), info.getSourceMsgId(), data, tsuid,
-                    rspHandler);
+            asInvoked.cstore(cuid, iuid, priority, info.getMoveOriginatorAET(), info.getSourceMsgId(), data,
+                    ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
         else
-            asInvoked.cstore(cuid, iuid, priority, data, tsuid, rspHandler);
+            asInvoked.cstore(cuid, iuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                    rspHandler);
     }
 }

@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerFactory;
@@ -580,7 +581,7 @@ public class ProxyAEExtension extends AEExtension {
             for (String calledAET : destinationAETs) {
                 try {
                     Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
-                            asAccepted.getAAssociateRQ(), aeCache);
+                            copyOf(asAccepted.getAAssociateRQ()), aeCache);
                     if (asInvoked != null)
                         fwdAssocs.put(calledAET, asInvoked);
                 } catch (IncompatibleConnectionException e) {
@@ -675,6 +676,12 @@ public class ProxyAEExtension extends AEExtension {
         for (CommonExtendedNegotiation cen : rq.getCommonExtendedNegotiations())
             copy.addCommonExtendedNegotiation(cen);
         return copy;
+    }
+
+
+    public static String getMatchingTsuid(Association asInvoked, String tsuid, String cuid) {
+        Set<String> tsuids = asInvoked.getTransferSyntaxesFor(cuid);
+        return tsuids.contains(tsuid) ? tsuid : tsuids.iterator().next();
     }
 
 }
