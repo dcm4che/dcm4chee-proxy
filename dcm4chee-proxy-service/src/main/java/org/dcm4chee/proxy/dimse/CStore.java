@@ -228,7 +228,8 @@ public class CStore extends BasicCStoreSCP {
         }
         Properties prop = new Properties();
         prop.setProperty("hostname", as.getConnection().getHostname());
-        prop.setProperty("patient-id", attrs.contains(Tag.PatientID) ? attrs.getString(Tag.PatientID) : "<NONE>");
+        String patID = attrs.getString(Tag.PatientID);
+        prop.setProperty("patient-id", (patID == null || patID.length() == 0) ? "<UNKNOWN>" : patID);
         prop.setProperty("study-iuid", attrs.getString(Tag.StudyInstanceUID));
         prop.setProperty("sop-instance-uid", attrs.getString(Tag.SOPInstanceUID));
         prop.setProperty("sop-class-uid", attrs.getString(Tag.SOPClassUID));
