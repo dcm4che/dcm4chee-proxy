@@ -478,16 +478,17 @@ public class ProxyAEExtension extends AEExtension {
         return returnList;
     }
 
-    public void coerceDataset(Association as, Role role, Dimse dimse, Attributes attrs, Attributes cmd,
+    public Attributes coerceDataset(Association as, Role role, Dimse dimse, Attributes attrs, Attributes cmd,
             ProxyDeviceExtension proxyDevExt) throws IOException {
-        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), cmd.getString(dimse.tagOfSOPClassUID()), role,
-                dimse);
-        if (ac != null)
-            coerceAttributes(as, attrs, ac, proxyDevExt);
+        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), cmd.getString(dimse.tagOfSOPClassUID()), role, dimse);
+        return (ac != null)
+            ? coerceAttributes(as, attrs, ac, proxyDevExt)
+            : attrs;
     }
 
-    public void coerceAttributes(Association as, Attributes attrs, AttributeCoercion ac,
+    public Attributes coerceAttributes(Association as, Attributes attrs, AttributeCoercion ac,
             ProxyDeviceExtension proxyDevExt) {
+        Attributes tmp = new Attributes(attrs);
         LOG.debug("{}: apply attribute coercion {} (dimse={}, role={}{}{})",
                 new Object[] { 
                     as, 
@@ -501,14 +502,15 @@ public class ProxyAEExtension extends AEExtension {
         try {
             SAXWriter w = SAXTransformer.getSAXWriter(proxyDevExt.getTemplates(ac.getURI()), modify);
             w.setIncludeKeyword(false);
-            w.write(attrs);
+            w.write(tmp);
         } catch (Exception e) {
             new IOException(e);
         }
         if (LOG.isDebugEnabled())
             LOG.debug("{}: attribute coercion result:{}{}",
                     new Object[] { as, newline, modify.toString(Integer.MAX_VALUE, 200) });
-        attrs.addAll(modify);
+        tmp.addAll(modify);
+        return tmp;
     }
 
     public void createStartLogFile(AuditDirectory auditDir, String callingAET, String calledAET, String proxyHostname, 

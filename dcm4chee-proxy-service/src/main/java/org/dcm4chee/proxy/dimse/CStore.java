@@ -215,7 +215,7 @@ public class CStore extends BasicCStoreSCP {
         Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
         String tsuid = pc.getTransferSyntax();
         Attributes attrs = data.readDataset(tsuid);
-        proxyAEE.coerceDataset(as, Role.SCU, Dimse.C_STORE_RQ, attrs, rq, as.getApplicationEntity().getDevice()
+        attrs = proxyAEE.coerceDataset(as, Role.SCU, Dimse.C_STORE_RQ, attrs, rq, as.getApplicationEntity().getDevice()
                 .getDeviceExtension(ProxyDeviceExtension.class));
         try {
             out.writeDataset(fmi, attrs);
@@ -404,8 +404,8 @@ public class CStore extends BasicCStoreSCP {
             processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, dataFile, fmi);
             return;
         }
-        Attributes attrs = parseWithPixelData(asAccepted, dataFile);
-        proxyAEE.coerceDataset(asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, rq, asInvoked
+        Attributes attrs = parseWithLazyPixelData(asAccepted, dataFile);
+        attrs = proxyAEE.coerceDataset(asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, rq, asInvoked
                 .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         File logFile = null;
         try {
@@ -426,12 +426,12 @@ public class CStore extends BasicCStoreSCP {
         }
     }
 
-    public Attributes parseWithPixelData(Association as, File file)
+    public Attributes parseWithLazyPixelData(Association as, File file)
             throws DicomServiceException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
-            in.setIncludeBulkData(IncludeBulkData.YES);
+            in.setIncludeBulkData(IncludeBulkData.LOCATOR);
             return in.readDataset(-1, -1);
         } catch (IOException e) {
             LOG.warn(as + ": Failed to decode dataset:", e);

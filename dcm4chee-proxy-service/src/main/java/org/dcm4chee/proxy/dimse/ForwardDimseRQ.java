@@ -104,7 +104,8 @@ public class ForwardDimseRQ {
         waitForOutstandingRSP = new CountDownLatch(fwdAssocs.length);
     }
 
-    private void forwardDimseRQ(final Association asInvoked) throws IOException, InterruptedException {
+    private void forwardDimseRQ(final Association asInvoked, Attributes coercedData) throws IOException,
+            InterruptedException {
         String tsuid = pc.getTransferSyntax();
         int priority = rq.getInt(Tag.Priority, 0);
         ApplicationEntity ae = asAccepted.getApplicationEntity();
@@ -132,13 +133,13 @@ public class ForwardDimseRQ {
         final DimseRSPHandler rspHandler = new DimseRSPHandler(rspMsgId) {
 
             @Override
-            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
-                super.onDimseRSP(asInvoked, cmd, data);
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes rspData) {
+                super.onDimseRSP(asInvoked, cmd, rspData);
                 if (adjustPatientID || dimse == Dimse.C_MOVE_RQ)
                     cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                 int rspStatus = cmd.getInt(Tag.Status, -1);
                 if (Status.isPending(rspStatus))
-                    writeDimseRSP(pc, cmd, data);
+                    writeDimseRSP(pc, cmd, rspData);
                 else {
                     if (status != Status.Success)
                         status = rspStatus;
@@ -154,20 +155,20 @@ public class ForwardDimseRQ {
                 }
             }
 
-            private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes data) {
+            private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes rspData) {
                 try {
                     if (adjustPatientID) {
-                        data.setString(Tag.PatientID, VR.LO, requestedPatientIDWithIssuer.id);
-                        data.setString(Tag.IssuerOfPatientID, VR.LO,
+                        rspData.setString(Tag.PatientID, VR.LO, requestedPatientIDWithIssuer.id);
+                        rspData.setString(Tag.IssuerOfPatientID, VR.LO,
                                 requestedPatientIDWithIssuer.issuer.getLocalNamespaceEntityID());
                     }
-                    if (data != null) {
+                    if (rspData != null) {
                         if (dimse == Dimse.C_FIND_RQ)
                             proxyAEE.coerceDataset(
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
-                                    data,
+                                    rspData,
                                     rq,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
@@ -176,7 +177,7 @@ public class ForwardDimseRQ {
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_GET_RSP,
-                                    data,
+                                    rspData,
                                     rq,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
@@ -185,12 +186,12 @@ public class ForwardDimseRQ {
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_MOVE_RSP,
-                                    data,
+                                    rspData,
                                     rq,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                     }
-                    asAccepted.writeDimseRSP(pc, cmd, data);
+                    asAccepted.writeDimseRSP(pc, cmd, rspData);
                 } catch (IOException e) {
                     LOG.error(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
                     LOG.debug(e.getMessage(), e);
@@ -213,15 +214,15 @@ public class ForwardDimseRQ {
             String cuid = rq.getString(dimse.tagOfSOPClassUID());
             switch (dimse) {
             case C_FIND_RQ:
-                asInvoked.cfind(cuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                asInvoked.cfind(cuid, priority, coercedData, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
                         rspHandler);
                 break;
             case C_GET_RQ:
-                asInvoked.cget(cuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                asInvoked.cget(cuid, priority, coercedData, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
                         rspHandler);
                 break;
             case C_MOVE_RQ:
-                asInvoked.cmove(cuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                asInvoked.cmove(cuid, priority, coercedData, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
                         getMoveDestination(proxyAEE), rspHandler);
                 break;
             default:
@@ -310,11 +311,10 @@ public class ForwardDimseRQ {
         }
     }
 
-    private void coerceAndForward(ProxyAEExtension pae, Association fwdAssoc) throws IOException,
-            InterruptedException {
-        pae.coerceDataset(fwdAssoc, Role.SCP, dimse, data, rq, asAccepted.getApplicationEntity()
-                .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
-        forwardDimseRQ(fwdAssoc);
+    private void coerceAndForward(ProxyAEExtension pae, Association fwdAssoc) throws IOException, InterruptedException {
+        Attributes coercedData = new Attributes(pae.coerceDataset(fwdAssoc, Role.SCP, dimse, data, rq, asAccepted
+                .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)));
+        forwardDimseRQ(fwdAssoc, coercedData);
     }
 
     private IDWithIssuer[] processPatientIDs(ProxyAEExtension pae, List<ForwardRule> fwdRules, Association fwdAssoc) {

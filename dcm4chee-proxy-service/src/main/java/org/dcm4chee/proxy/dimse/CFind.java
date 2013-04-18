@@ -84,7 +84,7 @@ public class CFind extends DicomService {
 
         ApplicationEntity ae = asAccepted.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        proxyAEE.coerceDataset(asAccepted, Role.SCU, Dimse.C_FIND_RQ, data, rq, asAccepted.getApplicationEntity()
+        data = proxyAEE.coerceDataset(asAccepted, Role.SCU, Dimse.C_FIND_RQ, data, rq, asAccepted.getApplicationEntity()
                 .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
