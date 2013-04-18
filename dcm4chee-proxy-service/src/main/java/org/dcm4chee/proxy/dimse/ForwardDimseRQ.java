@@ -40,7 +40,6 @@ package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
@@ -168,6 +167,7 @@ public class ForwardDimseRQ {
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
                                     data,
+                                    rq,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                         else if (dimse == Dimse.C_GET_RQ)
@@ -176,6 +176,7 @@ public class ForwardDimseRQ {
                                     Role.SCU,
                                     Dimse.C_GET_RSP,
                                     data,
+                                    rq,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                         else if (dimse == Dimse.C_MOVE_RQ)
@@ -184,6 +185,7 @@ public class ForwardDimseRQ {
                                     Role.SCU,
                                     Dimse.C_MOVE_RSP,
                                     data,
+                                    rq,
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                     }
@@ -303,7 +305,7 @@ public class ForwardDimseRQ {
 
     private void coerceAndForward(ProxyAEExtension pae, Association fwdAssoc) throws IOException,
             InterruptedException {
-        pae.coerceDataset(fwdAssoc, Role.SCP, dimse, data, asAccepted.getApplicationEntity()
+        pae.coerceDataset(fwdAssoc, Role.SCP, dimse, data, rq, asAccepted.getApplicationEntity()
                 .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         forwardDimseRQ(fwdAssoc);
     }

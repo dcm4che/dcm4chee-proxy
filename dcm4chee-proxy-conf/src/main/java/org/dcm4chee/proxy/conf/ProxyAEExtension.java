@@ -96,6 +96,7 @@ public class ProxyAEExtension extends AEExtension {
 
     private static final long serialVersionUID = -3552156927326582473L;
     private static final String separator = System.getProperty("file.separator");
+    public static final String newline = System.getProperty("line.separator");
     private static final String jbossServerDataDir = System.getProperty("jboss.server.data.dir");
     private static final String currentWorkingDir = System.getProperty("user.dir");
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
@@ -476,9 +477,9 @@ public class ProxyAEExtension extends AEExtension {
         return returnList;
     }
 
-    public void coerceDataset(Association as, Role role, Dimse dimse, Attributes attrs, ProxyDeviceExtension proxyDevExt)
-            throws IOException {
-        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), attrs.getString(dimse.tagOfSOPClassUID()), role,
+    public void coerceDataset(Association as, Role role, Dimse dimse, Attributes attrs, Attributes cmd,
+            ProxyDeviceExtension proxyDevExt) throws IOException {
+        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), cmd.getString(dimse.tagOfSOPClassUID()), role,
                 dimse);
         if (ac != null)
             coerceAttributes(as, attrs, ac, proxyDevExt);
@@ -503,6 +504,9 @@ public class ProxyAEExtension extends AEExtension {
         } catch (Exception e) {
             new IOException(e);
         }
+        if (LOG.isDebugEnabled())
+            LOG.debug("{}: attribute coercion result:{}{}",
+                    new Object[] { as, newline, modify.toString(Integer.MAX_VALUE, 200) });
         attrs.addAll(modify);
     }
 

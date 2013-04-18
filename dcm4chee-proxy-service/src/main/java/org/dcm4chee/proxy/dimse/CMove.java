@@ -83,7 +83,7 @@ public class CMove extends DicomService {
 
         ApplicationEntity ae = asAccepted.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        proxyAEE.coerceDataset(asAccepted, Role.SCU, dimse, data, asAccepted.getApplicationEntity().getDevice()
+        proxyAEE.coerceDataset(asAccepted, Role.SCU, dimse, data, rq, asAccepted.getApplicationEntity().getDevice()
                 .getDeviceExtension(ProxyDeviceExtension.class));
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
