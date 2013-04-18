@@ -39,6 +39,7 @@
 package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -280,7 +281,13 @@ public class ForwardDimseRQ {
 
     public void execute() throws IOException, InterruptedException {
         ProxyAEExtension proxyAEE = asAccepted.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
-        List<ForwardRule> fwdRules = proxyAEE.getCurrentForwardRules(asAccepted);
+        List<ForwardRule> fwdRules = new ArrayList<ForwardRule>();
+        String propertyName = ForwardRule.class.getName();
+        for (Association as : fwdAssocs) {
+            ForwardRule rule = (ForwardRule) as.getProperty(propertyName);
+            if (!fwdRules.contains(rule))
+                fwdRules.add(rule);
+        }
         for (Association fwdAssoc : fwdAssocs) {
             IDWithIssuer[] pids = processPatientIDs(proxyAEE, fwdRules, fwdAssoc);
             if (pids.length == 0)

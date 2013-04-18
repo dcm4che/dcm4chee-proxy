@@ -71,6 +71,7 @@ import org.dcm4che.net.Dimse;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4che.net.pdu.AAssociateAC;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.CommonExtendedNegotiation;
 import org.dcm4che.net.pdu.ExtendedNegotiation;
@@ -585,7 +586,7 @@ public class ProxyAEExtension extends AEExtension {
             for (String calledAET : destinationAETs) {
                 try {
                     Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
-                            copyOf(asAccepted.getAAssociateRQ()), aeCache);
+                            copyOf(asAccepted, rule), aeCache);
                     if (asInvoked != null)
                         fwdAssocs.put(calledAET, asInvoked);
                 } catch (IncompatibleConnectionException e) {
@@ -658,10 +659,15 @@ public class ProxyAEExtension extends AEExtension {
                 newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, tsB, imageStorageTS));
     }
 
-    public AAssociateRQ copyOf(AAssociateRQ rq) {
+    public AAssociateRQ copyOf(Association as, ForwardRule rule) {
+        AAssociateRQ rq = as.getAAssociateRQ();
         AAssociateRQ copy = new AAssociateRQ();
-        for (PresentationContext pc : rq.getPresentationContexts())
-            copy.addPresentationContext(pc);
+        if (rule.isExclusiveUseDefinedTC())
+            for (PresentationContext pc : filterMatchingPC(as))
+                copy.addPresentationContext(pc);
+        else
+            for (PresentationContext pc : rq.getPresentationContexts())
+                copy.addPresentationContext(pc);
         copy.setReservedBytes(rq.getReservedBytes());
         copy.setProtocolVersion(rq.getProtocolVersion());
         copy.setMaxPDULength(rq.getMaxPDULength());
@@ -683,9 +689,32 @@ public class ProxyAEExtension extends AEExtension {
     }
 
 
+    private List<PresentationContext> filterMatchingPC(Association as) {
+        AAssociateRQ rq = as.getAAssociateRQ();
+        AAssociateAC ac = as.getAAssociateAC();
+        List<PresentationContext> returnList = new ArrayList<PresentationContext>(rq.getNumberOfPresentationContexts());
+        for (int i = 0; i < rq.getNumberOfPresentationContexts(); i++) {
+            int pcid = i * 2 + 1;
+            PresentationContext pcAC = ac.getPresentationContext(pcid);
+            PresentationContext pcRQ = rq.getPresentationContext(pcid);
+            List<String> tss = new ArrayList<String>(pcAC.getTransferSyntaxes().length);
+            tss.add(UID.ImplicitVRLittleEndian);
+            for (String otherTss : pcAC.getTransferSyntaxes())
+                if (!tss.contains(otherTss))
+                    tss.add(otherTss);
+            returnList.add(new PresentationContext(pcid, pcRQ.getAbstractSyntax(), (String[]) tss
+                    .toArray(new String[tss.size()])));
+        }
+        return returnList;
+    }
+
     public static String getMatchingTsuid(Association asInvoked, String tsuid, String cuid) {
         Set<String> tsuids = asInvoked.getTransferSyntaxesFor(cuid);
-        return tsuids.contains(tsuid) ? tsuid : tsuids.iterator().next();
+        return tsuids.contains(tsuid) 
+                ? tsuid 
+                : tsuids.isEmpty() 
+                    ? null 
+                    : tsuids.iterator().next();
     }
 
 }
