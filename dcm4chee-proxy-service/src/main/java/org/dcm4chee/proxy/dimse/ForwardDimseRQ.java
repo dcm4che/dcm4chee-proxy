@@ -195,6 +195,7 @@ public class ForwardDimseRQ {
                 } catch (IOException e) {
                     LOG.error(asAccepted + ": failed to forward DIMSE-RSP: " + e.getMessage());
                     LOG.debug(e.getMessage(), e);
+                    asInvoked.abort();
                 }
             }
         };

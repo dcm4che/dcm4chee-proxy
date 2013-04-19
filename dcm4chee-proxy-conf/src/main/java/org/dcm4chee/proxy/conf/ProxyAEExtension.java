@@ -664,7 +664,7 @@ public class ProxyAEExtension extends AEExtension {
     public AAssociateRQ copyOf(Association as, ForwardRule rule) {
         AAssociateRQ rq = as.getAAssociateRQ();
         AAssociateRQ copy = new AAssociateRQ();
-        if (rule.isExclusiveUseDefinedTC())
+        if (rule != null && rule.isExclusiveUseDefinedTC())
             for (PresentationContext pc : filterMatchingPC(as))
                 copy.addPresentationContext(pc);
         else

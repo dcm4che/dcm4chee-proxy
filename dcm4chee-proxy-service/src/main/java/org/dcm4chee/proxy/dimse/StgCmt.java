@@ -167,7 +167,7 @@ public class StgCmt extends DicomService {
             }
         }
         try {
-            AAssociateRQ rqCopy = proxyAEE.copyOf(asAccepted.getAAssociateRQ());
+            AAssociateRQ rqCopy = proxyAEE.copyOf(asAccepted, rule);
             rqCopy.setCallingAET(callingAET);
             rqCopy.setCalledAET(calledAET);
             Association asInvoked = proxyAEE.getApplicationEntity().connect(
@@ -306,7 +306,7 @@ public class StgCmt extends DicomService {
             calledAEString = prop.getProperty("source-aet");
             ApplicationEntity ae = asAccepted.getApplicationEntity();
             ApplicationEntity calledAE = aeCache.findApplicationEntity(calledAEString);
-            AAssociateRQ rqCopy = proxyAEE.copyOf(asAccepted.getAAssociateRQ());
+            AAssociateRQ rqCopy = proxyAEE.copyOf(asAccepted, null);
             rqCopy.setCalledAET(calledAEString);
             if (!ae.getAETitle().equals("*"))
                 rqCopy.setCallingAET(ae.getAETitle());
