@@ -125,7 +125,7 @@ public class CStore extends BasicCStoreSCP {
         else {
             try {
                 forward(proxyAEE, asAccepted, (Association) forwardAssociationProperty, pc, rq, 
-                        new InputStreamDataWriter(data), -1, null, null);
+                        new InputStreamDataWriter(data), -1, null, null, null);
             } catch (Exception e) {
                 LOG.error(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
@@ -417,7 +417,7 @@ public class CStore extends BasicCStoreSCP {
                 logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), prop,
                         dataFile.length(), 0);
             }
-            forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile);
+            forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile, null);
         } catch (Exception e) {
             asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
             if (logFile != null)
@@ -467,13 +467,14 @@ public class CStore extends BasicCStoreSCP {
         int n = src.getInt(Tag.NumberOfFrames, 1);
         long t = 0;
         boolean log = true;
+        Attributes forwardRq = new Attributes(rq);
         for (int i = n - 1; i >= 0; --i) {
             long t1 = System.currentTimeMillis();
             Attributes attrs = extractor.extract(src, i);
             long t2 = System.currentTimeMillis();
             t = t + t2 - t1;
-            rq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
-            rq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
+            forwardRq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
+            forwardRq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             File logFile = null;
             try {
                 if (proxyAEE.isEnableAuditLog()) {
@@ -484,7 +485,8 @@ public class CStore extends BasicCStoreSCP {
                     logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
                             prop, attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
                 }
-                forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), i, logFile, null);
+                forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), i, logFile,
+                        dataFile, src.getString(Tag.SOPInstanceUID));
             } catch (Exception e) {
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
                 if (logFile != null)
@@ -544,7 +546,7 @@ public class CStore extends BasicCStoreSCP {
 
     private static void forward(final ProxyAEExtension proxyAEE, final Association asAccepted, Association asInvoked,
             final PresentationContext pc, final Attributes rq, DataWriter data, final int frame,
-            final File logFile, final File dataFile) throws IOException, InterruptedException {
+            final File logFile, final File dataFile, final String sourceIUID) throws IOException, InterruptedException {
         final String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
@@ -553,7 +555,7 @@ public class CStore extends BasicCStoreSCP {
         final int msgId = rq.getInt(Tag.MessageID, 0);
         final CMoveInfoObject info = (CMoveInfoObject) asAccepted.getProperty(ProxyAEExtension.FORWARD_CMOVE_INFO);
         int newMsgId = msgId;
-        if (info != null || asAccepted.isRequestor())
+        if (info != null || asAccepted.isRequestor() || sourceIUID != null)
             newMsgId = asInvoked.nextMessageID();
         DimseRSPHandler rspHandler = new DimseRSPHandler(newMsgId) {
 
@@ -565,11 +567,14 @@ public class CStore extends BasicCStoreSCP {
             synchronized public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                 if (!isClosed) {
                     super.onDimseRSP(asInvoked, cmd, data);
+                    if (frame > 0)
+                        return;
+
                     try {
-                        if (info != null && frame > 0)
-                            return;
-                        if (!asInvoked.isRequestor() || info != null)
+                        if (!asInvoked.isRequestor() || info != null || sourceIUID != null)
                             cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
+                        if (sourceIUID != null)
+                            cmd.setString(Tag.AffectedSOPInstanceUID, VR.UI, sourceIUID);
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
                         LOG.error(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());

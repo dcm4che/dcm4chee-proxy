@@ -197,12 +197,13 @@ public class ProxyAssociationHandler extends AssociationHandler {
         AAssociateAC ac = new AAssociateAC();
         ac.setCalledAET(rq.getCalledAET());
         ac.setCallingAET(rq.getCallingAET());
-        String callingAET = (forwardRule.getUseCallingAET() != null) ? forwardRule.getUseCallingAET() : (proxyAEE
-                .getApplicationEntity().getAETitle().equals("*")) ? rq.getCallingAET() : proxyAEE
-                .getApplicationEntity().getAETitle();
+        String callingAET = (forwardRule.getUseCallingAET() != null) 
+                ? forwardRule.getUseCallingAET() 
+                : (proxyAEE.getApplicationEntity().getAETitle().equals("*")) 
+                    ? rq.getCallingAET() 
+                    : proxyAEE.getApplicationEntity().getAETitle();
         try {
-            Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET,
-                    rq, aeCache);
+            Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET, rq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
             asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
@@ -215,8 +216,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     ac.addPresentationContext(pcLocal.isAccepted() ? pcCalled : pcLocal);
                 }
             } else
-                for (PresentationContext pc : acCalled.getPresentationContexts())
-                    ac.addPresentationContext(pc);
+                addPresentationContext(asAccepted, proxyAEE, calledAET, ac, callingAET, asCalled, acCalled);
             for (RoleSelection rs : acCalled.getRoleSelections())
                 ac.addRoleSelection(rs);
             for (ExtendedNegotiation extNeg : acCalled.getExtendedNegotiations())
@@ -250,6 +250,26 @@ public class ProxyAssociationHandler extends AssociationHandler {
             return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, e,
                     RetryObject.GeneralSecurityException.getSuffix() + "0", 0, proxyAEE);
         }
+    }
+
+    private void addPresentationContext(Association asAccepted, ProxyAEExtension proxyAEE, String calledAET,
+            AAssociateAC ac, String callingAET, Association asCalled, AAssociateAC acCalled) {
+        if (isConnectionWithChangedTC(proxyAEE, calledAET, callingAET)) {
+            for (PresentationContext pc : acCalled.getPresentationContexts()) {
+                String abstractSyntaxCalled = asCalled.getAAssociateRQ().getPresentationContext(pc.getPCID()).getAbstractSyntax();
+                if (asAccepted.getAAssociateRQ().containsPresentationContextFor(abstractSyntaxCalled))
+                    ac.addPresentationContext(pc);
+            }
+        } else {
+            for (PresentationContext pc : acCalled.getPresentationContexts())
+                ac.addPresentationContext(pc);
+        }
+    }
+
+    private boolean isConnectionWithChangedTC(ProxyAEExtension proxyAEE, String calledAET, String callingAET) {
+        HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
+        return forwardOptions.containsKey(calledAET) && forwardOptions.get(calledAET).isConvertEmf2Sf()
+                || forwardOptions.containsKey(callingAET) && forwardOptions.get(callingAET).isConvertEmf2Sf();
     }
 
     private AAssociateRQ copyOf(AAssociateRQ rq) {
