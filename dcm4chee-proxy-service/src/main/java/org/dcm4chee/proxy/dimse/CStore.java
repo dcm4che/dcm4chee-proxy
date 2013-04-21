@@ -119,7 +119,7 @@ public class CStore extends BasicCStoreSCP {
                 || proxyAEE.isEnableAuditLog()
                 || (forwardAssociationProperty instanceof HashMap<?, ?>)
                 || (forwardAssociationProperty instanceof Association 
-                        &&  requiresMultiFrameConversion(proxyAEE, ((Association)forwardAssociationProperty).getRemoteAET(), rq))
+                        &&  proxyAEE.requiresMultiFrameConversion(proxyAEE, ((Association)forwardAssociationProperty).getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID)))
                 || proxyAEE.isAssociationFromDestinationAET(asAccepted))
             spool(proxyAEE, asAccepted, pc, rq, data, null);
         else {
@@ -315,21 +315,21 @@ public class CStore extends BasicCStoreSCP {
                     asAccepted.getAAssociateRQ(), forwardAssociationProperty, proxyAEE, rule);
             if (asInvoked != null) {
                 asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
-                if (requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq))
-                    processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, file, fmi);
+                if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID)))
+                    processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, file);
                 else
                     forwardObject(asAccepted, asInvoked, pc, rq, file, fmi);
             } else {
-                storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
+                storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET);
             }
         } else {
             asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
-            storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET, rule);
+            storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, file, calledAET);
         }
     }
 
     private void storeToCalledAETSpoolDir(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
-            Attributes rq, File file, String calledAET, ForwardRule rule) throws IOException, DicomServiceException {
+            Attributes rq, File file, String calledAET) throws IOException, DicomServiceException {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
         dir.mkdir();
         String fileName = file.getName();
@@ -400,11 +400,11 @@ public class CStore extends BasicCStoreSCP {
     protected void forwardObject(Association asAccepted, Association asInvoked, PresentationContext pc, Attributes rq,
             File dataFile, Attributes fmi) throws IOException {
         ProxyAEExtension proxyAEE = asAccepted.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
-        if (requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq)) {
-            processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, dataFile, fmi);
+        if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID))) {
+            processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, dataFile);
             return;
         }
-        Attributes attrs = parseWithLazyPixelData(asAccepted, dataFile);
+        Attributes attrs = proxyAEE.parseWithLazyPixelData(asAccepted, dataFile);
         attrs = proxyAEE.coerceDataset(asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, rq, asInvoked
                 .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         File logFile = null;
@@ -426,35 +426,8 @@ public class CStore extends BasicCStoreSCP {
         }
     }
 
-    public Attributes parseWithLazyPixelData(Association as, File file)
-            throws DicomServiceException {
-        DicomInputStream in = null;
-        try {
-            in = new DicomInputStream(file);
-            in.setIncludeBulkData(IncludeBulkData.LOCATOR);
-            return in.readDataset(-1, -1);
-        } catch (IOException e) {
-            LOG.warn(as + ": Failed to decode dataset:", e);
-            throw new DicomServiceException(Status.CannotUnderstand);
-        } finally {
-            SafeClose.close(in);
-        }
-    }
-
-    private boolean requiresMultiFrameConversion(ProxyAEExtension proxyAEE, String destinationAET, Attributes rq) {
-        String sopClass = rq.getString(Tag.AffectedSOPClassUID);
-        HashMap<String, ForwardOption> fwdOptions = proxyAEE.getForwardOptions();
-        ForwardOption fwdOption = fwdOptions.get(destinationAET);
-        if (fwdOption != null)
-            return (fwdOption.isConvertEmf2Sf() 
-                        && (sopClass.equals(UID.EnhancedCTImageStorage)
-                            || sopClass.equals(UID.EnhancedMRImageStorage) 
-                            || sopClass.equals(UID.EnhancedPETImageStorage)));
-        return false;
-    }
-
     private void processMultiFrame(ProxyAEExtension proxyAEE, Association asAccepted, Association asInvoked,
-            PresentationContext pc, Attributes rq, File dataFile, Attributes fmi) throws IOException {
+            PresentationContext pc, Attributes rq, File dataFile) throws IOException {
         Attributes src;
         DicomInputStream dis = new DicomInputStream(dataFile);
         try {
@@ -468,9 +441,10 @@ public class CStore extends BasicCStoreSCP {
         long t = 0;
         boolean log = true;
         Attributes forwardRq = new Attributes(rq);
-        for (int i = n - 1; i >= 0; --i) {
+        String sourceUID = src.getString(Tag.SOPInstanceUID);
+        for (int frameNumber = n - 1; frameNumber >= 0; --frameNumber) {
             long t1 = System.currentTimeMillis();
-            Attributes attrs = extractor.extract(src, i);
+            Attributes attrs = extractor.extract(src, frameNumber);
             long t2 = System.currentTimeMillis();
             t = t + t2 - t1;
             forwardRq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
@@ -485,23 +459,28 @@ public class CStore extends BasicCStoreSCP {
                     logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
                             prop, attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
                 }
-                forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), i, logFile,
-                        dataFile, src.getString(Tag.SOPInstanceUID));
+                forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), frameNumber, logFile,
+                        dataFile, sourceUID);
             } catch (Exception e) {
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
                 if (logFile != null)
                     logFile.delete();
-                LOG.error("{}: Error forwarding single-frame from multi-frame object: {}",
-                        new Object[] { asAccepted, e.getMessage() });
                 log = false;
-                Attributes rsp = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
-                asAccepted.writeDimseRSP(pc, rsp);
-                break;
+                if (proxyAEE.isAcceptDataOnFailedAssociation()) {
+                    storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, forwardRq, dataFile, asInvoked.getCalledAET());
+                    break;
+                } else {
+                    LOG.error("{}: Error forwarding single-frame from multi-frame object: {}",
+                            new Object[] { asAccepted, e.getMessage() });
+                    Attributes rsp = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
+                    asAccepted.writeDimseRSP(pc, rsp);
+                    break;
+                }
             }
         }
         if (log)
             LOG.info("{}: extracted {} frames from multi-frame object {} in {}sec",
-                    new Object[] { asAccepted, n, src.getString(Tag.SOPInstanceUID), t / 1000F });
+                    new Object[] { asAccepted, n, sourceUID, t / 1000F });
     }
 
     protected static void createMappedFileCopy(ProxyAEExtension proxyAEE, Association as, File file, String calledAET,

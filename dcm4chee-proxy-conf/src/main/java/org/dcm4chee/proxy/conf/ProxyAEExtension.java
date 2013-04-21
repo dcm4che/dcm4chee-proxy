@@ -63,6 +63,8 @@ import org.dcm4che.conf.api.AttributeCoercions;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.UID;
+import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.SAXTransformer;
 import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.AEExtension;
@@ -640,7 +642,7 @@ public class ProxyAEExtension extends AEExtension {
             rq.addPresentationContext(pc);
     }
     
-    private void addReducedTS(AAssociateRQ rq) {
+    public void addReducedTS(AAssociateRQ rq) {
         List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
         int pcSize = rq.getNumberOfPresentationContexts();
         HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
@@ -717,6 +719,32 @@ public class ProxyAEExtension extends AEExtension {
                 : tsuids.isEmpty() 
                     ? null 
                     : tsuids.iterator().next();
+    }
+
+    public boolean requiresMultiFrameConversion(ProxyAEExtension proxyAEE, String destinationAET, String sopClass) {
+        HashMap<String, ForwardOption> fwdOptions = proxyAEE.getForwardOptions();
+        ForwardOption fwdOption = fwdOptions.get(destinationAET);
+        if (fwdOption != null)
+            return (fwdOption.isConvertEmf2Sf() 
+                        && (sopClass.equals(UID.EnhancedCTImageStorage)
+                            || sopClass.equals(UID.EnhancedMRImageStorage) 
+                            || sopClass.equals(UID.EnhancedPETImageStorage)));
+        return false;
+    }
+
+    public Attributes parseWithLazyPixelData(Association as, File file)
+            throws DicomServiceException {
+        DicomInputStream in = null;
+        try {
+            in = new DicomInputStream(file);
+            in.setIncludeBulkData(IncludeBulkData.LOCATOR);
+            return in.readDataset(-1, -1);
+        } catch (IOException e) {
+            LOG.warn(as + ": Failed to decode dataset:", e);
+            throw new DicomServiceException(Status.CannotUnderstand);
+        } finally {
+            SafeClose.close(in);
+        }
     }
 
 }

@@ -55,16 +55,17 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
+import org.dcm4che.emf.MultiframeExtractor;
+import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
+import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
-import org.dcm4che.net.DataWriter;
 import org.dcm4che.net.DataWriterAdapter;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.IncompatibleConnectionException;
-import org.dcm4che.net.InputStreamDataWriter;
 import org.dcm4che.net.NoPresentationContextException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
@@ -694,15 +695,26 @@ public class ForwardFiles {
         Association asInvoked = null;
         Properties prop = proxyAEE.getFileInfoProperties(ft.getFiles().get(0));
         try {
+            if (proxyAEE.getForwardOptions().containsKey(rq.getCalledAET())
+                    && proxyAEE.getForwardOptions().get(rq.getCalledAET()).isConvertEmf2Sf())
+                proxyAEE.addReducedTS(rq);
             asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(rq.getCalledAET()), rq);
             for (File file : ft.getFiles()) {
                 prop = proxyAEE.getFileInfoProperties(file);
                 try {
-                    if (asInvoked.isReadyForDataTransfer()) {
-                        forwardScheduledCStoreFiles(proxyAEE, asInvoked, file, prop);
-                    } else {
+                    String cuid = prop.getProperty("sop-class-uid");
+                    if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getCalledAET(), cuid))
+                        processEmf2Sf(proxyAEE, asInvoked, prop, file);
+                    else if (asInvoked.isReadyForDataTransfer()) {
+                        Attributes attrs = proxyAEE.parseWithLazyPixelData(asInvoked, file);
+                        AttributeCoercion ac = proxyAEE.getAttributeCoercion(asInvoked.getCalledAET(), cuid, Role.SCP,
+                                Dimse.C_STORE_RQ);
+                        if (ac != null)
+                            proxyAEE.coerceAttributes(asInvoked, attrs, ac, asInvoked.getApplicationEntity()
+                                    .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+                        forwardScheduledCStoreFile(proxyAEE, asInvoked, new DataWriterAdapter(attrs), -1, file, prop, file.length());
+                    } else
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, rq.getCalledAET(), prop);
-                    }
                 } catch (NoPresentationContextException npc) {
                     handleForwardException(proxyAEE, asInvoked, file, npc,
                             RetryObject.NoPresentationContextException.getSuffix(), prop, true);
@@ -712,7 +724,6 @@ public class ForwardFiles {
                 } catch (IOException ioe) {
                     handleForwardException(proxyAEE, asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix(),
                             prop, true);
-                    releaseAS(asInvoked);
                 }
             }
         } catch (ConfigurationException ce) {
@@ -748,43 +759,70 @@ public class ForwardFiles {
         }
     }
 
-    private void forwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final Association asInvoked,
-            final File file, final Properties prop) throws IOException, InterruptedException {
-        DicomInputStream in = null;
+    private void processEmf2Sf(ProxyAEExtension proxyAEE, Association asInvoked, Properties prop, File file)
+            throws IOException, InterruptedException {
+        Attributes src;
+        DicomInputStream dis = new DicomInputStream(file);
         try {
-            in = new DicomInputStream(file);
+            dis.setIncludeBulkData(IncludeBulkData.LOCATOR);
+            src = dis.readDataset(-1, -1);
+        } finally {
+            SafeClose.close(dis);
+        }
+        MultiframeExtractor extractor = new MultiframeExtractor();
+        int n = src.getInt(Tag.NumberOfFrames, 1);
+        long t = 0;
+        boolean log = true;
+        for (int frameNumber = n - 1; frameNumber >= 0; --frameNumber) {
+            long t1 = System.currentTimeMillis();
+            Attributes attrs = extractor.extract(src, frameNumber);
+            long t2 = System.currentTimeMillis();
+            t = t + t2 - t1;
+            long length = attrs.calcLength(DicomEncodingOptions.DEFAULT, true);
+            if (asInvoked.isReadyForDataTransfer()) {
+                prop.setProperty("sop-instance-uid", attrs.getString(Tag.SOPInstanceUID));
+                prop.setProperty("sop-class-uid", attrs.getString(Tag.SOPClassUID));
+                forwardScheduledCStoreFile(proxyAEE, asInvoked, new DataWriterAdapter(attrs), frameNumber, file, prop, length);
+            } else {
+                log = false;
+                break;
+            }
+        }
+        if (log)
+            LOG.info("{}: extracted {} frames from multi-frame object {} in {}sec",
+                    new Object[] { asInvoked, n, src.getString(Tag.SOPInstanceUID), t / 1000F });
+    }
+
+    private void forwardScheduledCStoreFile(final ProxyAEExtension proxyAEE, final Association asInvoked,
+            DataWriterAdapter data, final int frame, final File file, final Properties prop, final long fileSize) throws IOException,
+            InterruptedException {
             final String cuid = prop.getProperty("sop-class-uid");
             final String iuid = prop.getProperty("sop-instance-uid");
             final String tsuid = prop.getProperty("transfer-syntax-uid");
-            final Attributes[] ds = new Attributes[1];
-            final long fileSize = file.length();
             DimseRSPHandler rspHandler = new DimseRSPHandler(asInvoked.nextMessageID()) {
-
+    
                 @Override
                 public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
                     super.onDimseRSP(asInvoked, cmd, data);
                     int status = cmd.getInt(Tag.Status, -1);
                     switch (status) {
                     case Status.Success:
-                    case Status.CoercionOfDataElements:
-                        if (proxyAEE.isEnableAuditLog()) {
-                            try {
-                                Properties prop = proxyAEE.getFileInfoProperties(file);
-                                proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, asInvoked.getCallingAET(),
-                                        asInvoked.getRemoteAET(), prop, fileSize, -1);
-                            } catch (IOException e) {
-                                LOG.error("Error writing log file: " + e.getMessage());
-                                LOG.debug(e.getMessage(), e);
-                            }
-                        }
+                    case Status.CoercionOfDataElements: {
+                        if (proxyAEE.isEnableAuditLog())
+                            proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, asInvoked.getCallingAET(),
+                                    asInvoked.getRemoteAET(), prop, fileSize, -1);
+                        if (frame > 0)
+                            return;
+    
                         deleteSendFile(asInvoked, file);
                         break;
+                    }
                     default: {
                         LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { asInvoked, file,
                                 Integer.toHexString(status) + 'H' });
                         try {
-                            renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file,
-                                    asInvoked.getCalledAET(), prop);
+                            renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, asInvoked.getCalledAET(),
+                                    prop);
                         } catch (Exception e) {
                             LOG.error("{}: error renaming file {}: {}",
                                     new Object[] { asInvoked, file.getPath(), e.getMessage() });
@@ -794,11 +832,12 @@ public class ForwardFiles {
                     }
                 }
             };
-            asInvoked.cstore(cuid, iuid, 0, createDataWriter(proxyAEE, in, asInvoked, ds, cuid, prop), tsuid,
-                    rspHandler);
-        } finally {
-            SafeClose.close(in);
-        }
+            if (proxyAEE.isEnableAuditLog()) {
+                String sourceAET = prop.getProperty("source-aet");
+                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
+                        asInvoked.getConnection().getHostname(), prop, 0);
+            }
+            asInvoked.cstore(cuid, iuid, 0, data, tsuid, rspHandler);
     }
 
     private Integer getPreviousRetries(ProxyAEExtension proxyAEE, File file) {
@@ -815,17 +854,6 @@ public class ForwardFiles {
                 }
         }
         return 1;
-    }
-
-    protected void releaseAS(Association asAccepted) {
-        Association asInvoked = (Association) asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
-        if (asInvoked != null)
-            try {
-                asInvoked.release();
-            } catch (IOException e) {
-                LOG.debug("Failed to release {}: {}", new Object[] { asInvoked, e.getMessage() });
-                LOG.debug(e.getMessage(), e);
-            }
     }
 
     private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) {
@@ -934,21 +962,6 @@ public class ForwardFiles {
         String substringEnd = path.substring(indexOfNextSuffix);
         String pathname = substringStart + substringEnd + newSuffix + Integer.toString(previousNumRetries + 1);
         return new File(pathname);
-    }
-
-    private DataWriter createDataWriter(ProxyAEExtension proxyAEE, DicomInputStream in, Association as,
-            Attributes[] ds, String cuid, Properties prop) throws IOException {
-        if (proxyAEE.isEnableAuditLog())
-            proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, as.getCallingAET(), as.getCalledAET(), as
-                    .getConnection().getHostname(), prop, 0);
-        AttributeCoercion ac = proxyAEE.getAttributeCoercion(as.getCalledAET(), cuid, Role.SCP, Dimse.C_STORE_RQ);
-        if (ac != null) {
-            Attributes attrs = in.readDataset(-1, -1);
-            proxyAEE.coerceAttributes(as, attrs, ac,
-                    as.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
-            return new DataWriterAdapter(attrs);
-        }
-        return new InputStreamDataWriter(in);
     }
 
     private static void deleteSendFile(Association as, File file) {
