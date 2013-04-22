@@ -40,7 +40,10 @@ package org.dcm4chee.proxy;
 
 import static org.dcm4che.audit.AuditMessages.createEventIdentification;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Calendar;
+import java.util.Collection;
 
 import org.dcm4che.audit.AuditMessage;
 import org.dcm4che.audit.AuditMessages;
@@ -54,10 +57,12 @@ import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
+import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.DeviceService;
 import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.audit.AuditLog;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.dimse.CEcho;
 import org.dcm4chee.proxy.dimse.CFind;
@@ -145,6 +150,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     public void stop() {
         scheduler.stop();
         super.stop();
+        resetSpoolFiles();
         log(EventTypeCode.ApplicationStop);
     }
 
@@ -201,6 +207,81 @@ public class Proxy extends DeviceService implements ProxyMBean {
         int staleTimeout = device.getDeviceExtension(ProxyDeviceExtension.class).getConfigurationStaleTimeout();
         aeCache.setStaleTimeout(staleTimeout);
         hl7AppCache.setStaleTimeout(staleTimeout);
+    }
+
+    private void resetSpoolFiles() {
+        Collection<ApplicationEntity> proxyAEs = instance.getDevice().getApplicationEntities();
+        for (ApplicationEntity ae : proxyAEs) {
+            ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+            if (proxyAEE != null) {
+                LOG.info("Reset spool files for " + ae.getAETitle());
+                renameSndFiles(proxyAEE.getCStoreDirectoryPath());
+                deletePartFiles(proxyAEE.getCStoreDirectoryPath());
+                renameSndFiles(proxyAEE.getNactionDirectoryPath());
+                deletePartFiles(proxyAEE.getNactionDirectoryPath());
+                renameSndFiles(proxyAEE.getNCreateDirectoryPath());
+                deletePartFiles(proxyAEE.getNCreateDirectoryPath());
+                renameSndFiles(proxyAEE.getNSetDirectoryPath());
+                deletePartFiles(proxyAEE.getNSetDirectoryPath());
+            }
+        }
+    }
+
+    private void renameSndFiles(File path) {
+        for (String calledAET : path.list(dirFilter())) {
+            File dir = new File(path, calledAET);
+            File[] sndFiles = dir.listFiles(sndFileFilter());
+            for (File sndFile : sndFiles) {
+                LOG.info("Found *.snd file: " + sndFile.getPath());
+                String sndFileName = sndFile.getPath();
+                File dst = new File(sndFileName.substring(0, sndFileName.length() - 4));
+                if (sndFile.renameTo(dst))
+                    LOG.info("Rename {} to {} on shut-down", sndFile.getPath(), dst.getPath());
+                else
+                    LOG.info("Failed to rename {} to {} on shut-down", sndFile.getPath(), dst.getPath());
+            }
+        }
+    }
+
+    private FilenameFilter sndFileFilter() {
+        return new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".snd");
+            }
+        };
+    }
+
+    private void deletePartFiles(File path) {
+        for (String partFileName : path.list(partFileFilter())) {
+            File partFile = new File(path, partFileName);
+            LOG.info("Found *.part file: " + partFile.getPath());
+            if (partFile.delete())
+                LOG.info("Delete {} on shut-down", partFile.getPath());
+            else
+                LOG.info("Failed to delete {} on shut-down", partFile.getPath());
+        }
+    }
+
+    private FilenameFilter partFileFilter() {
+        return new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".part");
+            }
+        };
+    }
+
+    private FilenameFilter dirFilter() {
+        return new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return new File(dir, name).isDirectory();
+            }
+        };
     }
 
 }
