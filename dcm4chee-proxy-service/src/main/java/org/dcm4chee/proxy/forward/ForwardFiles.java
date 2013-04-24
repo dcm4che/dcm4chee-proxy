@@ -706,7 +706,7 @@ public class ForwardFiles {
                     if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getCalledAET(), cuid))
                         processEmf2Sf(proxyAEE, asInvoked, prop, file);
                     else if (asInvoked.isReadyForDataTransfer()) {
-                        Attributes attrs = proxyAEE.parseWithLazyPixelData(asInvoked, file);
+                        Attributes attrs = proxyAEE.parseAttributesWithLazyBulkData(asInvoked, file);
                         AttributeCoercion ac = proxyAEE.getAttributeCoercion(asInvoked.getCalledAET(), cuid, Role.SCP,
                                 Dimse.C_STORE_RQ);
                         if (ac != null)

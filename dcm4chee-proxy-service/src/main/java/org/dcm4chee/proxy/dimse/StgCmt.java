@@ -39,16 +39,14 @@
 package org.dcm4chee.proxy.dimse;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
@@ -208,7 +206,7 @@ public class StgCmt extends DicomService {
             Attributes data) throws IOException {
         ProxyAEExtension proxyAEE = (ProxyAEExtension) asAccepted.getApplicationEntity().getAEExtension(
                 ProxyAEExtension.class);
-        File transactionUIDFile = getTransactionUIDFile(proxyAEE, asAccepted, pc, rq, data);
+        File transactionUIDFile = getTransactionUIDFile(proxyAEE, data);
         if (transactionUIDFile == null || !transactionUIDFile.exists()) {
             LOG.debug(asAccepted + ": failed to load Transaction UID mapping for N-EVENT-REPORT-RQ from "
                     + asAccepted.getCallingAET());
@@ -239,42 +237,17 @@ public class StgCmt extends DicomService {
         }
     }
 
-    private File getTransactionUIDFile(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
-            Attributes rq, Attributes data) throws IOException {
+    private File getTransactionUIDFile(ProxyAEExtension proxyAEE, Attributes data) throws IOException {
         for (String calledAET : proxyAEE.getNeventDirectoryPath().list()) {
             File calledAETPath = new File (proxyAEE.getNeventDirectoryPath(), calledAET);
-            for (File file : calledAETPath.listFiles(infoFileFilter())) {
-                Properties prop = getProperties(file);
+            for (File file : calledAETPath.listFiles(proxyAEE.infoFileFilter())) {
+                Properties prop = proxyAEE.getFileInfoProperties(file);
                 String transactionUID = prop.getProperty("transaction-uid");
                 if (transactionUID.equals(data.getString(Tag.TransactionUID)))
                     return new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".naction");
             }
         }
         return null;
-    }
-
-    public Properties getProperties(File file) throws IOException {
-        Properties prop = new Properties();
-        FileInputStream inStream = null;
-        try {
-            inStream = new FileInputStream(file);
-            prop.load(inStream);
-        } finally {
-            SafeClose.close(inStream);
-        }
-        return prop;
-    }
-
-    private FileFilter infoFileFilter() {
-        return new FileFilter() {
-            
-            @Override
-            public boolean accept(File pathname) {
-                if (pathname.getPath().endsWith(".info"))
-                    return true;
-                return false;
-            }
-        };
     }
 
     private boolean pendingFileForwarding(Association as, Attributes eventInfo) {

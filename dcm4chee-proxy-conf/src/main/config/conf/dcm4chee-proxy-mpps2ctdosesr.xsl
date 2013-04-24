@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" xml:space="preserve">
-  <!-- Required Parameters -->
+  <!-- Required Parameters (will be set by Proxy) -->
   <xsl:param name="IrradiationEventUID" />
   <xsl:param name="DeviceObserverUID" />
   <xsl:param name="PerfomedProcedureStepSOPInstanceUID" />

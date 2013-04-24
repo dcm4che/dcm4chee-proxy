@@ -39,6 +39,7 @@
 package org.dcm4chee.proxy.conf;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -732,7 +733,7 @@ public class ProxyAEExtension extends AEExtension {
         return false;
     }
 
-    public Attributes parseWithLazyPixelData(Association as, File file)
+    public Attributes parseAttributesWithLazyBulkData(Association as, File file)
             throws DicomServiceException {
         DicomInputStream in = null;
         try {
@@ -745,6 +746,18 @@ public class ProxyAEExtension extends AEExtension {
         } finally {
             SafeClose.close(in);
         }
+    }
+
+    public FileFilter infoFileFilter() {
+        return new FileFilter() {
+            
+            @Override
+            public boolean accept(File pathname) {
+                if (pathname.getPath().endsWith(".info"))
+                    return true;
+                return false;
+            }
+        };
     }
 
 }

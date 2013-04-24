@@ -404,7 +404,7 @@ public class CStore extends BasicCStoreSCP {
             processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, dataFile);
             return;
         }
-        Attributes attrs = proxyAEE.parseWithLazyPixelData(asAccepted, dataFile);
+        Attributes attrs = proxyAEE.parseAttributesWithLazyBulkData(asAccepted, dataFile);
         attrs = proxyAEE.coerceDataset(asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, rq, asInvoked
                 .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
         File logFile = null;
