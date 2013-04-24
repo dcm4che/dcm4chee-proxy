@@ -39,11 +39,13 @@
 package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.dcm4che.conf.api.ApplicationEntityCache;
+import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Issuer;
 import org.dcm4che.data.Tag;
@@ -54,6 +56,7 @@ import org.dcm4che.net.CancelRQHandler;
 import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
+import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.pdu.PresentationContext;
@@ -322,35 +325,35 @@ public class ForwardDimseRQ {
         IDWithIssuer[] pids = IDWithIssuer.EMPTY;
         for (ForwardRule fwr : fwdRules)
             if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
-                pids = getOtherPatientIDs(pae, data);
+                try {
+                    pids = getOtherPatientIDs(fwdAssoc, pae, data);
+                } catch (Exception e) {
+                    LOG.error("Unable to execute PIX Query: " + e.getMessage());
+                }
                 break;
             }
         return pids;
     }
 
-    private IDWithIssuer[] getOtherPatientIDs(ProxyAEExtension pae, Attributes attrs) {
+    private IDWithIssuer[] getOtherPatientIDs(Association as, ProxyAEExtension pae, Attributes attrs)
+            throws ConfigurationException, IncompatibleConnectionException, IOException, GeneralSecurityException {
         IDWithIssuer[] pids = IDWithIssuer.EMPTY;
-        try {
-            Issuer issuerOfPatientID = null;
-            String requestedIssuer = attrs.getString(Tag.IssuerOfPatientID);
-            if (requestedIssuer == null) {
-                String callingAET = asAccepted.getAAssociateAC().getCallingAET();
-                ApplicationEntity issuerAET = aeCache.findApplicationEntity(callingAET);
-                issuerOfPatientID = issuerAET.getDevice().getIssuerOfPatientID();
-                if (issuerOfPatientID == null) {
-                    LOG.error("No IssuerOfPatientID for " + callingAET);
-                    return pids;
-                }
-            } else {
-                issuerOfPatientID = new Issuer(requestedIssuer);
+        Issuer issuerOfPatientID = null;
+        String requestedIssuer = attrs.getString(Tag.IssuerOfPatientID);
+        if (requestedIssuer == null) {
+            String callingAET = asAccepted.getAAssociateAC().getCallingAET();
+            ApplicationEntity issuerAET = aeCache.findApplicationEntity(callingAET);
+            issuerOfPatientID = issuerAET.getDevice().getIssuerOfPatientID();
+            if (issuerOfPatientID == null) {
+                LOG.error("No IssuerOfPatientID for " + callingAET);
+                return pids;
             }
-            IDWithIssuer pid = IDWithIssuer.pidWithIssuer(attrs, issuerOfPatientID);
-            if (pid != null)
-                pids = pixConsumer.pixQuery(pae, pid);
-        } catch (Exception e) {
-            LOG.error("Error getting other patient IDs: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+        } else {
+            issuerOfPatientID = new Issuer(requestedIssuer);
         }
+        IDWithIssuer pid = IDWithIssuer.pidWithIssuer(attrs, issuerOfPatientID);
+        if (pid != null)
+            pids = pixConsumer.pixQuery(pae, pid);
         return pids;
     }
 }

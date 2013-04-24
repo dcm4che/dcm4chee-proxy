@@ -167,7 +167,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     || matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
                 && matchingForwardRules.get(0).getDestinationAETitles().size() == 1 && isAvailableDestinationAET(
                     matchingForwardRules.get(0).getDestinationAETitles().get(0), proxyAEE))
-                && matchingForwardRules.get(0).getMpps2DoseSrTemplateURI() == null;
+                && matchingForwardRules.get(0).getMpps2DoseSrTemplateURI() == null
+                && !matchingForwardRules.get(0).isRunPIXQuery();
     }
 
     private boolean forwardBasedOnTemplates(List<ForwardRule> forwardRules) {

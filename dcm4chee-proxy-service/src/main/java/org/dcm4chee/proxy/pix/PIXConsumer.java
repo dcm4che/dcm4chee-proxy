@@ -51,16 +51,22 @@ import org.dcm4che.net.CompatibleConnection;
 import org.dcm4che.net.Connection;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.IncompatibleConnectionException;
+import org.dcm4che.net.Status;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4che.net.hl7.HL7DeviceExtension;
+import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.IDWithIssuer;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
  * @author Michael Backhaus <michael.backhaus@gmail.com>
  */
 public class PIXConsumer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PIXConsumer.class);
 
     private final HL7ApplicationCache hl7AppCache;
 
@@ -74,9 +80,12 @@ public class PIXConsumer {
             return IDWithIssuer.EMPTY;
 
         String pixConsumer = pae.getProxyPIXConsumerApplication();
+        if (pixConsumer == null || pixConsumer.isEmpty())
+            throw new DicomServiceException(Status.ProcessingFailure, "undefined Proxy PIX Consumer");
+
         String pixManager = pae.getRemotePIXManagerApplication();
-        if (pixConsumer == null || pixManager == null || containsWildcard(pid.id) || pid.issuer == null)
-            return new IDWithIssuer[] { pid };
+        if (pixConsumer == null || pixConsumer.isEmpty())
+            throw new DicomServiceException(Status.ProcessingFailure, "undefined Remote PIX Manager");
 
         ArrayList<IDWithIssuer> pids = new ArrayList<IDWithIssuer>();
         pids.add(pid);
@@ -90,7 +99,8 @@ public class PIXConsumer {
         HL7Message qbp = HL7Message.makePixQuery(pid.toString());
         HL7Segment msh = qbp.get(0);
         msh.setSendingApplicationWithFacility(pixConsumer);
-        msh.setReceivingApplicationWithFacility(pixManagerApp.getApplicationName());
+        String pixManagerAppName = pixManagerApp.getApplicationName();
+        msh.setReceivingApplicationWithFacility(pixManagerAppName);
         msh.setField(17, pixConsumerApp.getHL7DefaultCharacterSet());
         HL7Message rsp = pixQuery(pixConsumerApp, pixManagerApp, qbp);
         HL7Segment pidSeg = rsp.getSegment("PID");
@@ -102,10 +112,6 @@ public class PIXConsumer {
         return pids.toArray(new IDWithIssuer[pids.size()]);
     }
 
-    private boolean containsWildcard(String s) {
-        return s.indexOf('*') >= 0 || s.indexOf('?') >= 0;
-    }
-
     private HL7Message pixQuery(HL7Application pixConsumerApp, HL7Application pixManagerApp, HL7Message qbp)
             throws IncompatibleConnectionException, IOException, GeneralSecurityException {
         CompatibleConnection cc = pixConsumerApp.findCompatibelConnection(pixManagerApp);
@@ -113,6 +119,8 @@ public class PIXConsumer {
         MLLPConnection mllpConn = pixConsumerApp.connect(conn, cc.getRemoteConnection());
         try {
             String charset = pixConsumerApp.getHL7DefaultCharacterSet();
+            LOG.debug("{}: Executing PIX Query to {}", pixConsumerApp.getApplicationName(),
+                    pixManagerApp.getApplicationName());
             mllpConn.writeMessage(qbp.getBytes(charset));
             HL7Message rsp = HL7Message.parse(mllpConn.readMessage(), charset);
             return rsp;
