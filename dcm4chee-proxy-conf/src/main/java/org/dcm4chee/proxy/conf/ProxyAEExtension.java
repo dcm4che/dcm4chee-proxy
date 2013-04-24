@@ -619,7 +619,7 @@ public class ProxyAEExtension extends AEExtension {
             InterruptedException, IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
-        if (forwardOptions.containsKey(callingAET) && forwardOptions.get(callingAET).isConvertEmf2Sf())
+        if (forwardOptions.containsKey(asAccepted.getRemoteAET()) && forwardOptions.get(asAccepted.getRemoteAET()).isConvertEmf2Sf())
             addEnhancedTS(rq);
         else if (forwardOptions.containsKey(calledAET) && forwardOptions.get(calledAET).isConvertEmf2Sf())
             addReducedTS(rq);
