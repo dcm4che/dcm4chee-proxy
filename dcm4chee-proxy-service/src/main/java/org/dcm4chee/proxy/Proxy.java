@@ -141,6 +141,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     @Override
     public void start() throws Exception {
         scheduler = new Scheduler(aeCache, device, new AuditLog(device.getDeviceExtension(AuditLogger.class)));
+        resetSpoolFiles("start-up");
         super.start();
         scheduler.start();
         log(AuditMessages.EventTypeCode.ApplicationStart);
@@ -150,7 +151,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     public void stop() {
         scheduler.stop();
         super.stop();
-        resetSpoolFiles();
+        resetSpoolFiles("shut-down");
         log(EventTypeCode.ApplicationStop);
     }
 
@@ -209,36 +210,36 @@ public class Proxy extends DeviceService implements ProxyMBean {
         hl7AppCache.setStaleTimeout(staleTimeout);
     }
 
-    private void resetSpoolFiles() {
+    private void resetSpoolFiles(String action) {
         Collection<ApplicationEntity> proxyAEs = instance.getDevice().getApplicationEntities();
         for (ApplicationEntity ae : proxyAEs) {
             ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
             if (proxyAEE != null) {
-                LOG.info("Reset spool files for " + ae.getAETitle());
-                renameSndFiles(proxyAEE.getCStoreDirectoryPath());
-                deletePartFiles(proxyAEE.getCStoreDirectoryPath());
-                renameSndFiles(proxyAEE.getNactionDirectoryPath());
-                deletePartFiles(proxyAEE.getNactionDirectoryPath());
-                renameSndFiles(proxyAEE.getNCreateDirectoryPath());
-                deletePartFiles(proxyAEE.getNCreateDirectoryPath());
-                renameSndFiles(proxyAEE.getNSetDirectoryPath());
-                deletePartFiles(proxyAEE.getNSetDirectoryPath());
+                LOG.info("Reset spool files for {} on {}", ae.getAETitle(), action);
+                renameSndFiles(proxyAEE.getCStoreDirectoryPath(), action);
+                deletePartFiles(proxyAEE.getCStoreDirectoryPath(), action);
+                renameSndFiles(proxyAEE.getNactionDirectoryPath(), action);
+                deletePartFiles(proxyAEE.getNactionDirectoryPath(), action);
+                renameSndFiles(proxyAEE.getNCreateDirectoryPath(), action);
+                deletePartFiles(proxyAEE.getNCreateDirectoryPath(), action);
+                renameSndFiles(proxyAEE.getNSetDirectoryPath(), action);
+                deletePartFiles(proxyAEE.getNSetDirectoryPath(), action);
             }
         }
     }
 
-    private void renameSndFiles(File path) {
+    private void renameSndFiles(File path, String action) {
         for (String calledAET : path.list(dirFilter())) {
             File dir = new File(path, calledAET);
             File[] sndFiles = dir.listFiles(sndFileFilter());
             for (File sndFile : sndFiles) {
-                LOG.info("Found *.snd file: " + sndFile.getPath());
                 String sndFileName = sndFile.getPath();
                 File dst = new File(sndFileName.substring(0, sndFileName.length() - 4));
                 if (sndFile.renameTo(dst))
-                    LOG.info("Rename {} to {} on shut-down", sndFile.getPath(), dst.getPath());
+                    LOG.info("Rename {} to {} on {}", new Object[] { sndFile.getPath(), dst.getPath(), action });
                 else
-                    LOG.info("Failed to rename {} to {} on shut-down", sndFile.getPath(), dst.getPath());
+                    LOG.info("Failed to rename {} to {} on {}",
+                            new Object[] { sndFile.getPath(), dst.getPath(), action });
             }
         }
     }
@@ -253,14 +254,13 @@ public class Proxy extends DeviceService implements ProxyMBean {
         };
     }
 
-    private void deletePartFiles(File path) {
+    private void deletePartFiles(File path, String action) {
         for (String partFileName : path.list(partFileFilter())) {
             File partFile = new File(path, partFileName);
-            LOG.info("Found *.part file: " + partFile.getPath());
             if (partFile.delete())
-                LOG.info("Delete {} on shut-down", partFile.getPath());
+                LOG.info("Delete {} on {}", partFile.getPath(), action);
             else
-                LOG.info("Failed to delete {} on shut-down", partFile.getPath());
+                LOG.info("Failed to delete {} on {}", partFile.getPath(), action);
         }
     }
 
