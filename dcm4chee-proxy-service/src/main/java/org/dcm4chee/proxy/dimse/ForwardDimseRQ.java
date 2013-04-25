@@ -323,10 +323,17 @@ public class ForwardDimseRQ {
 
     private IDWithIssuer[] processPatientIDs(ProxyAEExtension pae, List<ForwardRule> fwdRules, Association fwdAssoc) {
         IDWithIssuer[] pids = IDWithIssuer.EMPTY;
+        String patientID = data.getString(Tag.PatientID);
+        if (patientID == null || patientID.isEmpty()) {
+            LOG.debug("{}: cannot execute PIX Query: no PatientID in dataset", fwdAssoc);
+            return pids;
+        }
+
         for (ForwardRule fwr : fwdRules)
             if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
-                LOG.debug("{}: run PIX Query based forward rule \"{}\"", fwdAssoc, fwr.getCommonName());
                 try {
+                    LOG.debug("{}: run PIX Query based forward rule \"{}\" using PatientID \"{}\"", new Object[] {
+                            fwdAssoc, fwr.getCommonName(), patientID });
                     pids = getOtherPatientIDs(fwdAssoc, pae, data);
                 } catch (Exception e) {
                     LOG.error("Unable to execute PIX Query: " + e.getMessage());
