@@ -325,6 +325,7 @@ public class ForwardDimseRQ {
         IDWithIssuer[] pids = IDWithIssuer.EMPTY;
         for (ForwardRule fwr : fwdRules)
             if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
+                LOG.debug("{}: run PIX Query based forward rule \"{}\"", fwdAssoc, fwr.getCommonName());
                 try {
                     pids = getOtherPatientIDs(fwdAssoc, pae, data);
                 } catch (Exception e) {
@@ -341,19 +342,26 @@ public class ForwardDimseRQ {
         Issuer issuerOfPatientID = null;
         String requestedIssuer = attrs.getString(Tag.IssuerOfPatientID);
         if (requestedIssuer == null) {
+            String deviceName = asAccepted.getApplicationEntity().getDevice().getDeviceName();
+            LOG.debug("{}: IssuerOfPatientID not in dataset, retrieve from device configuration \"{}\"", as, deviceName);
             String callingAET = asAccepted.getAAssociateAC().getCallingAET();
             ApplicationEntity issuerAET = aeCache.findApplicationEntity(callingAET);
             issuerOfPatientID = issuerAET.getDevice().getIssuerOfPatientID();
             if (issuerOfPatientID == null) {
-                LOG.error("No IssuerOfPatientID for " + callingAET);
+                LOG.error("{}: no IssuerOfPatientID configured for {}", as, callingAET);
                 return pids;
             }
+            if (LOG.isDebugEnabled())
+                LOG.debug("{}: retrieved IssuerOfPatientID = \"{}\" from configuration", as, issuerOfPatientID.toString());
         } else {
+            LOG.debug("{}: using IssuerOfPatientID = \"{}\" from dataset", as, requestedIssuer);
             issuerOfPatientID = new Issuer(requestedIssuer);
         }
         IDWithIssuer pid = IDWithIssuer.pidWithIssuer(attrs, issuerOfPatientID);
         if (pid != null)
             pids = pixConsumer.pixQuery(pae, pid);
+        else
+            LOG.error("{}: unexpected error: IDWithIssuer == null", as);
         return pids;
     }
 }
