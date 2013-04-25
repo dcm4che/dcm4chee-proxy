@@ -84,7 +84,7 @@ public class PIXConsumer {
             throw new DicomServiceException(Status.ProcessingFailure, "undefined Proxy PIX Consumer");
 
         String pixManager = pae.getRemotePIXManagerApplication();
-        if (pixConsumer == null || pixConsumer.isEmpty())
+        if (pixManager == null || pixManager.isEmpty())
             throw new DicomServiceException(Status.ProcessingFailure, "undefined Remote PIX Manager");
 
         ArrayList<IDWithIssuer> pids = new ArrayList<IDWithIssuer>();
