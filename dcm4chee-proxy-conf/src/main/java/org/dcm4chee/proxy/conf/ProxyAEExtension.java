@@ -526,7 +526,8 @@ public class ProxyAEExtension extends AEExtension {
             try {
                 Properties prop = new Properties();
                 prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
-                prop.setProperty("patient-id", fileInfo.getProperty("patient-id"));
+                String patID = fileInfo.getProperty("patient-id");
+                prop.setProperty("patient-id", (patID == null || patID.length() == 0) ? "<UNKOWN>" : patID);
                 prop.setProperty("hostname", fileInfo.getProperty("hostname"));
                 prop.setProperty("proxy-hostname", proxyHostname);
                 prop.store(new FileOutputStream(file), null);
