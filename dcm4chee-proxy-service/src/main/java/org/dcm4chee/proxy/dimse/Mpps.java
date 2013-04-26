@@ -272,6 +272,7 @@ public class Mpps extends DicomService {
         prop.setProperty("instance-uid", fmi.getString(Tag.MediaStorageSOPInstanceUID));
         prop.setProperty("sop-class-uid", fmi.getString(Tag.MediaStorageSOPClassUID));
         prop.setProperty("transfer-syntax-uid", fmi.getString(Tag.TransferSyntaxUID));
+        prop.setProperty("hostname", as.getConnection().getHostname());
         if (rule.getUseCallingAET() != null)
             prop.setProperty("use-calling-aet", rule.getUseCallingAET());
         String path = file.getPath();
