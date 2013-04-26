@@ -328,7 +328,6 @@ public class ForwardDimseRQ {
             LOG.debug("{}: cannot execute PIX Query: no PatientID in dataset", fwdAssoc);
             return pids;
         }
-
         for (ForwardRule fwr : fwdRules)
             if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
                 try {
