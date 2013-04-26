@@ -275,15 +275,16 @@ public class AuditLog {
                 timeStamp, 
                 eventOutcomeIndicator, 
                 null));
-        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
-                destinationHostname, 
-                AuditMessages.alternativeUserIDForAETitle(destinationAET), 
-                null, 
-                false, 
-                null, 
-                null, 
-                null, 
-                AuditMessages.RoleIDCode.Application));
+        if (!eventActionCode.equals(EventActionCode.Delete))
+            msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
+                    destinationHostname, 
+                    AuditMessages.alternativeUserIDForAETitle(destinationAET), 
+                    null, 
+                    false, 
+                    null, 
+                    null, 
+                    null, 
+                    AuditMessages.RoleIDCode.Application));
         msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
                 log.proxyHostname, 
                 AuditMessages.alternativeUserIDForAETitle(ae.getAETitle()),
