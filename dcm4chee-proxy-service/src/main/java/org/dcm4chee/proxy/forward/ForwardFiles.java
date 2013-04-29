@@ -258,7 +258,7 @@ public class ForwardFiles {
             private boolean checkSendFileDelay(final long now, File file, Retry matchingRetry) {
                 boolean sendNow = now > (file.lastModified() + (matchingRetry.delay * 1000));
                 if (sendNow)
-                    LOG.debug(">> ready to send now", file.getPath());
+                    LOG.debug(">> ready to send now");
                 else
                     LOG.debug(">> wait until last send delay > {}sec", matchingRetry.delay);
                 return sendNow;
