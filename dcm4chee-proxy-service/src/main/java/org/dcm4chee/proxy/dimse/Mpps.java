@@ -194,8 +194,7 @@ public class Mpps extends DicomService {
         }
         Attributes ncreateAttrs = proxyAEE.parseAttributesWithLazyBulkData(as, ncreateFile);
         data.merge(ncreateAttrs);
-        Attributes doseSrData = new Attributes();
-        transformMpps2DoseSr(as, proxyAEE, fmi, data, ppsSOPIUID, iuid, rule, doseSrData);
+        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, data, ppsSOPIUID, iuid, rule);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
@@ -215,8 +214,8 @@ public class Mpps extends DicomService {
             File calledAETPath = new File (proxyAEE.getDoseSrPath(), calledAET);
             for (File file : calledAETPath.listFiles(proxyAEE.infoFileFilter())) {
                 Properties prop = proxyAEE.getFileInfoProperties(file);
-                String transactionUID = prop.getProperty("instance-uid");
-                if (transactionUID.equals(iuid))
+                String fileInstanceUID = prop.getProperty("sop-instance-uid");
+                if (fileInstanceUID.equals(iuid))
                     return new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".ncreate");
             }
         }
@@ -235,9 +234,8 @@ public class Mpps extends DicomService {
             LOG.debug("{}: failed to DELETE {}", as, info);
     }
 
-    private void transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, Attributes fmi,
-            String ppsSOPIUID, String iuid, ForwardRule rule, Attributes doseSrData) throws TransformerFactoryConfigurationError,
-            DicomServiceException {
+    private Attributes transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String ppsSOPIUID,
+            String iuid, ForwardRule rule) throws TransformerFactoryConfigurationError, DicomServiceException {
         try {
             Templates templates = pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)
                     .getTemplates(rule.getMpps2DoseSrTemplateURI());
@@ -250,10 +248,15 @@ public class Mpps extends DicomService {
             BigInteger bi = new BigInteger(hex, 16);
             tr.setParameter("DeviceObserverUID", bi);
             tr.setParameter("PerfomedProcedureStepSOPInstanceUID", ppsSOPIUID);
+            Attributes doseSrData = new Attributes();
             th.setResult(new SAXResult(new ContentHandlerAdapter(doseSrData)));
             SAXWriter w = new SAXWriter(th);
             w.setIncludeKeyword(false);
             w.write(data);
+            if (LOG.isDebugEnabled())
+                LOG.debug("{}: MPPS to Dose SR transformed dataset:{}{}", new Object[] { as, System.lineSeparator(),
+                        doseSrData.toString(Integer.MAX_VALUE, 200) });
+            return doseSrData;
         } catch (Exception e) {
             LOG.error(as + ": error converting MPPS to Dose SR: " + e.getMessage());
             LOG.debug(e.getMessage(), e);
@@ -269,7 +272,7 @@ public class Mpps extends DicomService {
         DicomOutputStream out = null;
         Properties prop = new Properties();
         prop.setProperty("source-aet", as.getCallingAET());
-        prop.setProperty("instance-uid", fmi.getString(Tag.MediaStorageSOPInstanceUID));
+        prop.setProperty("sop-instance-uid", fmi.getString(Tag.MediaStorageSOPInstanceUID));
         prop.setProperty("sop-class-uid", fmi.getString(Tag.MediaStorageSOPClassUID));
         prop.setProperty("transfer-syntax-uid", fmi.getString(Tag.TransferSyntaxUID));
         prop.setProperty("hostname", as.getConnection().getHostname());
