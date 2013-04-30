@@ -140,6 +140,9 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     @Override
     public void start() throws Exception {
+        if (isRunning())
+            return;
+
         scheduler = new Scheduler(aeCache, device, new AuditLog(device.getDeviceExtension(AuditLogger.class)));
         resetSpoolFiles("start-up");
         super.start();
@@ -149,10 +152,18 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     @Override
     public void stop() {
+        if (!isRunning())
+            return;
+
         scheduler.stop();
         super.stop();
         resetSpoolFiles("shut-down");
         log(EventTypeCode.ApplicationStop);
+    }
+
+    public void restart() throws Exception {
+        stop();
+        start();
     }
 
     private void log(EventTypeCode eventType) {

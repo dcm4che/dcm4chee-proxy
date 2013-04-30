@@ -64,4 +64,7 @@ public interface ProxyMBean {
     @Path("reload")
     void reload() throws Exception;
 
+    @GET
+    @Path("restart")
+    void restart() throws Exception;
 }
