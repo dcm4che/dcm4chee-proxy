@@ -54,6 +54,7 @@ import org.dcm4che.audit.AuditMessages.EventTypeCode;
 import org.dcm4che.audit.AuditMessages.RoleIDCode;
 import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.ConfigurationException;
+import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
 import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che.conf.api.hl7.HL7Configuration;
@@ -109,7 +110,15 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     public Proxy(DicomConfiguration dicomConfiguration, HL7Configuration hl7configuration, String deviceName)
             throws ConfigurationException {
-        init(dicomConfiguration.findDevice(deviceName));
+        try {
+            init(dicomConfiguration.findDevice(deviceName));
+        } catch (ConfigurationNotFoundException e) {
+            LOG.error("Could not find configuration for proxy device {}", deviceName);
+            throw new ConfigurationNotFoundException(e);
+        } catch (ConfigurationException e) {
+            LOG.error("Error loading configuration for proxy device {}", deviceName);
+            throw new ConfigurationException(e);
+        }
         this.dicomConfiguration = dicomConfiguration;
         this.aeCache = new ApplicationEntityCache(dicomConfiguration);
         this.hl7AppCache = new HL7ApplicationCache(hl7configuration);
