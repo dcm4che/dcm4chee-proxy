@@ -81,7 +81,6 @@ import org.dcm4che.net.pdu.ExtendedNegotiation;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
@@ -570,7 +569,7 @@ public class ProxyAEExtension extends AEExtension {
             inStream = new FileInputStream(infoFileName);
             prop.load(inStream);
         } finally {
-            SafeClose.close(inStream);
+            inStream.close();
         }
         return prop;
     }
@@ -735,7 +734,7 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public Attributes parseAttributesWithLazyBulkData(Association as, File file)
-            throws DicomServiceException {
+            throws IOException {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
@@ -745,7 +744,7 @@ public class ProxyAEExtension extends AEExtension {
             LOG.warn(as + ": Failed to decode dataset:", e);
             throw new DicomServiceException(Status.CannotUnderstand);
         } finally {
-            SafeClose.close(in);
+            in.close();
         }
     }
 

@@ -74,7 +74,6 @@ import org.dcm4che.net.pdu.AAssociateRJ;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -535,7 +534,7 @@ public class ForwardFiles {
             else
                 as.nset(cuid, iuid, attrs, tsuid, rspHandler);
         } finally {
-            SafeClose.close(in);
+            in.close();
         }
     }
 
@@ -661,7 +660,7 @@ public class ForwardFiles {
         try {
             as.naction(cuid, iuid, 1, attrs, tsuid, rspHandler);
         } finally {
-            SafeClose.close(in);
+            in.close();
         }
     }
 
@@ -766,7 +765,7 @@ public class ForwardFiles {
             dis.setIncludeBulkData(IncludeBulkData.LOCATOR);
             src = dis.readDataset(-1, -1);
         } finally {
-            SafeClose.close(dis);
+            dis.close();
         }
         MultiframeExtractor extractor = new MultiframeExtractor();
         int n = src.getInt(Tag.NumberOfFrames, 1);
@@ -907,7 +906,7 @@ public class ForwardFiles {
         try {
             return in.readFileMetaInformation();
         } finally {
-            SafeClose.close(in);
+            in.close();
         }
     }
 

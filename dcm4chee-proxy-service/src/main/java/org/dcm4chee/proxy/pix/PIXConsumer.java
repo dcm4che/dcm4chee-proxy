@@ -55,7 +55,6 @@ import org.dcm4che.net.Status;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4che.net.hl7.HL7DeviceExtension;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4chee.proxy.common.IDWithIssuer;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

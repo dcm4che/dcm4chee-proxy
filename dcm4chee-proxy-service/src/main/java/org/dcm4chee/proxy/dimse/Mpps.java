@@ -71,7 +71,6 @@ import org.dcm4che.net.Status;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.SafeClose;
 import org.dcm4che.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
@@ -154,16 +153,15 @@ public class Mpps extends DicomService {
         }
     }
 
-    private void processDestinationAETs(Association as, Dimse dimse, Attributes fmi, Attributes data, ProxyAEExtension pae,
-            String iuid, ForwardRule rule, List<String> destinationAETs)
+    private void processDestinationAETs(Association as, Dimse dimse, Attributes fmi, Attributes data,
+            ProxyAEExtension pae, String iuid, ForwardRule rule, List<String> destinationAETs)
             throws TransformerFactoryConfigurationError, IOException {
         for (String calledAET : destinationAETs) {
             if (rule.getMpps2DoseSrTemplateURI() != null) {
                 File dir = pae.getDoseSrPath();
                 processMpps2DoseSRConversion(as, dimse, fmi, data, iuid, dir, calledAET, rule);
             } else {
-                File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae
-                        .getNSetDirectoryPath();
+                File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
                 File file = createFile(as, dimse, fmi, data, dir, calledAET, rule);
                 as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
                 rename(as, file);
@@ -193,8 +191,9 @@ public class Mpps extends DicomService {
             throw new DicomServiceException(Status.ProcessingFailure);
         }
         Attributes ncreateAttrs = proxyAEE.parseAttributesWithLazyBulkData(as, ncreateFile);
-        data.merge(ncreateAttrs);
-        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, data, ppsSOPIUID, iuid, rule);
+        Attributes mergedAttrs = new Attributes(data);
+        mergedAttrs.merge(ncreateAttrs);
+        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, mergedAttrs, ppsSOPIUID, iuid, rule);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
@@ -270,6 +269,18 @@ public class Mpps extends DicomService {
         dir.mkdir();
         File file = File.createTempFile("dcm", ".part", dir);
         DicomOutputStream out = null;
+        try {
+            LOG.debug("{}: create {}", new Object[] { as, file });
+            out = new DicomOutputStream(file);
+            out.writeDataset(fmi, data);
+        } catch (IOException e) {
+            LOG.warn("{}: failed to create {}", new Object[] { as, file.getPath() });
+            LOG.debug(e.getMessage(), e);
+            file.delete();
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
+        } finally {
+            out.close();
+        }
         Properties prop = new Properties();
         prop.setProperty("source-aet", as.getCallingAET());
         prop.setProperty("sop-instance-uid", fmi.getString(Tag.MediaStorageSOPInstanceUID));
@@ -282,20 +293,16 @@ public class Mpps extends DicomService {
         File info = new File(path.substring(0, path.length() - 5) + ".info");
         FileOutputStream infoOut = new FileOutputStream(info);
         try {
-            LOG.debug("{}: create {}", new Object[] { as, file });
-            out = new DicomOutputStream(file);
-            out.writeDataset(fmi, data);
             LOG.debug("{}: create {}", as, info.getPath());
             prop.store(infoOut, null);
         } catch (IOException e) {
-            LOG.warn("{}: failed to create {} and/or {}", new Object[] { as, file.getPath(), info.getPath() });
+            LOG.warn("{}: failed to create {}", new Object[] { as, info.getPath() });
             LOG.debug(e.getMessage(), e);
             file.delete();
             info.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
-            SafeClose.close(out);
-            SafeClose.close(infoOut);
+            infoOut.close();
         }
         return file;
     }

@@ -79,7 +79,6 @@ import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.BasicCStoreSCP;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.common.RetryObject;
@@ -248,7 +247,7 @@ public class CStore extends BasicCStoreSCP {
         return fmi;
     }
 
-    private void addFileInfo(String path, String key, String value) {
+    private void addFileInfo(String path, String key, String value) throws IOException {
         File info = new File(path.substring(0, path.length() - 5) + ".info");
         Properties prop = new Properties();
         FileInputStream inStream = null;
@@ -258,7 +257,7 @@ public class CStore extends BasicCStoreSCP {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            SafeClose.close(inStream);
+            inStream.close();
         }
         prop.setProperty(key, value);
         FileOutputStream out = null;
@@ -268,7 +267,7 @@ public class CStore extends BasicCStoreSCP {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            SafeClose.close(out);
+            out.close();
         }
     }
 
@@ -434,7 +433,7 @@ public class CStore extends BasicCStoreSCP {
             dis.setIncludeBulkData(IncludeBulkData.LOCATOR);
             src = dis.readDataset(-1, -1);
         } finally {
-            SafeClose.close(dis);
+            dis.close();
         }
         MultiframeExtractor extractor = new MultiframeExtractor();
         int n = src.getInt(Tag.NumberOfFrames, 1);

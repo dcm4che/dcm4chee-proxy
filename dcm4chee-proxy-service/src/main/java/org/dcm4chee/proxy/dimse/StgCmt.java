@@ -69,7 +69,6 @@ import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
@@ -424,6 +423,23 @@ public class StgCmt extends DicomService {
         dir.mkdir();
         File file = File.createTempFile("dcm", suffix, dir);
         DicomOutputStream stream = null;
+        try {
+            stream = new DicomOutputStream(file);
+            String iuid = UID.StorageCommitmentPushModelSOPInstance;
+            String cuid = UID.StorageCommitmentPushModelSOPClass;
+            String tsuid = UID.ExplicitVRLittleEndian;
+            Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, asAccepted.getCallingAET());
+            LOG.debug("{}: create {}", asAccepted, file.getPath());
+            stream.writeDataset(fmi, data);
+        } catch (Exception e) {
+            LOG.error(asAccepted + ": Failed to create transaction UID file: " + e.getMessage());
+            LOG.debug(e.getMessage(), e);
+            file.delete();
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
+        } finally {
+            stream.close();
+        }
         Properties prop = new Properties();
         prop.setProperty("source-aet", asAccepted.getCallingAET());
         if (rule != null && rule.getUseCallingAET() != null)
@@ -435,25 +451,17 @@ public class StgCmt extends DicomService {
         File info = new File(path.substring(0, path.indexOf('.')) + ".info");
         FileOutputStream infoOut = new FileOutputStream(info);
         try {
-            stream = new DicomOutputStream(file);
-            String iuid = UID.StorageCommitmentPushModelSOPInstance;
-            String cuid = UID.StorageCommitmentPushModelSOPClass;
-            String tsuid = UID.ExplicitVRLittleEndian;
-            Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
-            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, asAccepted.getCallingAET());
-            LOG.debug("{}: create {}", asAccepted, file.getPath());
-            stream.writeDataset(fmi, data);
+
             LOG.debug("{}: create {}", asAccepted, info.getPath());
             prop.store(infoOut, null);
         } catch (Exception e) {
-            LOG.error(asAccepted + ": Failed to create transaction UID file: " + e.getMessage());
+            LOG.error(asAccepted + ": Failed to create transaction UID info-file: " + e.getMessage());
             LOG.debug(e.getMessage(), e);
             file.delete();
             info.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
-            SafeClose.close(stream);
-            SafeClose.close(infoOut);
+            infoOut.close();
         }
         return file;
     }

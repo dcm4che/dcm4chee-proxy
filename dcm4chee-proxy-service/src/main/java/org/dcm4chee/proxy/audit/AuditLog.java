@@ -61,7 +61,6 @@ import org.dcm4che.audit.ParticipantObjectDescription;
 import org.dcm4che.audit.SOPClass;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.audit.AuditLogger;
-import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
@@ -112,15 +111,20 @@ public class AuditLog {
         ae.getDevice().execute(new Runnable() {
             @Override
             public void run() {
-                if (auditDir == AuditDirectory.FAILED)
-                    checkRetryLog(ae, studyIUIDDir, auditDir);
-                else
-                    checkLog(ae, studyIUIDDir, auditDir);
+                try {
+                    if (auditDir == AuditDirectory.FAILED)
+                        checkRetryLog(ae, studyIUIDDir, auditDir);
+                    else
+                        checkLog(ae, studyIUIDDir, auditDir);
+                } catch (IOException e) {
+                    LOG.error("Error processing audit log for study dir {}: {}", studyIUIDDir.getPath(), e);
+                    LOG.debug(e.getMessage(), e);
+                }
             }
         });
     }
 
-    private void checkRetryLog(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir) {
+    private void checkRetryLog(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir) throws IOException {
         if (!studyIUIDDir.exists())
             return;
 
@@ -138,7 +142,7 @@ public class AuditLog {
         }
     }
 
-    private void checkLog(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir) {
+    private void checkLog(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir) throws IOException {
         if (!studyIUIDDir.exists())
             return;
 
@@ -153,7 +157,7 @@ public class AuditLog {
         writeLogMessage(ae, studyIUIDDir, auditDir, separator);
     }
 
-    private void writeLogMessage(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir, String separator) {
+    private void writeLogMessage(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir, String separator) throws IOException {
         File[] logFiles = studyIUIDDir.listFiles(fileFilter());
         if (logFiles != null && logFiles.length > 1) {
             Log log = new Log();
@@ -231,7 +235,7 @@ public class AuditLog {
     }
 
     private void writeFailedLogMessage(ApplicationEntity ae, File studyIUIDDir, String retry, AuditDirectory auditDir,
-            String separator) {
+            String separator) throws IOException {
         File retryDir = new File(studyIUIDDir + separator + retry);
         File[] logFiles = retryDir.listFiles(fileFilter());
         if (logFiles != null && logFiles.length > 1) {
@@ -369,7 +373,7 @@ public class AuditLog {
         });
     }
 
-    private void readProperties(File file, Log log) {
+    private void readProperties(File file, Log log) throws IOException {
         Properties prop = new Properties();
         FileInputStream inStream = null;
         try {
@@ -390,7 +394,7 @@ public class AuditLog {
             LOG.error("Error reading properties from {}: {}", new Object[]{file.getPath(), e.getMessage()});
             LOG.debug(e.getMessage(), e);
         } finally {
-            SafeClose.close(inStream);
+            inStream.close();
         }
     }
 
