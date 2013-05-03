@@ -435,7 +435,7 @@ public class ProxyDeviceTest {
         List<String> sopClass = new ArrayList<String>();
         sopClass.add("1.2.840.10008.3.1.2.3.3");
         forwardRuleMPPS2DoseSR.setSopClass(sopClass);
-        forwardRuleMPPS2DoseSR.setMpps2DoseSrTemplateURI("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl");
+        forwardRuleMPPS2DoseSR.setMpps2DoseSrTemplateURI("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
         forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
         forwardRules.add(forwardRuleMPPS2DoseSR);
 
