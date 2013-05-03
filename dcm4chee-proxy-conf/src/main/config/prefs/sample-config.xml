@@ -3645,41 +3645,6 @@
             </node>
           </node>
         </node>
-        <node name="test-hl7">
-          <map>
-            <entry key="dicomInstalled" value="true"/>
-          </map>
-          <node name="dcmNetworkAE">
-            <map/>
-          </node>
-          <node name="dcmNetworkConnection">
-            <map/>
-            <node name="1">
-              <map>
-                <entry key="cn" value="hl7"/>
-                <entry key="dcmProtocol" value="HL7"/>
-                <entry key="dcmTCPNoDelay" value="false"/>
-                <entry key="dicomHostname" value="localhost"/>
-                <entry key="dicomPort" value="22225"/>
-              </map>
-            </node>
-          </node>
-          <node name="hl7Application">
-            <map/>
-            <node name="TEST1^HL7">
-              <map>
-                <entry key="dicomNetworkConnectionReference.#" value="1"/>
-                <entry key="dicomNetworkConnectionReference.1" value="1"/>
-              </map>
-            </node>
-            <node name="TEST2^HL7">
-              <map>
-                <entry key="dicomNetworkConnectionReference.#" value="1"/>
-                <entry key="dicomNetworkConnectionReference.1" value="1"/>
-              </map>
-            </node>
-          </node>
-        </node>
       </node>
       <node name="dicomUniqueAETitlesRegistryRoot">
         <map/>
@@ -3696,15 +3661,6 @@
           <map/>
         </node>
         <node name="STORESCU">
-          <map/>
-        </node>
-      </node>
-      <node name="hl7UniqueApplicationNamesRegistryRoot">
-        <map/>
-        <node name="TEST1^HL7">
-          <map/>
-        </node>
-        <node name="TEST2^HL7">
           <map/>
         </node>
       </node>
