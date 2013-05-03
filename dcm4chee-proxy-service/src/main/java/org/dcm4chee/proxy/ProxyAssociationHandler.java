@@ -230,7 +230,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
             return ac;
         } catch (ConfigurationException e) {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             throw new AAbort(AAbort.UL_SERIVE_PROVIDER, 0);
         } catch (AAssociateRJ rj) {
             return handleNegotiateConnectException(asAccepted, rq, ac, calledAET, rj,

@@ -78,7 +78,8 @@ public class CEcho extends BasicCEchoSCP {
             asAccepted.writeDimseRSP(pc, rsp.getCommand(), null);
         } catch (Exception e) {
             LOG.error("Failed to forward C-ECHO RQ to {}: {}", new Object[] {asInvoked, e.getMessage()} );
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             throw new AAbort(AAbort.UL_SERIVE_USER, 0);
         }
     }

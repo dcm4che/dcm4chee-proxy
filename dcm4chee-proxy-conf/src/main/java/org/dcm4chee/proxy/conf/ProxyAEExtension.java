@@ -137,123 +137,129 @@ public class ProxyAEExtension extends AEExtension {
         return spoolDirectory;
     }
     
-    public File getSpoolDirectoryPath() {
+    public File getSpoolDirectoryPath() throws IOException {
         File path = new File(spoolDirectory);
         if (!path.isAbsolute())
             path = jbossServerDataDir != null 
                 ? new File(jbossServerDataDir, spoolDirectory)
                 : new File(currentWorkingDir, spoolDirectory);
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getAuditDirectoryPath() {
+    public File getAuditDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectoryPath(), "audit");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "audit")
                 : new File(currentWorkingDir, "audit");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getTransferredAuditDirectoryPath() {
+    public File getTransferredAuditDirectoryPath() throws IOException {
         File path = new File(getAuditDirectoryPath(), AuditDirectory.TRANSFERRED.getDirectoryName());
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, AuditDirectory.TRANSFERRED.getDirectoryName())
                 : new File(currentWorkingDir, AuditDirectory.TRANSFERRED.getDirectoryName());
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getDeleteAuditDirectoryPath() {
+    public File getDeleteAuditDirectoryPath() throws IOException {
         File path = new File(getAuditDirectoryPath(), AuditDirectory.DELETED.getDirectoryName());
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, AuditDirectory.DELETED.getDirectoryName())
                 : new File(currentWorkingDir, AuditDirectory.DELETED.getDirectoryName());
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getFailedAuditDirectoryPath() {
+    public File getFailedAuditDirectoryPath() throws IOException {
         File path = new File(getAuditDirectoryPath(), AuditDirectory.FAILED.getDirectoryName());
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, AuditDirectory.FAILED.getDirectoryName())
                 : new File(currentWorkingDir, AuditDirectory.FAILED.getDirectoryName());
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getNactionDirectoryPath() {
+    public File getNactionDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectoryPath(), "naction");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "naction")
                 : new File(currentWorkingDir, "naction");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getNeventDirectoryPath() {
+    public File getNeventDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectoryPath(), "nevent");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "nevent")
                 : new File(currentWorkingDir, "nevent");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getNCreateDirectoryPath() {
+    public File getNCreateDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectory() + separator + "mpps" + separator + "ncreate");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "mpps" + separator + "ncreate")
                 : new File(currentWorkingDir, "mpps" + separator + "ncreate");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getNSetDirectoryPath() {
+    public File getNSetDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectory() + separator + "mpps" + separator + "nset");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "mpps" + separator + "nset")
                 : new File(currentWorkingDir, "mpps" + separator + "nset");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
     
-    public File getCStoreDirectoryPath() {
+    public File getCStoreDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectory(), "cstore");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "cstore")
                 : new File(currentWorkingDir, "cstore");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getDoseSrPath() {
+    private void makeDirs(File path) throws IOException {
+        if (!path.mkdirs())
+            if (!path.exists())
+                throw new IOException("Cannot create path " + path);
+    }
+
+    public File getDoseSrPath() throws IOException {
         File path = new File(getSpoolDirectory(), "dose");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "dose")
                 : new File(currentWorkingDir, "dose");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
-    public File getNoRetryPath() {
+    public File getNoRetryPath() throws IOException {
         File path = new File(getSpoolDirectory(), "noRetry");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
                 ? new File(jbossServerDataDir, "noRetry")
                 : new File(currentWorkingDir, "noRetry");
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
@@ -299,7 +305,7 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     private File getLogDir(AuditDirectory auditDir, String callingAET, String calledAET, String studyIUID, Integer retry)
-            throws DicomServiceException {
+            throws IOException {
         File path = null;
         String subDirs = getSeparator() + calledAET + getSeparator() + callingAET + getSeparator() + studyIUID;
         switch (auditDir) {
@@ -318,7 +324,7 @@ public class ProxyAEExtension extends AEExtension {
         }
         if (path == null)
             throw new DicomServiceException(Status.UnableToProcess);
-        path.mkdirs();
+        makeDirs(path);
         return path;
     }
 
@@ -516,7 +522,7 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public void createStartLogFile(AuditDirectory auditDir, String callingAET, String calledAET, String proxyHostname, 
-            Properties fileInfo, Integer retry) throws DicomServiceException {
+            Properties fileInfo, Integer retry) throws IOException {
         String studyIUID = fileInfo.containsKey("study-iuid") 
                 ? fileInfo.getProperty("study-iuid")
                 : fileInfo.getProperty("sop-instance-uid");

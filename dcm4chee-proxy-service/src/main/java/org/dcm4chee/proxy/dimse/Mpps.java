@@ -113,7 +113,8 @@ public class Mpps extends DicomService {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);
             } catch (ConfigurationException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.ProcessingFailure, e.getMessage());
             }
         else
@@ -121,7 +122,8 @@ public class Mpps extends DicomService {
                 forwardNCreateRQ(asAccepted, asInvoked, pc, dimse, cmd, data);
             } catch (InterruptedException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
     }
@@ -149,7 +151,8 @@ public class Mpps extends DicomService {
         } catch (AssociationStateException e) {
             Dimse dimseRSP = (dimse == Dimse.N_CREATE_RQ) ? Dimse.N_CREATE_RSP : Dimse.N_SET_RSP;
             LOG.warn("{} << {} failed: {}", new Object[] { as, dimseRSP.toString(), e.getMessage() });
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
         }
     }
 
@@ -258,7 +261,8 @@ public class Mpps extends DicomService {
             return doseSrData;
         } catch (Exception e) {
             LOG.error(as + ": error converting MPPS to Dose SR: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
         }
     }
@@ -275,7 +279,8 @@ public class Mpps extends DicomService {
             out.writeDataset(fmi, data);
         } catch (IOException e) {
             LOG.warn("{}: failed to create {}", new Object[] { as, file.getPath() });
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             file.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
@@ -297,7 +302,8 @@ public class Mpps extends DicomService {
             prop.store(infoOut, null);
         } catch (IOException e) {
             LOG.warn("{}: failed to create {}", new Object[] { as, info.getPath() });
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             file.delete();
             info.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
@@ -336,7 +342,8 @@ public class Mpps extends DicomService {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.error(asAccepted + ": error forwarding N-CREATE-RQ: " + e.getMessage());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         };
@@ -351,7 +358,8 @@ public class Mpps extends DicomService {
                 processForwardRules(asAccepted, pc, dimse, cmd, data);
             } catch (ConfigurationException e) {
                 LOG.error("{}: error processing {}: {}", new Object[] { asAccepted, dimse, e.getMessage() });
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
             }
         else
             try {
@@ -376,7 +384,8 @@ public class Mpps extends DicomService {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                 } catch (IOException e) {
                     LOG.error(asAccepted + ": error forwarding N-SET-RQ: ", e.getMessage());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         };

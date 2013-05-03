@@ -99,13 +99,19 @@ public class ForwardFiles {
     public void execute(ApplicationEntity ae) {
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
-        processCStore(proxyAEE, forwardOptions);
-        processNAction(proxyAEE, forwardOptions);
-        processNCreate(proxyAEE, forwardOptions);
-        processNSet(proxyAEE, forwardOptions);
+        try {
+            processCStore(proxyAEE, forwardOptions);
+            processNAction(proxyAEE, forwardOptions);
+            processNCreate(proxyAEE, forwardOptions);
+            processNSet(proxyAEE, forwardOptions);
+        } catch (IOException e) {
+            LOG.error("Error scanning spool directory: {}", e.getMessage());
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
     }
 
-    private void processNSet(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
+    private void processNSet(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) throws IOException {
         for (String calledAET : proxyAEE.getNSetDirectoryPath().list(dirFilter())) {
             File[] files = new File(proxyAEE.getNSetDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE, calledAET));
             if (files == null || files.length == 0)
@@ -131,7 +137,7 @@ public class ForwardFiles {
         }
     }
 
-    private void processNCreate(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
+    private void processNCreate(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) throws IOException {
         for (String calledAET : proxyAEE.getNCreateDirectoryPath().list(dirFilter())) {
             File[] files = new File(proxyAEE.getNCreateDirectoryPath(), calledAET).listFiles(fileFilter(proxyAEE,
                     calledAET));
@@ -159,7 +165,7 @@ public class ForwardFiles {
         }
     }
 
-    private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
+    private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) throws IOException {
         for (String calledAET : proxyAEE.getNactionDirectoryPath().list(dirFilter())) {
             File dir = new File(proxyAEE.getNactionDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
@@ -187,7 +193,7 @@ public class ForwardFiles {
         }
     }
 
-    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) {
+    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) throws IOException {
         for (String calledAET : proxyAEE.getCStoreDirectoryPath().list(dirFilter())) {
             File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
@@ -249,7 +255,18 @@ public class ForwardFiles {
                         return true;
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
-                    moveToNoRetryPath(proxyAEE, file, "(error parsing suffix)");
+                    try {
+                        moveToNoRetryPath(proxyAEE, file, "(error parsing suffix)");
+                    } catch (IOException e1) {
+                        LOG.error("Error moving file {} to no retry directory: {}",
+                                new Object[] { file.getName(), e.getMessage() });
+                        if(LOG.isDebugEnabled())
+                            e1.printStackTrace();
+                    }
+                } catch (IOException e) {
+                    LOG.error("Error reading from directory: {}", e.getMessage());
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
                 return false;
             }
@@ -277,7 +294,7 @@ public class ForwardFiles {
     }
 
     private boolean checkNumberOfRetries(ProxyAEExtension proxyAEE, Retry retry, String suffix, File file,
-            String calledAET) {
+            String calledAET) throws IOException {
         LOG.debug("Check number of previous retries for file " + file.getPath());
         int prevRetries = 0;
         String substring = suffix.substring(retry.getRetryObject().getSuffix().length());
@@ -348,7 +365,7 @@ public class ForwardFiles {
         return null;
     }
 
-    protected void moveToNoRetryPath(ProxyAEExtension proxyAEE, File file, String reason) {
+    protected void moveToNoRetryPath(ProxyAEExtension proxyAEE, File file, String reason) throws IOException {
         String path = file.getPath();
         String spoolDirPath = proxyAEE.getSpoolDirectoryPath().getPath();
         String fileName = file.getName();
@@ -391,7 +408,8 @@ public class ForwardFiles {
                 LOG.error("Failed to delete {}", infoFile);
         } catch (Exception e) {
             LOG.error("Failed to create log file: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
         }
     }
 
@@ -406,7 +424,8 @@ public class ForwardFiles {
                     forwardScheduledMPPS(proxyAEE, files, destinationAETitle, protocol);
                 } catch (IOException e) {
                     LOG.error("Error forwarding scheduled MPPS " + e.getMessage());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         });
@@ -444,10 +463,12 @@ public class ForwardFiles {
                             as.release();
                         } catch (InterruptedException e) {
                             LOG.error(as + ": unexpected exception: " + e.getMessage());
-                            LOG.debug(e.getMessage(), e);
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
                         } catch (IOException e) {
                             LOG.error(as + ": failed to release association: " + e.getMessage());
-                            LOG.debug(e.getMessage(), e);
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
                         }
                     }
                 }
@@ -482,7 +503,7 @@ public class ForwardFiles {
         }
     }
 
-    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, Attributes fmi) {
+    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, Attributes fmi) throws IOException {
         File dir = new File(proxyAEE.getNCreateDirectoryPath(), destinationAETitle);
         if (!dir.exists())
             return false;
@@ -522,7 +543,8 @@ public class ForwardFiles {
                         renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
                     } catch (IOException e) {
                         LOG.error(as + ": error renaming file: " + e.getMessage());
-                        LOG.debug(e.getMessage(), e);
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
                     }
                 }
                 }
@@ -548,7 +570,8 @@ public class ForwardFiles {
                     forwardScheduledNAction(proxyAEE, destinationAETitle, files);
                 } catch (IOException e) {
                     LOG.error("Error forwarding scheduled NAction: " + e.getMessage());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         });
@@ -579,10 +602,12 @@ public class ForwardFiles {
                             asInvoked.release();
                         } catch (InterruptedException e) {
                             LOG.error(asInvoked + ": unexpected exception: " + e.getMessage());
-                            LOG.debug(e.getMessage(), e);
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
                         } catch (IOException e) {
                             LOG.error(asInvoked + ": failed to release association: " + e.getMessage());
-                            LOG.debug(e.getMessage(), e);
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
                         }
                     }
                 }
@@ -621,8 +646,16 @@ public class ForwardFiles {
                 case Status.Success: {
                     String fileName = file.getName();
                     String filePath = file.getPath();
-                    File destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
-                            + asInvoked.getCalledAET());
+                    File destDir = null;
+                    try {
+                        destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
+                                + asInvoked.getCalledAET());
+                    } catch (IOException e) {
+                        LOG.error("{}: error creating directory {}: {}", new Object[]{as, destDir, e.getMessage()});
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
+                        break;
+                    }
                     destDir.mkdirs();
                     File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
                             + ".naction");
@@ -651,7 +684,8 @@ public class ForwardFiles {
                         renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
                     } catch (IOException e) {
                         LOG.error("Error renaming file {}: {}", new Object[] { file.getPath(), e.getMessage() });
-                        LOG.debug(e.getMessage(), e);
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
                     }
                 }
                 }
@@ -684,7 +718,8 @@ public class ForwardFiles {
                 processForwardTask(proxyAEE, ft);
             } catch (IOException e) {
                 LOG.error("Error processing forwarding files: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
             }
     }
 
@@ -748,10 +783,12 @@ public class ForwardFiles {
                     asInvoked.release();
                 } catch (InterruptedException e) {
                     LOG.error(asInvoked + ": unexpected exception: " + e.getMessage());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 } catch (IOException e) {
                     LOG.error(asInvoked + ": failed to release association: " + e.getMessage());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         }
@@ -824,7 +861,8 @@ public class ForwardFiles {
                         } catch (Exception e) {
                             LOG.error("{}: error renaming file {}: {}",
                                     new Object[] { asInvoked, file.getPath(), e.getMessage() });
-                            LOG.debug(e.getMessage(), e);
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
                         }
                     }
                     }
@@ -848,7 +886,8 @@ public class ForwardFiles {
                     return Integer.parseInt(substring);
                 } catch (NumberFormatException e) {
                     LOG.error("Error parsing number of retries in suffix of file " + file.getName());
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
         }
         return 1;

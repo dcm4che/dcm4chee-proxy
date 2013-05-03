@@ -100,7 +100,8 @@ public class CFind extends DicomService {
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.error("Error forwarding C-FIND request: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
         } else
@@ -116,7 +117,8 @@ public class CFind extends DicomService {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Error forwarding C-FIND request: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
     }

@@ -99,7 +99,8 @@ public class CGet extends DicomService {
                         new Association[fwdAssocs.size()])).execute();
             } catch (InterruptedException e) {
                 LOG.error("Error forwarding C-GET request: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
         } else
@@ -115,7 +116,8 @@ public class CGet extends DicomService {
                 }
             } catch (InterruptedException e) {
                 LOG.error("Error forwarding C-GET request: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.UnableToProcess, e.getCause());
             }
     }

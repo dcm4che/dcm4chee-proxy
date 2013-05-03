@@ -123,7 +123,8 @@ public class StgCmt extends DicomService {
                 onNActionRQ(asAccepted, asInvoked, pc, rq, data, rule);
             } catch (Exception e) {
                 LOG.debug(asAccepted + ": error forwarding N-ACTION-RQ: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
     }
@@ -230,7 +231,8 @@ public class StgCmt extends DicomService {
                 onNEventReportRQ(asAccepted, asInvoked, pc, rq, data, transactionUIDFile);
             } catch (InterruptedException e) {
                 LOG.error(asAccepted + ": error forwarding N-EVENT-REPORT-RQ: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
             }
         }
@@ -249,7 +251,7 @@ public class StgCmt extends DicomService {
         return null;
     }
 
-    private boolean pendingFileForwarding(Association as, Attributes eventInfo) {
+    private boolean pendingFileForwarding(Association as, Attributes eventInfo) throws IOException {
         File dir = new File(
                 ((ProxyAEExtension) as.getApplicationEntity().getAEExtension(ProxyAEExtension.class))
                         .getSpoolDirectoryPath(),
@@ -289,7 +291,8 @@ public class StgCmt extends DicomService {
             onNEventReportRQ(asAccepted, asInvoked, pc, data, eventInfo, file);
         } catch (AAssociateRJ e) {
             LOG.error(asAccepted + ": rejected association to forward AET: " + e.getReason());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
         } catch (IOException e) {
             LOG.error("{}: error connecting to {}: {}", new Object[] { asAccepted, calledAEString, e.getMessage() });
@@ -316,7 +319,8 @@ public class StgCmt extends DicomService {
             asAccepted.writeDimseRSP(pc, response);
         } catch (IOException e) {
             LOG.error(asAccepted + ": error forwarding storage commitment: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
         }
     }
 
@@ -338,7 +342,8 @@ public class StgCmt extends DicomService {
                     int status = cmd.getInt(Tag.Status, -1);
                     LOG.error("{}: failed to forward file {} with error status {}", new Object[] { asAccepted, file,
                             Integer.toHexString(status) + 'H' });
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         };
@@ -365,9 +370,18 @@ public class StgCmt extends DicomService {
                 switch (status) {
                 case Status.Success: {
                     String fileName = file.getName();
-                    File destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
-                            + asInvoked.getCalledAET());
-                    destDir.mkdirs();
+                    File destDir = null;
+                    try {
+                        destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
+                                + asInvoked.getCalledAET());
+                        destDir.mkdirs();
+                    } catch (IOException e) {
+                        LOG.error("{}: error creating directory {}: {}",
+                                new Object[] { asAccepted, destDir, e.getMessage() });
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
+                        break;
+                    }
                     File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
                             + ".naction");
                     if (file.renameTo(dest)) {
@@ -390,7 +404,8 @@ public class StgCmt extends DicomService {
                         asAccepted.writeDimseRSP(pc, cmd, data);
                     } catch (IOException e) {
                         LOG.error(asAccepted + ": failed to forward N-ACTION-RSP: " + e.getMessage());
-                        LOG.debug(e.getMessage(), e);
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
                     }
                     break;
                 }
@@ -407,7 +422,8 @@ public class StgCmt extends DicomService {
                         asAccepted.writeDimseRSP(pc, cmd);
                     } catch (IOException e) {
                         LOG.error(asAccepted + ": Failed to forward N-ACTION-RSP: " + e.getMessage());
-                        LOG.debug(e.getMessage(), e);
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
                     }
                 }
                 }
@@ -434,7 +450,8 @@ public class StgCmt extends DicomService {
             stream.writeDataset(fmi, data);
         } catch (Exception e) {
             LOG.error(asAccepted + ": Failed to create transaction UID file: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             file.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
         } finally {
@@ -456,7 +473,8 @@ public class StgCmt extends DicomService {
             prop.store(infoOut, null);
         } catch (Exception e) {
             LOG.error(asAccepted + ": Failed to create transaction UID info-file: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             file.delete();
             info.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());

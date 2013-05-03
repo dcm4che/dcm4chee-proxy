@@ -86,15 +86,21 @@ public class AuditLog {
         if (!proxyAEE.isEnableAuditLog())
             return;
 
-        File failedPath = proxyAEE.getFailedAuditDirectoryPath();
-        for (String calledAET : failedPath.list())
-            scanCalledAETDir(ae, new File(failedPath, calledAET), AuditDirectory.FAILED);
-        File transferredPath = proxyAEE.getTransferredAuditDirectoryPath();
-        for (String calledAET : transferredPath.list())
-            scanCalledAETDir(ae, new File(transferredPath, calledAET), AuditDirectory.TRANSFERRED);
-        File deletePath = proxyAEE.getDeleteAuditDirectoryPath();
-        for (String calledAET : deletePath.list())
-            scanCalledAETDir(ae, new File(deletePath, calledAET), AuditDirectory.DELETED);
+        try {
+            File failedPath = proxyAEE.getFailedAuditDirectoryPath();
+            for (String calledAET : failedPath.list())
+                scanCalledAETDir(ae, new File(failedPath, calledAET), AuditDirectory.FAILED);
+            File transferredPath = proxyAEE.getTransferredAuditDirectoryPath();
+            for (String calledAET : transferredPath.list())
+                scanCalledAETDir(ae, new File(transferredPath, calledAET), AuditDirectory.TRANSFERRED);
+            File deletePath = proxyAEE.getDeleteAuditDirectoryPath();
+            for (String calledAET : deletePath.list())
+                scanCalledAETDir(ae, new File(deletePath, calledAET), AuditDirectory.DELETED);
+        } catch (IOException e) {
+            LOG.error("Error reading from audit log directory: {}", e.getMessage());
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
     }
 
     private void scanCalledAETDir(ApplicationEntity ae, File calledAETDir, AuditDirectory auditDir) {
@@ -118,7 +124,8 @@ public class AuditLog {
                         checkLog(ae, studyIUIDDir, auditDir);
                 } catch (IOException e) {
                     LOG.error("Error processing audit log for study dir {}: {}", studyIUIDDir.getPath(), e);
-                    LOG.debug(e.getMessage(), e);
+                    if(LOG.isDebugEnabled())
+                        e.printStackTrace();
                 }
             }
         });
@@ -197,7 +204,8 @@ public class AuditLog {
                 logger.write(timeStamp, msg);
             } catch (Exception e) {
                 LOG.error("Failed to write audit log message: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
             }
             boolean deleteStudyDir = deleteLogFiles(logFiles);
             if (deleteStudyDir)
@@ -392,7 +400,8 @@ public class AuditLog {
             log.t2 = (log.t2 == 0 || log.t2 < time) ? time : log.t2;
         } catch (IOException e) {
             LOG.error("Error reading properties from {}: {}", new Object[]{file.getPath(), e.getMessage()});
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
         } finally {
             inStream.close();
         }

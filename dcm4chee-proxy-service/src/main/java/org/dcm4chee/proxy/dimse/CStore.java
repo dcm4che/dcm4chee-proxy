@@ -391,7 +391,8 @@ public class CStore extends BasicCStoreSCP {
             return File.createTempFile("dcm", ".part", proxyAEE.getCStoreDirectoryPath());
         } catch (Exception e) {
             LOG.error(as + ": failed to create temp file: " + e.getMessage());
-            LOG.debug(e.getMessage(), e);
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
         }
     }
@@ -577,7 +578,8 @@ public class CStore extends BasicCStoreSCP {
                         cmd = Commands.mkCStoreRSP(rq, Status.Success);
                     } catch (Exception e) {
                         LOG.error("{}: error saving file {}: {}", new Object[]{as, dataFile.getPath(), e.getMessage()});
-                        LOG.debug(e.getMessage(), e);
+                        if(LOG.isDebugEnabled())
+                            e.printStackTrace();
                     }
                 else
                     cmd = Commands.mkCStoreRSP(rq, Status.UnableToProcess);

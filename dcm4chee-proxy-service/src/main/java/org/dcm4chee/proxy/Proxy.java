@@ -42,6 +42,7 @@ import static org.dcm4che.audit.AuditMessages.createEventIdentification;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collection;
 
@@ -166,7 +167,13 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
         scheduler.stop();
         super.stop();
-        resetSpoolFiles("shut-down");
+        try {
+            resetSpoolFiles("shut-down");
+        } catch (IOException e) {
+            LOG.error("Error reseting spool file: {}", e.getMessage());
+            if(LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
         log(EventTypeCode.ApplicationStop);
     }
 
@@ -183,7 +190,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 logger.write(timeStamp, createApplicationActivityMessage(logger, timeStamp, eventType));
             } catch (Exception e) {
                 LOG.error("Failed to write audit log message: " + e.getMessage());
-                LOG.debug(e.getMessage(), e);
+                if(LOG.isDebugEnabled())
+                    e.printStackTrace();
             }
         }
     }
@@ -230,7 +238,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         hl7AppCache.setStaleTimeout(staleTimeout);
     }
 
-    private void resetSpoolFiles(String action) {
+    private void resetSpoolFiles(String action) throws IOException {
         Collection<ApplicationEntity> proxyAEs = instance.getDevice().getApplicationEntities();
         for (ApplicationEntity ae : proxyAEs) {
             ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
