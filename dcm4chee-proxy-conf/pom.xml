@@ -27,7 +27,7 @@
       <resource>
         <directory>src/main/config/conf</directory>
         <includes>
-          <include>dcm4chee-proxy-key.jks</include>
+          <include>key.jks</include>
           <include>ldap.properties</include>
         </includes>
       </resource>

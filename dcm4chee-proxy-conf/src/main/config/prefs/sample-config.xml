@@ -10,6 +10,8 @@
         <node name="dcm4chee-arc">
           <map>
             <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIEUK3wyDANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRUwEwYDVQQDEwxkY200Y2hlZS1hcmMwHhcNMTIxMTIyMDkzMDQ4WhcNMTMxMTIyMDkzMDQ4WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRUwEwYDVQQDEwxkY200Y2hlZS1hcmMwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAJAx/IuiHUy5WIuly4iFXZS4/ux4iUMlVlPmFeptY0hmhmbq/BRKt6c8So2fuVtaBND2QMVmOQggl+BssssL3KzgXXz7V5YthmEwxZu5T8EoePCEMMs7hAMvlbHzzBAHm93/IamPWgWic37ubci91gGULtf9zfQau3SmPlEkWCd/AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEABETBurvWryJRo806iyRWsO4Ik80q1T37abLuD47aPKgXUFN0kPKZkh3wWDmyxZ1qZFKuByVeDcECBzS44lEtqpOruVgxo2TVEX9b0RxJQN5zILyeqhxmutNSKTEBk9hLrBhj97gFEjtredGnxSrZasLrLp9KmlNidp3JWmge0Cg="/>
           </map>
           <node name="dcmNetworkAE">
             <map/>
@@ -45,10 +47,30 @@
         <node name="dcm4chee-proxy">
           <map>
             <entry key="dcmForwardThreads" value="1"/>
+            <entry key="dcmKeyStorePin" value="secret"/>
+            <entry key="dcmKeyStoreType" value="JKS"/>
+            <entry key="dcmKeyStoreURL" value="${jboss.server.config.url}/dcm4chee-proxy/key.jks"/>
             <entry key="dcmProxyConfigurationStaleTimeout" value="60"/>
             <entry key="dcmProxyDevice" value="true"/>
             <entry key="dcmSchedulerInterval" value="10"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.#" value="12"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.1" value="dicomConfigurationRoot/dicomDevicesRoot/dcm4chee-arc"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.10" value="dicomConfigurationRoot/dicomDevicesRoot/getscu"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.11" value="dicomConfigurationRoot/dicomDevicesRoot/movescu"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.12" value="dicomConfigurationRoot/dicomDevicesRoot/hl7snd"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.2" value="dicomConfigurationRoot/dicomDevicesRoot/dcmqrscp"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.3" value="dicomConfigurationRoot/dicomDevicesRoot/stgcmtscu"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.4" value="dicomConfigurationRoot/dicomDevicesRoot/storescp"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.5" value="dicomConfigurationRoot/dicomDevicesRoot/mppsscp"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.6" value="dicomConfigurationRoot/dicomDevicesRoot/ianscp"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.7" value="dicomConfigurationRoot/dicomDevicesRoot/storescu"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.8" value="dicomConfigurationRoot/dicomDevicesRoot/mppsscu"/>
+            <entry key="dicomAuthorizedNodeCertificateReference.9" value="dicomConfigurationRoot/dicomDevicesRoot/findscu"/>
             <entry key="dicomInstalled" value="true"/>
+            <entry key="dicomThisNodeCertificateReference.#" value="1"/>
+            <entry key="dicomThisNodeCertificateReference.1" value="dicomConfigurationRoot/dicomDevicesRoot/dcm4chee-proxy"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICUTCCAbqgAwIBAgIEUYOaiTANBgkqhkiG9w0BAQUFADBtMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRcwFQYDVQQDEw5kY200Y2hlZS1wcm94eTAeFw0xMzA1MDMxMTA3NTNaFw0yMzA1MDExMTA3NTNaMG0xCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmExDzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTERMA8GA1UECxMIZGNtNGNoZWUxFzAVBgNVBAMTDmRjbTRjaGVlLXByb3h5MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCA8H1UlLR7OHHAFxnbpipNxPt3NOinjc/bjWncqOMQ0SkGpg10cFzOQmo9a+adVWaUJbHsVXjHx+wHHPV5XToF7MSRwj3oxJzWDomSmAVL3ET3z+dYPkJyMZyrnd5hTMzTOJ5yaXtypj8Iqb9XVy6uKqsWGR6wZult03lgtbLp4wIDAQABMA0GCSqGSIb3DQEBBQUAA4GBAHSBS9I7YonJEza9cWj3JT5nWKCXjCkebGlbPulkiJoOgD0FMcMlHDTZ9ksFqxk9YxRcHlOL+fXSjdoED/Ow5SE+6MLaPYQ/DY6zhjaznuiAgk1sDMoUivwn3VpdZBz13ZpFe8+3Ir0lK9waJyDkifn0brzjnGFasLquZB+tXLh9"/>
           </map>
           <node name="dcmAuditLogger">
             <map>
@@ -57,7 +79,7 @@
               <entry key="dcmAuditSourceTypeCode.#" value="1"/>
               <entry key="dcmAuditSourceTypeCode.1" value="4"/>
               <entry key="dicomNetworkConnectionReference.#" value="1"/>
-              <entry key="dicomNetworkConnectionReference.1" value="3"/>
+              <entry key="dicomNetworkConnectionReference.1" value="4"/>
             </map>
           </node>
           <node name="dcmNetworkAE">
@@ -72,8 +94,9 @@
                 <entry key="dcmSpoolDirectory" value="/tmp/proxy/"/>
                 <entry key="dicomAssociationAcceptor" value="true"/>
                 <entry key="dicomAssociationInitiator" value="true"/>
-                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.#" value="2"/>
                 <entry key="dicomNetworkConnectionReference.1" value="1"/>
+                <entry key="dicomNetworkConnectionReference.2" value="2"/>
                 <entry key="hl7ProxyPIXConsumerApplication" value="HL7SND^DCM4CHEE-PROXY"/>
                 <entry key="hl7RemotePIXManagerApplication" value="HL7RCV^DCM4CHEE"/>
               </map>
@@ -84,7 +107,7 @@
                     <entry key="dcmDIMSE" value="C_STORE_RQ"/>
                     <entry key="dicomAETitle" value="ENSURE_PID"/>
                     <entry key="dicomTransferRole" value="SCP"/>
-                    <entry key="labeledURI" value="file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"/>
+                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"/>
                   </map>
                 </node>
                 <node name="2">
@@ -92,7 +115,7 @@
                     <entry key="dcmDIMSE" value="C_STORE_RQ"/>
                     <entry key="dicomAETitle" value="WITHOUT_PN"/>
                     <entry key="dicomTransferRole" value="SCU"/>
-                    <entry key="labeledURI" value="file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"/>
+                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"/>
                   </map>
                 </node>
               </node>
@@ -114,7 +137,7 @@
                   <map>
                     <entry key="cn" value="MPPS2XrayDoseSR"/>
                     <entry key="dcmCallingAETitle" value="MPPSSCU"/>
-                    <entry key="dcmMpps2DoseSrTemplateURI" value="file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-mpps2xraydosesr.xsl"/>
+                    <entry key="dcmMpps2DoseSrTemplateURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl"/>
                     <entry key="dcmSOPClass.#" value="1"/>
                     <entry key="dcmSOPClass.1" value="1.2.840.10008.3.1.2.3.3"/>
                     <entry key="dcmScheduleDays" value="Sun-Sat"/>
@@ -3297,13 +3320,28 @@
             </node>
             <node name="2">
               <map>
+                <entry key="cn" value="dicom-tls"/>
+                <entry key="dcmMaxOpsInvoked" value="0"/>
+                <entry key="dcmMaxOpsPerformed" value="0"/>
+                <entry key="dcmTLSProtocol.#" value="2"/>
+                <entry key="dcmTLSProtocol.1" value="TLSv1"/>
+                <entry key="dcmTLSProtocol.2" value="SSLv3"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="22762"/>
+                <entry key="dicomTLSCipherSuite.#" value="2"/>
+                <entry key="dicomTLSCipherSuite.1" value="TLS_RSA_WITH_AES_128_CBC_SHA"/>
+                <entry key="dicomTLSCipherSuite.2" value="SSL_RSA_WITH_3DES_EDE_CBC_SHA"/>
+              </map>
+            </node>
+            <node name="3">
+              <map>
                 <entry key="cn" value="hl7"/>
                 <entry key="dcmProtocol" value="HL7"/>
                 <entry key="dicomHostname" value="localhost"/>
                 <entry key="dicomPort" value="22575"/>
               </map>
             </node>
-            <node name="3">
+            <node name="4">
               <map>
                 <entry key="cn" value="audit-udp"/>
                 <entry key="dcmProtocol" value="SYSLOG_UDP"/>
@@ -3316,7 +3354,7 @@
             <node name="*">
               <map>
                 <entry key="dicomNetworkConnectionReference.#" value="1"/>
-                <entry key="dicomNetworkConnectionReference.1" value="2"/>
+                <entry key="dicomNetworkConnectionReference.1" value="3"/>
                 <entry key="hl7AcceptedMessageType.#" value="7"/>
                 <entry key="hl7AcceptedMessageType.1" value="ADT^A02"/>
                 <entry key="hl7AcceptedMessageType.2" value="ADT^A03"/>
@@ -3329,78 +3367,11 @@
             </node>
           </node>
         </node>
-        <node name="findscu">
+        <node name="dcmqrscp">
           <map>
             <entry key="dicomInstalled" value="true"/>
-          </map>
-          <node name="dcmNetworkAE">
-            <map/>
-            <node name="FINDSCU">
-              <map>
-                <entry key="dicomAssociationAcceptor" value="true"/>
-                <entry key="dicomAssociationInitiator" value="true"/>
-                <entry key="dicomNetworkConnectionReference.#" value="1"/>
-                <entry key="dicomNetworkConnectionReference.1" value="1"/>
-              </map>
-              <node name="dicomTransferCapability">
-                <map/>
-                <node name="SCP">
-                  <map/>
-                </node>
-                <node name="SCU">
-                  <map/>
-                </node>
-              </node>
-            </node>
-          </node>
-          <node name="dcmNetworkConnection">
-            <map/>
-            <node name="1">
-              <map>
-                <entry key="cn" value="dicom"/>
-                <entry key="dicomHostname" value="localhost"/>
-                <entry key="dicomPort" value="11115"/>
-              </map>
-            </node>
-          </node>
-        </node>
-        <node name="hl7rcv">
-          <map>
-            <entry key="dicomInstalled" value="true"/>
-            <entry key="dicomInstitutionCode.#" value="1"/>
-            <entry key="dicomInstitutionCode.1" value="(111.1111 ,99DCM4CHEE ,&quot;Site A&quot;)"/>
-            <entry key="dicomInstitutionName.#" value="1"/>
-            <entry key="dicomInstitutionName.1" value="Site A"/>
-            <entry key="dicomIssuerOfAccessionNumber" value="Site A&amp;1.2.40.0.13.1.1.999.111.1111&amp;ISO"/>
-            <entry key="dicomIssuerOfPatientID" value="Site A&amp;1.2.40.0.13.1.1.999.111.1111&amp;ISO"/>
-          </map>
-          <node name="dcmNetworkAE">
-            <map/>
-          </node>
-          <node name="dcmNetworkConnection">
-            <map/>
-            <node name="1">
-              <map>
-                <entry key="cn" value="hl7"/>
-                <entry key="dcmProtocol" value="HL7"/>
-                <entry key="dicomHostname" value="localhost"/>
-                <entry key="dicomPort" value="2576"/>
-              </map>
-            </node>
-          </node>
-          <node name="hl7Application">
-            <map/>
-            <node name="HL7RCV^DCM4CHEE">
-              <map>
-                <entry key="dicomNetworkConnectionReference.#" value="1"/>
-                <entry key="dicomNetworkConnectionReference.1" value="1"/>
-              </map>
-            </node>
-          </node>
-        </node>
-        <node name="storescp">
-          <map>
-            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIEUK3uxTANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIZGNtcXJzY3AwHhcNMTIxMTIyMDkyMjEzWhcNMTMxMTIyMDkyMjEzWjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIZGNtcXJzY3AwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIn3YCuqP9E56x1cB3BCUCbY80+BFbR3tfyM+kO9ea2pP8vK+F8DKA66jLXDzZu8tGpHCK3tUGFlKUce+7sVYrMr6dqqicuQp4nBkwkbx6/klW7zepK0TTJMWM3e2+kQHJzKdNUC22aLpG/3PYzuxpcvM0iPpNf3gqeqsZJbmhVBAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAarkEtvcOuycYDtaGNxOvwNH23RbJZhOg4S/mZjibPVSMWpAZtaKR4Ff3guFAmbYx3+J3yOxAsNFgPxUgTnVH9asConXvSiSVOfANikVFJjkwnZoiCvkEfkmYDh4LEO+ECwJP/ChL6La4Ko5G/j+83xjKQ4bue+ElQT3RFwqxaqg="/>
           </map>
           <node name="dcmNetworkAE">
             <map/>
@@ -3433,9 +3404,140 @@
             </node>
           </node>
         </node>
-        <node name="storescu">
+        <node name="findscu">
           <map>
             <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSzCCAbSgAwIBAgIEUK3u9zANBgkqhkiG9w0BAQUFADBqMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHZmluZHNjdTAeFw0xMjExMjIwOTIzMDNaFw0xMzExMjIwOTIzMDNaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmExDzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29sMRAwDgYDVQQDEwdmaW5kc2N1MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXr4itj4JlLdwuGzGIY6gdYpXTzrErxxil3u7h3esyybCJDyZ0fJQ1QOzvp8yLqvbuzGpPFrNX1SyNsQuFO7ry7FiVB/ujuY9+t724/w+/S5guoxRpYnCfQdC8iyzWzj2vWxDEKISiIKLXnfi4/Xq4E9HasdLGImtc380KM98C8wIDAQABMA0GCSqGSIb3DQEBBQUAA4GBAB5rDm3IXrl/cxiPTNTiBhqFXgEevw134bu1aJdbzkrH/Co2hXXgI43r4obIGc99wJ7j1Gx/tY4PIkyv8rBlg0U0BvJaE83r7v/Fz5DzQUjZ4/TtX1bKWPtv7l/EeKbHAdKpXX7rIBnlz78JQ8mKSsrldhzzpuoE0TcBh3Ue9wXM"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="getscu">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSTCCAbKgAwIBAgIEUK3vcTANBgkqhkiG9w0BAQUFADBpMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGZ2V0c2N1MB4XDTEyMTEyMjA5MjUwNVoXDTEzMTEyMjA5MjUwNVowaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEPMA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2wxDzANBgNVBAMTBmdldHNjdTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAvnMotdM/VUEN+P9pLAavYwRJoLKSKHfnyJs1QIB1nTMfjabcVHKDVSGBFxHWmz2gVZ35tpcHfaLvNSLgFTtpOOGDm+pM1vuR0WhNPJKW5Exjbht5SZQp9SMhikBkRpdh6UvsgMMhS6G2nXQsitJ6kBQupuSdzE2Whshw+O7eyXMCAwEAATANBgkqhkiG9w0BAQUFAAOBgQCXkbEEyFB+Bewa7iZhINKsDGAhudgNehyxnz5h2p7Bh02l7QDuuS5IkY10SxpVCSXd/Ojo/g0t34abvVaTgGczypLAZbvpvhYUt7RX2pT9HEbdATmUtGEZanddh1kYdyxuX0JINS4yZcx+itoy7S0AtFpWs98pwYvAfxJ7ziT8Gw=="/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="hl7rcv">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="dicomInstitutionCode.#" value="1"/>
+            <entry key="dicomInstitutionCode.1" value="(111.1111, 99DCM4CHEE, &quot;Site A&quot;)"/>
+            <entry key="dicomInstitutionName.#" value="1"/>
+            <entry key="dicomInstitutionName.1" value="Site A"/>
+            <entry key="dicomIssuerOfAccessionNumber" value="Site A&amp;1.2.40.0.13.1.1.999.111.1111&amp;ISO"/>
+            <entry key="dicomIssuerOfPatientID" value="Site A&amp;1.2.40.0.13.1.1.999.111.1111&amp;ISO"/>
+            <entry key="dicomThisNodeCertificateReference.#" value="1"/>
+            <entry key="dicomThisNodeCertificateReference.1" value="dicomConfigurationRoot/dicomDevicesRoot/hl7rcv"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSTCCAbKgAwIBAgIEUK3urzANBgkqhkiG9w0BAQUFADBpMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGaGw3cmN2MB4XDTEyMTEyMjA5MjE1MVoXDTEzMTEyMjA5MjE1MVowaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEPMA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2wxDzANBgNVBAMTBmhsN3JjdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAodaTN9nVfc/LWC840AZ/2romTFsw883UWTJeWiozXqI0P/0pcXnz0NZqgBRxfB+VXh+LhAcQCPP9+HyLOxrrNiBD4Tt75niOiSLlcfYr1WYdQ3FXtW1yUIuHRE+k+iP2z8B8VMXWYRvYEIqn28WwCrlHMl1j4HbrUgECm7cj99sCAwEAATANBgkqhkiG9w0BAQUFAAOBgQAFXhLI1Gsz2p76BfiiSMHLsAbV7sE9B0MrqiWz5/O9WjVlr+ipCvAAlVVB58sfSbFbhYuLY+VTHuO4TDAMmXLDRtRyoSqIJCkuJEilFrKpok7ZFyaU7C0UBtkHOcxvlXr+e22eDvSYcnl0iCqmr9vTqAfu32slHdAhrRE27NHu2w=="/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="hl7"/>
+                <entry key="dcmProtocol" value="HL7"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="2576"/>
+              </map>
+            </node>
+          </node>
+          <node name="hl7Application">
+            <map/>
+            <node name="HL7RCV^DCM4CHEE">
+              <map>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+            </node>
+          </node>
+        </node>
+        <node name="hl7snd">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSTCCAbKgAwIBAgIEUK3uRjANBgkqhkiG9w0BAQUFADBpMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGaGw3c25kMB4XDTEyMTEyMjA5MjAwNloXDTEzMTEyMjA5MjAwNlowaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEPMA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2wxDzANBgNVBAMTBmhsN3NuZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAkt0bLfpKxVyf9zK7+gsjMfcd5VjajWIYQr4In+2J6aNebFVZU5OaBiRSnn+0RwFqKDWrr4oCDa+ETtvgd59KleMWsYF3TsObd3Xu0vOAGVC/IzJN6WyW/l9a0BbmbgO7LAYjvdhyQbwdsa8qDyxacnsQoeQTU6I7FsMMmV9sIo0CAwEAATANBgkqhkiG9w0BAQUFAAOBgQBVdZYxhh7tMyk38Vf6D8WlXa5572CqbsctZ9jgSJNQ6H+3miI8vSB4qSK1wTVK8sk9Jsq4dovY6XiSfbwWNWGRofb4yOtkvvsQTwblUJf8L6s1ocl6Vs7eYcvPanGZ5sZRDRyd+C/JYUC8F9kUooCXTIiFrVC0S/BCYg9SI5+Vpg=="/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="ianscp">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSTCCAbKgAwIBAgIEUK3u7TANBgkqhkiG9w0BAQUFADBpMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGaWFuc2NwMB4XDTEyMTEyMjA5MjI1M1oXDTEzMTEyMjA5MjI1M1owaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEPMA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2wxDzANBgNVBAMTBmlhbnNjcDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA9rAB6PlxO82zSkt1+1fdtUC89LAtFHgkJOhW+/tzKu8RZsWt1BCoCj4pLo1XMhEVkoopp49TQpzZJL8oE+itxJjHjGaRNe+e+aNITs6kwroSWldGczsn+DCcTpo60YlH6bjKtdoY9eKehiRhtLtdWtyN0wvArydPq4721Z5+NBkCAwEAATANBgkqhkiG9w0BAQUFAAOBgQBQ4EajxLdDP04gstFCpKjo0dBAWBfiHjX1lx1CIWGI51rLepz23SxuqA8OA83jKOaCesci/lyspn2ZH3kJe2dWh8HFQu3vz7pqX3XoP44QUfEfsXOAjcfM3Fac5nlqGk1NpMNdCLT95IbggQReSoVQtVakv9ZBFzBcfBQg8yAXXg=="/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="movescu">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSzCCAbSgAwIBAgIEUK3vIzANBgkqhkiG9w0BAQUFADBqMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHbW92ZXNjdTAeFw0xMjExMjIwOTIzNDdaFw0xMzExMjIwOTIzNDdaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmExDzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29sMRAwDgYDVQQDEwdtb3Zlc2N1MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCoSA+VJx4aPNNzfMDXpCZXrah+RF6rviko5phdzgGhSFTfJK0dV6Gj8rdcx1ArzGEy40nXJK+TD9q2NjqiHh0Aa1bW9kB3UJu+lplDovqGNjDrATcndxM7nC9fZuK4HJErYgtvFQRzYAXTdQpMCw4ULdFHEiIuyHslhlKYo0tTLQIDAQABMA0GCSqGSIb3DQEBBQUAA4GBADhK2rj3p98pqsxM1qCkYmc5plPZV8LSJWK9RI7YLyt9QXyoMZbgk4vEE4iaiDDMK7Fzz+76amxJ+vUa9spGGC2UtrGAIJN0hBdwphJlKskraabRe6bEEC41ruvLGykS06uzwuEzzorob0guq8x1noAG48raUf6kuWQ6q4WViquG"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="mppsscp">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSzCCAbSgAwIBAgIEUK3uuTANBgkqhkiG9w0BAQUFADBqMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHbXBwc3NjcDAeFw0xMjExMjIwOTIyMDFaFw0xMzExMjIwOTIyMDFaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmExDzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29sMRAwDgYDVQQDEwdtcHBzc2NwMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCMEXa4smTZBC4zxeR8BelMxTLll/hEu1uYsR5eVzyGMzJXC4TDOdFMdmvP7uQXunjSangacYcejZ1SlWMsG2lhBhPDwPLfuExLAYF0VzHenO7ZoxTgyANN9LOKRr8FNLD/bC12qcElWRUzyfp17WQGX3yy1zJ6I+K9FNlEUAXBYQIDAQABMA0GCSqGSIb3DQEBBQUAA4GBAA2dYYal8U5XFn/yUXKwt49u5mAaOrTSRdPa+VCiIae/eq26DnYEvf8ihBig9laPR8sTtfj9VYMHpLzzCR/caQBmbIUnkAipEyyPy2uZcETciH0iDhqHesXuNoAqEcTSq9Xj7FSbRhVIEf/yvmF9JXWGKYzhkzpPwadK1Ve8gTYx"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="mppsscu">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICSzCCAbSgAwIBAgIEUK3vLDANBgkqhkiG9w0BAQUFADBqMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHbXBwc3NjdTAeFw0xMjExMjIwOTIzNTZaFw0xMzExMjIwOTIzNTZaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmExDzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29sMRAwDgYDVQQDEwdtcHBzc2N1MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCEvZ/RE+LnYSzQQpDaQ75aYRygc57E9OM03OVjprnLjRfdbB4vVQX6nGUIA3E/OOaHVfosSlGnM0Poh38jw0j6hEmJPnUqkJvq+ey9tuHDROZDMC3AkW805xDPcvCeBuCNRYAJhXv7VH6h/FNHW9x2ZfwqZT7rB/kaXxZ0+yvyMQIDAQABMA0GCSqGSIb3DQEBBQUAA4GBADqMsJZ5z7+I7qlOEi4+vXW+rg6n777FYTC5WVrJazlvtNvkCQluVAQUHhDVBHLsvzWHvWKmHv81lqZj92J4uXHaMRKfxiggdIMYThySPvgWhtHEACEGjWUuECLKEH/0yi/U0vAbMG9nmMMUW4BDX5tAabLqTugda8Fjh5zaDElI"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
+        <node name="stgcmtscu">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICTzCCAbigAwIBAgIEUK3vGjANBgkqhkiG9w0BAQUFADBsMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDESMBAGA1UEAxMJc3RnY210c2N1MB4XDTEyMTEyMjA5MjMzOFoXDTEzMTEyMjA5MjMzOFowbDELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEPMA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2wxEjAQBgNVBAMTCXN0Z2NtdHNjdTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAp0I5T/sXN824jKWmeYUYE9FEbdaXtsA1lDGezPVlG0hgSH6XhdJE+4E4rhsGSidOAKGk3ezt9My99LPfsNV2JSNYI6Touc3ZsZVpjfNUBw+E+6gyzHaf94JQC3SK30hAlDlwmxjLHhpamir+KUzgvhIbupNWKaOeVC9PF/FbjMkCAwEAATANBgkqhkiG9w0BAQUFAAOBgQBaBrh++2q8quzy/fSVa2MspvegjIG3aQws//dH6ra5mUTdX7dZKB6M8BJ2ntamYZG0LbdZt6lb5OAm1j/kl/oCCZY5fOrT3ByrlKIPmsOvN/9U89FFtaARYi7YrCrayOfHCBB1G274wa/zHEisOlFSfzg/crwkjQDhJhd+KJDnvA=="/>
           </map>
           <node name="dcmNetworkAE">
             <map/>
@@ -3468,6 +3570,56 @@
             </node>
           </node>
         </node>
+        <node name="storescp">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIEUK3vSzANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3AwHhcNMTIxMTIyMDkyNDI3WhcNMTMxMTIyMDkyNDI3WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3AwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKK6PQ7w451jzYdGyxtUgq4IhPio7qQItcZj6BdhfelPe9ndaEj3ZNkGfpPjcPgsCR/BMMAu/AHaF/bE4e0Helck8IQrZASdzMrSsAcH6PHVg4Jq/yRFO9QtQhcd6TLWwg1eHxb4t3hQKRz/SAVH0n2ReKrglnpZImueytnx8J8xAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAkjhvfZulWg8PaNzpmS3PLHjs7dCHvKq+15XkBeoRSuXapgPnopE58VSgSJmkgZ173QUFqrhH3MOJuDyHBMBsWyuwocYYY2BKXCpbQ41BbxcM08/zcrI84fhQoqoBos5/rgZ842eCmvNTkCHqThfCc3nTsm2lTW+9rvEoZqLmHRM="/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+            <node name="FINDSCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11115"/>
+              </map>
+            </node>
+          </node>
+        </node>
+        <node name="storescu">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+            <entry key="userCertificate.#" value="1"/>
+            <entry key="userCertificate.1" value="MIICTTCCAbagAwIBAgIEUK3vEDANBgkqhkiG9w0BAQUFADBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwHhcNMTIxMTIyMDkyMzI4WhcNMTMxMTIyMDkyMzI4WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAICzvTnF4VXtUekxN12L70gFuH6PUS43uKSBUdyZH93+EuuswSlfi2wAzdEOnsmXogYKLS0TJIxkZNmHIRWuUNRQCox81xbDU7aIDUgXsw6StpENumgomw9tgCYXBOpClegcD75X3IBDIZzwvSKNHjyPzRkhxwOtLFOjkU7ILYsTAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAfxLy9DtwfEeM54okTSQb6Y/ASj3XslIy9gbkTaJVrYK4VlHhOfl6Z66iq+QBGcVdqVCEXStvehm1iOofEmrUZxRGfh6/Tgzitig+hUMR6ZT0TAvaHxG1F1d+2yQQXGWCXLn0AmimDXheZkcyOWHpgssV/x63or5pK9cxdi4Tkak="/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+          </node>
+        </node>
         <node name="syslog">
           <map>
             <entry key="dicomInstalled" value="true"/>
@@ -3493,6 +3645,41 @@
             </node>
           </node>
         </node>
+        <node name="test-hl7">
+          <map>
+            <entry key="dicomInstalled" value="true"/>
+          </map>
+          <node name="dcmNetworkAE">
+            <map/>
+          </node>
+          <node name="dcmNetworkConnection">
+            <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="hl7"/>
+                <entry key="dcmProtocol" value="HL7"/>
+                <entry key="dcmTCPNoDelay" value="false"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="22225"/>
+              </map>
+            </node>
+          </node>
+          <node name="hl7Application">
+            <map/>
+            <node name="TEST1^HL7">
+              <map>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+            </node>
+            <node name="TEST2^HL7">
+              <map>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+            </node>
+          </node>
+        </node>
       </node>
       <node name="dicomUniqueAETitlesRegistryRoot">
         <map/>
@@ -3509,6 +3696,15 @@
           <map/>
         </node>
         <node name="STORESCU">
+          <map/>
+        </node>
+      </node>
+      <node name="hl7UniqueApplicationNamesRegistryRoot">
+        <map/>
+        <node name="TEST1^HL7">
+          <map/>
+        </node>
+        <node name="TEST2^HL7">
           <map/>
         </node>
       </node>

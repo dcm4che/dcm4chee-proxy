@@ -40,6 +40,8 @@ package org.dcm4chee.proxy.conf;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -66,6 +68,7 @@ import org.dcm4che.net.Connection.Protocol;
 import org.dcm4che.net.Device;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.QueryOption;
+import org.dcm4che.net.SSLManagerFactory;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.audit.AuditLogger;
@@ -73,12 +76,12 @@ import org.dcm4che.net.audit.AuditRecordRepository;
 import org.dcm4che.net.hl7.HL7Application;
 import org.dcm4che.net.hl7.HL7DeviceExtension;
 import org.dcm4che.util.SafeClose;
+import org.dcm4che.util.StringUtils;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
 import org.junit.Before;
 import org.junit.Test;
-
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -86,208 +89,110 @@ import org.junit.Test;
  */
 public class ProxyDeviceTest {
 
-    private static final String[] OTHER_DEVICES = {
+    private static final String[] OTHER_DEVICES = { 
         "dcm4chee-arc",
+        "dcmqrscp",
+        "stgcmtscu",
         "storescp",
+        "mppsscp",
+        "ianscp",
         "storescu",
+        "mppsscu",
         "findscu",
-    };
-    
-    private static final String[] OTHER_AES = {
-        "DCM4CHEE",
-        "STORESCP",
-        "STORESCU",
-        "FINDSCU",
-    };
+        "getscu",
+        "movescu",
+        "hl7snd"
+        };
+
+    private static final String[] OTHER_AES = { "DCM4CHEE", "STORESCP", "STORESCU", "FINDSCU", };
 
     private static final String PIX_CONSUMER = "HL7SND^DCM4CHEE-PROXY";
     private static final String PIX_MANAGER = "HL7RCV^DCM4CHEE";
 
-    private static final Issuer SITE_A =
-            new Issuer("Site A", "1.2.40.0.13.1.1.999.111.1111", "ISO");
+    private static final Issuer SITE_A = new Issuer("Site A", "1.2.40.0.13.1.1.999.111.1111", "ISO");
 
-    private static final Code INST_A =
-            new Code("111.1111", "99DCM4CHEE", null, "Site A");
+    private static final Code INST_A = new Code("111.1111", "99DCM4CHEE", null, "Site A");
 
-    private static final String[] IMAGE_TSUIDS = {
-        UID.ImplicitVRLittleEndian,
-        UID.ExplicitVRLittleEndian,
-        UID.DeflatedExplicitVRLittleEndian,
-        UID.ExplicitVRBigEndian,
-        UID.JPEGBaseline1,
-        UID.JPEGExtended24,
-        UID.JPEGLossless,
-        UID.JPEGLosslessNonHierarchical14,
-        UID.JPEGLSLossless,
-        UID.JPEGLSLossyNearLossless,
-        UID.JPEG2000LosslessOnly,
-        UID.JPEG2000,
-        UID.RLELossless
-    };
-    private static final String[] VIDEO_TSUIDS = {
-        UID.JPEGBaseline1,
-        UID.MPEG2,
-        UID.MPEG2MainProfileHighLevel,
-        UID.MPEG4AVCH264BDCompatibleHighProfileLevel41,
-        UID.MPEG4AVCH264HighProfileLevel41
-    };
-    private static final String[] OTHER_TSUIDS = {
-        UID.ImplicitVRLittleEndian,
-        UID.ExplicitVRLittleEndian,
-        UID.DeflatedExplicitVRLittleEndian,
-        UID.ExplicitVRBigEndian,
-    };
-    private static final String[] IMAGE_CUIDS = {
-        UID.ComputedRadiographyImageStorage,
-        UID.DigitalXRayImageStorageForPresentation,
-        UID.DigitalXRayImageStorageForProcessing,
-        UID.DigitalMammographyXRayImageStorageForPresentation,
-        UID.DigitalMammographyXRayImageStorageForProcessing,
-        UID.DigitalIntraOralXRayImageStorageForPresentation,
-        UID.DigitalIntraOralXRayImageStorageForProcessing,
-        UID.CTImageStorage,
-        UID.EnhancedCTImageStorage,
-        UID.UltrasoundMultiFrameImageStorageRetired,
-        UID.UltrasoundMultiFrameImageStorage,
-        UID.MRImageStorage,
-        UID.EnhancedMRImageStorage,
-        UID.EnhancedMRColorImageStorage,
-        UID.NuclearMedicineImageStorageRetired,
-        UID.UltrasoundImageStorageRetired,
-        UID.UltrasoundImageStorage,
-        UID.EnhancedUSVolumeStorage,
-        UID.SecondaryCaptureImageStorage,
-        UID.MultiFrameGrayscaleByteSecondaryCaptureImageStorage,
-        UID.MultiFrameGrayscaleWordSecondaryCaptureImageStorage,
-        UID.MultiFrameTrueColorSecondaryCaptureImageStorage,
-        UID.XRayAngiographicImageStorage,
-        UID.EnhancedXAImageStorage,
-        UID.XRayRadiofluoroscopicImageStorage,
-        UID.EnhancedXRFImageStorage,
-        UID.XRayAngiographicBiPlaneImageStorageRetired,
-        UID.XRay3DAngiographicImageStorage,
-        UID.XRay3DCraniofacialImageStorage,
-        UID.BreastTomosynthesisImageStorage,
-        UID.IntravascularOpticalCoherenceTomographyImageStorageForPresentation,
-        UID.IntravascularOpticalCoherenceTomographyImageStorageForProcessing,
-        UID.NuclearMedicineImageStorage,
-        UID.VLEndoscopicImageStorage,
-        UID.VLMicroscopicImageStorage,
-        UID.VLSlideCoordinatesMicroscopicImageStorage,
-        UID.VLPhotographicImageStorage,
-        UID.OphthalmicPhotography8BitImageStorage,
-        UID.OphthalmicPhotography16BitImageStorage,
-        UID.OphthalmicTomographyImageStorage,
-        UID.VLWholeSlideMicroscopyImageStorage,
-        UID.PositronEmissionTomographyImageStorage,
-        UID.EnhancedPETImageStorage,
-        UID.RTImageStorage,
-    };
-    private static final String[] VIDEO_CUIDS = {
-        UID.VideoEndoscopicImageStorage,
-        UID.VideoMicroscopicImageStorage,
-        UID.VideoPhotographicImageStorage,
-    };
-    private static final String[] OTHER_CUIDS = {
-        UID.MRSpectroscopyStorage,
-        UID.MultiFrameSingleBitSecondaryCaptureImageStorage,
-        UID.StandaloneOverlayStorageRetired,
-        UID.StandaloneCurveStorageRetired,
-        UID.TwelveLeadECGWaveformStorage,
-        UID.GeneralECGWaveformStorage,
-        UID.AmbulatoryECGWaveformStorage,
-        UID.HemodynamicWaveformStorage,
-        UID.CardiacElectrophysiologyWaveformStorage,
-        UID.BasicVoiceAudioWaveformStorage,
-        UID.GeneralAudioWaveformStorage,
-        UID.ArterialPulseWaveformStorage,
-        UID.RespiratoryWaveformStorage,
-        UID.StandaloneModalityLUTStorageRetired,
-        UID.StandaloneVOILUTStorageRetired,
-        UID.GrayscaleSoftcopyPresentationStateStorageSOPClass,
-        UID.ColorSoftcopyPresentationStateStorageSOPClass,
-        UID.PseudoColorSoftcopyPresentationStateStorageSOPClass,
-        UID.BlendingSoftcopyPresentationStateStorageSOPClass,
-        UID.XAXRFGrayscaleSoftcopyPresentationStateStorage,
-        UID.RawDataStorage,
-        UID.SpatialRegistrationStorage,
-        UID.SpatialFiducialsStorage,
-        UID.DeformableSpatialRegistrationStorage,
-        UID.SegmentationStorage,
-        UID.SurfaceSegmentationStorage,
-        UID.RealWorldValueMappingStorage,
-        UID.StereometricRelationshipStorage,
-        UID.LensometryMeasurementsStorage,
-        UID.AutorefractionMeasurementsStorage,
-        UID.KeratometryMeasurementsStorage,
-        UID.SubjectiveRefractionMeasurementsStorage,
-        UID.VisualAcuityMeasurementsStorage,
-        UID.SpectaclePrescriptionReportStorage,
-        UID.OphthalmicAxialMeasurementsStorage,
-        UID.IntraocularLensCalculationsStorage,
-        UID.MacularGridThicknessAndVolumeReportStorage,
-        UID.OphthalmicVisualFieldStaticPerimetryMeasurementsStorage,
-        UID.BasicStructuredDisplayStorage,
-        UID.BasicTextSRStorage,
-        UID.EnhancedSRStorage,
-        UID.ComprehensiveSRStorage,
-        UID.ProcedureLogStorage,
-        UID.MammographyCADSRStorage,
-        UID.KeyObjectSelectionDocumentStorage,
-        UID.ChestCADSRStorage,
-        UID.XRayRadiationDoseSRStorage,
-        UID.ColonCADSRStorage,
-        UID.ImplantationPlanSRStorage,
-        UID.EncapsulatedPDFStorage,
-        UID.EncapsulatedCDAStorage,
-        UID.StandalonePETCurveStorageRetired,
-        UID.RTDoseStorage,
-        UID.RTStructureSetStorage,
-        UID.RTBeamsTreatmentRecordStorage,
-        UID.RTPlanStorage,
-        UID.RTBrachyTreatmentRecordStorage,
-        UID.RTTreatmentSummaryRecordStorage,
-        UID.RTIonPlanStorage,
-        UID.RTIonBeamsTreatmentRecordStorage,
-        UID.StorageCommitmentPushModelSOPClass,
-        UID.ModalityPerformedProcedureStepSOPClass,
-    };
+    private static final String[] IMAGE_TSUIDS = { UID.ImplicitVRLittleEndian, UID.ExplicitVRLittleEndian,
+            UID.DeflatedExplicitVRLittleEndian, UID.ExplicitVRBigEndian, UID.JPEGBaseline1, UID.JPEGExtended24,
+            UID.JPEGLossless, UID.JPEGLosslessNonHierarchical14, UID.JPEGLSLossless, UID.JPEGLSLossyNearLossless,
+            UID.JPEG2000LosslessOnly, UID.JPEG2000, UID.RLELossless };
+    private static final String[] VIDEO_TSUIDS = { UID.JPEGBaseline1, UID.MPEG2, UID.MPEG2MainProfileHighLevel,
+            UID.MPEG4AVCH264BDCompatibleHighProfileLevel41, UID.MPEG4AVCH264HighProfileLevel41 };
+    private static final String[] OTHER_TSUIDS = { UID.ImplicitVRLittleEndian, UID.ExplicitVRLittleEndian,
+            UID.DeflatedExplicitVRLittleEndian, UID.ExplicitVRBigEndian, };
+    private static final String[] IMAGE_CUIDS = { UID.ComputedRadiographyImageStorage,
+            UID.DigitalXRayImageStorageForPresentation, UID.DigitalXRayImageStorageForProcessing,
+            UID.DigitalMammographyXRayImageStorageForPresentation, UID.DigitalMammographyXRayImageStorageForProcessing,
+            UID.DigitalIntraOralXRayImageStorageForPresentation, UID.DigitalIntraOralXRayImageStorageForProcessing,
+            UID.CTImageStorage, UID.EnhancedCTImageStorage, UID.UltrasoundMultiFrameImageStorageRetired,
+            UID.UltrasoundMultiFrameImageStorage, UID.MRImageStorage, UID.EnhancedMRImageStorage,
+            UID.EnhancedMRColorImageStorage, UID.NuclearMedicineImageStorageRetired, UID.UltrasoundImageStorageRetired,
+            UID.UltrasoundImageStorage, UID.EnhancedUSVolumeStorage, UID.SecondaryCaptureImageStorage,
+            UID.MultiFrameGrayscaleByteSecondaryCaptureImageStorage,
+            UID.MultiFrameGrayscaleWordSecondaryCaptureImageStorage,
+            UID.MultiFrameTrueColorSecondaryCaptureImageStorage, UID.XRayAngiographicImageStorage,
+            UID.EnhancedXAImageStorage, UID.XRayRadiofluoroscopicImageStorage, UID.EnhancedXRFImageStorage,
+            UID.XRayAngiographicBiPlaneImageStorageRetired, UID.XRay3DAngiographicImageStorage,
+            UID.XRay3DCraniofacialImageStorage, UID.BreastTomosynthesisImageStorage,
+            UID.IntravascularOpticalCoherenceTomographyImageStorageForPresentation,
+            UID.IntravascularOpticalCoherenceTomographyImageStorageForProcessing, UID.NuclearMedicineImageStorage,
+            UID.VLEndoscopicImageStorage, UID.VLMicroscopicImageStorage, UID.VLSlideCoordinatesMicroscopicImageStorage,
+            UID.VLPhotographicImageStorage, UID.OphthalmicPhotography8BitImageStorage,
+            UID.OphthalmicPhotography16BitImageStorage, UID.OphthalmicTomographyImageStorage,
+            UID.VLWholeSlideMicroscopyImageStorage, UID.PositronEmissionTomographyImageStorage,
+            UID.EnhancedPETImageStorage, UID.RTImageStorage, };
+    private static final String[] VIDEO_CUIDS = { UID.VideoEndoscopicImageStorage, UID.VideoMicroscopicImageStorage,
+            UID.VideoPhotographicImageStorage, };
+    private static final String[] OTHER_CUIDS = { UID.MRSpectroscopyStorage,
+            UID.MultiFrameSingleBitSecondaryCaptureImageStorage, UID.StandaloneOverlayStorageRetired,
+            UID.StandaloneCurveStorageRetired, UID.TwelveLeadECGWaveformStorage, UID.GeneralECGWaveformStorage,
+            UID.AmbulatoryECGWaveformStorage, UID.HemodynamicWaveformStorage,
+            UID.CardiacElectrophysiologyWaveformStorage, UID.BasicVoiceAudioWaveformStorage,
+            UID.GeneralAudioWaveformStorage, UID.ArterialPulseWaveformStorage, UID.RespiratoryWaveformStorage,
+            UID.StandaloneModalityLUTStorageRetired, UID.StandaloneVOILUTStorageRetired,
+            UID.GrayscaleSoftcopyPresentationStateStorageSOPClass, UID.ColorSoftcopyPresentationStateStorageSOPClass,
+            UID.PseudoColorSoftcopyPresentationStateStorageSOPClass,
+            UID.BlendingSoftcopyPresentationStateStorageSOPClass, UID.XAXRFGrayscaleSoftcopyPresentationStateStorage,
+            UID.RawDataStorage, UID.SpatialRegistrationStorage, UID.SpatialFiducialsStorage,
+            UID.DeformableSpatialRegistrationStorage, UID.SegmentationStorage, UID.SurfaceSegmentationStorage,
+            UID.RealWorldValueMappingStorage, UID.StereometricRelationshipStorage, UID.LensometryMeasurementsStorage,
+            UID.AutorefractionMeasurementsStorage, UID.KeratometryMeasurementsStorage,
+            UID.SubjectiveRefractionMeasurementsStorage, UID.VisualAcuityMeasurementsStorage,
+            UID.SpectaclePrescriptionReportStorage, UID.OphthalmicAxialMeasurementsStorage,
+            UID.IntraocularLensCalculationsStorage, UID.MacularGridThicknessAndVolumeReportStorage,
+            UID.OphthalmicVisualFieldStaticPerimetryMeasurementsStorage, UID.BasicStructuredDisplayStorage,
+            UID.BasicTextSRStorage, UID.EnhancedSRStorage, UID.ComprehensiveSRStorage, UID.ProcedureLogStorage,
+            UID.MammographyCADSRStorage, UID.KeyObjectSelectionDocumentStorage, UID.ChestCADSRStorage,
+            UID.XRayRadiationDoseSRStorage, UID.ColonCADSRStorage, UID.ImplantationPlanSRStorage,
+            UID.EncapsulatedPDFStorage, UID.EncapsulatedCDAStorage, UID.StandalonePETCurveStorageRetired,
+            UID.RTDoseStorage, UID.RTStructureSetStorage, UID.RTBeamsTreatmentRecordStorage, UID.RTPlanStorage,
+            UID.RTBrachyTreatmentRecordStorage, UID.RTTreatmentSummaryRecordStorage, UID.RTIonPlanStorage,
+            UID.RTIonBeamsTreatmentRecordStorage, UID.StorageCommitmentPushModelSOPClass,
+            UID.ModalityPerformedProcedureStepSOPClass, };
 
-    private static final String[] QUERY_CUIDS = {
-        UID.PatientRootQueryRetrieveInformationModelFIND,
-        UID.StudyRootQueryRetrieveInformationModelFIND,
-        UID.PatientStudyOnlyQueryRetrieveInformationModelFINDRetired,
-        UID.ModalityWorklistInformationModelFIND,
-        UID.PatientRootQueryRetrieveInformationModelGET,
-        UID.StudyRootQueryRetrieveInformationModelGET,
-        UID.PatientStudyOnlyQueryRetrieveInformationModelGETRetired,
-        UID.PatientRootQueryRetrieveInformationModelMOVE,
-        UID.StudyRootQueryRetrieveInformationModelMOVE,
-        UID.PatientStudyOnlyQueryRetrieveInformationModelMOVERetired
-    };
+    private static final String[] QUERY_CUIDS = { UID.PatientRootQueryRetrieveInformationModelFIND,
+            UID.StudyRootQueryRetrieveInformationModelFIND,
+            UID.PatientStudyOnlyQueryRetrieveInformationModelFINDRetired, UID.ModalityWorklistInformationModelFIND,
+            UID.PatientRootQueryRetrieveInformationModelGET, UID.StudyRootQueryRetrieveInformationModelGET,
+            UID.PatientStudyOnlyQueryRetrieveInformationModelGETRetired,
+            UID.PatientRootQueryRetrieveInformationModelMOVE, UID.StudyRootQueryRetrieveInformationModelMOVE,
+            UID.PatientStudyOnlyQueryRetrieveInformationModelMOVERetired };
 
-    private static final String[] HL7_MESSAGE_TYPES = {
-        "ADT^A02",
-        "ADT^A03",
-        "ADT^A06",
-        "ADT^A07",
-        "ADT^A08",
-        "ADT^A40",
-        "ORM^O01"
-    };
+    private static final String[] HL7_MESSAGE_TYPES = { "ADT^A02", "ADT^A03", "ADT^A06", "ADT^A07", "ADT^A08",
+            "ADT^A40", "ORM^O01" };
 
     private DicomConfiguration config;
+    private KeyStore keystore;
 
     @Before
     public void setUp() throws Exception {
-        config = System.getProperty("ldap") == null
-                ? newPreferencesProxyConfiguration()
-                : newLdapProxyConfiguration();
+        keystore = SSLManagerFactory.loadKeyStore("JKS", StringUtils.resourceURL("cacerts.jks"), "secret");
+        config = System.getProperty("ldap") == null ? newPreferencesProxyConfiguration() : newLdapProxyConfiguration();
         cleanUp();
     }
 
-    private DicomConfiguration newLdapProxyConfiguration()
-            throws ConfigurationException {
+    private DicomConfiguration newLdapProxyConfiguration() throws ConfigurationException {
         LdapDicomConfiguration config = new LdapDicomConfiguration();
         config.addDicomConfigurationExtension(new LdapHL7Configuration());
         config.addDicomConfigurationExtension(new LdapProxyConfigurationExtension());
@@ -311,17 +216,21 @@ public class ProxyDeviceTest {
             config.unregisterAETitle(aet);
         try {
             config.removeDevice("dcm4chee-proxy");
-        } catch (ConfigurationNotFoundException e) {}
+        } catch (ConfigurationNotFoundException e) {
+        }
         try {
             config.removeDevice("syslog");
-        } catch (ConfigurationNotFoundException e) {}
+        } catch (ConfigurationNotFoundException e) {
+        }
         try {
             config.removeDevice("hl7rcv");
-        } catch (ConfigurationNotFoundException e) {}
+        } catch (ConfigurationNotFoundException e) {
+        }
         for (String name : OTHER_DEVICES)
             try {
                 config.removeDevice(name);
-            } catch (ConfigurationNotFoundException e) {}
+            } catch (ConfigurationNotFoundException e) {
+            }
     }
 
     @Test
@@ -351,7 +260,7 @@ public class ProxyDeviceTest {
         auditUDP.setProtocol(protocol);
         arrDevice.addConnection(auditUDP);
         arr.addConnection(auditUDP);
-        return arrDevice ;
+        return arrDevice;
     }
 
     private void export(String name) throws Exception {
@@ -372,11 +281,19 @@ public class ProxyDeviceTest {
         device.addDeviceExtension(hl7DevExt);
         ProxyDeviceExtension proxyDev = new ProxyDeviceExtension();
         device.addDeviceExtension(proxyDev);
-        
+
+        device.setKeyStoreURL("${jboss.server.config.url}/dcm4chee-proxy/key.jks");
+        device.setKeyStoreType("JKS");
+        device.setKeyStorePin("secret");
+        device.setThisNodeCertificates(config.deviceRef(name), (X509Certificate) keystore.getCertificate(name));
+        for (String other : OTHER_DEVICES)
+            device.setAuthorizedNodeCertificates(config.deviceRef(other),
+                    (X509Certificate) keystore.getCertificate(other));
+
         proxyDev.setSchedulerInterval(10);
         proxyDev.setForwardThreads(1);
         proxyDev.setConfigurationStaleTimeout(60);
-        
+
         ApplicationEntity ae = new ApplicationEntity("DCM4CHEE-PROXY");
         ProxyAEExtension proxyAEE = new ProxyAEExtension();
         ae.addAEExtension(proxyAEE);
@@ -386,21 +303,15 @@ public class ProxyDeviceTest {
         proxyAEE.setAcceptDataOnFailedAssociation(true);
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(true);
         proxyAEE.setFallbackDestinationAET("DCM4CHEE");
-        
-        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, 
-                Dimse.C_STORE_RQ, 
-                TransferCapability.Role.SCP,
-                "ENSURE_PID",
-                "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
-        
-        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, 
-                Dimse.C_STORE_RQ, 
-                TransferCapability.Role.SCU,
-                "WITHOUT_PN",
-                "file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
-        
+
+        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, Dimse.C_STORE_RQ, TransferCapability.Role.SCP,
+                "ENSURE_PID", "${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
+
+        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, Dimse.C_STORE_RQ, TransferCapability.Role.SCU,
+                "WITHOUT_PN", "${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
+
         HashMap<String, ForwardOption> fwdOptions = new HashMap<String, ForwardOption>();
-        
+
         ForwardOption fwdOptionStoreScp = new ForwardOption();
         fwdOptionStoreScp.setDescription("Example ForwardOption for STORESCP");
         fwdOptionStoreScp.setConvertEmf2Sf(true);
@@ -409,11 +320,11 @@ public class ProxyDeviceTest {
         scheduleStoreScp.setHours("8-18");
         fwdOptionStoreScp.setSchedule(scheduleStoreScp);
         fwdOptions.put("STORESCP", fwdOptionStoreScp);
-        
+
         proxyAEE.setForwardOptions(fwdOptions);
-        
+
         List<ForwardRule> forwardRules = new ArrayList<ForwardRule>();
-        
+
         ForwardRule forwardRulePublic = new ForwardRule();
         forwardRulePublic.setCommonName("Public");
         List<String> destinationURIPublic = new ArrayList<String>();
@@ -425,7 +336,7 @@ public class ProxyDeviceTest {
         forwardRulePublic.setRunPIXQuery(Boolean.TRUE);
         forwardRulePublic.setDescription("Example ForwardRule");
         forwardRules.add(forwardRulePublic);
-        
+
         ForwardRule forwardRuleMPPS2DoseSR = new ForwardRule();
         forwardRuleMPPS2DoseSR.setCommonName("MPPS2XrayDoseSR");
         forwardRuleMPPS2DoseSR.setCallingAET("MPPSSCU");
@@ -435,13 +346,14 @@ public class ProxyDeviceTest {
         List<String> sopClass = new ArrayList<String>();
         sopClass.add("1.2.840.10008.3.1.2.3.3");
         forwardRuleMPPS2DoseSR.setSopClass(sopClass);
-        forwardRuleMPPS2DoseSR.setMpps2DoseSrTemplateURI("file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
+        forwardRuleMPPS2DoseSR
+                .setMpps2DoseSrTemplateURI("${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
         forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
         forwardRules.add(forwardRuleMPPS2DoseSR);
 
         ForwardRule forwardRulePrivate = new ForwardRule();
         forwardRulePrivate.setCommonName("Private");
-        List<String > destinationURIPrivate = new ArrayList<String>();
+        List<String> destinationURIPrivate = new ArrayList<String>();
         destinationURIPrivate.add("aet:STORESCP");
         destinationURIPrivate.add("aet:DCM4CHEE");
         forwardRulePrivate.setDestinationURIs(destinationURIPrivate);
@@ -456,14 +368,14 @@ public class ProxyDeviceTest {
         forwardRulePrivate.setRunPIXQuery(Boolean.TRUE);
         forwardRulePrivate.setDescription("Example ForwardRule");
         forwardRules.add(forwardRulePrivate);
-        
+
         proxyAEE.setForwardRules(forwardRules);
-        
+
         List<Retry> retries = new ArrayList<Retry>();
         retries.add(new Retry(RetryObject.ConnectionException, 20, 10, true));
         retries.add(new Retry(RetryObject.AssociationStateException, 20, 10, true));
         proxyAEE.setRetries(retries);
-        
+
         addVerificationStorageTransferCapabilities(ae);
         addTCs(ae, null, Role.SCP, IMAGE_CUIDS, IMAGE_TSUIDS);
         addTCs(ae, null, Role.SCP, VIDEO_CUIDS, VIDEO_TSUIDS);
@@ -472,14 +384,23 @@ public class ProxyDeviceTest {
         addTCs(ae, null, Role.SCU, VIDEO_CUIDS, VIDEO_TSUIDS);
         addTCs(ae, null, Role.SCU, OTHER_CUIDS, OTHER_TSUIDS);
         addTCs(ae, EnumSet.allOf(QueryOption.class), Role.SCP, QUERY_CUIDS, UID.ImplicitVRLittleEndian);
+
         device.addApplicationEntity(ae);
+
         Connection dicom = new Connection("dicom", "localhost", 22222);
         dicom.setMaxOpsInvoked(0);
         dicom.setMaxOpsPerformed(0);
         dicom.setInstalled(true);
         device.addConnection(dicom);
         ae.addConnection(dicom);
-        
+
+        Connection dicomTLS = new Connection("dicom-tls", "localhost", 22762);
+        dicomTLS.setMaxOpsInvoked(0);
+        dicomTLS.setMaxOpsPerformed(0);
+        dicomTLS.setTlsCipherSuites(Connection.TLS_RSA_WITH_AES_128_CBC_SHA, Connection.TLS_RSA_WITH_3DES_EDE_CBC_SHA);
+        device.addConnection(dicomTLS);
+        ae.addConnection(dicomTLS);
+
         HL7Application hl7App = new HL7Application("*");
         hl7App.setAcceptedMessageTypes(HL7_MESSAGE_TYPES);
         hl7DevExt.addHL7Application(hl7App);
@@ -502,7 +423,7 @@ public class ProxyDeviceTest {
 
         return device;
     }
-    
+
     private static Device createDevice(DicomConfiguration config, String name) throws Exception {
         Device device = new Device(name);
         return device;
@@ -523,8 +444,9 @@ public class ProxyDeviceTest {
         return device;
     }
 
-    private static Device init(Device device, Issuer issuer, Code institutionCode)
-            throws Exception {
+    private Device init(Device device, Issuer issuer, Code institutionCode) throws Exception {
+        String name = device.getDeviceName();
+        device.setThisNodeCertificates(config.deviceRef(name), (X509Certificate) keystore.getCertificate(name));
         device.setIssuerOfPatientID(issuer);
         device.setIssuerOfAccessionNumber(issuer);
         if (institutionCode != null) {
@@ -534,8 +456,8 @@ public class ProxyDeviceTest {
         return device;
     }
 
-    private static Device createDevice(DicomConfiguration config, String name, String aet,
-            String host, int port, int tlsPort) throws Exception {
+    private static Device createDevice(DicomConfiguration config, String name, String aet, String host, int port,
+            int tlsPort) throws Exception {
         Device device = createDevice(config, name);
         ApplicationEntity ae = new ApplicationEntity(aet);
         ae.setAssociationAcceptor(true);
@@ -549,23 +471,21 @@ public class ProxyDeviceTest {
     private static void addVerificationStorageTransferCapabilities(ApplicationEntity ae) {
         String cuid = UID.VerificationSOPClass;
         String name = UID.nameOf(cuid).replace('/', ' ');
-        ae.addTransferCapability(
-                new TransferCapability(name + " SCP", cuid, TransferCapability.Role.SCP,
-                        UID.ImplicitVRLittleEndian));
-        ae.addTransferCapability(
-                new TransferCapability(name + " SCU", cuid, TransferCapability.Role.SCU,
-                        UID.ImplicitVRLittleEndian));
-        
+        ae.addTransferCapability(new TransferCapability(name + " SCP", cuid, TransferCapability.Role.SCP,
+                UID.ImplicitVRLittleEndian));
+        ae.addTransferCapability(new TransferCapability(name + " SCU", cuid, TransferCapability.Role.SCU,
+                UID.ImplicitVRLittleEndian));
+
     }
 
-    private void addTCs(ApplicationEntity ae, EnumSet<QueryOption> queryOpts,
-            TransferCapability.Role role, String[] cuids, String... tss) {
+    private void addTCs(ApplicationEntity ae, EnumSet<QueryOption> queryOpts, TransferCapability.Role role,
+            String[] cuids, String... tss) {
         for (String cuid : cuids)
             addTC(ae, queryOpts, role, cuid, tss);
     }
 
-    private void addTC(ApplicationEntity ae, EnumSet<QueryOption> queryOpts,
-            TransferCapability.Role role, String cuid, String... tss) {
+    private void addTC(ApplicationEntity ae, EnumSet<QueryOption> queryOpts, TransferCapability.Role role, String cuid,
+            String... tss) {
         String name = UID.nameOf(cuid).replace('/', ' ');
         TransferCapability tc = new TransferCapability(name + ' ' + role, cuid, role, tss);
         tc.setQueryOptions(queryOpts);
