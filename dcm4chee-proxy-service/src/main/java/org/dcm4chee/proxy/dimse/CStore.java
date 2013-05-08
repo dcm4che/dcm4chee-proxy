@@ -443,14 +443,14 @@ public class CStore extends BasicCStoreSCP {
         Attributes forwardRq = new Attributes(rq);
         String sourceUID = src.getString(Tag.SOPInstanceUID);
         for (int frameNumber = n - 1; frameNumber >= 0; --frameNumber) {
-            long t1 = System.currentTimeMillis();
-            Attributes attrs = extractor.extract(src, frameNumber);
-            long t2 = System.currentTimeMillis();
-            t = t + t2 - t1;
-            forwardRq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
-            forwardRq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
             File logFile = null;
             try {
+                long t1 = System.currentTimeMillis();
+                Attributes attrs = extractor.extract(src, frameNumber);
+                long t2 = System.currentTimeMillis();
+                t = t + t2 - t1;
+                forwardRq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
+                forwardRq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
                 if (proxyAEE.isEnableAuditLog()) {
                     Properties prop = proxyAEE.getFileInfoProperties(dataFile);
                     String sourceAET = prop.getProperty("source-aet");
@@ -466,7 +466,10 @@ public class CStore extends BasicCStoreSCP {
                 if (logFile != null)
                     logFile.delete();
                 log = false;
-                if (proxyAEE.isAcceptDataOnFailedAssociation()) {
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
+                if (proxyAEE.isAcceptDataOnFailedAssociation() && dataFile.exists()) {
+                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.Exception.getSuffix() + "0");
                     storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, forwardRq, dataFile, asInvoked.getCalledAET());
                     break;
                 } else {
@@ -558,7 +561,7 @@ public class CStore extends BasicCStoreSCP {
                     } catch (IOException e) {
                         LOG.error(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());
                     } finally {
-                        if (cmd.getInt(Tag.Status, -1) == Status.Success && dataFile != null)
+                        if (cmd.getInt(Tag.Status, -1) == Status.Success && dataFile != null && dataFile.exists())
                             deleteFile(asAccepted, dataFile);
                     }
                 }
@@ -571,7 +574,7 @@ public class CStore extends BasicCStoreSCP {
                     logFile.delete();
                 super.onClose(as);
                 Attributes cmd = new Attributes();
-                if (dataFile != null && proxyAEE.isAcceptDataOnFailedAssociation())
+                if (dataFile != null && proxyAEE.isAcceptDataOnFailedAssociation() && dataFile.exists())
                     try {
                         String suffix = RetryObject.ConnectionException.getSuffix() + "0";
                         createMappedFileCopy(proxyAEE, asAccepted, dataFile, calledAET, suffix);
@@ -583,7 +586,8 @@ public class CStore extends BasicCStoreSCP {
                     }
                 else
                     cmd = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
-                deleteFile(asAccepted, dataFile);
+                if (dataFile != null && dataFile.exists())
+                    deleteFile(asAccepted, dataFile);
                 if (!as.isRequestor() || info != null)
                     cmd.setInt(Tag.MessageIDBeingRespondedTo, VR.US, msgId);
                 try {

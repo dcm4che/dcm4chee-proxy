@@ -757,6 +757,9 @@ public class ForwardFiles {
                 } catch (IOException ioe) {
                     handleForwardException(proxyAEE, asInvoked, file, ioe, RetryObject.ConnectionException.getSuffix(),
                             prop, true);
+                } catch (Exception e) {
+                    LOG.error("Unexpected exception: ", e.getMessage());
+                    handleForwardException(proxyAEE, asInvoked, file, e, RetryObject.Exception.getSuffix(), prop, true);
                 }
             }
         } catch (ConfigurationException ce) {
@@ -954,6 +957,8 @@ public class ForwardFiles {
         LOG.error(as + ": error processing forward task: " + e.getMessage());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, suffix);
         renameFile(proxyAEE, suffix, file, as.getCalledAET(), prop);
+        if (LOG.isDebugEnabled())
+            e.printStackTrace();
     }
 
     private void handleProcessForwardTaskException(ProxyAEExtension proxyAEE, AAssociateRQ rq, ForwardTask ft,

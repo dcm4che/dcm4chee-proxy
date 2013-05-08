@@ -171,13 +171,13 @@ public class Proxy extends DeviceService implements ProxyMBean {
             resetSpoolFiles("shut-down");
         } catch (IOException e) {
             LOG.error("Error reseting spool file: {}", e.getMessage());
-            if(LOG.isDebugEnabled())
+            if (LOG.isDebugEnabled())
                 e.printStackTrace();
         }
         log(EventTypeCode.ApplicationStop);
     }
 
-    public void restart() throws Exception {
+    synchronized public void restart() throws Exception {
         stop();
         reload();
         start();

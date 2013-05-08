@@ -49,7 +49,8 @@ public enum RetryObject {
     GeneralSecurityException(".ssl", "SSL Error"),
     NoPresentationContextException(".npc", "No Presentation Context Error"),
     IncompatibleConnectionException(".ic", "Incompatible Connection Error"),
-    AssociationStateException(".as", "Association I/O Error");
+    AssociationStateException(".as", "Association I/O Error"),
+    Exception(".err", "Unexpected Error");
     
     private final String suffix;
     private final String retryNote;

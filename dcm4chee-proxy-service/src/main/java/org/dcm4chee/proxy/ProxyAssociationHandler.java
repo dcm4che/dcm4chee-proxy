@@ -91,7 +91,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             ForwardRule forwardRule = proxyAEE.getCurrentForwardRules(as).get(0);
             LOG.info("{}: directly forwarding to {} based on forward rule \"{}\"", new Object[] { as,
                     forwardRule.getDestinationAETitles(), forwardRule.getCommonName() });
-            return forwardAAssociateRQ(as, copyOf(rq), proxyAEE);
+            return forwardAAssociateRQ(as, rq, proxyAEE);
         }
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
@@ -204,12 +204,13 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     ? rq.getCallingAET() 
                     : proxyAEE.getApplicationEntity().getAETitle();
         try {
-            Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET, rq, aeCache);
+            AAssociateRQ forwardRq = copyOf(rq);
+            Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET, forwardRq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
             asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (forwardRule.isExclusiveUseDefinedTC()) {
-                AAssociateAC acProxy = super.makeAAssociateAC(asAccepted, rq, null);
+                AAssociateAC acProxy = super.makeAAssociateAC(asAccepted, forwardRq, null);
                 LOG.debug("{}: generating subset of transfer capabilities", asAccepted);
                 for (PresentationContext pcCalled : acCalled.getPresentationContexts()) {
                     final PresentationContext pcLocal = acProxy.getPresentationContext(pcCalled.getPCID());
