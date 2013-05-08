@@ -179,6 +179,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     public void restart() throws Exception {
         stop();
+        reload();
         start();
     }
 
@@ -227,7 +228,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
     public void reload() throws Exception {
         scheduler.stop();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
-        device.rebindConnections();
+        if (isRunning())
+            device.rebindConnections();
         setConfigurationStaleTimeout();
         scheduler.start();
     }
