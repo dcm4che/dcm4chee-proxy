@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.BindException;
+import java.security.GeneralSecurityException;
 import java.util.Calendar;
 import java.util.Collection;
 
@@ -151,7 +152,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() throws Exception  {
         if (isRunning())
             return;
 
@@ -179,7 +180,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         log(EventTypeCode.ApplicationStop);
     }
 
-    synchronized public void restart() throws Exception {
+    public void restart() throws Exception {
         stop();
         reload();
         int count = restartTimeout;
@@ -249,13 +250,14 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     @Override
-    public void reload() throws Exception {
+    public void reload() throws IOException, GeneralSecurityException, ConfigurationException {
         scheduler.stop();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
-        if (isRunning())
-            device.rebindConnections();
         setConfigurationStaleTimeout();
-        scheduler.start();
+        if (isRunning()) {
+            device.rebindConnections();
+            scheduler.start();
+        }
     }
 
     private void setConfigurationStaleTimeout() {

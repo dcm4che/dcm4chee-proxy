@@ -87,7 +87,7 @@ public class Scheduler {
 
     public void stop() {
         if (timer != null) {
-            timer.cancel(false);
+            timer.cancel(true);
             timer = null;
         }
     }
