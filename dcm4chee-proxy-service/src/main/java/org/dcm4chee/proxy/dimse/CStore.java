@@ -153,12 +153,14 @@ public class CStore extends BasicCStoreSCP {
                     processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
                 } catch (ConfigurationException c) {
                     LOG.error("{}: configuration error while processing C-STORE-RQ: {}", new Object[]{asAccepted, c.getMessage()});
-                    deleteFile(asAccepted, file);
+                    if (file.exists())
+                        deleteFile(asAccepted, file);
                     throw new DicomServiceException(Status.UnableToProcess, c.getCause());
                 }
             else {
                 LOG.error("{}: error processing C-STORE-RQ: {}", new Object[]{asAccepted, e.getMessage()});
-                deleteFile(asAccepted, file);
+                if (file.exists())
+                    deleteFile(asAccepted, file);
                 throw new DicomServiceException(Status.UnableToProcess);
             }
         }
@@ -459,8 +461,8 @@ public class CStore extends BasicCStoreSCP {
                     logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
                             prop, attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
                 }
-                forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), frameNumber, logFile,
-                        dataFile, sourceUID);
+                forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), frameNumber,
+                        logFile, dataFile, sourceUID);
             } catch (Exception e) {
                 asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
                 if (logFile != null)
@@ -473,8 +475,8 @@ public class CStore extends BasicCStoreSCP {
                     storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, forwardRq, dataFile, asInvoked.getCalledAET());
                     break;
                 } else {
-                    LOG.error("{}: Error forwarding single-frame from multi-frame object: {}",
-                            new Object[] { asAccepted, e.getMessage() });
+                    LOG.error("{}: Error forwarding single-frame from multi-frame object: {}", new Object[] {
+                            asAccepted, e.getMessage() });
                     Attributes rsp = Commands.mkCStoreRSP(rq, Status.UnableToProcess);
                     asAccepted.writeDimseRSP(pc, rsp);
                     break;
@@ -482,8 +484,8 @@ public class CStore extends BasicCStoreSCP {
             }
         }
         if (log)
-            LOG.info("{}: extracted {} frames from multi-frame object {} in {}sec",
-                    new Object[] { asAccepted, n, sourceUID, t / 1000F });
+            LOG.info("{}: extracted {} frames from multi-frame object {} in {}sec", new Object[] { asAccepted, n,
+                    sourceUID, t / 1000F });
     }
 
     protected static void createMappedFileCopy(ProxyAEExtension proxyAEE, Association as, File file, String calledAET,
@@ -574,7 +576,7 @@ public class CStore extends BasicCStoreSCP {
                     logFile.delete();
                 super.onClose(as);
                 Attributes cmd = new Attributes();
-                if (dataFile != null && proxyAEE.isAcceptDataOnFailedAssociation() && dataFile.exists())
+                if (dataFile != null && dataFile.exists() && proxyAEE.isAcceptDataOnFailedAssociation())
                     try {
                         String suffix = RetryObject.ConnectionException.getSuffix() + "0";
                         createMappedFileCopy(proxyAEE, asAccepted, dataFile, calledAET, suffix);

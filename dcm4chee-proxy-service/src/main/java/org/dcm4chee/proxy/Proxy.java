@@ -43,6 +43,7 @@ import static org.dcm4che.audit.AuditMessages.createEventIdentification;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.BindException;
 import java.util.Calendar;
 import java.util.Collection;
 
@@ -108,6 +109,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     private final CGet cget;
     private final CMove cmove;
     private final Mpps mpps;
+    private final int restartTimeout = getRestartTimeout();
 
     public Proxy(DicomConfiguration dicomConfiguration, HL7Configuration hl7configuration, String deviceName)
             throws ConfigurationException {
@@ -180,7 +182,29 @@ public class Proxy extends DeviceService implements ProxyMBean {
     synchronized public void restart() throws Exception {
         stop();
         reload();
-        start();
+        int count = restartTimeout;
+        while (!isRunning()) {
+            try {
+                start();
+            } catch (BindException e) {
+                if (count < 0) {
+                    LOG.error("Error restarting {}: {}", instance.getDevice().getDeviceName(), e.getMessage());
+                    return;
+                }
+                count--;
+                Thread.sleep(1000);
+            }
+        }
+    }
+
+    private static int getRestartTimeout() {
+        String timeoutString = System.getProperty("org.dcm4chee.proxy.restart.timeout");
+        try {
+            return (timeoutString == null) ? 10 : Integer.parseInt(timeoutString);
+        } catch (NumberFormatException e) {
+            LOG.error("{} ({})", new Object[] { e, "org.dcm4chee.proxy.restart.timeout" });
+            return 10;
+        }
     }
 
     private void log(EventTypeCode eventType) {
