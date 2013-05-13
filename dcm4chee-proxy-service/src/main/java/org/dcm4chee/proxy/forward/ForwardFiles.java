@@ -730,7 +730,7 @@ public class ForwardFiles {
                         AttributeCoercion ac = proxyAEE.getAttributeCoercion(asInvoked.getCalledAET(), cuid, Role.SCP,
                                 Dimse.C_STORE_RQ);
                         if (ac != null)
-                            proxyAEE.coerceAttributes(asInvoked, attrs, ac, asInvoked.getApplicationEntity()
+                            attrs = proxyAEE.coerceAttributes(asInvoked, attrs, ac, asInvoked.getApplicationEntity()
                                     .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
                         forwardScheduledCStoreFile(proxyAEE, asInvoked, new DataWriterAdapter(attrs), -1, file, prop, file.length());
                     } else

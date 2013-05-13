@@ -167,7 +167,7 @@ public class ForwardDimseRQ {
                     }
                     if (rspData != null) {
                         if (dimse == Dimse.C_FIND_RQ)
-                            proxyAEE.coerceDataset(
+                            rspData = proxyAEE.coerceDataset(
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
@@ -176,7 +176,7 @@ public class ForwardDimseRQ {
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                         else if (dimse == Dimse.C_GET_RQ)
-                            proxyAEE.coerceDataset(
+                            rspData = proxyAEE.coerceDataset(
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_GET_RSP,
@@ -185,7 +185,7 @@ public class ForwardDimseRQ {
                                     asAccepted.getApplicationEntity().getDevice()
                                             .getDeviceExtension(ProxyDeviceExtension.class));
                         else if (dimse == Dimse.C_MOVE_RQ)
-                            proxyAEE.coerceDataset(
+                            rspData = proxyAEE.coerceDataset(
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_MOVE_RSP,
