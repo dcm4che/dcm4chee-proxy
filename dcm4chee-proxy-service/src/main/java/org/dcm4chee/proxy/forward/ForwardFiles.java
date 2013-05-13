@@ -73,7 +73,6 @@ import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.AAssociateRJ;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -539,13 +538,7 @@ public class ForwardFiles {
                 default: {
                     LOG.debug("{}: failed to forward file {} with error status {}",
                             new Object[] { as, file, Integer.toHexString(status) + 'H' });
-                    try {
-                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
-                    } catch (IOException e) {
-                        LOG.error(as + ": error renaming file: " + e.getMessage());
-                        if(LOG.isDebugEnabled())
-                            e.printStackTrace();
-                    }
+                    renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
                 }
                 }
             }
@@ -680,13 +673,7 @@ public class ForwardFiles {
                 default: {
                     LOG.error("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
                             Integer.toHexString(status) + 'H' });
-                    try {
-                        renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
-                    } catch (IOException e) {
-                        LOG.error("Error renaming file {}: {}", new Object[] { file.getPath(), e.getMessage() });
-                        if(LOG.isDebugEnabled())
-                            e.printStackTrace();
-                    }
+                    renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
                 }
                 }
             }
@@ -969,8 +956,7 @@ public class ForwardFiles {
         }
     }
 
-    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String calledAET, Properties prop)
-            throws IOException {
+    private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String calledAET, Properties prop) {
         File dst;
         String path = file.getPath();
         if (path.endsWith(".snd"))
@@ -980,10 +966,15 @@ public class ForwardFiles {
         if (file.renameTo(dst)) {
             dst.setLastModified(System.currentTimeMillis());
             LOG.debug("Rename {} to {}", new Object[] { file, dst });
-            writeFailedAuditLogMessage(proxyAEE, dst, null, calledAET, prop);
+            try {
+                writeFailedAuditLogMessage(proxyAEE, dst, null, calledAET, prop);
+            } catch (IOException e) {
+                LOG.error("Failed to write audit log message");
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
+            }
         } else {
             LOG.error("Failed to rename {} to {}", new Object[] { file, dst });
-            throw new DicomServiceException(Status.OutOfResources, "Failed to rename file");
         }
     }
 
