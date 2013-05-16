@@ -269,14 +269,14 @@ public class ForwardFiles {
                             deleteFailedFile(proxyAEE, calledAET, file,
                                     ": delete files without retry configuration is ENABLED", 0);
                         else
-                            moveToNoRetryPath(proxyAEE, file, ": delete files without retry configuration is DISABLED");
+                            moveToNoRetryPath(proxyAEE, calledAET, file, ": delete files without retry configuration is DISABLED");
                     else if (checkNumberOfRetries(proxyAEE, matchingRetry, suffix, file, calledAET)
                             && checkSendFileDelay(now, file, matchingRetry))
                         return true;
                 } catch (IndexOutOfBoundsException e) {
                     LOG.error("Error parsing suffix of " + path);
                     try {
-                        moveToNoRetryPath(proxyAEE, file, "(error parsing suffix)");
+                        moveToNoRetryPath(proxyAEE, calledAET, file, "(error parsing suffix)");
                     } catch (IOException e1) {
                         LOG.error("Error moving file {} to no retry directory: {}",
                                 new Object[] { file.getName(), e.getMessage() });
@@ -324,7 +324,7 @@ public class ForwardFiles {
                 LOG.debug(">> previous retries = " + prevRetries);
             } catch (NumberFormatException e) {
                 LOG.error("Error parsing number of retries in suffix of file " + file.getName());
-                moveToNoRetryPath(proxyAEE, file, ": error parsing suffix");
+                moveToNoRetryPath(proxyAEE, calledAET, file, ": error parsing suffix");
                 return false;
             }
         boolean send = prevRetries < retry.numberOfRetries;
@@ -338,18 +338,17 @@ public class ForwardFiles {
                 deleteFailedFile(proxyAEE, calledAET, file, reason + " and delete after final retry is ENABLED",
                         prevRetries);
             else {
-                moveToNoRetryPath(proxyAEE, file, reason);
+                moveToNoRetryPath(proxyAEE, calledAET, file, reason);
             }
         }
         return send;
     }
 
-    private void moveToFallbackAetDir(ProxyAEExtension proxyAEE, File file, String calledAET, String reason) {
+    private void moveToFallbackAetDir(ProxyAEExtension proxyAEE, File file, String calledAET, String reason) throws IOException {
         String path = file.getAbsolutePath();
         if (path.contains("ncreate")) {
-            String nSetFilePath = path.replace("create", "nset");
-            File nSetFile = new File(nSetFilePath);
-            if (nSetFile.exists())
+            File nSetFile = getMatchingNsetFile(proxyAEE, calledAET, file);
+            if (nSetFile != null)
                 moveToFallbackAetDir(proxyAEE, nSetFile, calledAET, reason);
         }
         File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + proxyAEE.getFallbackDestinationAET());
@@ -368,6 +367,22 @@ public class ForwardFiles {
                     new Object[] { infoFile, infoDst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { infoFile, infoDst });
+    }
+
+    private File getMatchingNsetFile(ProxyAEExtension proxyAEE, String calledAET, File file) throws IOException {
+        File dir = new File(proxyAEE.getNSetDirectoryPath(), calledAET);
+        if (!dir.exists())
+            return null;
+
+        Properties nCreateProp = proxyAEE.getFileInfoProperties(file);
+        String sopInstanceUID = nCreateProp.getProperty("sop-instance-uid");
+        File[] nSetInfoFiles = dir.listFiles(proxyAEE.infoFileFilter());
+        for (File nSetInfoFile : nSetInfoFiles) {
+            Properties nSetProp = proxyAEE.getPropertiesFromInfoFile(nSetInfoFile.getPath());
+            if (nSetProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
+                return new File(nSetInfoFile.getPath().substring(0, nSetInfoFile.getPath().indexOf('.')) + ".dcm");
+        }
+        return null;
     }
 
     private boolean sendToFallbackAET(ProxyAEExtension proxyAEE, String destinationAET) {
@@ -391,13 +406,12 @@ public class ForwardFiles {
         return null;
     }
 
-    protected void moveToNoRetryPath(ProxyAEExtension proxyAEE, File file, String reason) throws IOException {
+    protected void moveToNoRetryPath(ProxyAEExtension proxyAEE, String calledAET, File file, String reason) throws IOException {
         String path = file.getPath();
         if (path.contains("ncreate")) {
-            String nSetFilePath = path.replace("create", "nset");
-            File nSetFile = new File(nSetFilePath);
-            if (nSetFile.exists())
-                moveToNoRetryPath(proxyAEE, nSetFile, reason);
+            File nSetFile = getMatchingNsetFile(proxyAEE, calledAET, file);
+            if (nSetFile != null)
+                moveToNoRetryPath(proxyAEE, calledAET, nSetFile, reason);
         }
         String spoolDirPath = proxyAEE.getSpoolDirectoryPath().getPath();
         String fileName = file.getName();
