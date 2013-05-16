@@ -19,28 +19,124 @@ dicomAETitle: DCM4CHEE
 
 dn: dicomDeviceName=dcm4chee-arc,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomDevice
+objectClass: pkiUser
 objectClass: dcmDevice
+objectClass: dicomDevice
 dicomDeviceName: dcm4chee-arc
 dicomInstalled: TRUE
+userCertificate;binary:: MIICTTCCAbagAwIBAgIEUK3wyDANBgkqhkiG9w0BAQUFADBrMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRUwEwYDVQQDEwxkY200Y2hlZS1hcmMwHhcNMTIxM
+ TIyMDkzMDQ4WhcNMTMxMTIyMDkzMDQ4WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
+ MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRU
+ wEwYDVQQDEwxkY200Y2hlZS1hcmMwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAJAx/IuiHU
+ y5WIuly4iFXZS4/ux4iUMlVlPmFeptY0hmhmbq/BRKt6c8So2fuVtaBND2QMVmOQggl+BssssL3
+ KzgXXz7V5YthmEwxZu5T8EoePCEMMs7hAMvlbHzzBAHm93/IamPWgWic37ubci91gGULtf9zfQa
+ u3SmPlEkWCd/AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEABETBurvWryJRo806iyRWsO4Ik80q1T3
+ 7abLuD47aPKgXUFN0kPKZkh3wWDmyxZ1qZFKuByVeDcECBzS44lEtqpOruVgxo2TVEX9b0RxJQN
+ 5zILyeqhxmutNSKTEBk9hLrBhj97gFEjtredGnxSrZasLrLp9KmlNidp3JWmge0Cg=
 
 dn: cn=dicom,dicomDeviceName=dcm4chee-arc,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: dicom
 dicomPort: 11112
 
 dn: dicomAETitle=DCM4CHEE,dicomDeviceName=dcm4chee-arc,cn=Devices,cn=DICOM C
  onfiguration,dc=example,dc=com
-objectClass: dicomNetworkAE
 objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
 dicomAETitle: DCM4CHEE
 dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=dcm4chee-arc,cn=De
  vices,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=DCMQRSCP,cn=Unique AE Titles Registry,cn=DICOM Configuratio
+ n,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: DCMQRSCP
+
+dn: dicomDeviceName=dcmqrscp,cn=Devices,cn=DICOM Configuration,dc=example,dc
+ =com
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: dcmqrscp
+dicomInstalled: TRUE
+userCertificate;binary:: MIICTTCCAbagAwIBAgIEUK3uxTANBgkqhkiG9w0BAQUFADBrMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIZGNtcXJzY3AwHhcNMTIxM
+ TIyMDkyMjEzWhcNMTMxMTIyMDkyMjEzWjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
+ MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9
+ vbDERMA8GA1UEAxMIZGNtcXJzY3AwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAIn3YCuqP9
+ E56x1cB3BCUCbY80+BFbR3tfyM+kO9ea2pP8vK+F8DKA66jLXDzZu8tGpHCK3tUGFlKUce+7sVY
+ rMr6dqqicuQp4nBkwkbx6/klW7zepK0TTJMWM3e2+kQHJzKdNUC22aLpG/3PYzuxpcvM0iPpNf3
+ gqeqsZJbmhVBAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAarkEtvcOuycYDtaGNxOvwNH23RbJZhO
+ g4S/mZjibPVSMWpAZtaKR4Ff3guFAmbYx3+J3yOxAsNFgPxUgTnVH9asConXvSiSVOfANikVFJj
+ kwnZoiCvkEfkmYDh4LEO+ECwJP/ChL6La4Ko5G/j+83xjKQ4bue+ElQT3RFwqxaqg=
+
+dn: cn=dicom,dicomDeviceName=dcmqrscp,cn=Devices,cn=DICOM Configuration,dc=e
+ xample,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11113
+
+dn: dicomAETitle=DCMQRSCP,dicomDeviceName=dcmqrscp,cn=Devices,cn=DICOM Confi
+ guration,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: DCMQRSCP
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=dcmqrscp,cn=Device
+ s,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=STGCMTSCU,cn=Unique AE Titles Registry,cn=DICOM Configurati
+ on,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: STGCMTSCU
+
+dn: dicomDeviceName=stgcmtscu,cn=Devices,cn=DICOM Configuration,dc=example,d
+ c=com
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: stgcmtscu
+dicomInstalled: TRUE
+userCertificate;binary:: MIICTzCCAbigAwIBAgIEUK3vGjANBgkqhkiG9w0BAQUFADBsMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDESMBAGA1UEAxMJc3RnY210c2N1MB4XDTEyM
+ TEyMjA5MjMzOFoXDTEzMTEyMjA5MjMzOFowbDELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5u
+ YTEPMA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXR
+ vb2wxEjAQBgNVBAMTCXN0Z2NtdHNjdTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAp0I5T/
+ sXN824jKWmeYUYE9FEbdaXtsA1lDGezPVlG0hgSH6XhdJE+4E4rhsGSidOAKGk3ezt9My99LPfs
+ NV2JSNYI6Touc3ZsZVpjfNUBw+E+6gyzHaf94JQC3SK30hAlDlwmxjLHhpamir+KUzgvhIbupNW
+ KaOeVC9PF/FbjMkCAwEAATANBgkqhkiG9w0BAQUFAAOBgQBaBrh++2q8quzy/fSVa2MspvegjIG
+ 3aQws//dH6ra5mUTdX7dZKB6M8BJ2ntamYZG0LbdZt6lb5OAm1j/kl/oCCZY5fOrT3ByrlKIPms
+ OvN/9U89FFtaARYi7YrCrayOfHCBB1G274wa/zHEisOlFSfzg/crwkjQDhJhd+KJDnvA==
+
+dn: cn=dicom,dicomDeviceName=stgcmtscu,cn=Devices,cn=DICOM Configuration,dc=
+ example,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11114
+
+dn: dicomAETitle=STGCMTSCU,dicomDeviceName=stgcmtscu,cn=Devices,cn=DICOM Con
+ figuration,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: STGCMTSCU
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=stgcmtscu,cn=Devic
+ es,cn=DICOM Configuration,dc=example,dc=com
 
 dn: dicomAETitle=STORESCP,cn=Unique AE Titles Registry,cn=DICOM Configuratio
  n,dc=example,dc=com
@@ -49,28 +145,124 @@ dicomAETitle: STORESCP
 
 dn: dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
-objectClass: dicomDevice
+objectClass: pkiUser
 objectClass: dcmDevice
+objectClass: dicomDevice
 dicomDeviceName: storescp
 dicomInstalled: TRUE
+userCertificate;binary:: MIICTTCCAbagAwIBAgIEUK3vSzANBgkqhkiG9w0BAQUFADBrMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3AwHhcNMTIxM
+ TIyMDkyNDI3WhcNMTMxMTIyMDkyNDI3WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
+ MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9
+ vbDERMA8GA1UEAxMIc3RvcmVzY3AwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKK6PQ7w45
+ 1jzYdGyxtUgq4IhPio7qQItcZj6BdhfelPe9ndaEj3ZNkGfpPjcPgsCR/BMMAu/AHaF/bE4e0He
+ lck8IQrZASdzMrSsAcH6PHVg4Jq/yRFO9QtQhcd6TLWwg1eHxb4t3hQKRz/SAVH0n2ReKrglnpZ
+ Imueytnx8J8xAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAkjhvfZulWg8PaNzpmS3PLHjs7dCHvKq
+ +15XkBeoRSuXapgPnopE58VSgSJmkgZ173QUFqrhH3MOJuDyHBMBsWyuwocYYY2BKXCpbQ41Bbx
+ cM08/zcrI84fhQoqoBos5/rgZ842eCmvNTkCHqThfCc3nTsm2lTW+9rvEoZqLmHRM=
 
 dn: cn=dicom,dicomDeviceName=storescp,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: dicom
-dicomPort: 11113
+dicomPort: 11115
 
 dn: dicomAETitle=STORESCP,dicomDeviceName=storescp,cn=Devices,cn=DICOM Confi
  guration,dc=example,dc=com
-objectClass: dicomNetworkAE
 objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
 dicomAETitle: STORESCP
 dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=storescp,cn=Device
  s,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=MPPSSCP,cn=Unique AE Titles Registry,cn=DICOM Configuration
+ ,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: MPPSSCP
+
+dn: dicomDeviceName=mppsscp,cn=Devices,cn=DICOM Configuration,dc=example,dc=
+ com
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: mppsscp
+dicomInstalled: TRUE
+userCertificate;binary:: MIICSzCCAbSgAwIBAgIEUK3uuTANBgkqhkiG9w0BAQUFADBqMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHbXBwc3NjcDAeFw0xMjExM
+ jIwOTIyMDFaFw0xMzExMjIwOTIyMDFaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmEx
+ DzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29
+ sMRAwDgYDVQQDEwdtcHBzc2NwMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCMEXa4smTZBC
+ 4zxeR8BelMxTLll/hEu1uYsR5eVzyGMzJXC4TDOdFMdmvP7uQXunjSangacYcejZ1SlWMsG2lhB
+ hPDwPLfuExLAYF0VzHenO7ZoxTgyANN9LOKRr8FNLD/bC12qcElWRUzyfp17WQGX3yy1zJ6I+K9
+ FNlEUAXBYQIDAQABMA0GCSqGSIb3DQEBBQUAA4GBAA2dYYal8U5XFn/yUXKwt49u5mAaOrTSRdP
+ a+VCiIae/eq26DnYEvf8ihBig9laPR8sTtfj9VYMHpLzzCR/caQBmbIUnkAipEyyPy2uZcETciH
+ 0iDhqHesXuNoAqEcTSq9Xj7FSbRhVIEf/yvmF9JXWGKYzhkzpPwadK1Ve8gTYx
+
+dn: cn=dicom,dicomDeviceName=mppsscp,cn=Devices,cn=DICOM Configuration,dc=ex
+ ample,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11116
+
+dn: dicomAETitle=MPPSSCP,dicomDeviceName=mppsscp,cn=Devices,cn=DICOM Configu
+ ration,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: MPPSSCP
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=mppsscp,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=IANSCP,cn=Unique AE Titles Registry,cn=DICOM Configuration,
+ dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: IANSCP
+
+dn: dicomDeviceName=ianscp,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
+ om
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: ianscp
+dicomInstalled: TRUE
+userCertificate;binary:: MIICSTCCAbKgAwIBAgIEUK3u7TANBgkqhkiG9w0BAQUFADBpMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGaWFuc2NwMB4XDTEyMTEyM
+ jA5MjI1M1oXDTEzMTEyMjA5MjI1M1owaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEP
+ MA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2w
+ xDzANBgNVBAMTBmlhbnNjcDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA9rAB6PlxO82zSk
+ t1+1fdtUC89LAtFHgkJOhW+/tzKu8RZsWt1BCoCj4pLo1XMhEVkoopp49TQpzZJL8oE+itxJjHj
+ GaRNe+e+aNITs6kwroSWldGczsn+DCcTpo60YlH6bjKtdoY9eKehiRhtLtdWtyN0wvArydPq472
+ 1Z5+NBkCAwEAATANBgkqhkiG9w0BAQUFAAOBgQBQ4EajxLdDP04gstFCpKjo0dBAWBfiHjX1lx1
+ CIWGI51rLepz23SxuqA8OA83jKOaCesci/lyspn2ZH3kJe2dWh8HFQu3vz7pqX3XoP44QUfEfsX
+ OAjcfM3Fac5nlqGk1NpMNdCLT95IbggQReSoVQtVakv9ZBFzBcfBQg8yAXXg==
+
+dn: cn=dicom,dicomDeviceName=ianscp,cn=Devices,cn=DICOM Configuration,dc=exa
+ mple,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11117
+
+dn: dicomAETitle=IANSCP,dicomDeviceName=ianscp,cn=Devices,cn=DICOM Configura
+ tion,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: IANSCP
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=ianscp,cn=Devices,
+ cn=DICOM Configuration,dc=example,dc=com
 
 dn: dicomAETitle=STORESCU,cn=Unique AE Titles Registry,cn=DICOM Configuratio
  n,dc=example,dc=com
@@ -79,28 +271,82 @@ dicomAETitle: STORESCU
 
 dn: dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
-objectClass: dicomDevice
+objectClass: pkiUser
 objectClass: dcmDevice
+objectClass: dicomDevice
 dicomDeviceName: storescu
 dicomInstalled: TRUE
+userCertificate;binary:: MIICTTCCAbagAwIBAgIEUK3vEDANBgkqhkiG9w0BAQUFADBrMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDERMA8GA1UEAxMIc3RvcmVzY3UwHhcNMTIxM
+ TIyMDkyMzI4WhcNMTMxMTIyMDkyMzI4WjBrMQswCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5h
+ MQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9
+ vbDERMA8GA1UEAxMIc3RvcmVzY3UwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAICzvTnF4V
+ XtUekxN12L70gFuH6PUS43uKSBUdyZH93+EuuswSlfi2wAzdEOnsmXogYKLS0TJIxkZNmHIRWuU
+ NRQCox81xbDU7aIDUgXsw6StpENumgomw9tgCYXBOpClegcD75X3IBDIZzwvSKNHjyPzRkhxwOt
+ LFOjkU7ILYsTAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAfxLy9DtwfEeM54okTSQb6Y/ASj3XslI
+ y9gbkTaJVrYK4VlHhOfl6Z66iq+QBGcVdqVCEXStvehm1iOofEmrUZxRGfh6/Tgzitig+hUMR6Z
+ T0TAvaHxG1F1d+2yQQXGWCXLn0AmimDXheZkcyOWHpgssV/x63or5pK9cxdi4Tkak=
 
 dn: cn=dicom,dicomDeviceName=storescu,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: dicom
-dicomPort: 11114
+dicomPort: 11118
 
 dn: dicomAETitle=STORESCU,dicomDeviceName=storescu,cn=Devices,cn=DICOM Confi
  guration,dc=example,dc=com
-objectClass: dicomNetworkAE
 objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
 dicomAETitle: STORESCU
 dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=storescu,cn=Device
  s,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=MPPSSCU,cn=Unique AE Titles Registry,cn=DICOM Configuration
+ ,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: MPPSSCU
+
+dn: dicomDeviceName=mppsscu,cn=Devices,cn=DICOM Configuration,dc=example,dc=
+ com
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: mppsscu
+dicomInstalled: TRUE
+userCertificate;binary:: MIICSzCCAbSgAwIBAgIEUK3vLDANBgkqhkiG9w0BAQUFADBqMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHbXBwc3NjdTAeFw0xMjExM
+ jIwOTIzNTZaFw0xMzExMjIwOTIzNTZaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmEx
+ DzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29
+ sMRAwDgYDVQQDEwdtcHBzc2N1MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCEvZ/RE+LnYS
+ zQQpDaQ75aYRygc57E9OM03OVjprnLjRfdbB4vVQX6nGUIA3E/OOaHVfosSlGnM0Poh38jw0j6h
+ EmJPnUqkJvq+ey9tuHDROZDMC3AkW805xDPcvCeBuCNRYAJhXv7VH6h/FNHW9x2ZfwqZT7rB/ka
+ XxZ0+yvyMQIDAQABMA0GCSqGSIb3DQEBBQUAA4GBADqMsJZ5z7+I7qlOEi4+vXW+rg6n777FYTC
+ 5WVrJazlvtNvkCQluVAQUHhDVBHLsvzWHvWKmHv81lqZj92J4uXHaMRKfxiggdIMYThySPvgWht
+ HEACEGjWUuECLKEH/0yi/U0vAbMG9nmMMUW4BDX5tAabLqTugda8Fjh5zaDElI
+
+dn: cn=dicom,dicomDeviceName=mppsscu,cn=Devices,cn=DICOM Configuration,dc=ex
+ ample,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11119
+
+dn: dicomAETitle=MPPSSCU,dicomDeviceName=mppsscu,cn=Devices,cn=DICOM Configu
+ ration,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: MPPSSCU
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=mppsscu,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
 
 dn: dicomAETitle=FINDSCU,cn=Unique AE Titles Registry,cn=DICOM Configuration
  ,dc=example,dc=com
@@ -109,44 +355,173 @@ dicomAETitle: FINDSCU
 
 dn: dicomDeviceName=findscu,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomDevice
+objectClass: pkiUser
 objectClass: dcmDevice
+objectClass: dicomDevice
 dicomDeviceName: findscu
 dicomInstalled: TRUE
+userCertificate;binary:: MIICSzCCAbSgAwIBAgIEUK3u9zANBgkqhkiG9w0BAQUFADBqMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHZmluZHNjdTAeFw0xMjExM
+ jIwOTIzMDNaFw0xMzExMjIwOTIzMDNaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmEx
+ DzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29
+ sMRAwDgYDVQQDEwdmaW5kc2N1MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXr4itj4JlLd
+ wuGzGIY6gdYpXTzrErxxil3u7h3esyybCJDyZ0fJQ1QOzvp8yLqvbuzGpPFrNX1SyNsQuFO7ry7
+ FiVB/ujuY9+t724/w+/S5guoxRpYnCfQdC8iyzWzj2vWxDEKISiIKLXnfi4/Xq4E9HasdLGImtc
+ 380KM98C8wIDAQABMA0GCSqGSIb3DQEBBQUAA4GBAB5rDm3IXrl/cxiPTNTiBhqFXgEevw134bu
+ 1aJdbzkrH/Co2hXXgI43r4obIGc99wJ7j1Gx/tY4PIkyv8rBlg0U0BvJaE83r7v/Fz5DzQUjZ4/
+ TtX1bKWPtv7l/EeKbHAdKpXX7rIBnlz78JQ8mKSsrldhzzpuoE0TcBh3Ue9wXM
 
 dn: cn=dicom,dicomDeviceName=findscu,cn=Devices,cn=DICOM Configuration,dc=ex
  ample,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: dicom
-dicomPort: 11115
+dicomPort: 11120
 
 dn: dicomAETitle=FINDSCU,dicomDeviceName=findscu,cn=Devices,cn=DICOM Configu
  ration,dc=example,dc=com
-objectClass: dicomNetworkAE
 objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
 dicomAETitle: FINDSCU
 dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=findscu,cn=Devices
  ,cn=DICOM Configuration,dc=example,dc=com
 
+dn: dicomAETitle=GETSCU,cn=Unique AE Titles Registry,cn=DICOM Configuration,
+ dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: GETSCU
+
+dn: dicomDeviceName=getscu,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
+ om
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: getscu
+dicomInstalled: TRUE
+userCertificate;binary:: MIICSTCCAbKgAwIBAgIEUK3vcTANBgkqhkiG9w0BAQUFADBpMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGZ2V0c2N1MB4XDTEyMTEyM
+ jA5MjUwNVoXDTEzMTEyMjA5MjUwNVowaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEP
+ MA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2w
+ xDzANBgNVBAMTBmdldHNjdTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAvnMotdM/VUEN+P
+ 9pLAavYwRJoLKSKHfnyJs1QIB1nTMfjabcVHKDVSGBFxHWmz2gVZ35tpcHfaLvNSLgFTtpOOGDm
+ +pM1vuR0WhNPJKW5Exjbht5SZQp9SMhikBkRpdh6UvsgMMhS6G2nXQsitJ6kBQupuSdzE2Whshw
+ +O7eyXMCAwEAATANBgkqhkiG9w0BAQUFAAOBgQCXkbEEyFB+Bewa7iZhINKsDGAhudgNehyxnz5
+ h2p7Bh02l7QDuuS5IkY10SxpVCSXd/Ojo/g0t34abvVaTgGczypLAZbvpvhYUt7RX2pT9HEbdAT
+ mUtGEZanddh1kYdyxuX0JINS4yZcx+itoy7S0AtFpWs98pwYvAfxJ7ziT8Gw==
+
+dn: cn=dicom,dicomDeviceName=getscu,cn=Devices,cn=DICOM Configuration,dc=exa
+ mple,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11121
+
+dn: dicomAETitle=GETSCU,dicomDeviceName=getscu,cn=Devices,cn=DICOM Configura
+ tion,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: GETSCU
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=getscu,cn=Devices,
+ cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomAETitle=MOVESCU,cn=Unique AE Titles Registry,cn=DICOM Configuration
+ ,dc=example,dc=com
+objectClass: dicomUniqueAETitle
+dicomAETitle: MOVESCU
+
+dn: dicomDeviceName=movescu,cn=Devices,cn=DICOM Configuration,dc=example,dc=
+ com
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: movescu
+dicomInstalled: TRUE
+userCertificate;binary:: MIICSzCCAbSgAwIBAgIEUK3vIzANBgkqhkiG9w0BAQUFADBqMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEQMA4GA1UEAxMHbW92ZXNjdTAeFw0xMjExM
+ jIwOTIzNDdaFw0xMzExMjIwOTIzNDdaMGoxCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVubmEx
+ DzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTEVMBMGA1UECxMMZGNtNGNoZS10b29
+ sMRAwDgYDVQQDEwdtb3Zlc2N1MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCoSA+VJx4aPN
+ NzfMDXpCZXrah+RF6rviko5phdzgGhSFTfJK0dV6Gj8rdcx1ArzGEy40nXJK+TD9q2NjqiHh0Aa
+ 1bW9kB3UJu+lplDovqGNjDrATcndxM7nC9fZuK4HJErYgtvFQRzYAXTdQpMCw4ULdFHEiIuyHsl
+ hlKYo0tTLQIDAQABMA0GCSqGSIb3DQEBBQUAA4GBADhK2rj3p98pqsxM1qCkYmc5plPZV8LSJWK
+ 9RI7YLyt9QXyoMZbgk4vEE4iaiDDMK7Fzz+76amxJ+vUa9spGGC2UtrGAIJN0hBdwphJlKskraa
+ bRe6bEEC41ruvLGykS06uzwuEzzorob0guq8x1noAG48raUf6kuWQ6q4WViquG
+
+dn: cn=dicom,dicomDeviceName=movescu,cn=Devices,cn=DICOM Configuration,dc=ex
+ ample,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom
+dicomPort: 11122
+
+dn: dicomAETitle=MOVESCU,dicomDeviceName=movescu,cn=Devices,cn=DICOM Configu
+ ration,dc=example,dc=com
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dicomAETitle: MOVESCU
+dicomAssociationAcceptor: TRUE
+dicomAssociationInitiator: TRUE
+dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=movescu,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
+
+dn: dicomDeviceName=hl7snd,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
+ om
+objectClass: pkiUser
+objectClass: dcmDevice
+objectClass: dicomDevice
+dicomDeviceName: hl7snd
+dicomInstalled: TRUE
+userCertificate;binary:: MIICSTCCAbKgAwIBAgIEUK3uRjANBgkqhkiG9w0BAQUFADBpMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGaGw3c25kMB4XDTEyMTEyM
+ jA5MjAwNloXDTEzMTEyMjA5MjAwNlowaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEP
+ MA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2w
+ xDzANBgNVBAMTBmhsN3NuZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAkt0bLfpKxVyf9z
+ K7+gsjMfcd5VjajWIYQr4In+2J6aNebFVZU5OaBiRSnn+0RwFqKDWrr4oCDa+ETtvgd59KleMWs
+ YF3TsObd3Xu0vOAGVC/IzJN6WyW/l9a0BbmbgO7LAYjvdhyQbwdsa8qDyxacnsQoeQTU6I7FsMM
+ mV9sIo0CAwEAATANBgkqhkiG9w0BAQUFAAOBgQBVdZYxhh7tMyk38Vf6D8WlXa5572CqbsctZ9j
+ gSJNQ6H+3miI8vSB4qSK1wTVK8sk9Jsq4dovY6XiSfbwWNWGRofb4yOtkvvsQTwblUJf8L6s1oc
+ l6Vs7eYcvPanGZ5sZRDRyd+C/JYUC8F9kUooCXTIiFrVC0S/BCYg9SI5+Vpg==
+
 dn: dicomDeviceName=hl7rcv,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomDevice
+objectClass: pkiUser
 objectClass: dcmDevice
+objectClass: dicomDevice
 dicomDeviceName: hl7rcv
 dicomInstalled: TRUE
-dicomInstitutionCode: (111.1111 ,99DCM4CHEE ,"Site A")
+dicomInstitutionCode: (111.1111, 99DCM4CHEE, "Site A")
 dicomInstitutionName: Site A
 dicomIssuerOfAccessionNumber: Site A&1.2.40.0.13.1.1.999.111.1111&ISO
 dicomIssuerOfPatientID: Site A&1.2.40.0.13.1.1.999.111.1111&ISO
+dicomThisNodeCertificateReference: dicomDeviceName=hl7rcv,cn=Devices,cn=DICO
+ M Configuration,dc=example,dc=com
+userCertificate;binary:: MIICSTCCAbKgAwIBAgIEUK3urzANBgkqhkiG9w0BAQUFADBpMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxFTATBgNVBAsTDGRjbTRjaGUtdG9vbDEPMA0GA1UEAxMGaGw3cmN2MB4XDTEyMTEyM
+ jA5MjE1MVoXDTEzMTEyMjA5MjE1MVowaTELMAkGA1UEBhMCQVQxDzANBgNVBAgTBlZpZW5uYTEP
+ MA0GA1UEBxMGVmllbm5hMRAwDgYDVQQKEwdkY200Y2hlMRUwEwYDVQQLEwxkY200Y2hlLXRvb2w
+ xDzANBgNVBAMTBmhsN3JjdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAodaTN9nVfc/LWC
+ 840AZ/2romTFsw883UWTJeWiozXqI0P/0pcXnz0NZqgBRxfB+VXh+LhAcQCPP9+HyLOxrrNiBD4
+ Tt75niOiSLlcfYr1WYdQ3FXtW1yUIuHRE+k+iP2z8B8VMXWYRvYEIqn28WwCrlHMl1j4HbrUgEC
+ m7cj99sCAwEAATANBgkqhkiG9w0BAQUFAAOBgQAFXhLI1Gsz2p76BfiiSMHLsAbV7sE9B0MrqiW
+ z5/O9WjVlr+ipCvAAlVVB58sfSbFbhYuLY+VTHuO4TDAMmXLDRtRyoSqIJCkuJEilFrKpok7ZFy
+ aU7C0UBtkHOcxvlXr+e22eDvSYcnl0iCqmr9vTqAfu32slHdAhrRE27NHu2w==
 
 dn: cn=hl7,dicomDeviceName=hl7rcv,cn=Devices,cn=DICOM Configuration,dc=examp
  le,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: hl7
 dcmProtocol: HL7
@@ -161,15 +536,15 @@ hl7ApplicationName: HL7RCV^DCM4CHEE
 
 dn: dicomDeviceName=syslog,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomDevice
 objectClass: dcmDevice
+objectClass: dicomDevice
 dicomDeviceName: syslog
 dicomInstalled: TRUE
 
 dn: cn=audit-udp,dicomDeviceName=syslog,cn=Devices,cn=DICOM Configuration,dc
  =example,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: audit-udp
 dcmProtocol: SYSLOG_UDP
@@ -189,19 +564,63 @@ dicomAETitle: DCM4CHEE-PROXY
 
 dn: dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomDevice
-objectClass: dcmDevice
+objectClass: pkiUser
 objectClass: dcmProxyDevice
+objectClass: dcmDevice
+objectClass: dicomDevice
+dcmSchedulerInterval: 10
 dicomDeviceName: dcm4chee-proxy
 dicomInstalled: TRUE
 dcmForwardThreads: 1
+dcmKeyStorePin:: c2VjcmV0
+dcmKeyStoreType: JKS
+dcmKeyStoreURL: ${jboss.server.config.url}/dcm4chee-proxy/key.jks
 dcmProxyConfigurationStaleTimeout: 60
-dcmSchedulerInterval: 10
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=dcm4chee-arc,cn=Dev
+ ices,cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=dcmqrscp,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=stgcmtscu,cn=Device
+ s,cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=storescp,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=mppsscp,cn=Devices,
+ cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=ianscp,cn=Devices,c
+ n=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=storescu,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=mppsscu,cn=Devices,
+ cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=findscu,cn=Devices,
+ cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=getscu,cn=Devices,c
+ n=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=movescu,cn=Devices,
+ cn=DICOM Configuration,dc=example,dc=com
+dicomAuthorizedNodeCertificateReference: dicomDeviceName=hl7snd,cn=Devices,c
+ n=DICOM Configuration,dc=example,dc=com
+dicomManufacturer: dcm4che
+dicomManufacturerModelName: dcm4chee-proxy
+dicomSoftwareVersion: 1.0.0-SNAPSHOT
+dicomThisNodeCertificateReference: dicomDeviceName=dcm4chee-proxy,cn=Devices
+ ,cn=DICOM Configuration,dc=example,dc=com
+userCertificate;binary:: MIICUTCCAbqgAwIBAgIEUYOaiTANBgkqhkiG9w0BAQUFADBtMQs
+ wCQYDVQQGEwJBVDEPMA0GA1UECBMGVmllbm5hMQ8wDQYDVQQHEwZWaWVubmExEDAOBgNVBAoTB2
+ RjbTRjaGUxETAPBgNVBAsTCGRjbTRjaGVlMRcwFQYDVQQDEw5kY200Y2hlZS1wcm94eTAeFw0xM
+ zA1MDMxMTA3NTNaFw0yMzA1MDExMTA3NTNaMG0xCzAJBgNVBAYTAkFUMQ8wDQYDVQQIEwZWaWVu
+ bmExDzANBgNVBAcTBlZpZW5uYTEQMA4GA1UEChMHZGNtNGNoZTERMA8GA1UECxMIZGNtNGNoZWU
+ xFzAVBgNVBAMTDmRjbTRjaGVlLXByb3h5MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCA8H
+ 1UlLR7OHHAFxnbpipNxPt3NOinjc/bjWncqOMQ0SkGpg10cFzOQmo9a+adVWaUJbHsVXjHx+wHH
+ PV5XToF7MSRwj3oxJzWDomSmAVL3ET3z+dYPkJyMZyrnd5hTMzTOJ5yaXtypj8Iqb9XVy6uKqsW
+ GR6wZult03lgtbLp4wIDAQABMA0GCSqGSIb3DQEBBQUAA4GBAHSBS9I7YonJEza9cWj3JT5nWKC
+ XjCkebGlbPulkiJoOgD0FMcMlHDTZ9ksFqxk9YxRcHlOL+fXSjdoED/Ow5SE+6MLaPYQ/DY6zhj
+ aznuiAgk1sDMoUivwn3VpdZBz13ZpFe8+3Ir0lK9waJyDkifn0brzjnGFasLquZB+tXLh9
 
 dn: cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuratio
  n,dc=example,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: dicom
 dcmMaxOpsInvoked: 0
@@ -209,10 +628,24 @@ dcmMaxOpsPerformed: 0
 dicomInstalled: TRUE
 dicomPort: 22222
 
+dn: cn=dicom-tls,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
+ ation,dc=example,dc=com
+objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
+dicomHostname: localhost
+cn: dicom-tls
+dcmMaxOpsInvoked: 0
+dcmMaxOpsPerformed: 0
+dcmTLSProtocol: TLSv1
+dcmTLSProtocol: SSLv3
+dicomPort: 22762
+dicomTLSCipherSuite: TLS_RSA_WITH_AES_128_CBC_SHA
+dicomTLSCipherSuite: SSL_RSA_WITH_3DES_EDE_CBC_SHA
+
 dn: cn=hl7,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: hl7
 dcmProtocol: HL7
@@ -220,8 +653,8 @@ dicomPort: 22575
 
 dn: cn=audit-udp,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
  ation,dc=example,dc=com
-objectClass: dicomNetworkConnection
 objectClass: dcmNetworkConnection
+objectClass: dicomNetworkConnection
 dicomHostname: localhost
 cn: audit-udp
 dcmProtocol: SYSLOG_UDP
@@ -253,27 +686,29 @@ dcmAuditSourceTypeCode: 4
 
 dn: dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn
  =DICOM Configuration,dc=example,dc=com
-objectClass: dicomNetworkAE
-objectClass: dcmNetworkAE
 objectClass: dcmProxyNetworkAE
+objectClass: dcmNetworkAE
+objectClass: dicomNetworkAE
+dcmAcceptDataOnFailedAssociation: TRUE
+dcmDeleteFailedDataWithoutRetryConfiguration: TRUE
+dcmEnableAuditLog: FALSE
+dcmSpoolDirectory: /tmp/proxy/
 dicomAETitle: DCM4CHEE-PROXY
 dicomAssociationAcceptor: TRUE
 dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=dcm4chee-proxy,cn=
  Devices,cn=DICOM Configuration,dc=example,dc=com
-dcmAcceptDataOnFailedAssociation: TRUE
-dcmDeleteFailedDataWithoutRetryConfiguration: TRUE
+dicomNetworkConnectionReference: cn=dicom-tls,dicomDeviceName=dcm4chee-proxy
+ ,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 dcmDestinationAETitle: DCM4CHEE
-dcmEnableAuditLog: FALSE
-dcmSpoolDirectory: /tmp/proxy/
 hl7ProxyPIXConsumerApplication: HL7SND^DCM4CHEE-PROXY
 hl7RemotePIXManagerApplication: HL7RCV^DCM4CHEE
 
 dn: cn=Standalone VOI LUT Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
  ,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -285,8 +720,8 @@ cn: Standalone VOI LUT Storage (Retired) SCP
 dn: cn=Nuclear Medicine Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomD
  eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
  m
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.20
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -307,8 +742,8 @@ cn: Nuclear Medicine Image Storage SCP
 dn: cn=Standalone Modality LUT Storage (Retired) SCP,dicomAETitle=DCM4CHEE-P
  ROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=ex
  ample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.10
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -320,8 +755,8 @@ cn: Standalone Modality LUT Storage (Retired) SCP
 dn: cn=Patient Study Only Query Retrieve Information Model - GET (Retired) S
  CP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn
  =DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.3.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -334,8 +769,8 @@ dcmTimezoneQueryAdjustment: TRUE
 dn: cn=Patient Study Only Query Retrieve Information Model - MOVE (Retired) 
  SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,c
  n=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.3.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -348,8 +783,8 @@ dcmTimezoneQueryAdjustment: TRUE
 dn: cn=Patient Study Only Query Retrieve Information Model - FIND (Retired) 
  SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,c
  n=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.3.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -362,8 +797,8 @@ dcmTimezoneQueryAdjustment: TRUE
 dn: cn=Study Root Query Retrieve Information Model - GET SCP,dicomAETitle=DC
  M4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configurati
  on,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.2.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -376,8 +811,8 @@ dcmTimezoneQueryAdjustment: TRUE
 dn: cn=Study Root Query Retrieve Information Model - MOVE SCP,dicomAETitle=D
  CM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configurat
  ion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.2.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -389,8 +824,8 @@ dcmTimezoneQueryAdjustment: TRUE
 
 dn: cn=RT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -410,8 +845,8 @@ cn: RT Image Storage SCP
 
 dn: cn=Mammography CAD SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.50
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -423,8 +858,8 @@ cn: Mammography CAD SR Storage SCP
 dn: cn=Study Root Query Retrieve Information Model - FIND SCP,dicomAETitle=D
  CM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configurat
  ion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.2.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -436,8 +871,8 @@ dcmTimezoneQueryAdjustment: TRUE
 
 dn: cn=RT Dose Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
  hee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -448,8 +883,8 @@ cn: RT Dose Storage SCP
 
 dn: cn=Hemodynamic Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.2.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -461,8 +896,8 @@ cn: Hemodynamic Waveform Storage SCP
 dn: cn=RT Ion Beams Treatment Record Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.9
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -474,8 +909,8 @@ cn: RT Ion Beams Treatment Record Storage SCP
 dn: cn=Video Endoscopic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomD
  eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
  m
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2.4.50
@@ -487,8 +922,8 @@ cn: Video Endoscopic Image Storage SCP
 
 dn: cn=RT Ion Plan Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
  cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.8
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -500,8 +935,8 @@ cn: RT Ion Plan Storage SCP
 dn: cn=RT Treatment Summary Record Storage SCP,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.7
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -513,8 +948,8 @@ cn: RT Treatment Summary Record Storage SCP
 dn: cn=RT Brachy Treatment Record Storage SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.6
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -525,8 +960,8 @@ cn: RT Brachy Treatment Record Storage SCP
 
 dn: cn=RT Plan Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
  hee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.5
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -538,8 +973,8 @@ cn: RT Plan Storage SCP
 dn: cn=RT Beams Treatment Record Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dic
  omDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -550,8 +985,8 @@ cn: RT Beams Treatment Record Storage SCP
 
 dn: cn=RT Structure Set Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -563,8 +998,8 @@ cn: RT Structure Set Storage SCP
 dn: cn=Basic Voice Audio Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.4.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -576,8 +1011,8 @@ cn: Basic Voice Audio Waveform Storage SCP
 dn: cn=General Audio Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomD
  eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
  m
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.4.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -588,8 +1023,8 @@ cn: General Audio Waveform Storage SCP
 
 dn: cn=Respiratory Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.6.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -600,8 +1035,8 @@ cn: Respiratory Waveform Storage SCP
 
 dn: cn=Procedure Log Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName
  =dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.40
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -613,8 +1048,8 @@ cn: Procedure Log Storage SCP
 dn: cn=Ophthalmic Visual Field Static Perimetry Measurements Storage SCP,dic
  omAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM
   Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.80.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -626,8 +1061,8 @@ cn: Ophthalmic Visual Field Static Perimetry Measurements Storage SCP
 dn: cn=Breast Tomosynthesis Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.13.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -648,8 +1083,8 @@ cn: Breast Tomosynthesis Image Storage SCP
 dn: cn=X-Ray 3D Craniofacial Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.13.1.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -670,8 +1105,8 @@ cn: X-Ray 3D Craniofacial Image Storage SCP
 dn: cn=X-Ray 3D Angiographic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.13.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -692,8 +1127,8 @@ cn: X-Ray 3D Angiographic Image Storage SCP
 dn: cn=Multi-frame Grayscale Word Secondary Capture Image Storage SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -714,8 +1149,8 @@ cn: Multi-frame Grayscale Word Secondary Capture Image Storage SCP
 dn: cn=Color Softcopy Presentation State Storage SOP Class SCP,dicomAETitle=
  DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configura
  tion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -726,8 +1161,8 @@ cn: Color Softcopy Presentation State Storage SOP Class SCP
 
 dn: cn=Ultrasound Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.6.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -748,8 +1183,8 @@ cn: Ultrasound Image Storage SCP
 dn: cn=Multi-frame True Color Secondary Capture Image Storage SCP,dicomAETit
  le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
  uration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -770,8 +1205,8 @@ cn: Multi-frame True Color Secondary Capture Image Storage SCP
 dn: cn=Pseudo-Color Softcopy Presentation State Storage SOP Class SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -783,8 +1218,8 @@ cn: Pseudo-Color Softcopy Presentation State Storage SOP Class SCP
 dn: cn=Multi-frame Single Bit Secondary Capture Image Storage SCP,dicomAETit
  le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
  uration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -796,8 +1231,8 @@ cn: Multi-frame Single Bit Secondary Capture Image Storage SCP
 dn: cn=Multi-frame Grayscale Byte Secondary Capture Image Storage SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -818,8 +1253,8 @@ cn: Multi-frame Grayscale Byte Secondary Capture Image Storage SCP
 dn: cn=Grayscale Softcopy Presentation State Storage SOP Class SCP,dicomAETi
  tle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Confi
  guration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -831,8 +1266,8 @@ cn: Grayscale Softcopy Presentation State Storage SOP Class SCP
 dn: cn=Digital Mammography X-Ray Image Storage - For Processing SCP,dicomAET
  itle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Conf
  iguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.2.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -852,8 +1287,8 @@ cn: Digital Mammography X-Ray Image Storage - For Processing SCP
 
 dn: cn=Enhanced MR Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -874,8 +1309,8 @@ cn: Enhanced MR Image Storage SCP
 dn: cn=Storage Commitment Push Model SOP Class SCP,dicomAETitle=DCM4CHEE-PRO
  XY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.1.20.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -887,8 +1322,8 @@ cn: Storage Commitment Push Model SOP Class SCP
 dn: cn=Digital X-Ray Image Storage - For Processing SCP,dicomAETitle=DCM4CHE
  E-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc
  =example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -909,8 +1344,8 @@ cn: Digital X-Ray Image Storage - For Processing SCP
 dn: cn=Enhanced MR Color Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -930,8 +1365,8 @@ cn: Enhanced MR Color Image Storage SCP
 
 dn: cn=MR Spectroscopy Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa
  me=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -942,8 +1377,8 @@ cn: MR Spectroscopy Storage SCP
 
 dn: cn=Enhanced US Volume Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.6.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -964,8 +1399,8 @@ cn: Enhanced US Volume Storage SCP
 dn: cn=Blending Softcopy Presentation State Storage SOP Class SCP,dicomAETit
  le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
  uration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -977,8 +1412,8 @@ cn: Blending Softcopy Presentation State Storage SOP Class SCP
 dn: cn=XA XRF Grayscale Softcopy Presentation State Storage SCP,dicomAETitle
  =DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
  ation,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.5
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -990,8 +1425,8 @@ cn: XA XRF Grayscale Softcopy Presentation State Storage SCP
 dn: cn=VL Slide-Coordinates Microscopic Image Storage SCP,dicomAETitle=DCM4C
  HEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1011,8 +1446,8 @@ cn: VL Slide-Coordinates Microscopic Image Storage SCP
 
 dn: cn=VL Photographic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDe
  viceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1032,8 +1467,8 @@ cn: VL Photographic Image Storage SCP
 
 dn: cn=VL Endoscopic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevi
  ceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1054,8 +1489,8 @@ cn: VL Endoscopic Image Storage SCP
 dn: cn=Digital Intra-oral X-Ray Image Storage - For Presentation SCP,dicomAE
  Title=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Con
  figuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1075,8 +1510,8 @@ cn: Digital Intra-oral X-Ray Image Storage - For Presentation SCP
 
 dn: cn=VL Microscopic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1097,8 +1532,8 @@ cn: VL Microscopic Image Storage SCP
 dn: cn=Digital X-Ray Image Storage - For Presentation SCP,dicomAETitle=DCM4C
  HEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1119,8 +1554,8 @@ cn: Digital X-Ray Image Storage - For Presentation SCP
 dn: cn=Digital Mammography X-Ray Image Storage - For Presentation SCP,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1141,8 +1576,8 @@ cn: Digital Mammography X-Ray Image Storage - For Presentation SCP
 dn: cn=VL Whole Slide Microscopy Image Storage SCP,dicomAETitle=DCM4CHEE-PRO
  XY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.6
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1163,8 +1598,8 @@ cn: VL Whole Slide Microscopy Image Storage SCP
 dn: cn=Modality Worklist Information Model - FIND SCP,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.31
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1176,8 +1611,8 @@ dcmTimezoneQueryAdjustment: TRUE
 
 dn: cn=Verification SOP Class SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNam
  e=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1185,8 +1620,8 @@ cn: Verification SOP Class SCP
 
 dn: cn=Implantation Plan SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.70
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1198,8 +1633,8 @@ cn: Implantation Plan SR Storage SCP
 dn: cn=Digital Intra-oral X-Ray Image Storage - For Processing SCP,dicomAETi
  tle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Confi
  guration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.3.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1220,8 +1655,8 @@ cn: Digital Intra-oral X-Ray Image Storage - For Processing SCP
 dn: cn=Patient Root Query Retrieve Information Model - FIND SCP,dicomAETitle
  =DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
  ation,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1234,8 +1669,8 @@ dcmTimezoneQueryAdjustment: TRUE
 dn: cn=Key Object Selection Document Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.59
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1247,8 +1682,8 @@ cn: Key Object Selection Document Storage SCP
 dn: cn=Patient Root Query Retrieve Information Model - GET SCP,dicomAETitle=
  DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configura
  tion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1261,8 +1696,8 @@ dcmTimezoneQueryAdjustment: TRUE
 dn: cn=Patient Root Query Retrieve Information Model - MOVE SCP,dicomAETitle
  =DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
  ation,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.2.1.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1274,8 +1709,8 @@ dcmTimezoneQueryAdjustment: TRUE
 
 dn: cn=Chest CAD SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=
  dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.65
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1286,8 +1721,8 @@ cn: Chest CAD SR Storage SCP
 
 dn: cn=Colon CAD SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=
  dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.69
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1298,8 +1733,8 @@ cn: Colon CAD SR Storage SCP
 
 dn: cn=Enhanced CT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.2.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1320,8 +1755,8 @@ cn: Enhanced CT Image Storage SCP
 dn: cn=X-Ray Radiation Dose SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.67
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1333,8 +1768,8 @@ cn: X-Ray Radiation Dose SR Storage SCP
 dn: cn=Ultrasound Multi-frame Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
  ,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.3.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1354,8 +1789,8 @@ cn: Ultrasound Multi-frame Image Storage SCP
 
 dn: cn=12-lead ECG Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1367,8 +1802,8 @@ cn: 12-lead ECG Waveform Storage SCP
 dn: cn=Ambulatory ECG Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1379,8 +1814,8 @@ cn: Ambulatory ECG Waveform Storage SCP
 
 dn: cn=General ECG Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.1.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1391,8 +1826,8 @@ cn: General ECG Waveform Storage SCP
 
 dn: cn=Basic Text SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName
  =dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.11
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1404,8 +1839,8 @@ cn: Basic Text SR Storage SCP
 dn: cn=Cardiac Electrophysiology Waveform Storage SCP,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.3.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1417,8 +1852,8 @@ cn: Cardiac Electrophysiology Waveform Storage SCP
 dn: cn=Real World Value Mapping Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.67
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1429,8 +1864,8 @@ cn: Real World Value Mapping Storage SCP
 
 dn: cn=Raw Data Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1442,8 +1877,8 @@ cn: Raw Data Storage SCP
 dn: cn=Modality Performed Procedure Step SOP Class SCP,dicomAETitle=DCM4CHEE
  -PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=
  example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.3.1.2.3.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1455,8 +1890,8 @@ cn: Modality Performed Procedure Step SOP Class SCP
 dn: cn=Arterial Pulse Waveform Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.5.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1468,8 +1903,8 @@ cn: Arterial Pulse Waveform Storage SCP
 dn: cn=Macular Grid Thickness and Volume Report Storage SCP,dicomAETitle=DCM
  4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuratio
  n,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.79.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1481,8 +1916,8 @@ cn: Macular Grid Thickness and Volume Report Storage SCP
 dn: cn=Ophthalmic Tomography Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1503,8 +1938,8 @@ cn: Ophthalmic Tomography Image Storage SCP
 dn: cn=Stereometric Relationship Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dic
  omDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1516,8 +1951,8 @@ cn: Stereometric Relationship Storage SCP
 dn: cn=Ophthalmic Photography 16 Bit Image Storage SCP,dicomAETitle=DCM4CHEE
  -PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=
  example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1538,8 +1973,8 @@ cn: Ophthalmic Photography 16 Bit Image Storage SCP
 dn: cn=Video Photographic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.4.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2.4.50
@@ -1551,8 +1986,8 @@ cn: Video Photographic Image Storage SCP
 
 dn: cn=Enhanced PET Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.130
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1572,8 +2007,8 @@ cn: Enhanced PET Image Storage SCP
 
 dn: cn=Enhanced XA Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1594,8 +2029,8 @@ cn: Enhanced XA Image Storage SCP
 dn: cn=Basic Structured Display Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.131
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1607,8 +2042,8 @@ cn: Basic Structured Display Storage SCP
 dn: cn=Autorefraction Measurements Storage SCP,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1620,8 +2055,8 @@ cn: Autorefraction Measurements Storage SCP
 dn: cn=Lensometry Measurements Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1633,8 +2068,8 @@ cn: Lensometry Measurements Storage SCP
 dn: cn=Spectacle Prescription Report Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.6
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1646,8 +2081,8 @@ cn: Spectacle Prescription Report Storage SCP
 dn: cn=Visual Acuity Measurements Storage SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.5
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1659,8 +2094,8 @@ cn: Visual Acuity Measurements Storage SCP
 dn: cn=Subjective Refraction Measurements Storage SCP,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1672,8 +2107,8 @@ cn: Subjective Refraction Measurements Storage SCP
 dn: cn=Keratometry Measurements Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1685,8 +2120,8 @@ cn: Keratometry Measurements Storage SCP
 dn: cn=Intraocular Lens Calculations Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.8
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1697,8 +2132,8 @@ cn: Intraocular Lens Calculations Storage SCP
 
 dn: cn=Comprehensive SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.33
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1710,8 +2145,8 @@ cn: Comprehensive SR Storage SCP
 dn: cn=Ophthalmic Photography 8 Bit Image Storage SCP,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1732,8 +2167,8 @@ cn: Ophthalmic Photography 8 Bit Image Storage SCP
 dn: cn=Ophthalmic Axial Measurements Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.7
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1745,8 +2180,8 @@ cn: Ophthalmic Axial Measurements Storage SCP
 dn: cn=Nuclear Medicine Image Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PR
  OXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exa
  mple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.5
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1766,8 +2201,8 @@ cn: Nuclear Medicine Image Storage (Retired) SCP
 
 dn: cn=MR Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1788,8 +2223,8 @@ cn: MR Image Storage SCP
 dn: cn=Ultrasound Multi-frame Image Storage (Retired) SCP,dicomAETitle=DCM4C
  HEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1809,8 +2244,8 @@ cn: Ultrasound Multi-frame Image Storage (Retired) SCP
 
 dn: cn=CT Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1831,8 +2266,8 @@ cn: CT Image Storage SCP
 dn: cn=Standalone Curve Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1843,8 +2278,8 @@ cn: Standalone Curve Storage (Retired) SCP
 
 dn: cn=Surface Segmentation Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.5
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1856,8 +2291,8 @@ cn: Surface Segmentation Storage SCP
 dn: cn=Standalone Overlay Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
  ,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.8
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1868,8 +2303,8 @@ cn: Standalone Overlay Storage (Retired) SCP
 
 dn: cn=Segmentation Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=
  dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.4
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1881,8 +2316,8 @@ cn: Segmentation Storage SCP
 dn: cn=X-Ray Radiofluoroscopic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1903,8 +2338,8 @@ cn: X-Ray Radiofluoroscopic Image Storage SCP
 dn: cn=Secondary Capture Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1925,8 +2360,8 @@ cn: Secondary Capture Image Storage SCP
 dn: cn=Ultrasound Image Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.6
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1947,8 +2382,8 @@ cn: Ultrasound Image Storage (Retired) SCP
 dn: cn=X-Ray Angiographic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1968,8 +2403,8 @@ cn: X-Ray Angiographic Image Storage SCP
 
 dn: cn=Spatial Registration Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1981,8 +2416,8 @@ cn: Spatial Registration Storage SCP
 dn: cn=Standalone PET Curve Storage (Retired) SCP,dicomAETitle=DCM4CHEE-PROX
  Y,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=examp
  le,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.129
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -1994,8 +2429,8 @@ cn: Standalone PET Curve Storage (Retired) SCP
 dn: cn=Video Microscopic Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.2.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2.4.50
@@ -2008,8 +2443,8 @@ cn: Video Microscopic Image Storage SCP
 dn: cn=X-Ray Angiographic Bi-Plane Image Storage (Retired) SCP,dicomAETitle=
  DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configura
  tion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2030,8 +2465,8 @@ cn: X-Ray Angiographic Bi-Plane Image Storage (Retired) SCP
 dn: cn=Positron Emission Tomography Image Storage SCP,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.128
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2052,8 +2487,8 @@ cn: Positron Emission Tomography Image Storage SCP
 dn: cn=Deformable Spatial Registration Storage SCP,dicomAETitle=DCM4CHEE-PRO
  XY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.3
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2064,8 +2499,8 @@ cn: Deformable Spatial Registration Storage SCP
 
 dn: cn=Spatial Fiducials Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2077,8 +2512,8 @@ cn: Spatial Fiducials Storage SCP
 dn: cn=Intravascular Optical Coherence Tomography Image Storage - For Proces
  sing SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devi
  ces,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.14.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2100,8 +2535,8 @@ cn: Intravascular Optical Coherence Tomography Image Storage - For Processin
 dn: cn=Intravascular Optical Coherence Tomography Image Storage - For Presen
  tation SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=De
  vices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.14.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2122,8 +2557,8 @@ cn: Intravascular Optical Coherence Tomography Image Storage - For Presentat
 
 dn: cn=Enhanced XRF Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.2.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2143,8 +2578,8 @@ cn: Enhanced XRF Image Storage SCP
 
 dn: cn=Enhanced SR Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
  cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.22
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2156,8 +2591,8 @@ cn: Enhanced SR Storage SCP
 dn: cn=Computed Radiography Image Storage SCP,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2177,8 +2612,8 @@ cn: Computed Radiography Image Storage SCP
 
 dn: cn=Encapsulated CDA Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.104.2
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2189,8 +2624,8 @@ cn: Encapsulated CDA Storage SCP
 
 dn: cn=Encapsulated PDF Storage SCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.104.1
 dicomTransferRole: SCP
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2202,8 +2637,8 @@ cn: Encapsulated PDF Storage SCP
 dn: cn=Standalone VOI LUT Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
  ,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2215,8 +2650,8 @@ cn: Standalone VOI LUT Storage (Retired) SCU
 dn: cn=Nuclear Medicine Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomD
  eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
  m
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.20
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2237,8 +2672,8 @@ cn: Nuclear Medicine Image Storage SCU
 dn: cn=Standalone Modality LUT Storage (Retired) SCU,dicomAETitle=DCM4CHEE-P
  ROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=ex
  ample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.10
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2249,8 +2684,8 @@ cn: Standalone Modality LUT Storage (Retired) SCU
 
 dn: cn=RT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2270,8 +2705,8 @@ cn: RT Image Storage SCU
 
 dn: cn=Mammography CAD SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.50
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2282,8 +2717,8 @@ cn: Mammography CAD SR Storage SCU
 
 dn: cn=RT Dose Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
  hee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2294,8 +2729,8 @@ cn: RT Dose Storage SCU
 
 dn: cn=Hemodynamic Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.2.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2307,8 +2742,8 @@ cn: Hemodynamic Waveform Storage SCU
 dn: cn=RT Ion Beams Treatment Record Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.9
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2320,8 +2755,8 @@ cn: RT Ion Beams Treatment Record Storage SCU
 dn: cn=Video Endoscopic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomD
  eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
  m
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2.4.50
@@ -2333,8 +2768,8 @@ cn: Video Endoscopic Image Storage SCU
 
 dn: cn=RT Ion Plan Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
  cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.8
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2346,8 +2781,8 @@ cn: RT Ion Plan Storage SCU
 dn: cn=RT Treatment Summary Record Storage SCU,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.7
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2359,8 +2794,8 @@ cn: RT Treatment Summary Record Storage SCU
 dn: cn=RT Brachy Treatment Record Storage SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.6
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2371,8 +2806,8 @@ cn: RT Brachy Treatment Record Storage SCU
 
 dn: cn=RT Plan Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
  hee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.5
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2384,8 +2819,8 @@ cn: RT Plan Storage SCU
 dn: cn=RT Beams Treatment Record Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dic
  omDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2396,8 +2831,8 @@ cn: RT Beams Treatment Record Storage SCU
 
 dn: cn=RT Structure Set Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.481.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2409,8 +2844,8 @@ cn: RT Structure Set Storage SCU
 dn: cn=Basic Voice Audio Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.4.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2422,8 +2857,8 @@ cn: Basic Voice Audio Waveform Storage SCU
 dn: cn=General Audio Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomD
  eviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=co
  m
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.4.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2434,8 +2869,8 @@ cn: General Audio Waveform Storage SCU
 
 dn: cn=Respiratory Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.6.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2446,8 +2881,8 @@ cn: Respiratory Waveform Storage SCU
 
 dn: cn=Procedure Log Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName
  =dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.40
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2459,8 +2894,8 @@ cn: Procedure Log Storage SCU
 dn: cn=Ophthalmic Visual Field Static Perimetry Measurements Storage SCU,dic
  omAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM
   Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.80.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2472,8 +2907,8 @@ cn: Ophthalmic Visual Field Static Perimetry Measurements Storage SCU
 dn: cn=Breast Tomosynthesis Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.13.1.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2494,8 +2929,8 @@ cn: Breast Tomosynthesis Image Storage SCU
 dn: cn=X-Ray 3D Craniofacial Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.13.1.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2516,8 +2951,8 @@ cn: X-Ray 3D Craniofacial Image Storage SCU
 dn: cn=X-Ray 3D Angiographic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.13.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2538,8 +2973,8 @@ cn: X-Ray 3D Angiographic Image Storage SCU
 dn: cn=Multi-frame Grayscale Word Secondary Capture Image Storage SCU,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2560,8 +2995,8 @@ cn: Multi-frame Grayscale Word Secondary Capture Image Storage SCU
 dn: cn=Color Softcopy Presentation State Storage SOP Class SCU,dicomAETitle=
  DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configura
  tion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2572,8 +3007,8 @@ cn: Color Softcopy Presentation State Storage SOP Class SCU
 
 dn: cn=Ultrasound Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.6.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2594,8 +3029,8 @@ cn: Ultrasound Image Storage SCU
 dn: cn=Multi-frame True Color Secondary Capture Image Storage SCU,dicomAETit
  le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
  uration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2616,8 +3051,8 @@ cn: Multi-frame True Color Secondary Capture Image Storage SCU
 dn: cn=Pseudo-Color Softcopy Presentation State Storage SOP Class SCU,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2629,8 +3064,8 @@ cn: Pseudo-Color Softcopy Presentation State Storage SOP Class SCU
 dn: cn=Multi-frame Single Bit Secondary Capture Image Storage SCU,dicomAETit
  le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
  uration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2642,8 +3077,8 @@ cn: Multi-frame Single Bit Secondary Capture Image Storage SCU
 dn: cn=Multi-frame Grayscale Byte Secondary Capture Image Storage SCU,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2664,8 +3099,8 @@ cn: Multi-frame Grayscale Byte Secondary Capture Image Storage SCU
 dn: cn=Grayscale Softcopy Presentation State Storage SOP Class SCU,dicomAETi
  tle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Confi
  guration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2677,8 +3112,8 @@ cn: Grayscale Softcopy Presentation State Storage SOP Class SCU
 dn: cn=Digital Mammography X-Ray Image Storage - For Processing SCU,dicomAET
  itle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Conf
  iguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.2.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2698,8 +3133,8 @@ cn: Digital Mammography X-Ray Image Storage - For Processing SCU
 
 dn: cn=Enhanced MR Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2720,8 +3155,8 @@ cn: Enhanced MR Image Storage SCU
 dn: cn=Storage Commitment Push Model SOP Class SCU,dicomAETitle=DCM4CHEE-PRO
  XY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.1.20.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2733,8 +3168,8 @@ cn: Storage Commitment Push Model SOP Class SCU
 dn: cn=Digital X-Ray Image Storage - For Processing SCU,dicomAETitle=DCM4CHE
  E-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc
  =example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2755,8 +3190,8 @@ cn: Digital X-Ray Image Storage - For Processing SCU
 dn: cn=Enhanced MR Color Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2776,8 +3211,8 @@ cn: Enhanced MR Color Image Storage SCU
 
 dn: cn=MR Spectroscopy Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa
  me=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2788,8 +3223,8 @@ cn: MR Spectroscopy Storage SCU
 
 dn: cn=Enhanced US Volume Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.6.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2810,8 +3245,8 @@ cn: Enhanced US Volume Storage SCU
 dn: cn=Blending Softcopy Presentation State Storage SOP Class SCU,dicomAETit
  le=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Config
  uration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2823,8 +3258,8 @@ cn: Blending Softcopy Presentation State Storage SOP Class SCU
 dn: cn=XA XRF Grayscale Softcopy Presentation State Storage SCU,dicomAETitle
  =DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configur
  ation,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.11.5
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2836,8 +3271,8 @@ cn: XA XRF Grayscale Softcopy Presentation State Storage SCU
 dn: cn=VL Slide-Coordinates Microscopic Image Storage SCU,dicomAETitle=DCM4C
  HEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2857,8 +3292,8 @@ cn: VL Slide-Coordinates Microscopic Image Storage SCU
 
 dn: cn=VL Photographic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDe
  viceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2878,8 +3313,8 @@ cn: VL Photographic Image Storage SCU
 
 dn: cn=VL Endoscopic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevi
  ceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2900,8 +3335,8 @@ cn: VL Endoscopic Image Storage SCU
 dn: cn=Digital Intra-oral X-Ray Image Storage - For Presentation SCU,dicomAE
  Title=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Con
  figuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2921,8 +3356,8 @@ cn: Digital Intra-oral X-Ray Image Storage - For Presentation SCU
 
 dn: cn=VL Microscopic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2943,8 +3378,8 @@ cn: VL Microscopic Image Storage SCU
 dn: cn=Digital X-Ray Image Storage - For Presentation SCU,dicomAETitle=DCM4C
  HEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2965,8 +3400,8 @@ cn: Digital X-Ray Image Storage - For Presentation SCU
 dn: cn=Digital Mammography X-Ray Image Storage - For Presentation SCU,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
  nfiguration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -2987,8 +3422,8 @@ cn: Digital Mammography X-Ray Image Storage - For Presentation SCU
 dn: cn=VL Whole Slide Microscopy Image Storage SCU,dicomAETitle=DCM4CHEE-PRO
  XY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.6
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3008,8 +3443,8 @@ cn: VL Whole Slide Microscopy Image Storage SCU
 
 dn: cn=Verification SOP Class SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNam
  e=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3017,8 +3452,8 @@ cn: Verification SOP Class SCU
 
 dn: cn=Implantation Plan SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.70
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3030,8 +3465,8 @@ cn: Implantation Plan SR Storage SCU
 dn: cn=Digital Intra-oral X-Ray Image Storage - For Processing SCU,dicomAETi
  tle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Confi
  guration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1.3.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3052,8 +3487,8 @@ cn: Digital Intra-oral X-Ray Image Storage - For Processing SCU
 dn: cn=Key Object Selection Document Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.59
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3064,8 +3499,8 @@ cn: Key Object Selection Document Storage SCU
 
 dn: cn=Chest CAD SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=
  dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.65
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3076,8 +3511,8 @@ cn: Chest CAD SR Storage SCU
 
 dn: cn=Colon CAD SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=
  dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.69
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3088,8 +3523,8 @@ cn: Colon CAD SR Storage SCU
 
 dn: cn=Enhanced CT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.2.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3110,8 +3545,8 @@ cn: Enhanced CT Image Storage SCU
 dn: cn=X-Ray Radiation Dose SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.67
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3123,8 +3558,8 @@ cn: X-Ray Radiation Dose SR Storage SCU
 dn: cn=Ultrasound Multi-frame Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
  ,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.3.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3144,8 +3579,8 @@ cn: Ultrasound Multi-frame Image Storage SCU
 
 dn: cn=12-lead ECG Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3157,8 +3592,8 @@ cn: 12-lead ECG Waveform Storage SCU
 dn: cn=Ambulatory ECG Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.1.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3169,8 +3604,8 @@ cn: Ambulatory ECG Waveform Storage SCU
 
 dn: cn=General ECG Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.1.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3181,8 +3616,8 @@ cn: General ECG Waveform Storage SCU
 
 dn: cn=Basic Text SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName
  =dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.11
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3194,8 +3629,8 @@ cn: Basic Text SR Storage SCU
 dn: cn=Cardiac Electrophysiology Waveform Storage SCU,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.3.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3207,8 +3642,8 @@ cn: Cardiac Electrophysiology Waveform Storage SCU
 dn: cn=Real World Value Mapping Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.67
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3219,8 +3654,8 @@ cn: Real World Value Mapping Storage SCU
 
 dn: cn=Raw Data Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3232,8 +3667,8 @@ cn: Raw Data Storage SCU
 dn: cn=Modality Performed Procedure Step SOP Class SCU,dicomAETitle=DCM4CHEE
  -PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=
  example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.3.1.2.3.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3245,8 +3680,8 @@ cn: Modality Performed Procedure Step SOP Class SCU
 dn: cn=Arterial Pulse Waveform Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9.5.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3258,8 +3693,8 @@ cn: Arterial Pulse Waveform Storage SCU
 dn: cn=Macular Grid Thickness and Volume Report Storage SCU,dicomAETitle=DCM
  4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuratio
  n,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.79.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3271,8 +3706,8 @@ cn: Macular Grid Thickness and Volume Report Storage SCU
 dn: cn=Ophthalmic Tomography Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3293,8 +3728,8 @@ cn: Ophthalmic Tomography Image Storage SCU
 dn: cn=Stereometric Relationship Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dic
  omDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc
  =com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3306,8 +3741,8 @@ cn: Stereometric Relationship Storage SCU
 dn: cn=Ophthalmic Photography 16 Bit Image Storage SCU,dicomAETitle=DCM4CHEE
  -PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=
  example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3328,8 +3763,8 @@ cn: Ophthalmic Photography 16 Bit Image Storage SCU
 dn: cn=Video Photographic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.4.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2.4.50
@@ -3341,8 +3776,8 @@ cn: Video Photographic Image Storage SCU
 
 dn: cn=Enhanced PET Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.130
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3362,8 +3797,8 @@ cn: Enhanced PET Image Storage SCU
 
 dn: cn=Enhanced XA Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3384,8 +3819,8 @@ cn: Enhanced XA Image Storage SCU
 dn: cn=Basic Structured Display Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.131
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3397,8 +3832,8 @@ cn: Basic Structured Display Storage SCU
 dn: cn=Autorefraction Measurements Storage SCU,dicomAETitle=DCM4CHEE-PROXY,d
  icomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,
  dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3410,8 +3845,8 @@ cn: Autorefraction Measurements Storage SCU
 dn: cn=Lensometry Measurements Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3423,8 +3858,8 @@ cn: Lensometry Measurements Storage SCU
 dn: cn=Spectacle Prescription Report Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.6
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3436,8 +3871,8 @@ cn: Spectacle Prescription Report Storage SCU
 dn: cn=Visual Acuity Measurements Storage SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.5
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3449,8 +3884,8 @@ cn: Visual Acuity Measurements Storage SCU
 dn: cn=Subjective Refraction Measurements Storage SCU,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3462,8 +3897,8 @@ cn: Subjective Refraction Measurements Storage SCU
 dn: cn=Keratometry Measurements Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3475,8 +3910,8 @@ cn: Keratometry Measurements Storage SCU
 dn: cn=Intraocular Lens Calculations Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.8
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3487,8 +3922,8 @@ cn: Intraocular Lens Calculations Storage SCU
 
 dn: cn=Comprehensive SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.33
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3500,8 +3935,8 @@ cn: Comprehensive SR Storage SCU
 dn: cn=Ophthalmic Photography 8 Bit Image Storage SCU,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.5.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3522,8 +3957,8 @@ cn: Ophthalmic Photography 8 Bit Image Storage SCU
 dn: cn=Ophthalmic Axial Measurements Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.78.7
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3535,8 +3970,8 @@ cn: Ophthalmic Axial Measurements Storage SCU
 dn: cn=Nuclear Medicine Image Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PR
  OXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exa
  mple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.5
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3556,8 +3991,8 @@ cn: Nuclear Medicine Image Storage (Retired) SCU
 
 dn: cn=MR Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3578,8 +4013,8 @@ cn: MR Image Storage SCU
 dn: cn=Ultrasound Multi-frame Image Storage (Retired) SCU,dicomAETitle=DCM4C
  HEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,
  dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3599,8 +4034,8 @@ cn: Ultrasound Multi-frame Image Storage (Retired) SCU
 
 dn: cn=CT Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4
  chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3621,8 +4056,8 @@ cn: CT Image Storage SCU
 dn: cn=Standalone Curve Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.9
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3633,8 +4068,8 @@ cn: Standalone Curve Storage (Retired) SCU
 
 dn: cn=Surface Segmentation Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.5
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3646,8 +4081,8 @@ cn: Surface Segmentation Storage SCU
 dn: cn=Standalone Overlay Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PROXY,
  dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example
  ,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.8
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3658,8 +4093,8 @@ cn: Standalone Overlay Storage (Retired) SCU
 
 dn: cn=Segmentation Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=
  dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.4
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3671,8 +4106,8 @@ cn: Segmentation Storage SCU
 dn: cn=X-Ray Radiofluoroscopic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY
  ,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exampl
  e,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3693,8 +4128,8 @@ cn: X-Ray Radiofluoroscopic Image Storage SCU
 dn: cn=Secondary Capture Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.7
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3715,8 +4150,8 @@ cn: Secondary Capture Image Storage SCU
 dn: cn=Ultrasound Image Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.6
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3737,8 +4172,8 @@ cn: Ultrasound Image Storage (Retired) SCU
 dn: cn=X-Ray Angiographic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dico
  mDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=
  com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3758,8 +4193,8 @@ cn: X-Ray Angiographic Image Storage SCU
 
 dn: cn=Spatial Registration Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDev
  iceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3771,8 +4206,8 @@ cn: Spatial Registration Storage SCU
 dn: cn=Standalone PET Curve Storage (Retired) SCU,dicomAETitle=DCM4CHEE-PROX
  Y,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=examp
  le,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.129
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3784,8 +4219,8 @@ cn: Standalone PET Curve Storage (Retired) SCU
 dn: cn=Video Microscopic Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicom
  DeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.77.1.2.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2.4.50
@@ -3798,8 +4233,8 @@ cn: Video Microscopic Image Storage SCU
 dn: cn=X-Ray Angiographic Bi-Plane Image Storage (Retired) SCU,dicomAETitle=
  DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configura
  tion,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3820,8 +4255,8 @@ cn: X-Ray Angiographic Bi-Plane Image Storage (Retired) SCU
 dn: cn=Positron Emission Tomography Image Storage SCU,dicomAETitle=DCM4CHEE-
  PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=e
  xample,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.128
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3842,8 +4277,8 @@ cn: Positron Emission Tomography Image Storage SCU
 dn: cn=Deformable Spatial Registration Storage SCU,dicomAETitle=DCM4CHEE-PRO
  XY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=exam
  ple,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.3
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3854,8 +4289,8 @@ cn: Deformable Spatial Registration Storage SCU
 
 dn: cn=Spatial Fiducials Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevice
  Name=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.66.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3867,8 +4302,8 @@ cn: Spatial Fiducials Storage SCU
 dn: cn=Intravascular Optical Coherence Tomography Image Storage - For Proces
  sing SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devi
  ces,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.14.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3890,8 +4325,8 @@ cn: Intravascular Optical Coherence Tomography Image Storage - For Processin
 dn: cn=Intravascular Optical Coherence Tomography Image Storage - For Presen
  tation SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=De
  vices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.14.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3912,8 +4347,8 @@ cn: Intravascular Optical Coherence Tomography Image Storage - For Presentat
 
 dn: cn=Enhanced XRF Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDevic
  eName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.12.2.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3933,8 +4368,8 @@ cn: Enhanced XRF Image Storage SCU
 
 dn: cn=Enhanced SR Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=d
  cm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.88.22
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3946,8 +4381,8 @@ cn: Enhanced SR Storage SCU
 dn: cn=Computed Radiography Image Storage SCU,dicomAETitle=DCM4CHEE-PROXY,di
  comDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,d
  c=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3967,8 +4402,8 @@ cn: Computed Radiography Image Storage SCU
 
 dn: cn=Encapsulated CDA Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.104.2
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -3979,8 +4414,8 @@ cn: Encapsulated CDA Storage SCU
 
 dn: cn=Encapsulated PDF Storage SCU,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
  ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
-objectClass: dicomTransferCapability
 objectClass: dcmTransferCapability
+objectClass: dicomTransferCapability
 dicomSOPClass: 1.2.840.10008.5.1.4.1.1.104.1
 dicomTransferRole: SCU
 dicomTransferSyntax: 1.2.840.10008.1.2
@@ -4009,43 +4444,43 @@ dcmRetryObject: AssociationStateException
 dn: dcmDestinationAETitle=STORESCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa
  me=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardOption
-dicomDescription: Example ForwardOption for STORESCP
-dcmConvertEmf2Sf: TRUE
 dcmDestinationAETitle: STORESCP
-dcmScheduleDays: Wed
+dcmConvertEmf2Sf: TRUE
+dcmScheduleDays: Sun-Sat
 dcmScheduleHours: 8-18
+dicomDescription: Example ForwardOption for STORESCP
 
 dn: cn=Public,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=
  Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
 cn: Public
-dicomDescription: Example ForwardRule
 labeledURI: aet:DCM4CHEE
+labeledURI: aet:STORESCP
 dcmExclusiveUseDefinedTC: FALSE
 dcmPIXQuery: TRUE
 dcmScheduleDays: Sun-Tue,Thu-Sat
 dcmScheduleHours: 0-23
+dicomDescription: Example ForwardRule
 
 dn: cn=MPPS2XrayDoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-
  proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
 cn: MPPS2XrayDoseSR
-dicomDescription: Example ForwardRule for MPPS to Dose SR conversion
 labeledURI: aet:DCM4CHEE
 dcmCallingAETitle: MPPSSCU
 dcmExclusiveUseDefinedTC: FALSE
-dcmMpps2DoseSrTemplateURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dc
- m4chee-proxy-mpps2xraydosesr.xsl
+dcmMpps2DoseSrTemplateURI: ${jboss.server.config.dir}/dcm4chee-proxy/dcm4che
+ e-proxy-xr-mpps2dosesr.xsl
 dcmPIXQuery: FALSE
 dcmScheduleDays: Sun-Sat
 dcmScheduleHours: 0-23
 dcmSOPClass: 1.2.840.10008.3.1.2.3.3
+dicomDescription: Example ForwardRule for MPPS to Dose SR conversion
 
 dn: cn=Private,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn
  =Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmForwardRule
 cn: Private
-dicomDescription: Example ForwardRule
 labeledURI: aet:STORESCP
 labeledURI: aet:DCM4CHEE
 dcmExclusiveUseDefinedTC: FALSE
@@ -4054,16 +4489,7 @@ dcmScheduleDays: Wed
 dcmScheduleHours: 9-18
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.2
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.4
-
-dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
- ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
- nfiguration,dc=example,dc=com
-objectClass: dcmAttributeCoercion
-dcmDIMSE: C_STORE_RQ
-dicomTransferRole: SCP
-labeledURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-en
- sure-pid.xsl
-dicomAETitle: ENSURE_PID
+dicomDescription: Example ForwardRule
 
 dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
  ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
@@ -4071,7 +4497,17 @@ dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCU
-labeledURI: file:${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nu
- llify-pn.xsl
+labeledURI: ${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify
+ -pn.xsl
 dicomAETitle: WITHOUT_PN
+
+dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
+ ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
+ nfiguration,dc=example,dc=com
+objectClass: dcmAttributeCoercion
+dcmDIMSE: C_STORE_RQ
+dicomTransferRole: SCP
+labeledURI: ${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-
+ pid.xsl
+dicomAETitle: ENSURE_PID
 
