@@ -114,7 +114,10 @@ public class CStore extends BasicCStoreSCP {
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null
                 || proxyAEE.isAcceptDataOnFailedAssociation()
-                || !proxyAEE.getAttributeCoercions().getAll().isEmpty()
+                || proxyAEE.getAttributeCoercions().findAttributeCoercion(rq.getString(Tag.AffectedSOPClassUID), dimse,
+                        Role.SCU, asAccepted.getRemoteAET()) != null
+                || proxyAEE.getAttributeCoercions().findAttributeCoercion(rq.getString(Tag.AffectedSOPClassUID), dimse,
+                        Role.SCP, ((Association)forwardAssociationProperty).getRemoteAET()) != null
                 || proxyAEE.isEnableAuditLog()
                 || (forwardAssociationProperty instanceof HashMap<?, ?>)
                 || (forwardAssociationProperty instanceof Association 

@@ -329,8 +329,8 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
-            Role role, Dimse cmd) {
-        return attributeCoercions.findMatching(sopClass, cmd, role, aeTitle);
+            Role role, Dimse dimse) {
+        return attributeCoercions.findAttributeCoercion(sopClass, dimse, role, aeTitle);
     }
 
     public AttributeCoercions getAttributeCoercions() {
@@ -455,7 +455,7 @@ public class ProxyAEExtension extends AEExtension {
         setDeleteFailedDataWithoutRetryConfiguration(proxyAEE.deleteFailedDataWithoutRetryConfiguration);
         setFallbackDestinationAET(proxyAEE.fallbackDestinationAET);
         attributeCoercions.clear();
-        for (AttributeCoercion ac : proxyAEE.getAttributeCoercions().getAll())
+        for (AttributeCoercion ac : proxyAEE.getAttributeCoercions())
             addAttributeCoercion(ac);
     }
 
@@ -501,10 +501,10 @@ public class ProxyAEExtension extends AEExtension {
                 new Object[] { 
                     as, 
                     ac.getURI(), 
-                    ac.getDimse(), 
+                    ac.getDIMSE(), 
                     ac.getRole(), 
                     ac.getAETitle() == null ? "" : ", aet=" + ac.getAETitle(),
-                    ac.getSopClass() == null ? "" : ", sopClass=" + ac.getSopClass()
+                    ac.getSOPClass() == null ? "" : ", sopClass=" + ac.getSOPClass()
         });
         Attributes modify = new Attributes();
         try {

@@ -1,9 +1,9 @@
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
- * The contentsOfthis file are subject to the Mozilla Public License Version
+ * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copyOfthe License at
+ * the License. You may obtain a copy of the License at
  * http://www.mozilla.org/MPL/
  *
  * Software distributed under the License is distributed on an "AS IS" basis,
@@ -11,10 +11,10 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is partOfdcm4che, an implementationOfDICOM(TM) in
+ * The Original Code is part of dcm4che, an implementation of DICOM(TM) in
  * Java(TM), hosted at https://github.com/gunterze/dcm4che.
  *
- * The Initial DeveloperOfthe Original Code is
+ * The Initial Developer of the Original Code is
  * Agfa Healthcare.
  * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
@@ -22,17 +22,17 @@
  * Contributor(s):
  * See @authors listed below
  *
- * Alternatively, the contentsOfthis file may be used under the terms of
+ * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisionsOfthe GPL or the LGPL are applicable instead
- *Ofthose above. If you wish to allow useOfyour versionOfthis file only
- * under the termsOfeither the GPL or the LGPL, and not to allow others to
- * use your versionOfthis file under the termsOfthe MPL, indicate your
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
  * decision by deleting the provisions above and replace them with the notice
  * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your versionOfthis file under
- * the termsOfany oneOfthe MPL, the GPL or the LGPL.
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
 
@@ -281,6 +281,9 @@ public class ProxyDeviceTest {
         device.addDeviceExtension(hl7DevExt);
         ProxyDeviceExtension proxyDev = new ProxyDeviceExtension();
         device.addDeviceExtension(proxyDev);
+        device.setManufacturerModelName("dcm4chee-proxy");
+        device.setSoftwareVersions("1.0.0-SNAPSHOT");
+        device.setManufacturer("dcm4che");
 
         device.setKeyStoreURL("${jboss.server.config.url}/dcm4chee-proxy/key.jks");
         device.setKeyStoreType("JKS");
