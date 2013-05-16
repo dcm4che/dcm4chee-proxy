@@ -67,6 +67,10 @@
             <entry key="dicomAuthorizedNodeCertificateReference.8" value="dicomConfigurationRoot/dicomDevicesRoot/mppsscu"/>
             <entry key="dicomAuthorizedNodeCertificateReference.9" value="dicomConfigurationRoot/dicomDevicesRoot/findscu"/>
             <entry key="dicomInstalled" value="true"/>
+            <entry key="dicomManufacturer" value="dcm4che"/>
+            <entry key="dicomManufacturerModelName" value="dcm4chee-proxy"/>
+            <entry key="dicomSoftwareVersion.#" value="1"/>
+            <entry key="dicomSoftwareVersion.1" value="1.0.0-SNAPSHOT"/>
             <entry key="dicomThisNodeCertificateReference.#" value="1"/>
             <entry key="dicomThisNodeCertificateReference.1" value="dicomConfigurationRoot/dicomDevicesRoot/dcm4chee-proxy"/>
             <entry key="userCertificate.#" value="1"/>
@@ -105,17 +109,17 @@
                 <node name="1">
                   <map>
                     <entry key="dcmDIMSE" value="C_STORE_RQ"/>
-                    <entry key="dicomAETitle" value="ENSURE_PID"/>
-                    <entry key="dicomTransferRole" value="SCP"/>
-                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"/>
+                    <entry key="dicomAETitle" value="WITHOUT_PN"/>
+                    <entry key="dicomTransferRole" value="SCU"/>
+                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"/>
                   </map>
                 </node>
                 <node name="2">
                   <map>
                     <entry key="dcmDIMSE" value="C_STORE_RQ"/>
-                    <entry key="dicomAETitle" value="WITHOUT_PN"/>
-                    <entry key="dicomTransferRole" value="SCU"/>
-                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"/>
+                    <entry key="dicomAETitle" value="ENSURE_PID"/>
+                    <entry key="dicomTransferRole" value="SCP"/>
+                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"/>
                   </map>
                 </node>
               </node>
@@ -3375,7 +3379,7 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
-            <node name="STORESCP">
+            <node name="DCMQRSCP">
               <map>
                 <entry key="dicomAssociationAcceptor" value="true"/>
                 <entry key="dicomAssociationInitiator" value="true"/>
@@ -3412,9 +3416,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="FINDSCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11120"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="getscu">
@@ -3425,9 +3453,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="GETSCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11121"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="hl7rcv">
@@ -3489,9 +3541,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="IANSCP">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11117"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="movescu">
@@ -3502,9 +3578,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="MOVESCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11122"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="mppsscp">
@@ -3515,9 +3615,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="MPPSSCP">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11116"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="mppsscu">
@@ -3528,9 +3652,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="MPPSSCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11119"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="stgcmtscu">
@@ -3541,7 +3689,7 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
-            <node name="STORESCU">
+            <node name="STGCMTSCU">
               <map>
                 <entry key="dicomAssociationAcceptor" value="true"/>
                 <entry key="dicomAssociationInitiator" value="true"/>
@@ -3578,7 +3726,7 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
-            <node name="FINDSCU">
+            <node name="STORESCP">
               <map>
                 <entry key="dicomAssociationAcceptor" value="true"/>
                 <entry key="dicomAssociationInitiator" value="true"/>
@@ -3615,9 +3763,33 @@
           </map>
           <node name="dcmNetworkAE">
             <map/>
+            <node name="STORESCU">
+              <map>
+                <entry key="dicomAssociationAcceptor" value="true"/>
+                <entry key="dicomAssociationInitiator" value="true"/>
+                <entry key="dicomNetworkConnectionReference.#" value="1"/>
+                <entry key="dicomNetworkConnectionReference.1" value="1"/>
+              </map>
+              <node name="dicomTransferCapability">
+                <map/>
+                <node name="SCP">
+                  <map/>
+                </node>
+                <node name="SCU">
+                  <map/>
+                </node>
+              </node>
+            </node>
           </node>
           <node name="dcmNetworkConnection">
             <map/>
+            <node name="1">
+              <map>
+                <entry key="cn" value="dicom"/>
+                <entry key="dicomHostname" value="localhost"/>
+                <entry key="dicomPort" value="11118"/>
+              </map>
+            </node>
           </node>
         </node>
         <node name="syslog">
@@ -3654,7 +3826,28 @@
         <node name="DCM4CHEE-PROXY">
           <map/>
         </node>
+        <node name="DCMQRSCP">
+          <map/>
+        </node>
         <node name="FINDSCU">
+          <map/>
+        </node>
+        <node name="GETSCU">
+          <map/>
+        </node>
+        <node name="IANSCP">
+          <map/>
+        </node>
+        <node name="MOVESCU">
+          <map/>
+        </node>
+        <node name="MPPSSCP">
+          <map/>
+        </node>
+        <node name="MPPSSCU">
+          <map/>
+        </node>
+        <node name="STGCMTSCU">
           <map/>
         </node>
         <node name="STORESCP">

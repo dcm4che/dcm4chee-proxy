@@ -43,6 +43,7 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -96,13 +97,33 @@ public class ForwardFiles {
     }
 
     public void execute(ApplicationEntity ae) {
-        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
+        final ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        final HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
         try {
             processCStore(proxyAEE, forwardOptions);
             processNAction(proxyAEE, forwardOptions);
-            processNCreate(proxyAEE, forwardOptions);
-            processNSet(proxyAEE, forwardOptions);
+            ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice()
+                    .getDeviceExtension(ProxyDeviceExtension.class)).getFileForwardingExecutor().execute(
+                    new Runnable() {
+
+                        @Override
+                        public void run() {
+                            try {
+                                processNCreate(proxyAEE, forwardOptions);
+                            } catch (IOException e) {
+                                LOG.error("Error processing scheduled N-CREATE files: {}", e.getMessage());
+                                if (LOG.isDebugEnabled())
+                                    e.printStackTrace();
+                            }
+                            try {
+                                processNSet(proxyAEE, forwardOptions);
+                            } catch (IOException e) {
+                                LOG.error("Error processing scheduled N-SET files: {}", e.getMessage());
+                                if (LOG.isDebugEnabled())
+                                    e.printStackTrace();
+                            }
+                        }
+                    });
         } catch (IOException e) {
             LOG.error("Error scanning spool directory: {}", e.getMessage());
             if(LOG.isDebugEnabled())
@@ -116,7 +137,7 @@ public class ForwardFiles {
             if (files == null || files.length == 0)
                 continue;
 
-            LOG.debug("Processing schedule N-SET data ...");
+            LOG.debug("Processing schedule N-SET data for {} ...", calledAET);
             if (!forwardOptions.keySet().contains(calledAET)) {
                 // process destinations without forward schedule
                 LOG.debug("No forward schedule for {}, sending existing N-SET data now", calledAET);
@@ -143,7 +164,7 @@ public class ForwardFiles {
             if (files == null || files.length == 0)
                 continue;
 
-            LOG.debug("Processing schedule N-CREATE data ...");
+            LOG.debug("Processing schedule N-CREATE data for {} ...", calledAET);
             if (!forwardOptions.keySet().contains(calledAET)) {
                 // process destinations without forward schedule
                 LOG.debug("No forward schedule for {}, sending existing N-CREATE data now", calledAET);
@@ -325,6 +346,12 @@ public class ForwardFiles {
 
     private void moveToFallbackAetDir(ProxyAEExtension proxyAEE, File file, String calledAET, String reason) {
         String path = file.getAbsolutePath();
+        if (path.contains("ncreate")) {
+            String nSetFilePath = path.replace("create", "nset");
+            File nSetFile = new File(nSetFilePath);
+            if (nSetFile.exists())
+                moveToFallbackAetDir(proxyAEE, nSetFile, calledAET, reason);
+        }
         File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + proxyAEE.getFallbackDestinationAET());
         dstDir.mkdir();
         String fileName = file.getName();
@@ -366,6 +393,12 @@ public class ForwardFiles {
 
     protected void moveToNoRetryPath(ProxyAEExtension proxyAEE, File file, String reason) throws IOException {
         String path = file.getPath();
+        if (path.contains("ncreate")) {
+            String nSetFilePath = path.replace("create", "nset");
+            File nSetFile = new File(nSetFilePath);
+            if (nSetFile.exists())
+                moveToNoRetryPath(proxyAEE, nSetFile, reason);
+        }
         String spoolDirPath = proxyAEE.getSpoolDirectoryPath().getPath();
         String fileName = file.getName();
         String subPath = path.substring(path.indexOf(spoolDirPath) + spoolDirPath.length(), path.indexOf(fileName));
@@ -389,17 +422,21 @@ public class ForwardFiles {
     private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason, Integer retry) {
         try {
             String path = file.getPath();
+            Properties prop = proxyAEE.getFileInfoProperties(file);
             if (proxyAEE.isEnableAuditLog() && path.contains("cstore")) {
-                Properties prop = proxyAEE.getFileInfoProperties(file);
                 String callingAET = prop.getProperty("source-aet");
                 proxyAEE.createStartLogFile(AuditDirectory.DELETED, callingAET, calledAET, proxyAEE
                         .getApplicationEntity().getConnections().get(0).getHostname(), prop, retry);
                 proxyAEE.writeLogFile(AuditDirectory.DELETED, callingAET, calledAET, prop, file.length(), retry);
             }
+            if (path.contains("ncreate"))
+                deletePendingNSet(proxyAEE, calledAET, file, prop);
             if (file.delete())
                 LOG.debug("Delete {} {}", file, reason);
-            else
+            else {
                 LOG.error("Failed to delete {}", file);
+                return;
+            }
             File infoFile = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
             if (infoFile.delete())
                 LOG.debug("Delete {}", infoFile);
@@ -412,22 +449,40 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledMPPS(final ProxyAEExtension proxyAEE, final File[] files,
-            final String destinationAETitle, final String protocol) {
-        ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice()
-                .getDeviceExtension(ProxyDeviceExtension.class)).getFileForwardingExecutor().execute(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    forwardScheduledMPPS(proxyAEE, files, destinationAETitle, protocol);
-                } catch (IOException e) {
-                    LOG.error("Error forwarding scheduled MPPS " + e.getMessage());
-                    if(LOG.isDebugEnabled())
-                        e.printStackTrace();
+    private void deletePendingNSet(ProxyAEExtension proxyAEE, String calledAET, File file, Properties prop)
+            throws IOException {
+        File nSetDir = new File(proxyAEE.getNSetDirectoryPath(), calledAET);
+        if (nSetDir.exists() && nSetDir.list() != null && nSetDir.list().length != 0) {
+            String sopInstanceUID = prop.getProperty("sop-instance-uid");
+            for (File nSetFile : nSetDir.listFiles(fileFilter(proxyAEE, calledAET))) {
+                Properties nSetProp = proxyAEE.getFileInfoProperties(nSetFile);
+                if (nSetProp.getProperty("sop-instance-uid").equals(sopInstanceUID)) {
+                    if (nSetFile.delete())
+                        LOG.debug("Delete {} before deleting matching N-CREATE file {}", nSetFile, file);
+                    else {
+                        LOG.error("Failed to delete {}", nSetFile);
+                        return;
+                    }
+                    File infoFile = new File(nSetFile.getPath().substring(0, nSetFile.getPath().indexOf('.')) + ".info");
+                    if (infoFile.delete())
+                        LOG.debug("Delete {}", infoFile);
+                    else
+                        LOG.error("Failed to delete {}", infoFile);
                 }
             }
-        });
+        }
+    }
+
+    private void startForwardScheduledMPPS(final ProxyAEExtension proxyAEE, File[] files,
+            final String destinationAETitle, final String protocol) {
+        final File[] sendFiles = createSendFileList(files);
+        try {
+            forwardScheduledMPPS(proxyAEE, sendFiles, destinationAETitle, protocol);
+        } catch (IOException e) {
+            LOG.error("Error forwarding scheduled MPPS " + e.getMessage());
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
     }
 
     protected void forwardScheduledMPPS(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle,
@@ -437,10 +492,16 @@ public class ForwardFiles {
             String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
                     .getProperty("source-aet");
             try {
-                Attributes fmi = readFileMetaInformation(file);
-                if (protocol == "nset" && pendingNCreateForwarding(proxyAEE, destinationAETitle, fmi))
-                    return;
-
+                if (protocol == "nset" && pendingNCreateForwarding(proxyAEE, destinationAETitle, file)) {
+                    String prevFilePath = file.getPath();
+                    File dst = new File(prevFilePath.substring(0, prevFilePath.length() - 4));
+                    if (file.renameTo(dst))
+                        LOG.debug("{} has pending N-CREATE-RQ, rename to {}", prevFilePath, dst);
+                    else {
+                        LOG.error("Error renaming {} to {}.", prevFilePath, dst);
+                    }
+                    continue;
+                }
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.ModalityPerformedProcedureStepSOPClass,
                         UID.ExplicitVRLittleEndian));
@@ -450,6 +511,7 @@ public class ForwardFiles {
                         aeCache.findApplicationEntity(destinationAETitle), rq);
                 try {
                     if (as.isReadyForDataTransfer()) {
+                        Attributes fmi = readFileMetaInformation(file);
                         forwardScheduledMPPS(proxyAEE, as, file, fmi, protocol, prop);
                     } else {
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, destinationAETitle,
@@ -502,17 +564,20 @@ public class ForwardFiles {
         }
     }
 
-    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, Attributes fmi) throws IOException {
+    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, 
+            File file) throws IOException {
         File dir = new File(proxyAEE.getNCreateDirectoryPath(), destinationAETitle);
         if (!dir.exists())
             return false;
 
-        String[] files = dir.list();
-        String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
-        for (String file : files)
-            if (file.startsWith(iuid))
+        Properties nSetProp = proxyAEE.getFileInfoProperties(file);
+        String sopInstanceUID = nSetProp.getProperty("sop-instance-uid");
+        File[] nCreateInfoFiles = dir.listFiles(proxyAEE.infoFileFilter());
+        for (File nCreateInfoFile : nCreateInfoFiles) {
+            Properties nCreateProp = proxyAEE.getPropertiesFromInfoFile(nCreateInfoFile.getAbsolutePath());
+            if (nCreateProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
                 return true;
-
+        }
         return false;
     }
 
@@ -553,21 +618,38 @@ public class ForwardFiles {
         }
     }
 
-    private void startForwardScheduledNAction(final ProxyAEExtension proxyAEE, final String destinationAETitle, final File[] files) {
+    private void startForwardScheduledNAction(final ProxyAEExtension proxyAEE, final String destinationAETitle,
+            File[] files) {
+        final File[] sendFiles = createSendFileList(files);
         ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice()
                 .getDeviceExtension(ProxyDeviceExtension.class)).getFileForwardingExecutor().execute(new Runnable() {
 
             @Override
             public void run() {
                 try {
-                    forwardScheduledNAction(proxyAEE, destinationAETitle, files);
+                    forwardScheduledNAction(proxyAEE, destinationAETitle, sendFiles);
                 } catch (IOException e) {
                     LOG.error("Error forwarding scheduled NAction: " + e.getMessage());
-                    if(LOG.isDebugEnabled())
+                    if (LOG.isDebugEnabled())
                         e.printStackTrace();
                 }
             }
         });
+    }
+
+    private File[] createSendFileList(File[] files) {
+        ArrayList<File> sendFilesList = new ArrayList<File>();
+        for (File file : files) {
+            String prevFilePath = file.getPath();
+            File snd = new File(prevFilePath + ".snd");
+            if (file.renameTo(snd)) {
+                LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
+                sendFilesList.add(snd);
+            } else
+                LOG.error("Error renaming {} to {}. Skip file for now and try again on next scheduler run.",
+                        prevFilePath, snd.getPath());
+        }
+        return sendFilesList.toArray(new File[sendFilesList.size()]);
     }
 
     private void forwardScheduledNAction(ProxyAEExtension proxyAEE, String calledAET, File[] files) throws IOException {

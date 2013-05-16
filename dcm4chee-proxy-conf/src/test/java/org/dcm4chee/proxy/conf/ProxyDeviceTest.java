@@ -104,7 +104,19 @@ public class ProxyDeviceTest {
         "hl7snd"
         };
 
-    private static final String[] OTHER_AES = { "DCM4CHEE", "STORESCP", "STORESCU", "FINDSCU", };
+    private static final String[] OTHER_AES = { 
+        "DCM4CHEE", 
+        "DCMQRSCP",
+        "STGCMTSCU",
+        "STORESCP",
+        "MPPSSCP",
+        "IANSCP",
+        "STORESCU",
+        "MPPSSCU",
+        "FINDSCU",
+        "GETSCU",
+        "MOVESCU"
+        };
 
     private static final String PIX_CONSUMER = "HL7SND^DCM4CHEE-PROXY";
     private static final String PIX_MANAGER = "HL7RCV^DCM4CHEE";

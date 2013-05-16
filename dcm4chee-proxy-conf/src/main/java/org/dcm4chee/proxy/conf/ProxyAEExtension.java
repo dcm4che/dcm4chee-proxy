@@ -41,6 +41,7 @@ package org.dcm4chee.proxy.conf;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -567,10 +568,14 @@ public class ProxyAEExtension extends AEExtension {
     }
 
     public Properties getFileInfoProperties(File file) throws IOException {
+        String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
+        return getPropertiesFromInfoFile(infoFileName);
+    }
+
+    public Properties getPropertiesFromInfoFile(String infoFileName) throws FileNotFoundException, IOException {
         Properties prop = new Properties();
         FileInputStream inStream = null;
         try {
-            String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
             LOG.debug("Loading info file {}", infoFileName);
             inStream = new FileInputStream(infoFileName);
             prop.load(inStream);
