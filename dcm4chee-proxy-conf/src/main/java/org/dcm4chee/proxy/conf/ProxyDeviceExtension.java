@@ -83,7 +83,13 @@ public class ProxyDeviceExtension extends DeviceExtension {
             throw new IllegalArgumentException("ForwardThreads cannot be 0");
         this.forwardThreads = forwardThreads;
     }
-    
+
+    public void clearTemplatesCache() {
+        TemplatesCache cache = templateCache;
+        if (cache != null)
+            cache.clear();
+    }
+
     public Templates getTemplates(String uri) throws TransformerConfigurationException {
         if (templateCache == null)
             templateCache = new TemplatesCache();

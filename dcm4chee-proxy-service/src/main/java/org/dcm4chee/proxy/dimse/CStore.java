@@ -120,8 +120,9 @@ public class CStore extends BasicCStoreSCP {
                         Role.SCP, ((Association)forwardAssociationProperty).getRemoteAET()) != null
                 || proxyAEE.isEnableAuditLog()
                 || (forwardAssociationProperty instanceof HashMap<?, ?>)
-                || (forwardAssociationProperty instanceof Association 
-                        &&  proxyAEE.requiresMultiFrameConversion(proxyAEE, ((Association)forwardAssociationProperty).getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID)))
+                || (forwardAssociationProperty instanceof Association && proxyAEE.requiresMultiFrameConversion(
+                        proxyAEE, ((Association) forwardAssociationProperty).getRemoteAET(),
+                        rq.getString(Tag.AffectedSOPClassUID))) 
                 || proxyAEE.isAssociationFromDestinationAET(asAccepted))
             spool(proxyAEE, asAccepted, pc, rq, data, null);
         else {

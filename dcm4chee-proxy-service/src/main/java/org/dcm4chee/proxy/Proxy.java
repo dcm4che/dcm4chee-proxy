@@ -252,6 +252,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     @Override
     public void reload() throws IOException, GeneralSecurityException, ConfigurationException {
         scheduler.stop();
+        device.getDeviceExtension(ProxyDeviceExtension.class).clearTemplatesCache();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
         setConfigurationStaleTimeout();
         if (isRunning()) {
