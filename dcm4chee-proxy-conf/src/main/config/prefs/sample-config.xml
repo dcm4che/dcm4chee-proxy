@@ -111,7 +111,7 @@
                     <entry key="dcmDIMSE" value="C_STORE_RQ"/>
                     <entry key="dicomAETitle" value="WITHOUT_PN"/>
                     <entry key="dicomTransferRole" value="SCU"/>
-                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"/>
+                    <entry key="labeledURI" value="${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"/>
                   </map>
                 </node>
                 <node name="2">
@@ -119,7 +119,7 @@
                     <entry key="dcmDIMSE" value="C_STORE_RQ"/>
                     <entry key="dicomAETitle" value="ENSURE_PID"/>
                     <entry key="dicomTransferRole" value="SCP"/>
-                    <entry key="labeledURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"/>
+                    <entry key="labeledURI" value="${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"/>
                   </map>
                 </node>
               </node>
@@ -141,7 +141,7 @@
                   <map>
                     <entry key="cn" value="MPPS2XrayDoseSR"/>
                     <entry key="dcmCallingAETitle" value="MPPSSCU"/>
-                    <entry key="dcmMpps2DoseSrTemplateURI" value="${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl"/>
+                    <entry key="dcmMpps2DoseSrTemplateURI" value="${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl"/>
                     <entry key="dcmSOPClass.#" value="1"/>
                     <entry key="dcmSOPClass.1" value="1.2.840.10008.3.1.2.3.3"/>
                     <entry key="dcmScheduleDays" value="Sun-Sat"/>

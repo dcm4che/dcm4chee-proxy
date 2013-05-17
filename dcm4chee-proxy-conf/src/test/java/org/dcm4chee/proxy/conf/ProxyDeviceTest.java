@@ -320,10 +320,10 @@ public class ProxyDeviceTest {
         proxyAEE.setFallbackDestinationAET("DCM4CHEE");
 
         proxyAEE.addAttributeCoercion(new AttributeCoercion(null, Dimse.C_STORE_RQ, TransferCapability.Role.SCP,
-                "ENSURE_PID", "${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
+                "ENSURE_PID", "${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
 
         proxyAEE.addAttributeCoercion(new AttributeCoercion(null, Dimse.C_STORE_RQ, TransferCapability.Role.SCU,
-                "WITHOUT_PN", "${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
+                "WITHOUT_PN", "${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
 
         HashMap<String, ForwardOption> fwdOptions = new HashMap<String, ForwardOption>();
 
@@ -362,7 +362,7 @@ public class ProxyDeviceTest {
         sopClass.add("1.2.840.10008.3.1.2.3.3");
         forwardRuleMPPS2DoseSR.setSopClass(sopClass);
         forwardRuleMPPS2DoseSR
-                .setMpps2DoseSrTemplateURI("${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
+                .setMpps2DoseSrTemplateURI("${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
         forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
         forwardRules.add(forwardRuleMPPS2DoseSR);
 

@@ -4446,7 +4446,7 @@ dn: dcmDestinationAETitle=STORESCP,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceNa
 objectClass: dcmForwardOption
 dcmDestinationAETitle: STORESCP
 dcmConvertEmf2Sf: TRUE
-dcmScheduleDays: Sun-Sat
+dcmScheduleDays: Wed
 dcmScheduleHours: 8-18
 dicomDescription: Example ForwardOption for STORESCP
 
@@ -4455,7 +4455,6 @@ dn: cn=Public,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=
 objectClass: dcmForwardRule
 cn: Public
 labeledURI: aet:DCM4CHEE
-labeledURI: aet:STORESCP
 dcmExclusiveUseDefinedTC: FALSE
 dcmPIXQuery: TRUE
 dcmScheduleDays: Sun-Tue,Thu-Sat
@@ -4469,7 +4468,7 @@ cn: MPPS2XrayDoseSR
 labeledURI: aet:DCM4CHEE
 dcmCallingAETitle: MPPSSCU
 dcmExclusiveUseDefinedTC: FALSE
-dcmMpps2DoseSrTemplateURI: ${jboss.server.config.dir}/dcm4chee-proxy/dcm4che
+dcmMpps2DoseSrTemplateURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4che
  e-proxy-xr-mpps2dosesr.xsl
 dcmPIXQuery: FALSE
 dcmScheduleDays: Sun-Sat
@@ -4497,7 +4496,7 @@ dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCU
-labeledURI: ${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-nullify
+labeledURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-nullify
  -pn.xsl
 dicomAETitle: WITHOUT_PN
 
@@ -4507,7 +4506,7 @@ dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
 objectClass: dcmAttributeCoercion
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCP
-labeledURI: ${jboss.server.config.dir}/dcm4chee-proxy/dcm4chee-proxy-ensure-
+labeledURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-ensure-
  pid.xsl
 dicomAETitle: ENSURE_PID
 
