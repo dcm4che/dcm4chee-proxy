@@ -4466,7 +4466,7 @@ dn: cn=MPPS2XrayDoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-
 objectClass: dcmForwardRule
 cn: MPPS2XrayDoseSR
 labeledURI: aet:DCM4CHEE
-dcmCallingAETitle: MPPSSCU
+dcmAETitle: [MPPSSCU]
 dcmExclusiveUseDefinedTC: FALSE
 dcmMpps2DoseSrTemplateURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4che
  e-proxy-xr-mpps2dosesr.xsl
@@ -4490,23 +4490,23 @@ dcmSOPClass: 1.2.840.10008.5.1.4.1.1.2
 dcmSOPClass: 1.2.840.10008.5.1.4.1.1.4
 dicomDescription: Example ForwardRule
 
-dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=WITHOUT_PN+dicomTransferRole=SCU,dicomA
- ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
- nfiguration,dc=example,dc=com
+dn: cn=Remove Person Names,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4c
+ hee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmAttributeCoercion
+cn: Remove Person Names
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCU
 labeledURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-nullify
  -pn.xsl
-dicomAETitle: WITHOUT_PN
+dcmAETitle: WITHOUT_PN
 
-dn: dcmDIMSE=C_STORE_RQ+dicomAETitle=ENSURE_PID+dicomTransferRole=SCP,dicomA
- ETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-proxy,cn=Devices,cn=DICOM Co
- nfiguration,dc=example,dc=com
+dn: cn=Supplement missing PatientID,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceN
+ ame=dcm4chee-proxy,cn=Devices,cn=DICOM Configuration,dc=example,dc=com
 objectClass: dcmAttributeCoercion
+cn: Supplement missing PatientID
 dcmDIMSE: C_STORE_RQ
 dicomTransferRole: SCP
 labeledURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-ensure-
  pid.xsl
-dicomAETitle: ENSURE_PID
+dcmAETitle: ENSURE_PID
 

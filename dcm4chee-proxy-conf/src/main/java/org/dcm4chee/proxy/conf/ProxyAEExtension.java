@@ -464,10 +464,10 @@ public class ProxyAEExtension extends AEExtension {
         List<ForwardRule> filterList = new ArrayList<ForwardRule>();
         for (ForwardRule rule : getCurrentForwardRules(as)) {
             String rqSopClass = rq.getString(dimse.tagOfSOPClassUID());
-            if (rule.getDimse().isEmpty() && rule.getSopClass().isEmpty()
-                    || rule.getSopClass().contains(rqSopClass) && rule.getDimse().isEmpty()
+            if (rule.getDimse().isEmpty() && rule.getSopClasses().isEmpty()
+                    || rule.getSopClasses().contains(rqSopClass) && rule.getDimse().isEmpty()
                     || rule.getDimse().contains(dimse) 
-                        && (rule.getSopClass().isEmpty() || rule.getSopClass().contains(rqSopClass)))
+                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(rqSopClass)))
                 filterList.add(rule);
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
@@ -480,7 +480,7 @@ public class ProxyAEExtension extends AEExtension {
                     returnList.remove(rule);
                     break;
                 }
-                if (rule.getSopClass().isEmpty() && !fwr.getSopClass().isEmpty())
+                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty())
                     returnList.remove(rule);
             }
         }
@@ -504,8 +504,8 @@ public class ProxyAEExtension extends AEExtension {
                     ac.getURI(), 
                     ac.getDIMSE(), 
                     ac.getRole(), 
-                    ac.getAETitle() == null ? "" : ", aet=" + ac.getAETitle(),
-                    ac.getSOPClass() == null ? "" : ", sopClass=" + ac.getSOPClass()
+                    ac.getAETitles() == null ? "" : ", aet=" + ac.getAETitles(),
+                    ac.getSOPClasses() == null ? "" : ", sopClass=" + ac.getSOPClasses()
         });
         Attributes modify = new Attributes();
         try {

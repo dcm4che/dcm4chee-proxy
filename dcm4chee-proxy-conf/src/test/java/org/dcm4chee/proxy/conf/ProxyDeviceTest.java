@@ -319,11 +319,21 @@ public class ProxyDeviceTest {
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(true);
         proxyAEE.setFallbackDestinationAET("DCM4CHEE");
 
-        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, Dimse.C_STORE_RQ, TransferCapability.Role.SCP,
-                "ENSURE_PID", "${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
+        proxyAEE.addAttributeCoercion(new AttributeCoercion(
+                "Supplement missing PatientID", 
+                null, 
+                Dimse.C_STORE_RQ,
+                TransferCapability.Role.SCP, 
+                new String[]{"ENSURE_PID"},
+                "${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-ensure-pid.xsl"));
 
-        proxyAEE.addAttributeCoercion(new AttributeCoercion(null, Dimse.C_STORE_RQ, TransferCapability.Role.SCU,
-                "WITHOUT_PN", "${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
+        proxyAEE.addAttributeCoercion(new AttributeCoercion(
+                "Remove Person Names",
+                null, 
+                Dimse.C_STORE_RQ, 
+                TransferCapability.Role.SCU,
+                new String[]{"WITHOUT_PN"}, 
+                "${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-nullify-pn.xsl"));
 
         HashMap<String, ForwardOption> fwdOptions = new HashMap<String, ForwardOption>();
 
@@ -354,13 +364,15 @@ public class ProxyDeviceTest {
 
         ForwardRule forwardRuleMPPS2DoseSR = new ForwardRule();
         forwardRuleMPPS2DoseSR.setCommonName("MPPS2XrayDoseSR");
-        forwardRuleMPPS2DoseSR.setCallingAET("MPPSSCU");
+        ArrayList<String> callingAET = new ArrayList<String>();
+        callingAET.add("MPPSSCU");
+        forwardRuleMPPS2DoseSR.setCallingAETs(callingAET);
         List<String> destinationURIMPPS2DoseSR = new ArrayList<String>();
         destinationURIMPPS2DoseSR.add("aet:DCM4CHEE");
         forwardRuleMPPS2DoseSR.setDestinationURIs(destinationURIMPPS2DoseSR);
         List<String> sopClass = new ArrayList<String>();
         sopClass.add("1.2.840.10008.3.1.2.3.3");
-        forwardRuleMPPS2DoseSR.setSopClass(sopClass);
+        forwardRuleMPPS2DoseSR.setSopClasses(sopClass);
         forwardRuleMPPS2DoseSR
                 .setMpps2DoseSrTemplateURI("${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
         forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
@@ -379,7 +391,7 @@ public class ProxyDeviceTest {
         List<String> sopClassesList = new ArrayList<String>();
         sopClassesList.add(UID.CTImageStorage);
         sopClassesList.add(UID.MRImageStorage);
-        forwardRulePrivate.setSopClass(sopClassesList);
+        forwardRulePrivate.setSopClasses(sopClassesList);
         forwardRulePrivate.setRunPIXQuery(Boolean.TRUE);
         forwardRulePrivate.setDescription("Example ForwardRule");
         forwardRules.add(forwardRulePrivate);

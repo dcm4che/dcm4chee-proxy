@@ -152,8 +152,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             Preferences ruleNode = rulesNode.node(ruleName);
             ForwardRule rule = new ForwardRule();
             rule.setDimse(Arrays.asList(dimseArray(ruleNode, "dcmForwardRuleDimse")));
-            rule.setSopClass(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "dcmSOPClass")));
-            rule.setCallingAET(ruleNode.get("dcmCallingAETitle", null));
+            rule.setSopClasses(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "dcmSOPClass")));
+            rule.setCallingAETs(Arrays.asList(ruleNode.get("dcmAETitle", null)));
             rule.setDestinationURIs(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "labeledURI")));
             rule.setUseCallingAET(ruleNode.get("dcmUseCallingAETitle", null));
             rule.setExclusiveUseDefinedTC(ruleNode.getBoolean("dcmExclusiveUseDefinedTC", Boolean.FALSE));
@@ -234,8 +234,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
     private void storeToForwardRule(ForwardRule rule, Preferences prefs) {
         storeForwardRuleDimse(rule, prefs);
         PreferencesUtils.storeNotEmpty(prefs, "dcmSOPClass",
-                rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
-        PreferencesUtils.storeNotNull(prefs, "dcmCallingAETitle", rule.getCallingAET());
+                rule.getSopClasses().toArray(new String[rule.getSopClasses().size()]));
+        PreferencesUtils.storeNotNull(prefs, "dcmAETitle", rule.getCallingAETs());
         PreferencesUtils.storeNotEmpty(prefs, "labeledURI",
                 rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         PreferencesUtils.storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
@@ -362,9 +362,9 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeDiff(prefs, "dcmForwardRuleDimse", dimseA.toArray(new String[dimseA.size()]),
                 dimseB.toArray(new String[dimseB.size()]));
         PreferencesUtils.storeDiff(prefs, "dcmSOPClass",
-                ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]),
-                ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
-        PreferencesUtils.storeDiff(prefs, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
+                ruleA.getSopClasses().toArray(new String[ruleA.getSopClasses().size()]),
+                ruleB.getSopClasses().toArray(new String[ruleB.getSopClasses().size()]));
+        PreferencesUtils.storeDiff(prefs, "dcmAETitle", ruleA.getCallingAETs(), ruleB.getCallingAETs());
         PreferencesUtils.storeDiff(prefs, "labeledURI",
                 ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), ruleB
                         .getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));

@@ -101,12 +101,12 @@ public class ProxyAssociationHandler extends AssociationHandler {
     private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq, ProxyAEExtension proxyAEE) {
         List<ForwardRule> filterList = new ArrayList<ForwardRule>();
         for (ForwardRule rule : proxyAEE.getForwardRules()) {
-            String callingAET = rule.getCallingAET();
-            if ((callingAET == null || callingAET.equals(rq.getCallingAET()))
+            List<String> callingAET = rule.getCallingAETs();
+            if ((callingAET.isEmpty() || callingAET.contains(rq.getCallingAET()))
                     && rule.getReceiveSchedule().isNow(new GregorianCalendar())) {
                 LOG.debug(
                         "Adding forward rule \"{}\" based on i) Calling AET = {} and ii) receive schedule days = {}, hours = {}",
-                        new Object[] { rule.getCommonName(), rule.getCallingAET(), rule.getReceiveSchedule().getDays(),
+                        new Object[] { rule.getCommonName(), rule.getCallingAETs(), rule.getReceiveSchedule().getDays(),
                                 rule.getReceiveSchedule().getHours() });
                 filterList.add(rule);
             }
@@ -117,11 +117,11 @@ public class ProxyAssociationHandler extends AssociationHandler {
             for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
-                if (rule.getCallingAET() == null && fwr.getCallingAET() != null
-                        && fwr.getCallingAET().equals(rq.getCallingAET())) {
+                if (rule.getCallingAETs() == null && fwr.getCallingAETs() != null
+                        && fwr.getCallingAETs().equals(rq.getCallingAET())) {
                     LOG.debug(
                             "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
-                            new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAET() });
+                            new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAETs() });
                     returnList.remove(rule);
                 }
             }
@@ -162,9 +162,9 @@ public class ProxyAssociationHandler extends AssociationHandler {
         return (matchingForwardRules.size() == 1
                 && !forwardBasedOnTemplates(matchingForwardRules)
                 && matchingForwardRules.get(0).getDimse().isEmpty()
-                && matchingForwardRules.get(0).getSopClass().isEmpty()
-                && (matchingForwardRules.get(0).getCallingAET() == null 
-                    || matchingForwardRules.get(0).getCallingAET().equals(as.getCallingAET()))
+                && matchingForwardRules.get(0).getSopClasses().isEmpty()
+                && (matchingForwardRules.get(0).getCallingAETs().isEmpty() 
+                    || matchingForwardRules.get(0).getCallingAETs().contains(as.getCallingAET()))
                 && matchingForwardRules.get(0).getDestinationAETitles().size() == 1 && isAvailableDestinationAET(
                     matchingForwardRules.get(0).getDestinationAETitles().get(0), proxyAEE))
                 && matchingForwardRules.get(0).getMpps2DoseSrTemplateURI() == null

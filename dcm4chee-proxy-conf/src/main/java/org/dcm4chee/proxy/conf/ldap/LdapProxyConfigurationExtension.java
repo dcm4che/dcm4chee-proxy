@@ -155,8 +155,8 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
                 Attributes attrs = sr.getAttributes();
                 ForwardRule rule = new ForwardRule();
                 rule.setDimse(Arrays.asList(dimseArray(attrs.get("dcmForwardRuleDimse"))));
-                rule.setSopClass(Arrays.asList(LdapUtils.stringArray(attrs.get("dcmSOPClass"))));
-                rule.setCallingAET(LdapUtils.stringValue(attrs.get("dcmCallingAETitle"), null));
+                rule.setSopClasses(Arrays.asList(LdapUtils.stringArray(attrs.get("dcmSOPClass"))));
+                rule.setCallingAETs(Arrays.asList(LdapUtils.stringArray(attrs.get("dcmAETitle"))));
                 rule.setDestinationURIs(Arrays.asList(LdapUtils.stringArray(attrs.get("labeledURI"))));
                 rule.setUseCallingAET(LdapUtils.stringValue(attrs.get("dcmUseCallingAETitle"), null));
                 rule.setExclusiveUseDefinedTC(LdapUtils.booleanValue(attrs.get("dcmExclusiveUseDefinedTC"),
@@ -256,8 +256,8 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
     private Attributes storeToForwardRule(ForwardRule rule, BasicAttributes attrs) {
         attrs.put("objectclass", "dcmForwardRule");
         storeForwardRuleDimse(attrs, rule.getDimse());
-        LdapUtils.storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClass().toArray(new String[rule.getSopClass().size()]));
-        LdapUtils.storeNotNull(attrs, "dcmCallingAETitle", rule.getCallingAET());
+        LdapUtils.storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClasses().toArray(new String[rule.getSopClasses().size()]));
+        LdapUtils.storeNotNull(attrs, "dcmAETitle", rule.getCallingAETs());
         LdapUtils.storeNotEmpty(attrs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         LdapUtils.storeNotNull(attrs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         LdapUtils.storeBoolean(attrs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC());
@@ -396,9 +396,9 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
             dimseB.add(dimse.toString());
         LdapUtils.storeDiff(mods, "dcmForwardRuleDimse", dimseA.toArray(new String[dimseA.size()]),
                 dimseB.toArray(new String[dimseB.size()]));
-        LdapUtils.storeDiff(mods, "dcmSOPClass", ruleA.getSopClass().toArray(new String[ruleA.getSopClass().size()]),
-                ruleB.getSopClass().toArray(new String[ruleB.getSopClass().size()]));
-        LdapUtils.storeDiff(mods, "dcmCallingAETitle", ruleA.getCallingAET(), ruleB.getCallingAET());
+        LdapUtils.storeDiff(mods, "dcmSOPClass", ruleA.getSopClasses().toArray(new String[ruleA.getSopClasses().size()]),
+                ruleB.getSopClasses().toArray(new String[ruleB.getSopClasses().size()]));
+        LdapUtils.storeDiff(mods, "dcmAETitle", ruleA.getCallingAETs(), ruleB.getCallingAETs());
         LdapUtils.storeDiff(mods, "labeledURI",
                 ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), ruleB
                         .getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));

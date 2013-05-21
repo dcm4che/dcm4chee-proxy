@@ -90,27 +90,12 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.12
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.13 
-  NAME 'dcmCallingAETitle'
-  DESC 'String : value for Calling AE Title specific Forward Rule'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-  SINGLE-VALUE )
-  
 attributetype ( 1.2.40.0.13.1.2.15.0.3.14 
   NAME 'dcmForwardThreads'
   DESC 'Integer : maximum number of concurrent forward threads'
   EQUALITY integerMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
-  
-attributetype ( 1.2.40.0.13.1.2.15.0.3.15 
-  NAME 'dcmSOPClass'
-  DESC 'List of SOP Class UIDs'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
   
 attributetype ( 1.2.40.0.13.1.2.15.0.3.16
   NAME 'dcmConvertEmf2Sf'
@@ -235,7 +220,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
   MAY (
     dcmForwardRuleDimse $
     dcmSOPClass $
-    dcmCallingAETitle $
+    dcmAETitle $
     dcmExclusiveUseDefinedTC $
     dcmUseCallingAETitle $
     dcmScheduleDays $

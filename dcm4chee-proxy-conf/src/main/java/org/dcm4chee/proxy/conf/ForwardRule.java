@@ -52,10 +52,10 @@ public class ForwardRule implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private List<Dimse> dimse = new ArrayList<Dimse>();
-    private List<String> sopClass = new ArrayList<String>();
-    private String callingAET;
-    private List<String> destinationURI = new ArrayList<String>();
+    private List<Dimse> dimse = new ArrayList<Dimse>(0);
+    private List<String> sopClasses = new ArrayList<String>(0);
+    private List<String> callingAETs = new ArrayList<String>(0);
+    private List<String> destinationURI = new ArrayList<String>(1);
     private String useCallingAET;
     private Schedule receiveSchedule = new Schedule();
     private boolean exclusiveUseDefinedTC;
@@ -72,20 +72,20 @@ public class ForwardRule implements Serializable {
         this.dimse = dimse;
     }
 
-    public List<String> getSopClass() {
-        return sopClass;
+    public List<String> getSopClasses() {
+        return sopClasses;
     }
 
-    public void setSopClass(List<String> sopClass) {
-        this.sopClass = sopClass;
+    public void setSopClasses(List<String> sopClasses) {
+        this.sopClasses = sopClasses;
     }
 
-    public String getCallingAET() {
-        return callingAET;
+    public List<String> getCallingAETs() {
+        return callingAETs;
     }
 
-    public void setCallingAET(String callingAET) {
-        this.callingAET = callingAET;
+    public void setCallingAETs(List<String> callingAETs) {
+        this.callingAETs = callingAETs;
     }
 
     public List<String> getDestinationURI() {
