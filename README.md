@@ -193,6 +193,16 @@ add to the according container configuration (e.g. standalone.xml):
 </profile>
 ```
 
+**JDBC Preferences**
+
+If the preferences data is supposed to be read via the dcm4che-jdbc-prefs project
+from a database, specify the following system property in the container configuration:
+```xml
+<system-properties>
+    <property name="storage.backend" value="jdbc"/>
+</system-properties>
+```
+
 Standalone Application
 ----------------------
 The dcm4chee-proxy can be run as a standlone application from the command line.

@@ -104,6 +104,9 @@ public class ProxyServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         try {
+            String storageBackend = System.getProperty("storage.backend");
+            if (storageBackend != null && storageBackend.equals("jdbc"))
+                System.setProperty("java.util.prefs.PreferencesFactory", "org.dcm4che.jdbc.prefs.PreferencesFactoryImpl");
             addJBossDirURLSystemProperties();
             String ldapPropertiesURL = StringUtils.replaceSystemProperties(
                     System.getProperty("org.dcm4chee.proxy.ldapPropertiesURL",
