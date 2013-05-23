@@ -153,7 +153,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             ForwardRule rule = new ForwardRule();
             rule.setDimse(Arrays.asList(dimseArray(ruleNode, "dcmForwardRuleDimse")));
             rule.setSopClasses(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "dcmSOPClass")));
-            rule.setCallingAETs(Arrays.asList(ruleNode.get("dcmAETitle", null)));
+            rule.setCallingAETs(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "dcmAETitle")));
             rule.setDestinationURIs(Arrays.asList(PreferencesUtils.stringArray(ruleNode, "labeledURI")));
             rule.setUseCallingAET(ruleNode.get("dcmUseCallingAETitle", null));
             rule.setExclusiveUseDefinedTC(ruleNode.getBoolean("dcmExclusiveUseDefinedTC", Boolean.FALSE));
@@ -235,7 +235,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         storeForwardRuleDimse(rule, prefs);
         PreferencesUtils.storeNotEmpty(prefs, "dcmSOPClass",
                 rule.getSopClasses().toArray(new String[rule.getSopClasses().size()]));
-        PreferencesUtils.storeNotNull(prefs, "dcmAETitle", rule.getCallingAETs());
+        PreferencesUtils.storeNotEmpty(prefs, "dcmAETitle", 
+                rule.getCallingAETs().toArray(new String[rule.getCallingAETs().size()]));
         PreferencesUtils.storeNotEmpty(prefs, "labeledURI",
                 rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         PreferencesUtils.storeNotNull(prefs, "dcmUseCallingAETitle", rule.getUseCallingAET());
@@ -364,7 +365,9 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeDiff(prefs, "dcmSOPClass",
                 ruleA.getSopClasses().toArray(new String[ruleA.getSopClasses().size()]),
                 ruleB.getSopClasses().toArray(new String[ruleB.getSopClasses().size()]));
-        PreferencesUtils.storeDiff(prefs, "dcmAETitle", ruleA.getCallingAETs(), ruleB.getCallingAETs());
+        PreferencesUtils.storeDiff(prefs, "dcmAETitle", 
+                ruleA.getCallingAETs().toArray(new String[ruleA.getCallingAETs().size()]), 
+                ruleB.getCallingAETs().toArray(new String[ruleB.getCallingAETs().size()]));
         PreferencesUtils.storeDiff(prefs, "labeledURI",
                 ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), ruleB
                         .getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));

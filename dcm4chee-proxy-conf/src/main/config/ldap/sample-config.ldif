@@ -4466,7 +4466,7 @@ dn: cn=MPPS2XrayDoseSR,dicomAETitle=DCM4CHEE-PROXY,dicomDeviceName=dcm4chee-
 objectClass: dcmForwardRule
 cn: MPPS2XrayDoseSR
 labeledURI: aet:DCM4CHEE
-dcmAETitle: [MPPSSCU]
+dcmAETitle: MPPSSCU
 dcmExclusiveUseDefinedTC: FALSE
 dcmMpps2DoseSrTemplateURI: ${jboss.server.config.url}/dcm4chee-proxy/dcm4che
  e-proxy-xr-mpps2dosesr.xsl

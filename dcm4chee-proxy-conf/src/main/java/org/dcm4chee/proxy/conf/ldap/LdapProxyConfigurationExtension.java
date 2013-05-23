@@ -257,7 +257,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         attrs.put("objectclass", "dcmForwardRule");
         storeForwardRuleDimse(attrs, rule.getDimse());
         LdapUtils.storeNotEmpty(attrs, "dcmSOPClass", rule.getSopClasses().toArray(new String[rule.getSopClasses().size()]));
-        LdapUtils.storeNotNull(attrs, "dcmAETitle", rule.getCallingAETs());
+        LdapUtils.storeNotEmpty(attrs, "dcmAETitle", rule.getCallingAETs().toArray(new String[rule.getCallingAETs().size()]));
         LdapUtils.storeNotEmpty(attrs, "labeledURI", rule.getDestinationURI().toArray(new String[rule.getDestinationURI().size()]));
         LdapUtils.storeNotNull(attrs, "dcmUseCallingAETitle", rule.getUseCallingAET());
         LdapUtils.storeBoolean(attrs, "dcmExclusiveUseDefinedTC", rule.isExclusiveUseDefinedTC());
@@ -394,22 +394,27 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         List<String> dimseB = new ArrayList<String>();
         for (Dimse dimse : ruleB.getDimse())
             dimseB.add(dimse.toString());
-        LdapUtils.storeDiff(mods, "dcmForwardRuleDimse", dimseA.toArray(new String[dimseA.size()]),
+        LdapUtils.storeDiff(mods, "dcmForwardRuleDimse", 
+                dimseA.toArray(new String[dimseA.size()]),
                 dimseB.toArray(new String[dimseB.size()]));
-        LdapUtils.storeDiff(mods, "dcmSOPClass", ruleA.getSopClasses().toArray(new String[ruleA.getSopClasses().size()]),
+        LdapUtils.storeDiff(mods, "dcmSOPClass", 
+                ruleA.getSopClasses().toArray(new String[ruleA.getSopClasses().size()]),
                 ruleB.getSopClasses().toArray(new String[ruleB.getSopClasses().size()]));
-        LdapUtils.storeDiff(mods, "dcmAETitle", ruleA.getCallingAETs(), ruleB.getCallingAETs());
+        LdapUtils.storeDiff(mods, "dcmAETitle", 
+                ruleA.getCallingAETs().toArray(new String[ruleA.getCallingAETs().size()]), 
+                ruleB.getCallingAETs().toArray(new String[ruleB.getCallingAETs().size()]));
         LdapUtils.storeDiff(mods, "labeledURI",
-                ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), ruleB
-                        .getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
-        LdapUtils.storeDiff(mods, "dcmExclusiveUseDefinedTC", ruleA.isExclusiveUseDefinedTC(),
+                ruleA.getDestinationURI().toArray(new String[ruleA.getDestinationURI().size()]), 
+                ruleB.getDestinationURI().toArray(new String[ruleB.getDestinationURI().size()]));
+        LdapUtils.storeDiff(mods, "dcmExclusiveUseDefinedTC", 
+                ruleA.isExclusiveUseDefinedTC(),
                 ruleB.isExclusiveUseDefinedTC());
         LdapUtils.storeDiff(mods, "cn", ruleA.getCommonName(), ruleB.getCommonName());
         LdapUtils.storeDiff(mods, "dcmUseCallingAETitle", ruleA.getUseCallingAET(), ruleB.getUseCallingAET());
-        LdapUtils.storeDiff(mods, "dcmScheduleDays", ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule()
-                .getDays());
-        LdapUtils.storeDiff(mods, "dcmScheduleHours", ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule()
-                .getHours());
+        LdapUtils.storeDiff(mods, "dcmScheduleDays", 
+                ruleA.getReceiveSchedule().getDays(), ruleB.getReceiveSchedule().getDays());
+        LdapUtils.storeDiff(mods, "dcmScheduleHours", 
+                ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
         LdapUtils.storeDiff(mods, "dcmMpps2DoseSrTemplateURI", ruleA.getMpps2DoseSrTemplateURI(),
                 ruleB.getMpps2DoseSrTemplateURI());
         LdapUtils.storeDiff(mods, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());

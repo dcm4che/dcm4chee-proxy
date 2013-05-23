@@ -144,7 +144,8 @@
                 <node name="MPPS2XrayDoseSR">
                   <map>
                     <entry key="cn" value="MPPS2XrayDoseSR"/>
-                    <entry key="dcmAETitle" value="[MPPSSCU]"/>
+                    <entry key="dcmAETitle.#" value="1"/>
+                    <entry key="dcmAETitle.1" value="MPPSSCU"/>
                     <entry key="dcmMpps2DoseSrTemplateURI" value="${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl"/>
                     <entry key="dcmSOPClass.#" value="1"/>
                     <entry key="dcmSOPClass.1" value="1.2.840.10008.3.1.2.3.3"/>
