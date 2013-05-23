@@ -45,9 +45,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.security.DigestOutputStream;
 import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -98,7 +96,7 @@ public class CStore extends BasicCStoreSCP {
     protected static final Logger LOG = LoggerFactory.getLogger(CStore.class);
 
     private ApplicationEntityCache aeCache;
-    
+
     public CStore(ApplicationEntityCache aeCache, String... sopClasses) {
         super(sopClasses);
         this.aeCache = aeCache;
@@ -141,8 +139,7 @@ public class CStore extends BasicCStoreSCP {
     protected void spool(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes cmd,
             PDVInputStream data, Attributes rsp) throws IOException {
         File file = createSpoolFile(proxyAEE, asAccepted);
-        MessageDigest digest = getMessageDigest(asAccepted);
-        Attributes fmi = processInputStream(proxyAEE, asAccepted, pc, cmd, data, file, digest);
+        Attributes fmi = processInputStream(proxyAEE, asAccepted, pc, cmd, data, file);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         try {
             if (forwardAssociationProperty == null && proxyAEE.isAssociationFromDestinationAET(asAccepted))
@@ -210,15 +207,15 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private Attributes processInputStream(ProxyAEExtension proxyAEE, Association as, PresentationContext pc,
-            Attributes rq, PDVInputStream data, File file, MessageDigest digest) throws FileNotFoundException,
-            IOException {
+            Attributes rq, PDVInputStream data, File file) throws FileNotFoundException, IOException {
         LOG.debug("{}: write {}", as, file);
         FileOutputStream fout = new FileOutputStream(file);
-        DigestOutputStream digestOutputStream = new DigestOutputStream(fout, digest);
-        BufferedOutputStream bout = new BufferedOutputStream(digest == null ? fout : digestOutputStream);
+        BufferedOutputStream bout = new BufferedOutputStream(fout);
         DicomOutputStream out = new DicomOutputStream(bout, UID.ExplicitVRLittleEndian);
-        Attributes fmi = createFileMetaInformation(as, rq, pc.getTransferSyntax());
+        String cuid = rq.getString(Tag.AffectedSOPClassUID);
+        String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
         String tsuid = pc.getTransferSyntax();
+        Attributes fmi = as.createFileMetaInformation(iuid, cuid, tsuid);
         Attributes attrs = data.readDataset(tsuid);
         attrs = proxyAEE.coerceDataset(as, Role.SCU, Dimse.C_STORE_RQ, attrs, rq, as.getApplicationEntity().getDevice()
                 .getDeviceExtension(ProxyDeviceExtension.class));
@@ -229,7 +226,6 @@ public class CStore extends BasicCStoreSCP {
         } finally {
             out.close();
             bout.close();
-            digestOutputStream.close();
         }
         Properties prop = new Properties();
         prop.setProperty("hostname", as.getConnection().getHostname());
@@ -291,7 +287,7 @@ public class CStore extends BasicCStoreSCP {
             for (ForwardRule rule : forwardRules) {
                 List<String> destinationAETs = new ArrayList<String>();
                 if (rule.containsTemplateURI()) {
-                    Attributes data = parse(asAccepted, file);
+                    Attributes data = proxyAEE.parseAttributesWithLazyBulkData(asAccepted, file);
                     destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, data);
                 } else
                     destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, null);
