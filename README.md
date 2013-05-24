@@ -196,10 +196,10 @@ add to the according container configuration (e.g. standalone.xml):
 **JDBC Preferences**
 
 If the preferences data is supposed to be read via the dcm4che-jdbc-prefs project
-from a database, specify the following system property in the container configuration:
+from a database, specify the following system property in the container configuration (e.g. standalone.xml):
 ```xml
 <system-properties>
-    <property name="storage.backend" value="jdbc"/>
+    <property name="java.util.prefs.PreferencesFactory" value="org.dcm4che.jdbc.prefs.PreferencesFactoryImpl"/>
 </system-properties>
 ```
 

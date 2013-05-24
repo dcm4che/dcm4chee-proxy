@@ -104,9 +104,6 @@ public class ProxyServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         try {
-            String storageBackend = System.getProperty("storage.backend");
-            if (storageBackend != null && storageBackend.equals("jdbc"))
-                System.setProperty("java.util.prefs.PreferencesFactory", "org.dcm4che.jdbc.prefs.PreferencesFactoryImpl");
             addJBossDirURLSystemProperties();
             String ldapPropertiesURL = StringUtils.replaceSystemProperties(
                     System.getProperty("org.dcm4chee.proxy.ldapPropertiesURL",
@@ -129,7 +126,11 @@ public class ProxyServlet extends HttpServlet {
                 dicomConfig = ldapConfig;
                 this.hl7Config = hl7Conf;
             } catch (FileNotFoundException e) {
-                LOG.info("Using Java Preferences as Configuration Backend");
+                String pf = System.getProperty("java.util.prefs.PreferencesFactory");
+                if (pf != null && pf.equals("org.dcm4che.jdbc.prefs.PreferencesFactoryImpl"))
+                    LOG.info("Using JDBC Preferences as Configuration Backend");
+                else
+                    LOG.info("Using Java Preferences as Configuration Backend");
                 PreferencesDicomConfiguration prefsConfig = new PreferencesDicomConfiguration();
                 PreferencesHL7Configuration hl7Conf = new PreferencesHL7Configuration();
                 prefsConfig.addDicomConfigurationExtension(hl7Conf);
