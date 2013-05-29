@@ -136,7 +136,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 "1.2.840.10008.5.1.4.1.2.3.3");
         this.cmove = new CMove(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.2", "1.2.840.10008.5.1.4.1.2.2.2",
                 "1.2.840.10008.5.1.4.1.2.3.2");
-        this.mpps = new Mpps();
+        this.mpps = new Mpps(device.getDeviceExtension(AuditLogger.class));
         device.setDimseRQHandler(serviceRegistry());
         device.setAssociationHandler(new ProxyAssociationHandler(aeCache));
         setConfigurationStaleTimeout();

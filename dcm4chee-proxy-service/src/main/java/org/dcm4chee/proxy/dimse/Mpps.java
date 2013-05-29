@@ -42,6 +42,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Properties;
 
@@ -53,6 +55,13 @@ import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 
+import org.dcm4che.audit.AuditMessage;
+import org.dcm4che.audit.AuditMessages;
+import org.dcm4che.audit.AuditMessages.EventActionCode;
+import org.dcm4che.audit.AuditMessages.EventID;
+import org.dcm4che.audit.AuditMessages.EventOutcomeIndicator;
+import org.dcm4che.audit.ParticipantObjectDescription;
+import org.dcm4che.audit.SOPClass;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Tag;
@@ -68,6 +77,7 @@ import org.dcm4che.net.Commands;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.Status;
+import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
@@ -85,9 +95,11 @@ import org.slf4j.LoggerFactory;
 public class Mpps extends DicomService {
 
     protected static final Logger LOG = LoggerFactory.getLogger(Mpps.class);
+    private static AuditLogger logger;
 
-    public Mpps() {
+    public Mpps(AuditLogger logger) {
         super(UID.ModalityPerformedProcedureStepSOPClass);
+        Mpps.logger = logger;
     }
 
     @Override
@@ -136,8 +148,9 @@ public class Mpps extends DicomService {
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no matching forward rule");
 
-        Attributes rsp = (dimse == Dimse.N_CREATE_RQ) ? Commands.mkNCreateRSP(cmd, Status.Success) : Commands
-                .mkNSetRSP(cmd, Status.Success);
+        Attributes rsp = (dimse == Dimse.N_CREATE_RQ) 
+                ? Commands.mkNCreateRSP(cmd, Status.Success) 
+                : Commands.mkNSetRSP(cmd, Status.Success);
         String iuid = rsp.getString(Tag.AffectedSOPInstanceUID);
         String cuid = rsp.getString(Tag.AffectedSOPClassUID);
         String tsuid = UID.ExplicitVRLittleEndian;
@@ -196,18 +209,28 @@ public class Mpps extends DicomService {
         Attributes ncreateAttrs = proxyAEE.parseAttributesWithLazyBulkData(as, ncreateFile);
         Attributes mergedAttrs = new Attributes(data);
         mergedAttrs.merge(ncreateAttrs);
-        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, mergedAttrs, ppsSOPIUID, iuid, rule);
+        Properties prop = proxyAEE.getFileInfoProperties(ncreateFile);
+        Calendar timeStamp = new GregorianCalendar();
+        String patientID = ncreateAttrs.getString(Tag.PatientID);
+        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, mergedAttrs, ppsSOPIUID, iuid, rule, prop, timeStamp, patientID);
         String doseIuid = UIDUtils.createUID();
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
         doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
         doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrFmi, doseSrData, proxyAEE.getCStoreDirectoryPath(), calledAET,
-                rule);
+        File doseSrFile = createFile(as, dimse, doseSrFmi, doseSrData, proxyAEE.getCStoreDirectoryPath(), calledAET, rule);
         LOG.info("{}: created Dose SR file {}", as, doseSrFile.getPath());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
+        AuditMessage msg = createAuditMessage(
+                proxyAEE.getApplicationEntity(), 
+                timeStamp,
+                EventOutcomeIndicator.Success,
+                prop.getProperty("hostname"),
+                patientID,
+                doseSrData.getString(Tag.StudyInstanceUID));
+        writeAuditLogMessage(as, msg, timeStamp);
         deleteFile(as, ncreateFile);
     }
 
@@ -237,7 +260,8 @@ public class Mpps extends DicomService {
     }
 
     private Attributes transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String ppsSOPIUID,
-            String iuid, ForwardRule rule) throws TransformerFactoryConfigurationError, DicomServiceException {
+            String iuid, ForwardRule rule, Properties prop, Calendar timeStamp, String patientID) throws TransformerFactoryConfigurationError,
+            IOException {
         try {
             Templates templates = pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)
                     .getTemplates(rule.getMpps2DoseSrTemplateURI());
@@ -263,8 +287,16 @@ public class Mpps extends DicomService {
             LOG.error(as + ": error converting MPPS to Dose SR: " + e.getMessage());
             if(LOG.isDebugEnabled())
                 e.printStackTrace();
+            AuditMessage msg = createAuditMessage(
+                    pae.getApplicationEntity(), 
+                    timeStamp,
+                    EventOutcomeIndicator.SeriousFailure,
+                    prop.getProperty("hostname"),
+                    patientID,
+                    data.getString(Tag.StudyInstanceUID));
+            writeAuditLogMessage(as, msg, timeStamp);
             throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
-        }
+        } 
     }
 
     protected File createFile(Association as, Dimse dimse, Attributes fmi, Attributes data, File baseDir,
@@ -390,5 +422,64 @@ public class Mpps extends DicomService {
             }
         };
         asInvoked.nset(cuid, iuid, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+    }
+
+    private AuditMessage createAuditMessage(ApplicationEntity ae, Calendar timeStamp, String eventOutcomeIndicator,
+            String proxyHostname, String patientID, String studyIUID) {
+        AuditMessage msg = new AuditMessage();
+        msg.setEventIdentification(AuditMessages.createEventIdentification(
+                EventID.DICOMInstancesAccessed, 
+                EventActionCode.Create, 
+                timeStamp, 
+                eventOutcomeIndicator, 
+                null));
+        msg.getActiveParticipant().add(AuditMessages.createActiveParticipant(
+                proxyHostname, 
+                AuditMessages.alternativeUserIDForAETitle(ae.getAETitle()),
+                null, 
+                false, 
+                null, 
+                null, 
+                null, 
+                AuditMessages.RoleIDCode.Application));
+        ParticipantObjectDescription pod = new ParticipantObjectDescription();
+        SOPClass sc = new SOPClass();
+        sc.setUID(UID.XRayRadiationDoseSRStorage);
+        sc.setNumberOfInstances(1);
+        pod.getSOPClass().add(sc);
+        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
+                studyIUID, 
+                AuditMessages.ParticipantObjectIDTypeCode.StudyInstanceUID, 
+                null, 
+                null, 
+                AuditMessages.ParticipantObjectTypeCode.SystemObject, 
+                AuditMessages.ParticipantObjectTypeCodeRole.Report, 
+                null, 
+                null, 
+                pod));
+        msg.getParticipantObjectIdentification().add(AuditMessages.createParticipantObjectIdentification(
+                patientID == null ? "<UNKNOWN>" : patientID,
+                AuditMessages.ParticipantObjectIDTypeCode.PatientNumber,
+                null,
+                null,
+                AuditMessages.ParticipantObjectTypeCode.Person,
+                AuditMessages.ParticipantObjectTypeCodeRole.Patient,
+                null,
+                null,
+                null));
+        msg.getAuditSourceIdentification().add(logger.createAuditSourceIdentification());
+        return msg;
+    }
+
+    private void writeAuditLogMessage(Association as, AuditMessage msg, Calendar timeStamp) {
+        try {
+            if (LOG.isDebugEnabled())
+                LOG.debug("AuditMessage: " + AuditMessages.toXML(msg));
+            logger.write(timeStamp, msg);
+        } catch (Exception e) {
+            LOG.error(as + ": error writing audit log message: " + e.getMessage());
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
     }
 }
