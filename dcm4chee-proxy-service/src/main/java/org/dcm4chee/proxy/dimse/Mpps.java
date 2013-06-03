@@ -64,6 +64,7 @@ import org.dcm4che.audit.ParticipantObjectDescription;
 import org.dcm4che.audit.SOPClass;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
@@ -287,13 +288,15 @@ public class Mpps extends DicomService {
             LOG.error(as + ": error converting MPPS to Dose SR: " + e.getMessage());
             if(LOG.isDebugEnabled())
                 e.printStackTrace();
+            Sequence seq = data.getSequence(Tag.ScheduledStepAttributesSequence);
+            String studyIUID = seq.get(0).getString(Tag.StudyInstanceUID);
             AuditMessage msg = createAuditMessage(
                     pae.getApplicationEntity(), 
                     timeStamp,
                     EventOutcomeIndicator.SeriousFailure,
                     prop.getProperty("hostname"),
                     patientID,
-                    data.getString(Tag.StudyInstanceUID));
+                    studyIUID);
             writeAuditLogMessage(as, msg, timeStamp);
             throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
         } 
