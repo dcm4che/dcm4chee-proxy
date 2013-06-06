@@ -474,6 +474,16 @@ dicomAssociationInitiator: TRUE
 dicomNetworkConnectionReference: cn=dicom,dicomDeviceName=movescu,cn=Devices
  ,cn=DICOM Configuration,dc=example,dc=com
 
+dn: cn=Unique HL7 Application Names Registry,cn=DICOM Configuration,dc=examp
+ le,dc=com
+objectClass: hl7UniqueApplicationNamesRegistryRoot
+cn: Unique HL7 Application Names Registry
+
+dn: hl7ApplicationName=HL7RCV^DCM4CHEE,cn=Unique HL7 Application Names Regis
+ try,cn=DICOM Configuration,dc=example,dc=com
+objectClass: hl7UniqueApplicationName
+hl7ApplicationName: HL7RCV^DCM4CHEE
+
 dn: dicomDeviceName=hl7snd,cn=Devices,cn=DICOM Configuration,dc=example,dc=c
  om
 objectClass: pkiUser

@@ -9,7 +9,7 @@ if "%OS%" == "Windows_NT"  setlocal
 set MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
 set MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
 
-set DCM4CHE_VERSION=3.0.2-SNAPSHOT
+set DCM4CHE_VERSION=3.2.1
 
 set DIRNAME=.\
 if "%OS%" == "Windows_NT" set DIRNAME=%~dp0%

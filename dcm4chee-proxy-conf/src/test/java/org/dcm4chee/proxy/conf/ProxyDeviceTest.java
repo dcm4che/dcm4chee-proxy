@@ -51,6 +51,7 @@ import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.conf.api.ConfigurationNotFoundException;
 import org.dcm4che.conf.api.DicomConfiguration;
+import org.dcm4che.conf.api.hl7.HL7Configuration;
 import org.dcm4che.conf.ldap.LdapDicomConfiguration;
 import org.dcm4che.conf.ldap.audit.LdapAuditLoggerConfiguration;
 import org.dcm4che.conf.ldap.audit.LdapAuditRecordRepositoryConfiguration;
@@ -195,6 +196,7 @@ public class ProxyDeviceTest {
             "ADT^A40", "ORM^O01" };
 
     private DicomConfiguration config;
+    private HL7Configuration hl7Config;
     private KeyStore keystore;
 
     @Before
@@ -206,19 +208,23 @@ public class ProxyDeviceTest {
 
     private DicomConfiguration newLdapProxyConfiguration() throws ConfigurationException {
         LdapDicomConfiguration config = new LdapDicomConfiguration();
-        config.addDicomConfigurationExtension(new LdapHL7Configuration());
+        LdapHL7Configuration hl7Config = new LdapHL7Configuration();
+        config.addDicomConfigurationExtension(hl7Config);
         config.addDicomConfigurationExtension(new LdapProxyConfigurationExtension());
         config.addDicomConfigurationExtension(new LdapAuditLoggerConfiguration());
         config.addDicomConfigurationExtension(new LdapAuditRecordRepositoryConfiguration());
+        this.hl7Config = hl7Config;
         return config;
     }
 
     private DicomConfiguration newPreferencesProxyConfiguration() {
         PreferencesDicomConfiguration config = new PreferencesDicomConfiguration();
-        config.addDicomConfigurationExtension(new PreferencesHL7Configuration());
+        PreferencesHL7Configuration hl7Config = new PreferencesHL7Configuration();
+        config.addDicomConfigurationExtension(hl7Config);
         config.addDicomConfigurationExtension(new PreferencesProxyConfigurationExtension());
         config.addDicomConfigurationExtension(new PreferencesAuditLoggerConfiguration());
         config.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
+        this.hl7Config = hl7Config;
         return config;
     }
 
@@ -226,6 +232,7 @@ public class ProxyDeviceTest {
         config.unregisterAETitle("DCM4CHEE-PROXY");
         for (String aet : OTHER_AES)
             config.unregisterAETitle(aet);
+        hl7Config.unregisterHL7Application(PIX_MANAGER);
         try {
             config.removeDevice("dcm4chee-proxy");
         } catch (ConfigurationNotFoundException e) {
@@ -252,6 +259,7 @@ public class ProxyDeviceTest {
             config.registerAETitle(aet);
             config.persist(createDevice(config, OTHER_DEVICES[i], aet, "localhost", 11112 + i, 2762 + i));
         }
+        hl7Config.registerHL7Application(PIX_MANAGER);
         for (int i = OTHER_AES.length; i < OTHER_DEVICES.length; i++)
             config.persist(createDevice(config, OTHER_DEVICES[i]));
         config.persist(createHL7Device("hl7rcv", SITE_A, INST_A, PIX_MANAGER, "localhost", 2576, 12576));
