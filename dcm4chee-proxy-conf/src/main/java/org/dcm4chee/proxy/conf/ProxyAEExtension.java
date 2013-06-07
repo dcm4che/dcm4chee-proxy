@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -504,8 +505,8 @@ public class ProxyAEExtension extends AEExtension {
                     ac.getURI(), 
                     ac.getDIMSE(), 
                     ac.getRole(), 
-                    ac.getAETitles() == null ? "" : ", aet=" + ac.getAETitles(),
-                    ac.getSOPClasses() == null ? "" : ", sopClass=" + ac.getSOPClasses()
+                    ac.getAETitles().length == 0 ? "" : ", aet=" + Arrays.toString(ac.getAETitles()),
+                    ac.getSOPClasses().length == 0 ? "" : ", sopClass=" + Arrays.toString(ac.getSOPClasses())
         });
         Attributes modify = new Attributes();
         try {
