@@ -89,8 +89,6 @@ public class ForwardDimseRQ {
     private int NumberOfCompletedSuboperations = 0;
     private int NumberOfFailedSuboperations = 0;
     private int NumberOfWarningSuboperations = 0;
-    private IDWithIssuer requestedPatientIDWithIssuer;
-    private boolean adjustPatientID = false;
     private PIXConsumer pixConsumer;
     private ApplicationEntityCache aeCache;
 
@@ -107,8 +105,8 @@ public class ForwardDimseRQ {
         waitForOutstandingRSP = new CountDownLatch(fwdAssocs.length);
     }
 
-    private void forwardDimseRQ(final Association asInvoked, Attributes coercedData) throws IOException,
-            InterruptedException {
+    private void forwardDimseRQ(final Association asInvoked, Attributes coercedData, final boolean adjustPatientID)
+            throws IOException, InterruptedException {
         String tsuid = pc.getTransferSyntax();
         int priority = rq.getInt(Tag.Priority, 0);
         ApplicationEntity ae = asAccepted.getApplicationEntity();
@@ -161,9 +159,8 @@ public class ForwardDimseRQ {
             private void writeDimseRSP(PresentationContext pc, Attributes cmd, Attributes rspData) {
                 try {
                     if (adjustPatientID) {
-                        rspData.setString(Tag.PatientID, VR.LO, requestedPatientIDWithIssuer.id);
-                        rspData.setString(Tag.IssuerOfPatientID, VR.LO,
-                                requestedPatientIDWithIssuer.issuer.getLocalNamespaceEntityID());
+                        rspData.setString(Tag.PatientID, VR.LO, data.getString(Tag.PatientID));
+                        rspData.setString(Tag.IssuerOfPatientID, VR.LO, data.getString(Tag.IssuerOfPatientID));
                     }
                     if (rspData != null) {
                         if (dimse == Dimse.C_FIND_RQ)
@@ -302,60 +299,80 @@ public class ForwardDimseRQ {
         for (Association fwdAssoc : fwdAssocs) {
             IDWithIssuer[] pids = processPatientIDs(proxyAEE, fwdRules, fwdAssoc);
             if (pids.length == 0)
-                coerceAndForward(proxyAEE, fwdAssoc);
+                coerceAndForward(proxyAEE, fwdAssoc, data, false);
             else
                 forwardDimseRQPerPatientID(proxyAEE, fwdAssoc, pids);
         }
     }
 
-    private void forwardDimseRQPerPatientID(ProxyAEExtension pae, Association fwdAssoc, IDWithIssuer[] pids)
+    private void forwardDimseRQPerPatientID(ProxyAEExtension proxyAEE, Association fwdAssoc, IDWithIssuer[] pids)
             throws IOException, InterruptedException {
-        requestedPatientIDWithIssuer = new IDWithIssuer(data.getString(Tag.PatientID),
-                data.getString(Tag.IssuerOfPatientID));
-        adjustPatientID = true;
         waitForOutstandingRSP = new CountDownLatch((int) waitForOutstandingRSP.getCount() + (pids.length - 1));
+        LOG.debug("{}: execute {} for PatientIDs {}", new Object[]{ fwdAssoc, dimse, pidsToString(pids)});
         for (IDWithIssuer pid : pids) {
-            data.setString(Tag.PatientID, VR.LO, pid.id);
-            data.setString(Tag.IssuerOfPatientID, VR.LO, pid.issuer.getLocalNamespaceEntityID());
-            coerceAndForward(pae, fwdAssoc);
+            Attributes newPidAttrs = new Attributes(data);
+            newPidAttrs.setString(Tag.PatientID, VR.LO, pid.id);
+            newPidAttrs.setString(Tag.IssuerOfPatientID, VR.LO, pid.issuer.getLocalNamespaceEntityID());
+            coerceAndForward(proxyAEE, fwdAssoc, newPidAttrs, true);
         }
     }
 
-    private void coerceAndForward(ProxyAEExtension pae, Association fwdAssoc) throws IOException, InterruptedException {
-        Attributes coercedData = new Attributes(pae.coerceDataset(fwdAssoc, Role.SCP, dimse, data, rq, asAccepted
-                .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)));
-        forwardDimseRQ(fwdAssoc, coercedData);
+    private String pidsToString(IDWithIssuer[] pids) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("[");
+        int i = 1;
+        for (IDWithIssuer pid : pids) {
+            sb.append(pid.toString());
+            if (i < pids.length)
+                sb.append(", ");
+            ++i;
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
-    private IDWithIssuer[] processPatientIDs(ProxyAEExtension pae, List<ForwardRule> fwdRules, Association fwdAssoc) {
+    private void coerceAndForward(ProxyAEExtension proxyAEE, Association fwdAssoc, Attributes attrs, boolean adjustPatientID)
+            throws IOException, InterruptedException {
+        Attributes coercedData = new Attributes(proxyAEE.coerceDataset(fwdAssoc, Role.SCP, dimse, attrs, rq, asAccepted
+                .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)));
+        forwardDimseRQ(fwdAssoc, coercedData, adjustPatientID);
+    }
+
+    private IDWithIssuer[] processPatientIDs(ProxyAEExtension proxyAEE, List<ForwardRule> fwdRules, Association fwdAssoc) {
         IDWithIssuer[] pids = IDWithIssuer.EMPTY;
         String patientID = data.getString(Tag.PatientID);
         if (patientID == null || patientID.isEmpty()) {
-            LOG.debug("{}: cannot execute PIX Query: no PatientID in dataset", fwdAssoc);
+            LOG.debug("{}: no PatientID in dataset", fwdAssoc);
             return pids;
         }
         for (ForwardRule fwr : fwdRules)
             if (fwr.isRunPIXQuery() && fwr.getDestinationAETitles().contains(fwdAssoc.getCalledAET())) {
-                try {
-                    LOG.debug("{}: run PIX Query based forward rule \"{}\" using PatientID \"{}\"", new Object[] {
-                            fwdAssoc, fwr.getCommonName(), patientID });
-                    pids = getOtherPatientIDs(fwdAssoc, pae, data);
-                } catch (Exception e) {
-                    LOG.error("Unable to execute PIX Query: " + e.getMessage());
+                Object pidsFromAssoc = asAccepted.getProperty(ProxyAEExtension.PIDS);
+                if (pidsFromAssoc != null) {
+                    pids = (IDWithIssuer[]) pidsFromAssoc;
+                } else {
+                    try {
+                        LOG.debug("{}: run PIX Query based on forward rule \"{}\" using PatientID \"{}\"",
+                                new Object[] { fwdAssoc, fwr.getCommonName(), patientID });
+                        pids = getOtherPatientIDs(fwdAssoc, proxyAEE);
+                        asAccepted.setProperty(ProxyAEExtension.PIDS, pids);
+                    } catch (Exception e) {
+                        LOG.error("Unable to execute PIX Query: " + e.getMessage());
+                    }
                 }
                 break;
             }
         return pids;
     }
 
-    private IDWithIssuer[] getOtherPatientIDs(Association as, ProxyAEExtension pae, Attributes attrs)
+    private IDWithIssuer[] getOtherPatientIDs(Association as, ProxyAEExtension proxyAEE)
             throws ConfigurationException, IncompatibleConnectionException, IOException, GeneralSecurityException {
         IDWithIssuer[] pids = IDWithIssuer.EMPTY;
         Issuer issuerOfPatientID = null;
-        String requestedIssuer = attrs.getString(Tag.IssuerOfPatientID);
+        String requestedIssuer = data.getString(Tag.IssuerOfPatientID);
         if (requestedIssuer == null) {
             String deviceName = asAccepted.getApplicationEntity().getDevice().getDeviceName();
-            LOG.debug("{}: IssuerOfPatientID not in dataset, retrieve from device configuration \"{}\"", as, deviceName);
+            LOG.debug("{}: IssuerOfPatientID not in dataset, will now try to retrieve from device configuration \"{}\"", as, deviceName);
             String callingAET = asAccepted.getAAssociateAC().getCallingAET();
             ApplicationEntity issuerAET = aeCache.findApplicationEntity(callingAET);
             issuerOfPatientID = issuerAET.getDevice().getIssuerOfPatientID();
@@ -365,13 +382,14 @@ public class ForwardDimseRQ {
             }
             if (LOG.isDebugEnabled())
                 LOG.debug("{}: retrieved IssuerOfPatientID = \"{}\" from configuration", as, issuerOfPatientID.toString());
+            data.setString(Tag.IssuerOfPatientID, VR.LO, issuerOfPatientID.toString());
         } else {
             LOG.debug("{}: using IssuerOfPatientID = \"{}\" from dataset", as, requestedIssuer);
             issuerOfPatientID = new Issuer(requestedIssuer);
         }
-        IDWithIssuer pid = IDWithIssuer.pidWithIssuer(attrs, issuerOfPatientID);
+        IDWithIssuer pid = IDWithIssuer.pidWithIssuer(data, issuerOfPatientID);
         if (pid != null)
-            pids = pixConsumer.pixQuery(pae, pid);
+            pids = pixConsumer.pixQuery(proxyAEE, pid);
         else
             LOG.error("{}: unexpected error: IDWithIssuer == null", as);
         return pids;
