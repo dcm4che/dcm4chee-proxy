@@ -52,12 +52,12 @@ public interface ProxyMBean {
     @Path("running")
     boolean isRunning();
 
-    @GET
-    @Path("start")
+//    @GET
+//    @Path("start")
     void start() throws Exception;
 
-    @GET
-    @Path("stop")
+//    @GET
+//    @Path("stop")
     void stop();
 
     @GET
