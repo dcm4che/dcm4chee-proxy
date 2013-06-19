@@ -751,7 +751,7 @@ public class ProxyAEExtension extends AEExtension {
         DicomInputStream in = null;
         try {
             in = new DicomInputStream(file);
-            in.setIncludeBulkData(IncludeBulkData.LOCATOR);
+            in.setIncludeBulkData(IncludeBulkData.URI);
             return in.readDataset(-1, -1);
         } catch (IOException e) {
             LOG.warn(as + ": Failed to decode dataset:", e);

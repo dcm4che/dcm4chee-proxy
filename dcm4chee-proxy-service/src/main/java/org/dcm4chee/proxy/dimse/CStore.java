@@ -433,7 +433,7 @@ public class CStore extends BasicCStoreSCP {
         Attributes src;
         DicomInputStream dis = new DicomInputStream(dataFile);
         try {
-            dis.setIncludeBulkData(IncludeBulkData.LOCATOR);
+            dis.setIncludeBulkData(IncludeBulkData.URI);
             src = dis.readDataset(-1, -1);
         } finally {
             dis.close();

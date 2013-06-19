@@ -885,7 +885,7 @@ public class ForwardFiles {
         Attributes src;
         DicomInputStream dis = new DicomInputStream(file);
         try {
-            dis.setIncludeBulkData(IncludeBulkData.LOCATOR);
+            dis.setIncludeBulkData(IncludeBulkData.URI);
             src = dis.readDataset(-1, -1);
         } finally {
             dis.close();
