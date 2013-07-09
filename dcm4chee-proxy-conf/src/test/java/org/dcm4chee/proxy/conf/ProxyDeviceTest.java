@@ -383,6 +383,8 @@ public class ProxyDeviceTest {
         forwardRuleMPPS2DoseSR.setSopClasses(sopClass);
         forwardRuleMPPS2DoseSR
                 .setMpps2DoseSrTemplateURI("${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-mpps2dosesr.xsl");
+        forwardRuleMPPS2DoseSR
+                .setDoseSrIODTemplateURI("${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-dosesr-iod.xml");
         forwardRuleMPPS2DoseSR.setDescription("Example ForwardRule for MPPS to Dose SR conversion");
         forwardRules.add(forwardRuleMPPS2DoseSR);
 

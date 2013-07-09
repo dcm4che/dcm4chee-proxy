@@ -5,7 +5,11 @@
   <xsl:param name="DeviceObserverUID" />
   <xsl:param name="PerfomedProcedureStepSOPInstanceUID" />
   <xsl:template match="/">
-    <!-- Important: Configure 'Procedure Intent', 'Irradiation Event Type' and 'Acquisition Plane' according to Procedure and Modality -->
+    <!-- Important: Configure 
+        'Procedure Intent', 
+        'Irradiation Event Type' and 
+        'Acquisition Plane' 
+        according to Procedure and Modality -->
     <NativeDicomModel xml-space="preserved">
       <DicomAttribute keyword="SOPClassUID" tag="00080016" vr="UI">
         <Value number="1">1.2.840.10008.5.1.4.1.1.88.67</Value>

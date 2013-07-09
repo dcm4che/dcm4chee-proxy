@@ -239,6 +239,16 @@ m-name: dcmDeleteFailedDataWithoutRetryConfiguration
 m-description: Boolean : delete files based on error without retry configuration after first failed forwarding
 m-singleValue: TRUE
 
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.25, ou=attributeTypes, cn=dcm4chee-proxy, ou=sch
+ ema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.25
+m-name: doseSrIODTemplateURI
+m-description: String : URI of Dose SR validation template
+m-singleValue: TRUE
+
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit
 objectclass: top
@@ -353,6 +363,7 @@ m-may: dcmUseCallingAETitle
 m-may: dcmScheduleDays
 m-may: dcmScheduleHours
 m-may: dcmMpps2DoseSrTemplateURI
+m-may: doseSrIODTemplateURI
 m-may: dcmPIXQuery
 m-may: dicomDescription
 

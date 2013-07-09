@@ -61,6 +61,7 @@ public class ForwardRule implements Serializable {
     private boolean exclusiveUseDefinedTC;
     private String commonName;
     private String mpps2DoseSrTemplateURI;
+    private String doseSrIODTemplateURI;
     private boolean runPIXQuery;
     private String description;
 
@@ -152,6 +153,14 @@ public class ForwardRule implements Serializable {
 
     public void setMpps2DoseSrTemplateURI(String conversionUri) {
         this.mpps2DoseSrTemplateURI = conversionUri;
+    }
+
+    public String getDoseSrIODTemplateURI() {
+        return doseSrIODTemplateURI;
+    }
+
+    public void setDoseSrIODTemplateURI(String doseSrValidateIODTemplateURI) {
+        this.doseSrIODTemplateURI = doseSrValidateIODTemplateURI;
     }
 
     public boolean isRunPIXQuery() {

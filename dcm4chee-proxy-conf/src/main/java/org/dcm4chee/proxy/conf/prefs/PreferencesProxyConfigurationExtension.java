@@ -163,6 +163,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             schedule.setHours(ruleNode.get("dcmScheduleHours", null));
             rule.setReceiveSchedule(schedule);
             rule.setMpps2DoseSrTemplateURI(ruleNode.get("dcmMpps2DoseSrTemplateURI", null));
+            rule.setDoseSrIODTemplateURI(ruleNode.get("doseSrIODTemplateURI", null));
             rule.setRunPIXQuery(ruleNode.getBoolean("dcmPIXQuery", Boolean.FALSE));
             rule.setDescription(ruleNode.get("dicomDescription", null));
             rules.add(rule);
@@ -245,6 +246,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         PreferencesUtils.storeNotNull(prefs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         PreferencesUtils.storeNotNull(prefs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         PreferencesUtils.storeNotNull(prefs, "dcmMpps2DoseSrTemplateURI", rule.getMpps2DoseSrTemplateURI());
+        PreferencesUtils.storeNotNull(prefs, "doseSrIODTemplateURI", rule.getDoseSrIODTemplateURI());
         PreferencesUtils.storeNotDef(prefs, "dcmPIXQuery", rule.isRunPIXQuery(), Boolean.FALSE);
         PreferencesUtils.storeNotNull(prefs, "dicomDescription", rule.getDescription());
     }
@@ -381,6 +383,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
                 .getReceiveSchedule().getHours());
         PreferencesUtils.storeDiff(prefs, "dcmMpps2DoseSrTemplateURI", ruleA.getMpps2DoseSrTemplateURI(),
                 ruleB.getMpps2DoseSrTemplateURI());
+        PreferencesUtils.storeDiff(prefs, "doseSrIODTemplateURI", ruleA.getDoseSrIODTemplateURI(),
+                ruleB.getDoseSrIODTemplateURI());
         PreferencesUtils.storeDiff(prefs, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
         PreferencesUtils.storeDiff(prefs, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
     }

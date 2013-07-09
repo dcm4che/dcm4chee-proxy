@@ -167,6 +167,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
                 schedule.setHours(LdapUtils.stringValue(attrs.get("dcmScheduleHours"), null));
                 rule.setReceiveSchedule(schedule);
                 rule.setMpps2DoseSrTemplateURI(LdapUtils.stringValue(attrs.get("dcmMpps2DoseSrTemplateURI"), null));
+                rule.setDoseSrIODTemplateURI(LdapUtils.stringValue(attrs.get("doseSrIODTemplateURI"), null));
                 rule.setRunPIXQuery(LdapUtils.booleanValue(attrs.get("dcmPIXQuery"), Boolean.FALSE));
                 rule.setDescription(LdapUtils.stringValue(attrs.get("dicomDescription"), null));
                 rules.add(rule);
@@ -265,6 +266,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         LdapUtils.storeNotNull(attrs, "dcmScheduleDays", rule.getReceiveSchedule().getDays());
         LdapUtils.storeNotNull(attrs, "dcmScheduleHours", rule.getReceiveSchedule().getHours());
         LdapUtils.storeNotNull(attrs, "dcmMpps2DoseSrTemplateURI", rule.getMpps2DoseSrTemplateURI());
+        LdapUtils.storeNotNull(attrs, "doseSrIODTemplateURI", rule.getDoseSrIODTemplateURI());
         LdapUtils.storeBoolean(attrs, "dcmPIXQuery", rule.isRunPIXQuery());
         LdapUtils.storeNotNull(attrs, "dicomDescription", rule.getDescription());
         return attrs;
@@ -417,6 +419,8 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
                 ruleA.getReceiveSchedule().getHours(), ruleB.getReceiveSchedule().getHours());
         LdapUtils.storeDiff(mods, "dcmMpps2DoseSrTemplateURI", ruleA.getMpps2DoseSrTemplateURI(),
                 ruleB.getMpps2DoseSrTemplateURI());
+        LdapUtils.storeDiff(mods, "doseSrIODTemplateURI", ruleA.getDoseSrIODTemplateURI(),
+                ruleB.getDoseSrIODTemplateURI());
         LdapUtils.storeDiff(mods, "dcmPIXQuery", ruleA.isRunPIXQuery(), ruleB.isRunPIXQuery());
         LdapUtils.storeDiff(mods, "dicomDescription", ruleA.getDescription(), ruleB.getDescription());
         return mods;

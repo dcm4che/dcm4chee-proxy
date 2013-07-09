@@ -64,10 +64,12 @@ import org.dcm4che.audit.ParticipantObjectDescription;
 import org.dcm4che.audit.SOPClass;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.IOD;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.data.VR;
+import org.dcm4che.data.ValidationResult;
 import org.dcm4che.io.ContentHandlerAdapter;
 import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.io.SAXWriter;
@@ -82,6 +84,7 @@ import org.dcm4che.net.audit.AuditLogger;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che.util.StringUtils;
 import org.dcm4che.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
@@ -179,7 +182,7 @@ public class Mpps extends DicomService {
                 processMpps2DoseSRConversion(as, dimse, fmi, data, iuid, dir, calledAET, rule);
             } else {
                 File dir = (dimse == Dimse.N_CREATE_RQ) ? pae.getNCreateDirectoryPath() : pae.getNSetDirectoryPath();
-                File file = createFile(as, dimse, fmi, data, dir, calledAET, rule);
+                File file = createFile(as, fmi, data, dir, calledAET, rule);
                 as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
                 rename(as, file);
             }
@@ -189,7 +192,7 @@ public class Mpps extends DicomService {
     private void processMpps2DoseSRConversion(Association as, Dimse dimse, Attributes fmi, Attributes data, String iuid,
             File baseDir, String calledAET, ForwardRule rule) throws TransformerFactoryConfigurationError, IOException {
         if (dimse == Dimse.N_CREATE_RQ) {
-            File file = createFile(as, dimse, fmi, data, baseDir, calledAET, rule);
+            File file = createFile(as, fmi, data, baseDir, calledAET, rule);
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".ncreate");
             rename(as, file);
         } else
@@ -213,14 +216,16 @@ public class Mpps extends DicomService {
         Properties prop = proxyAEE.getFileInfoProperties(ncreateFile);
         Calendar timeStamp = new GregorianCalendar();
         String patientID = ncreateAttrs.getString(Tag.PatientID);
-        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, mergedAttrs, ppsSOPIUID, iuid, rule, prop, timeStamp, patientID);
         String doseIuid = UIDUtils.createUID();
+        Attributes doseSrData = transformMpps2DoseSr(as, proxyAEE, mergedAttrs, ppsSOPIUID, iuid, rule, prop,
+                timeStamp, patientID, fmi, doseIuid);
+        if (doseSrData == null)
+            return;
+
         String cuid = UID.XRayRadiationDoseSRStorage;
         String tsuid = UID.ImplicitVRLittleEndian;
         Attributes doseSrFmi = Attributes.createFileMetaInformation(doseIuid, cuid, tsuid);
-        doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
-        doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
-        File doseSrFile = createFile(as, dimse, doseSrFmi, doseSrData, proxyAEE.getCStoreDirectoryPath(), calledAET, rule);
+        File doseSrFile = createFile(as, doseSrFmi, doseSrData, proxyAEE.getCStoreDirectoryPath(), calledAET, rule);
         LOG.info("{}: created Dose SR file {}", as, doseSrFile.getPath());
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rename(as, doseSrFile);
@@ -260,11 +265,12 @@ public class Mpps extends DicomService {
             LOG.debug("{}: failed to DELETE {}", as, info);
     }
 
-    private Attributes transformMpps2DoseSr(Association as, ProxyAEExtension pae, Attributes data, String ppsSOPIUID,
-            String iuid, ForwardRule rule, Properties prop, Calendar timeStamp, String patientID) throws TransformerFactoryConfigurationError,
-            IOException {
+    private Attributes transformMpps2DoseSr(Association as, ProxyAEExtension proxyAEE, Attributes data,
+            String ppsSOPIUID, String iuid, ForwardRule rule, Properties prop, Calendar timeStamp, String patientID,
+            Attributes fmi, String doseIuid) throws TransformerFactoryConfigurationError, IOException {
+        Attributes doseSrData = new Attributes();
         try {
-            Templates templates = pae.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)
+            Templates templates = proxyAEE.getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)
                     .getTemplates(rule.getMpps2DoseSrTemplateURI());
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);
@@ -275,36 +281,77 @@ public class Mpps extends DicomService {
             BigInteger bi = new BigInteger(hex, 16);
             tr.setParameter("DeviceObserverUID", bi);
             tr.setParameter("PerfomedProcedureStepSOPInstanceUID", ppsSOPIUID);
-            Attributes doseSrData = new Attributes();
             th.setResult(new SAXResult(new ContentHandlerAdapter(doseSrData)));
             SAXWriter w = new SAXWriter(th);
             w.setIncludeKeyword(false);
             w.write(data);
+            doseSrData.setString(Tag.SOPInstanceUID, VR.UI, doseIuid);
+            doseSrData.setString(Tag.SeriesInstanceUID, VR.UI, UIDUtils.createUID());
+            validateDoseSR(as, rule, doseSrData, irradiationEventUID);
             if (LOG.isDebugEnabled())
                 LOG.debug("{}: MPPS to Dose SR transformed dataset:{}{}", new Object[] { as, System.lineSeparator(),
                         doseSrData.toString(Integer.MAX_VALUE, 200) });
             return doseSrData;
         } catch (Exception e) {
-            LOG.error(as + ": error converting MPPS to Dose SR: " + e.getMessage());
+            LOG.error("{}: error converting MPPS to Dose SR: {}", as, e.getMessage());
             if(LOG.isDebugEnabled())
                 e.printStackTrace();
             Sequence seq = data.getSequence(Tag.ScheduledStepAttributesSequence);
             String studyIUID = seq.get(0).getString(Tag.StudyInstanceUID);
             AuditMessage msg = createAuditMessage(
-                    pae.getApplicationEntity(), 
+                    proxyAEE.getApplicationEntity(), 
                     timeStamp,
                     EventOutcomeIndicator.SeriousFailure,
                     prop.getProperty("hostname"),
                     patientID,
                     studyIUID);
             writeAuditLogMessage(as, msg, timeStamp);
-            throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
+            if (!doseSrData.isEmpty())
+                storeFailedMPPS(as, fmi, doseSrData, proxyAEE.getDoseSrPath());
+            return null;
         } 
     }
 
-    protected File createFile(Association as, Dimse dimse, Attributes fmi, Attributes data, File baseDir,
-            String destinationAET, ForwardRule rule) throws IOException {
-        File dir = new File(baseDir, destinationAET);
+    private void validateDoseSR(Association as, ForwardRule rule, Attributes doseSrData, String irradiationEventUID)
+            throws Exception {
+        if (rule.getDoseSrIODTemplateURI() == null)
+            return;
+
+        String iodTemplateURI = StringUtils.replaceSystemProperties(rule.getDoseSrIODTemplateURI()).replace('\\', '/');
+        IOD doseSrIOD = IOD.load(iodTemplateURI);
+        ValidationResult result = doseSrData.validate(doseSrIOD);
+        if (result.isValid())
+            LOG.info("{}: Successfully converted and validated MPPS to Dose SR for IrradiationEventUID {}", as,
+                    irradiationEventUID);
+        else {
+            LOG.error("{}: validation of generated Dose SR failed: {}", as, result.asText(doseSrData));
+            throw new Exception("invalid Dose SR");
+        }
+    }
+
+    private void storeFailedMPPS(Association as, Attributes fmi, Attributes data, File path) throws IOException {
+        File dir = new File(path, as.getCallingAET());
+        dir.mkdir();
+        File file = File.createTempFile("dcm", ".failed", dir);
+        DicomOutputStream out = null;
+        try {
+            LOG.debug("{}: create {}", new Object[] { as, file });
+            out = new DicomOutputStream(file);
+            out.writeDataset(fmi, data);
+        } catch (IOException e) {
+            LOG.warn("{}: failed to create {}", new Object[] { as, file.getPath() });
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+            file.delete();
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
+        } finally {
+            out.close();
+        }
+    }
+
+    protected File createFile(Association as, Attributes fmi, Attributes data, File baseDir, String aet,
+            ForwardRule rule) throws IOException {
+        File dir = new File(baseDir, aet);
         dir.mkdir();
         File file = File.createTempFile("dcm", ".part", dir);
         DicomOutputStream out = null;
@@ -314,7 +361,7 @@ public class Mpps extends DicomService {
             out.writeDataset(fmi, data);
         } catch (IOException e) {
             LOG.warn("{}: failed to create {}", new Object[] { as, file.getPath() });
-            if(LOG.isDebugEnabled())
+            if (LOG.isDebugEnabled())
                 e.printStackTrace();
             file.delete();
             throw new DicomServiceException(Status.OutOfResources, e.getCause());
@@ -337,7 +384,7 @@ public class Mpps extends DicomService {
             prop.store(infoOut, null);
         } catch (IOException e) {
             LOG.warn("{}: failed to create {}", new Object[] { as, info.getPath() });
-            if(LOG.isDebugEnabled())
+            if (LOG.isDebugEnabled())
                 e.printStackTrace();
             file.delete();
             info.delete();
@@ -347,7 +394,7 @@ public class Mpps extends DicomService {
         }
         return file;
     }
-    
+
     protected File rename(Association as, File file) throws DicomServiceException {
         String path = file.getPath();
         File dst = new File(path.substring(0, path.length() - 5).concat(
