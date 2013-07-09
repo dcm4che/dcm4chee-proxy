@@ -45,11 +45,13 @@
           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00080060']/Value" />
         </Value>
       </DicomAttribute>
+      <!-- Manually set Manufacturer if not included in MPPS -->
       <DicomAttribute keyword="Manufacturer" tag="00080070" vr="LO">
         <Value number="1">
           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00080070']/Value" />
         </Value>
       </DicomAttribute>
+      <!-- Manually set ManufacturerModelName if not included in MPPS -->
       <DicomAttribute keyword="ManufacturerModelName" tag="00081090" vr="LO">
         <Value number="1">
           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00081090']/Value" />
@@ -79,11 +81,13 @@
           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00100040']/Value" />
         </Value>
       </DicomAttribute>
+      <!-- Manually set DeviceSerialNumber if not included in MPPS -->
       <DicomAttribute keyword="DeviceSerialNumber" tag="00181000" vr="LO">
         <Value number="1">
           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00181000']/Value" />
         </Value>
       </DicomAttribute>
+      <!-- Manually set SoftwareVersions if not included in MPPS -->
       <DicomAttribute keyword="SoftwareVersions" tag="00181020" vr="LO">
         <Value number="1">
           <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00181020']/Value" />
