@@ -39,7 +39,7 @@
   </DataElement>
   <DataElement keyword="VerificationFlag" tag="0040A493" vr="CS" type="1" vm="1">
     <If>
-      <MemberOf keyword="CompletionFlag" tag="0040A491" vr="CS">
+      <MemberOf keyword="CompletionFlag" tag="0040A491" vr="CS" type="1" vm="1">
         <Value>COMPLETE</Value>
       </MemberOf>
     </If>
@@ -48,7 +48,7 @@
   </DataElement>
   <DataElement keyword="VerificationFlag" tag="0040A493" vr="CS" type="1" vm="1">
     <If>
-      <NotMemberOf keyword="CompletionFlag" tag="0040A491" vr="CS">
+      <NotMemberOf keyword="CompletionFlag" tag="0040A491" vr="CS" type="1" vm="1">
         <Value>COMPLETE</Value>
       </NotMemberOf>
     </If>
@@ -82,17 +82,7 @@
     <Value>CONTAINER</Value>
   </DataElement>
   <DataElement keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" items="1">
-    <Item>
-      <DataElement keyword="CodeValue" tag="00080100" vr="SH" type="1" vm="1">
-        <Value>113701</Value>
-      </DataElement>
-      <DataElement keyword="CodingSchemeDesignator" tag="00080102" vr="SH" type="1" vm="1">
-        <Value>DCM</Value>
-      </DataElement>
-      <DataElement keyword="CodeMeaning" tag="00080104" vr="LO" type="1" vm="1">
-        <Value>X-Ray Radiation Dose Report</Value>
-      </DataElement>
-    </Item>
+    <Code codeValue="113701" codingSchemeDesignator="DCM" codeMeaning="X-Ray Radiation Dose Report" />
   </DataElement>
   <DataElement keyword="ContinuityOfContent" tag="0040A050" vr="CS" type="1" vm="1">
     <Value>SEPARATE</Value>
@@ -111,52 +101,320 @@
   </DataElement>
   <DataElement keyword="ObservationDateTime" tag="0040A032" vr="DT" type="3" vm="1" />
   <DataElement keyword="ContentSequence" tag="0040A730" vr="SQ" type="3" items="n">
-    <Item>
+    <Item type="1">
+      <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+        <Code codeValue="121058" codingSchemeDesignator="DCM" codeMeaning="Procedure reported" />
+      </MemberOf>
       <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
         <Value>HAS CONCEPT MOD</Value>
+      </DataElement>
+      <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+        <Value>CODE</Value>
+      </DataElement>
+      <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" items="1">
+        <Code codeValue="113704" codingSchemeDesignator="DCM" codeMeaning="Projection X-Ray" />
+      </DataElement>
+      <DataElement keyword="ContentSequence" tag="0040A730" vr="SQ" type="1" vm="1" items="1">
+        <Item>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>HAS CONCEPT MOD</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>CODE</Value>
+          </DataElement>
+          <DataElement keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" items="1">
+            <Code codeValue="G-C0E8" codingSchemeDesignator="SRT" codeMeaning="Has Intent" />
+          </DataElement>
+          <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" items="1">
+            <Code codeValue="R-408C3" codingSchemeDesignator="SRT" codeMeaning="Diagnostic Intent" />
+            <Code codeValue="R-41531" codingSchemeDesignator="SRT" codeMeaning="Therapeutic Intent" />
+            <Code codeValue="R-002E9" codingSchemeDesignator="SRT" codeMeaning="Combined Diagnostic and Therapeutic Procedure" />
+          </DataElement>
+        </Item>
+      </DataElement>
+    </Item>
+    <Item type="1">
+      <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+        <Code codeValue="121012" codingSchemeDesignator="DCM" codeMeaning="Device Observer UID" />
+      </MemberOf>
+      <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
         <Value>HAS OBS CONTEXT</Value>
-        <Value>HAS PROPERTIES</Value>
+      </DataElement>
+      <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+        <Value>UIDREF</Value>
+      </DataElement>
+      <DataElement keyword="UID" tag="0040A124" vr="UI" type="1" vm="1"/>
+    </Item>
+    <Item type="1">
+      <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+        <Code codeValue="113705" codingSchemeDesignator="DCM" codeMeaning="Scope of Accumulation" />
+      </MemberOf>
+      <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+        <Value>HAS OBS CONTEXT</Value>
+      </DataElement>
+      <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+        <Value>CODE</Value>
+      </DataElement>
+      <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" items="1">
+        <Code codeValue="113016" codingSchemeDesignator="DCM" codeMeaning="Performed Procedure Step" />
+      </DataElement>
+      <DataElement keyword="ContentSequence" tag="0040A730" vr="SQ" type="1" items="1">
+        <Item>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>HAS PROPERTIES</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>UIDREF</Value>
+          </DataElement>
+          <DataElement keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" items="1">
+            <Code codeValue="121126" codingSchemeDesignator="DCM" codeMeaning="Performed Procedure Step SOP Instance UID" />
+          </DataElement>
+          <DataElement keyword="UID" tag="0040A124" vr="UI" type="1" vm="1"/>
+        </Item>
+      </DataElement>
+    </Item>
+    <Item type="1">
+      <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+        <Code codeValue="113702" codingSchemeDesignator="DCM" codeMeaning="Accumulated X-Ray Dose Data" />
+      </MemberOf>
+      <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+        <Value>CONTAINS</Value>
+      </DataElement>
+      <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+        <Value>CONTAINER</Value>
+      </DataElement>
+      <DataElement keyword="ContinuityOfContent" tag="0040A050" vr="CS" type="1" vm="1">
+        <Value>SEPARATE</Value>
+      </DataElement>
+      <DataElement keyword="ContentTemplateSequence" tag="0040A504" vr="SQ" type="1" vm="1" items="1">
+        <Item>
+          <DataElement keyword="MappingResource" tag="00080105" vr="CS" type="1" vm="1">
+            <Value>DCMR</Value>
+          </DataElement>
+          <DataElement keyword="TemplateIdentifier" tag="0040DB00" vr="CS" type="1" vm="1">
+            <Value>10002</Value>
+          </DataElement>
+        </Item>
+      </DataElement>
+      <DataElement keyword="ContentSequence" tag="0040A730" vr="SQ" type="1" vm="1" items="n">
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+            <Code codeValue="113764" codingSchemeDesignator="DCM" codeMeaning="Acquisition Plane" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>HAS CONCEPT MOD</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>CODE</Value>
+          </DataElement>
+          <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" vm="1" items="1">
+            <Code codeValue="113620" codingSchemeDesignator="DCM" codeMeaning="Plane A" />
+            <Code codeValue="113621" codingSchemeDesignator="DCM" codeMeaning="Plane B" />
+            <Code codeValue="113622" codingSchemeDesignator="DCM" codeMeaning="Single Plane" />
+            <Code codeValue="113890" codingSchemeDesignator="DCM" codeMeaning="All Planes" />
+          </DataElement>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+            <Code codeValue="113722" codingSchemeDesignator="DCM" codeMeaning="Dose Area Product Total" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>NUM</Value>
+          </DataElement>
+          <DataElement keyword="MeasuredValueSequence" tag="0040A300" vr="SQ" type="1" vm="1" items="1">
+            <Item>
+              <DataElement keyword="MeasurementUnitsCodeSequence" tag="004008EA" vr="SQ" type="1" vm="1" items="1">
+                <Code codeValue="Gy.m2" codingSchemeDesignator="UCUM" codeMeaning="Gy.m2" />
+              </DataElement>
+              <DataElement keyword="NumericValue" tag="0040A30A" vr="DS" type="1" vm="1"/>
+            </Item>
+          </DataElement>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+            <Code codeValue="113727" codingSchemeDesignator="DCM" codeMeaning="Acquisition Dose Area Product Total" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>NUM</Value>
+          </DataElement>
+          <DataElement keyword="MeasuredValueSequence" tag="0040A300" vr="SQ" type="1" vm="1" items="1">
+            <Item>
+              <DataElement keyword="MeasurementUnitsCodeSequence" tag="004008EA" vr="SQ" type="1" vm="1" items="1">
+                <Code codeValue="Gy.m2" codingSchemeDesignator="UCUM" codeMeaning="Gy.m2" />
+              </DataElement>
+              <DataElement keyword="NumericValue" tag="0040A30A" vr="DS" type="1" vm="1"/>
+            </Item>
+          </DataElement>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1">
+            <Code codeValue="113855" codingSchemeDesignator="DCM" codeMeaning="Total Acquisition Time" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>NUM</Value>
+          </DataElement>
+          <DataElement keyword="MeasuredValueSequence" tag="0040A300" vr="SQ" type="1" vm="1" items="1">
+            <Item>
+              <DataElement keyword="MeasurementUnitsCodeSequence" tag="004008EA" vr="SQ" type="1" vm="1">
+                <Code codeValue="s" codingSchemeDesignator="UCUM" codeMeaning="s" />
+              </DataElement>
+              <DataElement keyword="NumericValue" tag="0040A30A" vr="DS" type="1" vm="1"/>
+            </Item>
+          </DataElement>
+        </Item>
+      </DataElement>
+    </Item>
+    <Item type="1">
+      <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+        <Code codeValue="113706" codingSchemeDesignator="DCM" codeMeaning="Irradiation Event X-Ray Data" />
+      </MemberOf>
+      <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+        <Value>CONTAINS</Value>
+      </DataElement>
+      <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+        <Value>CONTAINER</Value>
+      </DataElement>
+      <DataElement keyword="ContinuityOfContent" tag="0040A050" vr="CS" type="1" vm="1">
+        <Value>SEPARATE</Value>
+      </DataElement>
+      <DataElement keyword="ContentTemplateSequence" tag="0040A504" vr="SQ" type="1" vm="1" items="1">
+        <Item>
+          <DataElement keyword="MappingResource" tag="00080105" vr="CS" type="1" vm="1">
+            <Value>DCMR</Value>
+          </DataElement>
+          <DataElement keyword="TemplateIdentifier" tag="0040DB00" vr="CS" type="1" vm="1">
+            <Value>10003</Value>
+          </DataElement>
+        </Item>
+      </DataElement>
+      <DataElement keyword="ContentSequence" tag="0040A730" vr="SQ" type="1" vm="1" items="n">
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="113764" codingSchemeDesignator="DCM" codeMeaning="Acquisition Plane" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>HAS CONCEPT MOD</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>CODE</Value>
+          </DataElement>
+          <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" vm="1" items="1">
+            <Code codeValue="113622" codingSchemeDesignator="DCM" codeMeaning="Single Plane" />
+          </DataElement>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="111526" codingSchemeDesignator="DCM" codeMeaning="DateTime Started" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>DATETIME</Value>
+          </DataElement>
+          <DataElement keyword="DateTime" tag="0040A120" vr="DT" type="1" vm="1"/>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="113721" codingSchemeDesignator="DCM" codeMeaning="Irradiation Event Type" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>CODE</Value>
+          </DataElement>
+          <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" vm="1" items="1">
+            <Code codeValue="113611" codingSchemeDesignator="DCM" codeMeaning="Stationary Acquisition" />
+            <Code codeValue="113612" codingSchemeDesignator="DCM" codeMeaning="Stepping Acquisition" />
+            <Code codeValue="113613" codingSchemeDesignator="DCM" codeMeaning="Rotational Acquisition" />
+            <Code codeValue="P5-0600" codingSchemeDesignator="SRT" codeMeaning="Fluoroscopy" />
+          </DataElement>  
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="113769" codingSchemeDesignator="DCM" codeMeaning="Irradiation Event UID" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>UIDREF</Value>
+          </DataElement>
+          <DataElement keyword="UID" tag="0040A124" vr="UI" type="1" vm="1"/>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="122130" codingSchemeDesignator="DCM" codeMeaning="Dose Area Product" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>NUM</Value>
+          </DataElement>
+          <DataElement keyword="MeasuredValueSequence" tag="0040A300" vr="SQ" type="1" vm="1" items="1">
+            <Item>
+              <DataElement keyword="MeasurementUnitsCodeSequence" tag="004008EA" vr="SQ" type="1" vm="1" items="1">
+                <Code codeValue="Gy.m2" codingSchemeDesignator="UCUM" codeMeaning="Gym2" />
+              </DataElement>
+              <DataElement keyword="NumericValue" tag="0040A30A" vr="DS" type="1" vm="1"/>
+            </Item>
+          </DataElement>
+        </Item>
+        <Item>
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="123014" codingSchemeDesignator="DCM" codeMeaning="Target Region" />
+          </MemberOf>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>CODE</Value>
+          </DataElement>
+          <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" vm="1" items="1"/>
+        </Item>
+        <Item type="1">
+          <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Code codeValue="113795" codingSchemeDesignator="DCM" codeMeaning="Acquired Image" />
+          </MemberOf>
+          <DataElement keyword="ReferencedSOPSequence" tag="00081199" vr="SQ" type="1" vm="1" items="1">
+            <Item>
+              <DataElement keyword="ReferencedSOPClassUID" tag="00081150" vr="UI" type="1" vm="1" />
+              <DataElement keyword="ReferencedSOPInstanceUID" tag="00081155" vr="UI" type="1" vm="1" />
+            </Item>
+          </DataElement>
+          <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
+            <Value>CONTAINS</Value>
+          </DataElement>
+          <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
+            <Value>IMAGE</Value>
+          </DataElement>
+        </Item>
+      </DataElement>
+    </Item>
+    <Item type="1">
+      <MemberOf keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+        <Code codeValue="113854" codingSchemeDesignator="DCM" codeMeaning="Source of Dose Information" />
+      </MemberOf>
+      <DataElement keyword="RelationshipType" tag="0040A010" vr="CS" type="1" vm="1">
         <Value>CONTAINS</Value>
       </DataElement>
       <DataElement keyword="ValueType" tag="0040A040" vr="CS" type="1" vm="1">
         <Value>CODE</Value>
-        <Value>UIDREF</Value>
-        <Value>CONTAINER</Value>
-        <Value>NUM</Value>
-        <Value>DATETIME</Value>
-        <Value>IMAGE</Value>
-      </DataElement>
-      <DataElement keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ" type="1" vm="1" items="1">
-        <Item id="CodeSequence"/>
       </DataElement>
       <DataElement keyword="ConceptCodeSequence" tag="0040A168" vr="SQ" type="1" vm="1" items="1">
-        <If>
-          <MemberOf keyword="ValueType" tag="0040A040" vr="CS" valueNumber="1">
-            <Value>CODE</Value>
-          </MemberOf>
-        </If>
-        <Item id="CodeSequence"/>
-      </DataElement>
-      <DataElement keyword="ContinuityOfContent" tag="0040A050" vr="CS" type="1" vm="1">
-        <If id="Container">
-          <MemberOf keyword="ValueType" tag="0040A040" vr="CS" valueNumber="1">
-            <Value>CONTAINER</Value>
-          </MemberOf>
-        </If>
-      </DataElement>
-      <DataElement keyword="ContentTemplateSequence" tag="0040A504" vr="SQ" type="1" vm="1" items="1">
-        <If idref="Container"/>
-      </DataElement>
-      <DataElement keyword="ContentSequence" tag="0040A730" vr="SQ" type="1" vm="1" items="n">
-        <If idref="Container"/>
-      </DataElement>
-      <DataElement keyword="UID" tag="0040A124" vr="UI" type="1" vm="1">
-        <If>
-          <MemberOf keyword="ValueType" tag="0040A040" vr="CS" valueNumber="1">
-            <Value>UIDREF</Value>
-          </MemberOf>
-        </If>
-      </DataElement>
+        <Code codeValue="113858" codingSchemeDesignator="DCM" codeMeaning="MPPS Content" />
+      </DataElement> 
     </Item>
   </DataElement>
   <!-- SOP Common Module -->
