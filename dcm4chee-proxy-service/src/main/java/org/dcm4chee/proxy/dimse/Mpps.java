@@ -269,7 +269,7 @@ public class Mpps extends DicomService {
             SAXTransformerFactory factory = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler th = factory.newTransformerHandler(templates);
             Transformer tr = th.getTransformer();
-            String irradiationEventUID = iuid.concat("1");
+            String irradiationEventUID = new String(iuid).concat("1");
             tr.setParameter("IrradiationEventUID", irradiationEventUID);
             String hex = Hex.encodeHex(as.getCallingAET().getBytes());
             BigInteger bi = new BigInteger(hex, 16);
