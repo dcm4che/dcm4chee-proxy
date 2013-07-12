@@ -5,18 +5,12 @@
   <xsl:param name="DeviceObserverUID" />
   <xsl:param name="PerfomedProcedureStepSOPInstanceUID" />
   <xsl:template match="/">
-    <!-- Important: 
-        Configure the fields 
-        'Procedure Intent', 
-        'Irradiation Event Type' and 
-        'Acquisition Plane' 
-        according to Modality and Protocols.
-        It might also be required to manually set
-        'Manufacturer',
-        'ManufacturerModelName',
-        'DeviceSerialNumber' and
-        'SoftwareVersions'.
-        -->
+    <!-- IMPORTANT: 
+    Configure 
+    * 'Procedure Intent', 
+    * 'Irradiation Event Type' and 
+    * 'Acquisition Plane' 
+    according to Modality and Protocols. -->
     <NativeDicomModel xml-space="preserved">
       <DicomAttribute keyword="SOPClassUID" tag="00080016" vr="UI">
         <Value number="1">1.2.840.10008.5.1.4.1.1.88.67</Value>
@@ -138,6 +132,7 @@
       <DicomAttribute keyword="VerificationFlag" tag="0040A493" vr="CS">
         <Value number="1">UNVERIFIED</Value>
       </DicomAttribute>
+      <!-- TID 10001 Projection X-Ray Radiation Dose -->
       <DicomAttribute keyword="ContentTemplateSequence" tag="0040A504" vr="SQ">
         <Item number="1">
           <DicomAttribute keyword="MappingResource" tag="00080105" vr="CS">
@@ -362,16 +357,7 @@
           <DicomAttribute keyword="ContinuityOfContent" tag="0040A050" vr="CS">
             <Value number="1">SEPARATE</Value>
           </DicomAttribute>
-          <DicomAttribute keyword="ContentTemplateSequence" tag="0040A504" vr="SQ">
-            <Item number="1">
-              <DicomAttribute keyword="MappingResource" tag="00080105" vr="CS">
-                <Value number="1">DCMR</Value>
-              </DicomAttribute>
-              <DicomAttribute keyword="TemplateIdentifier" tag="0040DB00" vr="CS">
-                <Value number="1">10002</Value>
-              </DicomAttribute>
-            </Item>
-          </DicomAttribute>
+          <!-- TID 10002 Accumulated X-Ray Dose -->
           <DicomAttribute keyword="ContentSequence" tag="0040A730" vr="SQ">
             <Item number="1">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
@@ -608,16 +594,6 @@
           </DicomAttribute>
           <DicomAttribute keyword="ContinuityOfContent" tag="0040A050" vr="CS">
             <Value number="1">SEPARATE</Value>
-          </DicomAttribute>
-          <DicomAttribute keyword="ContentTemplateSequence" tag="0040A504" vr="SQ">
-            <Item number="1">
-              <DicomAttribute keyword="MappingResource" tag="00080105" vr="CS">
-                <Value number="1">DCMR</Value>
-              </DicomAttribute>
-              <DicomAttribute keyword="TemplateIdentifier" tag="0040DB00" vr="CS">
-                <Value number="1">10003</Value>
-              </DicomAttribute>
-            </Item>
           </DicomAttribute>
           <DicomAttribute keyword="ContentSequence" tag="0040A730" vr="SQ">
             <Item number="1">
