@@ -288,6 +288,40 @@
             <Value number="1">HAS OBS CONTEXT</Value>
           </DicomAttribute>
           <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+            <Value number="1">CODE</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">121005</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Observer Type</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">121007</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Device</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+        </Item>
+        <Item number="3">
+          <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+            <Value number="1">HAS OBS CONTEXT</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
             <Value number="1">UIDREF</Value>
           </DicomAttribute>
           <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
@@ -309,7 +343,7 @@
             </Value>
           </DicomAttribute>
         </Item>
-        <Item number="3">
+        <Item number="4">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">HAS OBS CONTEXT</Value>
           </DicomAttribute>
@@ -372,7 +406,7 @@
             </Item>
           </DicomAttribute>
         </Item>
-        <Item number="4">
+        <Item number="5">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">CONTAINS</Value>
           </DicomAttribute>
@@ -610,7 +644,7 @@
             </Item>
           </DicomAttribute>
         </Item>
-        <Item number="5">
+        <Item number="6">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">CONTAINS</Value>
           </DicomAttribute>
@@ -890,7 +924,7 @@
             <xsl:apply-templates select="/NativeDicomModel/DicomAttribute[@tag='00400340']/Item" />
           </DicomAttribute>
         </Item>
-        <Item number="6">
+        <Item number="7">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">CONTAINS</Value>
           </DicomAttribute>
