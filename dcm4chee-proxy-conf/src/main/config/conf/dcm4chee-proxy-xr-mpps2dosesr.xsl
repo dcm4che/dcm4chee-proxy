@@ -46,7 +46,7 @@
     <!-- IMPORTANT: 
     Configure 
     * 'Procedure Intent', 
-    * 'Irradiation Event Type' and 
+    * 'Irradiation Event Type' 
     * 'Acquisition Plane' 
     according to Modality and Protocols. -->
     <NativeDicomModel xml-space="preserved">
@@ -289,6 +289,66 @@
         </Item>
         <Item number="2">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+            <Value number="1">CONTAINS</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+            <Value number="1">CODE</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">122142</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Acquisition Device Type</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113957</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Fluoroscopy-Guided Projection Radiography System</Value>
+              </DicomAttribute>
+            </Item>
+            <!-- 
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113958</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Integrated Projection Radiography System</Value>
+              </DicomAttribute>
+            </Item>
+            -->
+            <!-- 
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113959</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Cassette-based Projection Radiography System</Value>
+              </DicomAttribute>
+            </Item>
+            -->
+          </DicomAttribute>
+        </Item>
+        <Item number="3">
+          <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">HAS OBS CONTEXT</Value>
           </DicomAttribute>
           <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
@@ -321,7 +381,7 @@
             </Item>
           </DicomAttribute>
         </Item>
-        <Item number="3">
+        <Item number="4">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">HAS OBS CONTEXT</Value>
           </DicomAttribute>
@@ -347,7 +407,41 @@
             </Value>
           </DicomAttribute>
         </Item>
-        <Item number="4">
+        <Item number="5">
+          <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+            <Value number="1">HAS OBS CONTEXT</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+            <Value number="1">CODE</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113876</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Device Role in Procedure</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">121097</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">Recording</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+        </Item>
+        <Item number="6">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">HAS OBS CONTEXT</Value>
           </DicomAttribute>
@@ -410,7 +504,109 @@
             </Item>
           </DicomAttribute>
         </Item>
-        <Item number="5">
+        <Item number="7">
+          <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+            <Value number="1">CONTAINS</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+            <Value number="1">CODE</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113945</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">X-Ray Detector Data Available</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">R-00339</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">SRT</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">No</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+        </Item>
+        <Item number="8">
+          <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+            <Value number="1">CONTAINS</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+            <Value number="1">CODE</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113943</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">X-Ray Source Data Available</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">R-00339</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">SRT</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">No</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+        </Item>
+        <Item number="9">
+          <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+            <Value number="1">CONTAINS</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+            <Value number="1">CODE</Value>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">113944</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">DCM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">X-Ray Mechanical Data Available</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+          <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+            <Item number="1">
+              <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                <Value number="1">R-00339</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                <Value number="1">SRT</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                <Value number="1">No</Value>
+              </DicomAttribute>
+            </Item>
+          </DicomAttribute>
+        </Item>
+        <Item number="10">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">CONTAINS</Value>
           </DicomAttribute>
@@ -515,6 +711,7 @@
               </DicomAttribute>
               -->
             </Item>
+            <!-- TID 10004 -->
             <Item number="2">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
                 <Value number="1">CONTAINS</Value>
@@ -646,9 +843,176 @@
                 </Item>
               </DicomAttribute>
             </Item>
+            <Item number="5">
+              <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                <Value number="1">CONTAINS</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                <Value number="1">CODE</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">113876</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">DCM</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Device Role in Procedure</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">113859</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">DCM</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Irradiating Device</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              <DicomAttribute keyword="ContentSequence" tag="0040A730" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                    <Value number="1">HAS PROPERTIES</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                    <Value number="1">TEXT</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                    <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113877</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Device Name</Value>
+                      </DicomAttribute>
+                    </Item>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="Value" tag="0040A160" vr="UT">
+                    <Value number="1">
+                        <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00400241']/Value" />
+                    </Value>
+                  </DicomAttribute>
+                </Item>
+                <Item number="2">
+                  <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                    <Value number="1">HAS PROPERTIES</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                    <Value number="1">TEXT</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                    <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113878</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Device Manufacturer</Value>
+                      </DicomAttribute>
+                    </Item>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="Value" tag="0040A160" vr="UT">
+                    <Value number="1">
+                        <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00080070']/Value" />
+                    </Value>
+                  </DicomAttribute>
+                </Item>
+                <Item number="3">
+                  <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                    <Value number="1">HAS PROPERTIES</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                    <Value number="1">TEXT</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                    <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113879</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Device Model Name</Value>
+                      </DicomAttribute>
+                    </Item>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="Value" tag="0040A160" vr="UT">
+                    <Value number="1">
+                      <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00081090']/Value" />
+                    </Value>
+                  </DicomAttribute>
+                </Item>
+                <Item number="4">
+                  <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                    <Value number="1">HAS PROPERTIES</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                    <Value number="1">TEXT</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                    <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113880</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Device Serial Number</Value>
+                      </DicomAttribute>
+                    </Item>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="Value" tag="0040A160" vr="UT">
+                    <Value number="1">
+                      <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='00081090']/Value" />
+                    </Value>
+                  </DicomAttribute>
+                </Item>
+                <Item number="5">
+                  <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                    <Value number="1">HAS PROPERTIES</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                    <Value number="1">UIDREF</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                    <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">121012</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Device Observer UID</Value>
+                      </DicomAttribute>
+                    </Item>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="UID" tag="0040A124" vr="UI">
+                    <Value number="1">
+                      <xsl:value-of select="$DeviceObserverUID" />
+                    </Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+            </Item>
           </DicomAttribute>
         </Item>
-        <Item number="6">
+        <!-- TID 10003 -->
+        <Item number="11">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">CONTAINS</Value>
           </DicomAttribute>
@@ -704,9 +1068,75 @@
                     <Value number="1">Single Plane</Value>
                   </DicomAttribute>
                 </Item>
+                <!-- Other Acquisition Planes -->
+                <!--
+                <Item number="1">
+                    <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113620</Value>
+                    </DicomAttribute>
+                    <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                    </DicomAttribute>
+                    <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Plane A</Value>
+                    </DicomAttribute>
+                </Item>
+                -->
+                <!--
+                <Item number="1">
+                    <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113621</Value>
+                    </DicomAttribute>
+                    <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                    </DicomAttribute>
+                    <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Plane B</Value>
+                    </DicomAttribute>
+                </Item>
+                -->
+                <!--
+                <Item number="1">
+                    <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">113890</Value>
+                    </DicomAttribute>
+                    <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">DCM</Value>
+                    </DicomAttribute>
+                    <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">All Planes</Value>
+                    </DicomAttribute>
+                </Item>
+                -->
               </DicomAttribute>
             </Item>
             <Item number="2">
+              <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                <Value number="1">CONTAINS</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                <Value number="1">UIDREF</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">113769</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">DCM</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Irradiation Event UID</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              <DicomAttribute keyword="UID" tag="0040A124" vr="UI">
+                <Value number="1">
+                  <xsl:value-of select="$IrradiationEventUID" />
+                </Value>
+              </DicomAttribute>
+            </Item>
+            <Item number="3">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
                 <Value number="1">CONTAINS</Value>
               </DicomAttribute>
@@ -732,7 +1162,7 @@
                 </Value>
               </DicomAttribute>
             </Item>
-            <Item number="3">
+            <Item number="4">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
                 <Value number="1">CONTAINS</Value>
               </DicomAttribute>
@@ -764,7 +1194,7 @@
                     <Value number="1">Stationary Acquisition</Value>
                   </DicomAttribute>
                 </Item>
-              </DicomAttribute>  
+              </DicomAttribute>
               <!-- Other Irradiation Event Types -->
               <!--
               <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
@@ -812,76 +1242,7 @@
               </DicomAttribute>
               -->
             </Item>
-            <Item number="4">
-              <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
-                <Value number="1">CONTAINS</Value>
-              </DicomAttribute>
-              <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
-                <Value number="1">UIDREF</Value>
-              </DicomAttribute>
-              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
-                <Item number="1">
-                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">113769</Value>
-                  </DicomAttribute>
-                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
-                    <Value number="1">DCM</Value>
-                  </DicomAttribute>
-                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                    <Value number="1">Irradiation Event UID</Value>
-                  </DicomAttribute>
-                </Item>
-              </DicomAttribute>
-              <DicomAttribute keyword="UID" tag="0040A124" vr="UI">
-                <Value number="1">
-                  <xsl:value-of select="$IrradiationEventUID" />
-                </Value>
-              </DicomAttribute>
-            </Item>
             <Item number="5">
-              <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
-                <Value number="1">CONTAINS</Value>
-              </DicomAttribute>
-              <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
-                <Value number="1">NUM</Value>
-              </DicomAttribute>
-              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
-                <Item number="1">
-                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                    <Value number="1">122130</Value>
-                  </DicomAttribute>
-                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
-                    <Value number="1">DCM</Value>
-                  </DicomAttribute>
-                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                    <Value number="1">Dose Area Product</Value>
-                  </DicomAttribute>
-                </Item>
-              </DicomAttribute>
-              <DicomAttribute keyword="MeasuredValueSequence" tag="0040A300" vr="SQ">
-                <Item number="1">
-                  <DicomAttribute keyword="MeasurementUnitsCodeSequence" tag="004008EA" vr="SQ">
-                    <Item number="1">
-                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
-                        <Value number="1">Gy.m2</Value>
-                      </DicomAttribute>
-                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
-                        <Value number="1">UCUM</Value>
-                      </DicomAttribute>
-                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                        <Value number="1">Gym2</Value>
-                      </DicomAttribute>
-                    </Item>
-                  </DicomAttribute>
-                  <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
-                    <Value number="1">
-                      <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value div 100000" />
-                    </Value>
-                  </DicomAttribute>
-                </Item>
-              </DicomAttribute>
-            </Item>
-            <Item number="6">
               <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
                 <Value number="1">CONTAINS</Value>
               </DicomAttribute>
@@ -925,10 +1286,163 @@
                 </xsl:choose>
               </DicomAttribute>
             </Item>
+            <Item number="6">
+              <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                <Value number="1">CONTAINS</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                <Value number="1">NUM</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">122130</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">DCM</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Dose Area Product</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              <DicomAttribute keyword="MeasuredValueSequence" tag="0040A300" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="MeasurementUnitsCodeSequence" tag="004008EA" vr="SQ">
+                    <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                        <Value number="1">Gy.m2</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                        <Value number="1">UCUM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                        <Value number="1">Gym2</Value>
+                      </DicomAttribute>
+                    </Item>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="NumericValue" tag="0040A30A" vr="DS">
+                    <Value number="1">
+                      <xsl:value-of select="/NativeDicomModel/DicomAttribute[@tag='0018115E']/Value div 100000" />
+                    </Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+            </Item>
+            <Item number="7">
+              <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
+                <Value number="1">CONTAINS</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ValueType" tag="0040A040" vr="CS">
+                <Value number="1">CODE</Value>
+              </DicomAttribute>
+              <DicomAttribute keyword="ConceptNameCodeSequence" tag="0040A043" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">113780</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">DCM</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">Reference Point Definition</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                <Item number="1">
+                  <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                    <Value number="1">113860</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                    <Value number="1">DCM</Value>
+                  </DicomAttribute>
+                  <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                    <Value number="1">15cm from Isocenter toward Source</Value>
+                  </DicomAttribute>
+                </Item>
+              </DicomAttribute>
+              <!-- Other Reference Point Definition -->
+              <!--
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                  <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                          <Value number="1">113861</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                          <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                          <Value number="1">30cm in Front of Image Input Surface</Value>
+                      </DicomAttribute>
+                  </Item>
+              </DicomAttribute>
+              -->
+              <!--
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                  <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                          <Value number="1">113862</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                          <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                          <Value number="1">1cm above Tabletop</Value>
+                      </DicomAttribute>
+                  </Item>
+              </DicomAttribute>
+              -->
+              <!--
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                  <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                          <Value number="1">113863</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                          <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                          <Value number="1">30cm above Tabletop</Value>
+                      </DicomAttribute>
+                  </Item>
+              </DicomAttribute>
+              -->
+              <!--
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                  <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                          <Value number="1">113864</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                          <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                          <Value number="1">15cm from Table Centerline</Value>
+                      </DicomAttribute>
+                  </Item>
+              </DicomAttribute>
+              -->
+              <!--
+              <DicomAttribute keyword="ConceptCodeSequence" tag="0040A168" vr="SQ">
+                  <Item number="1">
+                      <DicomAttribute keyword="CodeValue" tag="00080100" vr="SH">
+                          <Value number="1">113865</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodingSchemeDesignator" tag="00080102" vr="SH">
+                          <Value number="1">DCM</Value>
+                      </DicomAttribute>
+                      <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
+                          <Value number="1">Entrance exposure to a 4.2 cm breast thickness</Value>
+                      </DicomAttribute>
+                  </Item>
+              </DicomAttribute>
+              -->
+            </Item>
             <xsl:apply-templates select="/NativeDicomModel/DicomAttribute[@tag='00400340']/Item" />
           </DicomAttribute>
         </Item>
-        <Item number="7">
+        <Item number="12">
           <DicomAttribute keyword="RelationshipType" tag="0040A010" vr="CS">
             <Value number="1">CONTAINS</Value>
           </DicomAttribute>
@@ -967,7 +1481,7 @@
   </xsl:template>
 
   <xsl:template name="AcquiredImage" match="Item">
-    <Item number="{@number+6}">
+    <Item number="{@number+7}">
       <DicomAttribute keyword="ReferencedSOPSequence" tag="00081199" vr="SQ">
         <Item number="1">
           <DicomAttribute keyword="ReferencedSOPClassUID" tag="00081150" vr="UI">
