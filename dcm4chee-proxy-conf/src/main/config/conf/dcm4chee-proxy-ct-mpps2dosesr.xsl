@@ -52,7 +52,7 @@
     * 'Nominal Single Collimation Width' 
     * 'Nominal Total Collimation Width' 
     * 'Number of X-Ray Sources' 
-    * 'Identification Number of the X-Ray Source' 
+    * 'Identification of the X-Ray Source' 
     * 'CTDIw Phantom Type' 
     according to Procedure, Modality and MPPS content -->
     <NativeDicomModel xml-space="preserved">
@@ -1273,7 +1273,7 @@
                 <Value number="1">DCM</Value>
               </DicomAttribute>
               <DicomAttribute keyword="CodeMeaning" tag="00080104" vr="LO">
-                <Value number="1">Identification Number of the X-Ray Source</Value>
+                <Value number="1">Identification of the X-Ray Source</Value>
               </DicomAttribute>
             </Item>
           </DicomAttribute>
