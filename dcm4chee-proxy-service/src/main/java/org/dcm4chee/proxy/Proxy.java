@@ -197,6 +197,18 @@ public class Proxy extends DeviceService implements ProxyMBean {
             }
         }
     }
+    
+    public String getRegisteredAETs() throws Exception {
+    	String registeredAETitles[] = dicomConfiguration.listRegisteredAETitles();
+    	StringBuilder result = new StringBuilder();
+    	boolean separator = false;
+    	for ( String aet : registeredAETitles )
+    	{
+    		result.append( ( separator ? "," : "" ) + aet );
+    		separator = true;
+    	}
+    	return result.toString();
+    }
 
     private static int getRestartTimeout() {
         String timeoutString = System.getProperty("org.dcm4chee.proxy.restart.timeout");

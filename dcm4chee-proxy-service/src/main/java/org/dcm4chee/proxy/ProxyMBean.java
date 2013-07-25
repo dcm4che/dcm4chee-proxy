@@ -67,4 +67,8 @@ public interface ProxyMBean {
     @GET
     @Path("restart")
     void restart() throws Exception;
+    
+    @GET
+    @Path("getRegisteredAETs")
+    String getRegisteredAETs() throws Exception;
 }
