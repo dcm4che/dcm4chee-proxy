@@ -402,24 +402,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         setForwardRules(attrs, cuid, sourceAET);
                     processForwardRules(fileInfo, fmi, attrs, sourceAET, prop, cuid);
                 } else {
-                    processSingleForwardDestination(fileInfo, fmi, null, prop, sourceAET);
-//                    File dst = null;
-//                    try {
-//                        Attributes destAttrs = coerceAttributes(aet, cuid, TransferCapability.Role.SCP, attrs);
-//                        dst = storeDestinationAETCopy(fileInfo, fmi, aet, destAttrs);
-//                        storeInfoFile(prop, dst);
-//                        setSopRef(fmi, attrs);
-//                    } catch (Exception e) {
-//                        LOG.info("{}: Failed to store file to destination AET directory: {}", this, e);
-//                        if (LOG.isDebugEnabled())
-//                            e.printStackTrace();
-//                        int failureReason = e instanceof DicomServiceException 
-//                                ? ((DicomServiceException) e).getStatus() 
-//                                : org.dcm4che.net.Status.ProcessingFailure;
-//                        storageFailed(fileInfo.attrs, failureReason);
-//                        if (dst != null && dst.exists())
-//                            deleteFile(dst);
-//                    }
+                    processSingleForwardDestination(fileInfo, attrs, fmi, null, prop, sourceAET);
                 }
                 deleteFile(fileInfo.file);
             } catch (DicomServiceException | ConfigurationException e) {
@@ -438,7 +421,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             return;
         }
         if (fwdRules.size() == 1) {
-            processSingleForwardDestination(fileInfo, fmi, fwdRules.get(0), prop, sourceAET);
+            processSingleForwardDestination(fileInfo, attrs, fmi, fwdRules.get(0), prop, sourceAET);
             return;
         }
         List<String> prevDestinationAETs = new ArrayList<>();
@@ -606,7 +589,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             if (proxyAEE.getApplicationEntity().getAETitle().equals(aet))
                 processForwardRules(fileInfo, fmi, cuid, sourceAET, prop);
             else
-                processSingleForwardDestination(fileInfo, fmi, null, prop, sourceAET);
+                processSingleForwardDestination(fileInfo, fileInfo.attrs, fmi, null, prop, sourceAET);
         }
     }
 
@@ -739,8 +722,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         }
     }
 
-    private void processSingleForwardDestination(FileInfo fileInfo, Attributes fmi, ForwardRule rule, Properties prop,
-            String callingAET) {
+    private void processSingleForwardDestination(FileInfo fileInfo, Attributes attrs, Attributes fmi, ForwardRule rule,
+            Properties prop, String callingAET) {
         String calledAET = null;
         if (rule != null) {
             if (rule.getUseCallingAET() != null) {
@@ -756,12 +739,14 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         if (forwardOption == null || forwardOption.getSchedule().isNow(new GregorianCalendar())) {
             Association as = null;
             try {
-            as = ForwardConnectionUtils.openForwardAssociation(proxyAEE, rule, callingAET, calledAET,
-                    fmi.getString(Tag.MediaStorageSOPClassUID), fmi.getString(Tag.TransferSyntaxUID), this.toString());
-            if (as != null)
-                forwardFile(as, new DataWriterAdapter(fileInfo.attrs), fileInfo.file, prop, fileInfo.file.length(), fmi);
-            else
-                storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
+                as = ForwardConnectionUtils.openForwardAssociation(proxyAEE, rule, callingAET, calledAET,
+                        fmi.getString(Tag.MediaStorageSOPClassUID), fmi.getString(Tag.TransferSyntaxUID),
+                        this.toString());
+                if (as != null)
+                    forwardFile(as, new DataWriterAdapter(attrs), fileInfo.file, prop, fileInfo.file.length(),
+                            fmi);
+                else
+                    storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
             } finally {
                 if (as != null)
                     try {
@@ -769,11 +754,11 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         as.release();
                     } catch (InterruptedException e) {
                         LOG.error(as + ": unexpected exception: " + e.getMessage());
-                        if(LOG.isDebugEnabled())
+                        if (LOG.isDebugEnabled())
                             e.printStackTrace();
                     } catch (IOException e) {
                         LOG.error(as + ": failed to release association: " + e.getMessage());
-                        if(LOG.isDebugEnabled())
+                        if (LOG.isDebugEnabled())
                             e.printStackTrace();
                     }
             }
