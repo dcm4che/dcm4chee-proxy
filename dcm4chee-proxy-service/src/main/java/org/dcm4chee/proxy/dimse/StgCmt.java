@@ -133,7 +133,8 @@ public class StgCmt extends DicomService {
             Attributes data) throws IOException, ConfigurationException {
         ApplicationEntity ae = as.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(as, rq, dimse);
+        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(proxyAEE.getCurrentForwardRules(as),
+                rq.getString(dimse.tagOfSOPClassUID()), dimse);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("No matching forward rule");
 

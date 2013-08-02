@@ -94,9 +94,8 @@ public class ProxyServlet extends HttpServlet {
 
     private static void addJBossDirURLSystemProperties() {
         for (String key : JBOSS_PROPERITIES) {
-            String url = new File(System.getProperty(key + ".dir"))
-                .toURI().toString();
-            System.setProperty(key + ".url", url.substring(0, url.length()-1));
+            String url = new File(System.getProperty(key + ".dir")).toURI().toString();
+            System.setProperty(key + ".url", url.substring(0, url.length() - 1));
         }
     }
 

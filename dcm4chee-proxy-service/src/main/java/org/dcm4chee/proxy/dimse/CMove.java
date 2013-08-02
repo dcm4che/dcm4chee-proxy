@@ -87,7 +87,8 @@ public class CMove extends DicomService {
                 .getDeviceExtension(ProxyDeviceExtension.class));
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(asAccepted, rq, dimse);
+            List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(
+                    proxyAEE.getCurrentForwardRules(asAccepted), rq.getString(dimse.tagOfSOPClassUID()), dimse);
             HashMap<String, Association> fwdAssocs = proxyAEE
                     .openForwardAssociations(asAccepted, forwardRules, data, aeCache);
             if (fwdAssocs.isEmpty())

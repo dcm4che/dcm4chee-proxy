@@ -122,7 +122,7 @@ public class CStore extends BasicCStoreSCP {
                         proxyAEE, ((Association) forwardAssociationProperty).getRemoteAET(),
                         rq.getString(Tag.AffectedSOPClassUID))) 
                 || proxyAEE.isAssociationFromDestinationAET(asAccepted))
-            spool(proxyAEE, asAccepted, pc, rq, data, null);
+            spool(proxyAEE, asAccepted, pc, dimse, rq, data, null);
         else {
             try {
                 forward(proxyAEE, asAccepted, (Association) forwardAssociationProperty, pc, rq, 
@@ -136,8 +136,8 @@ public class CStore extends BasicCStoreSCP {
         }
     }
 
-    protected void spool(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Attributes cmd,
-            PDVInputStream data, Attributes rsp) throws IOException {
+    protected void spool(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Dimse dimse,
+            Attributes cmd, PDVInputStream data, Attributes rsp) throws IOException {
         File file = createSpoolFile(proxyAEE, asAccepted);
         Attributes fmi = processInputStream(proxyAEE, asAccepted, pc, cmd, data, file);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
@@ -147,11 +147,11 @@ public class CStore extends BasicCStoreSCP {
             if (forwardAssociationProperty != null && forwardAssociationProperty instanceof Association)
                 forwardObject(asAccepted, (Association) forwardAssociationProperty, pc, cmd, file, fmi);
             else
-                processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
+                processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, dimse, cmd, rsp, file, fmi);
         } catch (Exception e) {
             if (proxyAEE.isAcceptDataOnFailedAssociation())
                 try {
-                    processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, cmd, rsp, file, fmi);
+                    processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, dimse, cmd, rsp, file, fmi);
                 } catch (ConfigurationException c) {
                     LOG.error("{}: configuration error while processing C-STORE-RQ: {}", new Object[]{asAccepted, c.getMessage()});
                     if (file.exists())
@@ -274,9 +274,10 @@ public class CStore extends BasicCStoreSCP {
     }
 
     private void processForwardRules(ProxyAEExtension proxyAEE, Association asAccepted,
-            Object forwardAssociationProperty, PresentationContext pc, Attributes rq, Attributes rsp, File file,
-            Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
-        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(asAccepted, rq, Dimse.C_STORE_RQ);
+            Object forwardAssociationProperty, PresentationContext pc, Dimse dimse, Attributes rq, Attributes rsp,
+            File file, Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
+        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(
+                proxyAEE.getCurrentForwardRules(asAccepted), rq.getString(dimse.tagOfSOPClassUID()), Dimse.C_STORE_RQ);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no matching forward rule");
 
@@ -284,6 +285,7 @@ public class CStore extends BasicCStoreSCP {
             processSingleForwardDestination(asAccepted, forwardAssociationProperty, pc, rq, file, fmi, proxyAEE,
                     forwardRules.get(0));
         else {
+            List<String> prevDestinationAETs = new ArrayList<String>();
             for (ForwardRule rule : forwardRules) {
                 List<String> destinationAETs = new ArrayList<String>();
                 if (rule.containsTemplateURI()) {
@@ -292,10 +294,17 @@ public class CStore extends BasicCStoreSCP {
                 } else
                     destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, null);
                 for (String calledAET : destinationAETs) {
+                    if (prevDestinationAETs.contains(calledAET)) {
+                        LOG.info("{}: Found previously used destination AET {} in rule {}, will not send data again", 
+                                new Object[]{asAccepted, calledAET, rule.getCommonName()});
+                        LOG.info("{}: Please check configured forward rules for overlapping time with duplicate destination AETs");
+                        continue;
+                    }
                     if (rule.getUseCallingAET() != null)
                         addFileInfo(file.getPath(), "use-calling-aet", rule.getUseCallingAET());
                     createMappedFileCopy(proxyAEE, asAccepted, file, calledAET, ".dcm");
                 }
+                prevDestinationAETs.addAll(destinationAETs);
             }
             deleteFile(asAccepted, file);
             Attributes cmd = Commands.mkCStoreRSP(rq, Status.Success);

@@ -39,10 +39,13 @@
 package org.dcm4chee.proxy;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
+
+import org.dcm4chee.proxy.stow.StowRS;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
@@ -50,9 +53,20 @@ import javax.ws.rs.core.Application;
 @ApplicationPath("/proxy-application")
 public class ProxyApplication extends Application {
 
+    private static final Set<Class<?>> classes = new HashSet<Class<?>>(1);
+
+    public ProxyApplication() {
+        classes.add(StowRS.class);
+    }
+    
     @Override
     public Set<Object> getSingletons() {
         return Collections.singleton((Object) Proxy.getInstance());
+    }
+
+    @Override
+    public Set<Class<?>> getClasses() {
+        return classes;
     }
 
 }

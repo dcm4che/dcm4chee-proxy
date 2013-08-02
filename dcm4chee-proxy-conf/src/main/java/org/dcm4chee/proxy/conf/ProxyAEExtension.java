@@ -48,6 +48,7 @@ import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -354,7 +355,7 @@ public class ProxyAEExtension extends AEExtension {
         return destinationAETs;
     }
 
-    private List<String> getDestinationAETsFromTemplate(String uri, ProxyDeviceExtension proxyDevExt, Attributes data)
+    public List<String> getDestinationAETsFromTemplate(String uri, ProxyDeviceExtension proxyDevExt, Attributes data)
             throws ConfigurationException {
         final List<String> result = new ArrayList<String>();
         try {
@@ -462,14 +463,44 @@ public class ProxyAEExtension extends AEExtension {
             addAttributeCoercion(ac);
     }
 
-    public List<ForwardRule> filterForwardRulesOnDimseRQ(Association as, Attributes rq, Dimse dimse) {
+    public List<ForwardRule> filterForwardRulesByCallingAET(String callingAET) {
         List<ForwardRule> filterList = new ArrayList<ForwardRule>();
-        for (ForwardRule rule : getCurrentForwardRules(as)) {
-            String rqSopClass = rq.getString(dimse.tagOfSOPClassUID());
+        for (ForwardRule rule : getForwardRules()) {
+            List<String> callingAETs = rule.getCallingAETs();
+            if ((callingAETs.isEmpty() || callingAETs.contains(callingAET))
+                    && rule.getReceiveSchedule().isNow(new GregorianCalendar())) {
+                LOG.debug(
+                        "Adding forward rule \"{}\" based on i) Calling AET = {} and ii) receive schedule days = {}, hours = {}",
+                        new Object[] { rule.getCommonName(), rule.getCallingAETs(), rule.getReceiveSchedule().getDays(),
+                                rule.getReceiveSchedule().getHours() });
+                filterList.add(rule);
+            }
+        }
+        List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
+        for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
+            ForwardRule rule = iterator.next();
+            for (ForwardRule fwr : filterList) {
+                if (rule.getCommonName().equals(fwr.getCommonName()))
+                    continue;
+                if (rule.getCallingAETs() == null && fwr.getCallingAETs() != null
+                        && fwr.getCallingAETs().equals(callingAET)) {
+                    LOG.debug(
+                            "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
+                            new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAETs() });
+                    returnList.remove(rule);
+                }
+            }
+        }
+        return returnList;
+    }
+
+    public List<ForwardRule> filterForwardRulesOnDimseRQ(List<ForwardRule> fwdRules, String cuid, Dimse dimse) {
+        List<ForwardRule> filterList = new ArrayList<ForwardRule>();
+        for (ForwardRule rule : fwdRules) {
             if (rule.getDimse().isEmpty() && rule.getSopClasses().isEmpty()
-                    || rule.getSopClasses().contains(rqSopClass) && rule.getDimse().isEmpty()
+                    || rule.getSopClasses().contains(cuid) && rule.getDimse().isEmpty()
                     || rule.getDimse().contains(dimse) 
-                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(rqSopClass)))
+                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(cuid)))
                 filterList.add(rule);
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
@@ -517,7 +548,7 @@ public class ProxyAEExtension extends AEExtension {
         } catch (Exception e) {
             new IOException(e);
         }
-        if (LOG.isDebugEnabled())
+        if (LOG.isDebugEnabled() && !modify.isEmpty())
             LOG.debug("{}: attribute coercion result:{}{}",
                     new Object[] { as, newline, modify.toString(Integer.MAX_VALUE, 200) });
         tmp.addAll(modify);

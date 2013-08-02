@@ -89,8 +89,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     private static Proxy instance;
 
-    static Proxy getInstance() {
-        return instance;
+    public static Proxy getInstance() {
+        return Proxy.instance;
     }
 
     public static final String KS_TYPE = "org.dcm4chee.proxy.net.keyStoreType";
@@ -197,17 +197,16 @@ public class Proxy extends DeviceService implements ProxyMBean {
             }
         }
     }
-    
+
     public String getRegisteredAETs() throws Exception {
-    	String registeredAETitles[] = dicomConfiguration.listRegisteredAETitles();
-    	StringBuilder result = new StringBuilder();
-    	boolean separator = false;
-    	for ( String aet : registeredAETitles )
-    	{
-    		result.append( ( separator ? "," : "" ) + aet );
-    		separator = true;
-    	}
-    	return result.toString();
+        String registeredAETitles[] = dicomConfiguration.listRegisteredAETitles();
+        StringBuilder result = new StringBuilder();
+        boolean separator = false;
+        for (String aet : registeredAETitles) {
+            result.append((separator ? "," : "") + aet);
+            separator = true;
+        }
+        return result.toString();
     }
 
     private static int getRestartTimeout() {
@@ -351,6 +350,10 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 return new File(dir, name).isDirectory();
             }
         };
+    }
+
+    public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {
+        return aeCache.findApplicationEntity(aet);
     }
 
 }

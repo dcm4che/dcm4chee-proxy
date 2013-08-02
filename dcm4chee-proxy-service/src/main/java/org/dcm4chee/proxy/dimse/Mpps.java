@@ -148,7 +148,8 @@ public class Mpps extends DicomService {
             Attributes data) throws ConfigurationException, IOException {
         ApplicationEntity ae = as.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(as, cmd, dimse);
+        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(proxyAEE.getCurrentForwardRules(as),
+                cmd.getString(dimse.tagOfSOPClassUID()), dimse);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no matching forward rule");
 
