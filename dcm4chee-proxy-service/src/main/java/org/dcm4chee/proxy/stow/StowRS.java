@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SyncFailedException;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -91,6 +92,7 @@ import org.dcm4che.net.Association;
 import org.dcm4che.net.DataWriterAdapter;
 import org.dcm4che.net.Dimse;
 import org.dcm4che.net.DimseRSPHandler;
+import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
 import org.dcm4che.net.service.DicomServiceException;
@@ -140,6 +142,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private Sequence sopSequence;
     private Sequence failedSOPSequence;
     List<ForwardRule> fwdRules = new ArrayList<>();
+    HashMap<String, Association> fwdAssocs = new HashMap<>();
 
     @Override
     public String toString() {
@@ -172,7 +175,24 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         }
         initResponse();
         creatorType.storeInstances(this);
+        closeForwardAssociations();
         return response();
+    }
+
+    private void closeForwardAssociations() {
+        for (Association as : fwdAssocs.values())
+            try {
+                as.waitForOutstandingRSP();
+                as.release();
+            } catch (InterruptedException e) {
+                LOG.error(as + ": unexpected exception: " + e.getMessage());
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
+            } catch (IOException e) {
+                LOG.error(as + ": failed to release association: " + e.getMessage());
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
+            }
     }
 
     private Response response() {
@@ -401,9 +421,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                     if (fwdRules.isEmpty())
                         setForwardRules(attrs, cuid, sourceAET);
                     processForwardRules(fileInfo, fmi, attrs, sourceAET, prop, cuid);
-                } else {
+                } else
                     processSingleForwardDestination(fileInfo, attrs, fmi, null, prop, sourceAET);
-                }
                 deleteFile(fileInfo.file);
             } catch (DicomServiceException | ConfigurationException e) {
                 throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
@@ -702,34 +721,27 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         }
         ForwardOption forwardOption = proxyAEE.getForwardOptions().get(calledAET);
         if (forwardOption == null || forwardOption.getSchedule().isNow(new GregorianCalendar())) {
-            Association as = null;
             try {
-                as = ForwardConnectionUtils.openForwardAssociation(proxyAEE, rule, callingAET, calledAET,
-                        fmi.getString(Tag.MediaStorageSOPClassUID), fmi.getString(Tag.TransferSyntaxUID),
-                        this.toString());
-                if (as != null)
-                    forwardFile(as, new DataWriterAdapter(attrs), fileInfo.file, prop, fileInfo.file.length(),
-                            fmi);
-                else
+                Association as;
+                if (fwdAssocs.containsKey(calledAET))
+                    as = fwdAssocs.get(calledAET);
+                else {
+                    as = ForwardConnectionUtils.openForwardAssociation(proxyAEE, rule, callingAET, calledAET,
+                            fmi.getString(Tag.MediaStorageSOPClassUID), fmi.getString(Tag.TransferSyntaxUID));
+                    fwdAssocs.put(calledAET, as);
+                }
+                forwardFile(as, attrs, fileInfo.file, prop, fileInfo.file.length(), fmi);
+            } catch (IOException | InterruptedException | IncompatibleConnectionException | GeneralSecurityException e) {
+                LOG.error("{}: Error opening forward connection: {}", this, e);
+                if (proxyAEE.isAcceptDataOnFailedAssociation())
                     storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
-            } finally {
-                if (as != null)
-                    try {
-                        as.waitForOutstandingRSP();
-                        as.release();
-                    } catch (InterruptedException e) {
-                        LOG.error(as + ": unexpected exception: " + e.getMessage());
-                        if (LOG.isDebugEnabled())
-                            e.printStackTrace();
-                    } catch (IOException e) {
-                        LOG.error(as + ": failed to release association: " + e.getMessage());
-                        if (LOG.isDebugEnabled())
-                            e.printStackTrace();
-                    }
+            } catch (ConfigurationException e) {
+                LOG.error("{}: Error opening forward connection: {}", this, e);
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
             }
         } else
             storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
-        setSopRef(fmi, fileInfo.attrs);
     }
 
     private void storeToCalledAETSpoolDir(FileInfo fileInfo, String calledAET, Properties prop, Attributes fmi) {
@@ -741,6 +753,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             file = createDestinationAETFile(fileInfo.file.getName(), aet);
             writeDicomInstance(file, fmi, destAttrs);
             storeInfoFile(prop, file);
+            setSopRef(fmi, fileInfo.attrs);
         } catch (Exception e) {
             LOG.info("{}: Storage Failed {}", this, e);
             if (LOG.isDebugEnabled())
@@ -753,8 +766,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         }
     }
 
-    private void forwardFile(Association as, DataWriterAdapter data, final File file,
-            final Properties prop, final long fileSize, Attributes fmi) {
+    private void forwardFile(Association as, final Attributes attrs, final File file, final Properties prop,
+            final long fileSize, final Attributes fmi) {
         final String cuid = prop.getProperty("sop-class-uid");
         final String iuid = prop.getProperty("sop-instance-uid");
         final String tsuid = prop.getProperty("transfer-syntax-uid");
@@ -770,17 +783,17 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                     if (proxyAEE.isEnableAuditLog())
                         LogUtils.writeLogFile(proxyAEE, AuditDirectory.TRANSFERRED, as.getCallingAET(),
                                 as.getRemoteAET(), prop, fileSize, -1);
+                    setSopRef(fmi, attrs);
                     break;
                 }
                 default: {
-                    LOG.debug("{}: failed to forward file {} with error status {}", new Object[] { as, file,
-                            Integer.toHexString(status) + 'H' });
+                    LOG.debug("{}: failed to forward file {} with error status {}",
+                            new Object[] { as, file, Integer.toHexString(status) + 'H' });
                     try {
                         renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
                     } catch (Exception e) {
-                        LOG.error("{}: error renaming file {}: {}",
-                                new Object[] { as, file.getPath(), e.getMessage() });
-                        if(LOG.isDebugEnabled())
+                        LOG.error("{}: error renaming file {}: {}", new Object[] { as, file.getPath(), e.getMessage() });
+                        if (LOG.isDebugEnabled())
                             e.printStackTrace();
                     }
                 }
@@ -793,7 +806,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 LogUtils.createStartLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET, as.getRemoteAET(), as
                         .getConnection().getHostname(), prop, 0);
             }
-            as.cstore(cuid, iuid, 0, data, tsuid, rspHandler);
+            as.cstore(cuid, iuid, 0, new DataWriterAdapter(attrs), tsuid, rspHandler);
         } catch (Exception e) {
             LOG.info("{}: Storage Failed {}", this, e);
             if (LOG.isDebugEnabled())

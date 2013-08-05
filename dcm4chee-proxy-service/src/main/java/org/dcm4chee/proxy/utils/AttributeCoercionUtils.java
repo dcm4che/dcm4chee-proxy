@@ -61,8 +61,6 @@ public class AttributeCoercionUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(AttributeCoercionUtils.class);
 
-    private static final String newline = System.getProperty("line.separator");
-
     public static Attributes coerceDataset(ProxyAEExtension proxyAEE, Association as, Role role, Dimse dimse,
             Attributes attrs, Attributes cmd) throws IOException {
         return coerceAttributes(proxyAEE, as.getRemoteAET(), cmd.getString(dimse.tagOfSOPClassUID()), role, dimse,
@@ -99,7 +97,7 @@ public class AttributeCoercionUtils {
         }
         if (LOG.isDebugEnabled() && !modify.isEmpty())
             LOG.debug("{}: Attribute coercion result:{}{}",
-                    new Object[] { source, newline, modify.toString(Integer.MAX_VALUE, 200) });
+                    new Object[] { source, proxyAEE.getNewline(), modify.toString(Integer.MAX_VALUE, 200) });
         tmp.addAll(modify);
         return tmp;
     }

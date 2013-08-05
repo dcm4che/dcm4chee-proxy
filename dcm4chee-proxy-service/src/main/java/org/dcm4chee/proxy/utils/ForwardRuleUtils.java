@@ -124,8 +124,10 @@ public class ForwardRuleUtils {
             if ((callingAETs.isEmpty() || callingAETs.contains(callingAET))
                     && rule.getReceiveSchedule().isNow(new GregorianCalendar())) {
                 LOG.debug(
-                        "Adding forward rule \"{}\" based on i) Calling AET = {} and ii) receive schedule days = {}, hours = {}",
-                        new Object[] { rule.getCommonName(), rule.getCallingAETs(), rule.getReceiveSchedule().getDays(),
+                        "Filter by Calling AET: use forward rule \"{}\" based on i) Calling AET = {} and ii) receive schedule days = {}, hours = {}",
+                        new Object[] { rule.getCommonName(), 
+                                rule.getCallingAETs().isEmpty() ? "<EMPTY>" : rule.getCallingAETs(), 
+                                rule.getReceiveSchedule().getDays(),
                                 rule.getReceiveSchedule().getHours() });
                 filterList.add(rule);
             }
@@ -136,10 +138,10 @@ public class ForwardRuleUtils {
             for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
-                if (rule.getCallingAETs() == null && fwr.getCallingAETs() != null
+                if (rule.getCallingAETs().isEmpty() && !fwr.getCallingAETs().isEmpty()
                         && fwr.getCallingAETs().equals(callingAET)) {
                     LOG.debug(
-                            "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
+                            "Filter by Calling AET: remove forward rule \"{}\" with Calling AET = <EMPTY> due to rule \"{}\" with matching Calling AET = {}",
                             new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAETs() });
                     returnList.remove(rule);
                 }
@@ -154,8 +156,15 @@ public class ForwardRuleUtils {
             if (rule.getDimse().isEmpty() && rule.getSopClasses().isEmpty()
                     || rule.getSopClasses().contains(cuid) && rule.getDimse().isEmpty()
                     || rule.getDimse().contains(dimse) 
-                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(cuid)))
+                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(cuid))) {
+                LOG.debug(
+                        "Filter on DIMSE RQ: add forward rule \"{}\" based on DIMSE = \"{}\" and SOPClasses = \"{}\"",
+                        new Object[] { 
+                                rule.getCommonName(), 
+                                rule.getDimse().isEmpty() ? "<EMPTY>" : rule.getDimse(),
+                                rule.getSopClasses().isEmpty() ? "<EMPTY>" : rule.getSopClasses()});
                 filterList.add(rule);
+            }
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
         for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
@@ -163,12 +172,26 @@ public class ForwardRuleUtils {
             for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
+
                 if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
+                    LOG.debug(
+                            "Filter on DIMSE RQ: remove forward rule \"{}\" with DIMSE = <EMPTY> due to rule \"{}\" with DIMSE = \"{}\"",
+                            new Object[] { 
+                                    rule.getCommonName(), 
+                                    fwr.getCommonName(),
+                                    fwr.getDimse()});
                     returnList.remove(rule);
                     break;
                 }
-                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty())
+                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty()) {
+                    LOG.debug(
+                            "Filter on DIMSE RQ: remove forward rule \"{}\" with SOP Class = <EMPTY> due to rule \"{}\" with SOP Class = \"{}\"",
+                            new Object[] { 
+                                    rule.getCommonName(), 
+                                    fwr.getCommonName(),
+                                    fwr.getSopClasses()});
                     returnList.remove(rule);
+                }
             }
         }
         return returnList;

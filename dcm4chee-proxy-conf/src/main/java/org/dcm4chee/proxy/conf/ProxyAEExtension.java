@@ -70,7 +70,7 @@ public class ProxyAEExtension extends AEExtension {
 
     private static final long serialVersionUID = -3552156927326582473L;
     private static final String separator = System.getProperty("file.separator");
-    public static final String newline = System.getProperty("line.separator");
+    private static final String newline = System.getProperty("line.separator");
     private static final String jbossServerDataDir = System.getProperty("jboss.server.data.dir");
     private static final String currentWorkingDir = System.getProperty("user.dir");
     public static final String FORWARD_ASSOCIATION = "forward.assoc";
@@ -261,6 +261,10 @@ public class ProxyAEExtension extends AEExtension {
 
     public final String getSeparator() {
         return separator;
+    }
+
+    public final String getNewline() {
+        return newline;
     }
 
     public List<ForwardRule> getForwardRules() {

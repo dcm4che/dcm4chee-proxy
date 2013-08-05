@@ -76,27 +76,21 @@ public class ForwardConnectionUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ForwardConnectionUtils.class);
 
     public static Association openForwardAssociation(ProxyAEExtension proxyAEE, ForwardRule rule, String callingAET,
-            String calledAET, String cuid, String tsuid, String clazz) {
+            String calledAET, String cuid, String tsuid) throws IOException, InterruptedException,
+            IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
         AAssociateRQ rq = new AAssociateRQ();
         rq.addPresentationContext(new PresentationContext(1, cuid, tsuid));
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
         Association asInvoked = null;
-        try {
-            asInvoked = proxyAEE.getApplicationEntity().connect(Proxy.getInstance().findApplicationEntity(calledAET),
-                    rq);
-        } catch (Exception e) {
-            LOG.error("{}: Error opening forward connection: {}", clazz, e);
-            if (LOG.isDebugEnabled())
-                e.printStackTrace();
-        }
+        asInvoked = proxyAEE.getApplicationEntity().connect(Proxy.getInstance().findApplicationEntity(calledAET), rq);
         return asInvoked;
     }
 
     public static Association openForwardAssociation(ProxyAEExtension proxyAEE, Association asAccepted,
             ForwardRule rule, String callingAET, String calledAET, AAssociateRQ rq, ApplicationEntityCache aeCache)
-                    throws IOException, InterruptedException, IncompatibleConnectionException, GeneralSecurityException,
-                    ConfigurationException {
+            throws IOException, InterruptedException, IncompatibleConnectionException, GeneralSecurityException,
+            ConfigurationException {
         rq.setCallingAET(callingAET);
         rq.setCalledAET(calledAET);
         HashMap<String, ForwardOption> forwardOptions = proxyAEE.getForwardOptions();
