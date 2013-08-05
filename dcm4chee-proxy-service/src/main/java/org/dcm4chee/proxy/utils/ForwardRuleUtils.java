@@ -138,8 +138,9 @@ public class ForwardRuleUtils {
             for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
-                if (rule.getCallingAETs().isEmpty() && !fwr.getCallingAETs().isEmpty()
-                        && fwr.getCallingAETs().equals(callingAET)) {
+                if (rule.getCallingAETs().isEmpty()
+                        && !fwr.getCallingAETs().isEmpty()
+                        && fwr.getCallingAETs().contains(callingAET)) {
                     LOG.debug(
                             "Filter by Calling AET: remove forward rule \"{}\" with Calling AET = <EMPTY> due to rule \"{}\" with matching Calling AET = {}",
                             new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAETs() });

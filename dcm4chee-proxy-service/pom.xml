@@ -120,6 +120,12 @@
       <version>${dcm4che.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <scm>
     <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
