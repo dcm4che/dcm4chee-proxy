@@ -54,8 +54,10 @@ import org.dcm4che.net.service.DicomService;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
-import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.pix.PIXConsumer;
+import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.ForwardRuleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,14 +85,13 @@ public class CMove extends DicomService {
 
         ApplicationEntity ae = asAccepted.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        data = proxyAEE.coerceDataset(asAccepted, Role.SCU, dimse, data, rq, asAccepted.getApplicationEntity().getDevice()
-                .getDeviceExtension(ProxyDeviceExtension.class));
+        data = AttributeCoercionUtils.coerceDataset(proxyAEE, asAccepted, Role.SCU, dimse, data, rq);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (forwardAssociationProperty == null) {
-            List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(
+            List<ForwardRule> forwardRules = ForwardRuleUtils.filterForwardRulesOnDimseRQ(
                     proxyAEE.getCurrentForwardRules(asAccepted), rq.getString(dimse.tagOfSOPClassUID()), dimse);
-            HashMap<String, Association> fwdAssocs = proxyAEE
-                    .openForwardAssociations(asAccepted, forwardRules, data, aeCache);
+            HashMap<String, Association> fwdAssocs = ForwardConnectionUtils.openForwardAssociations(proxyAEE,
+                    asAccepted, forwardRules, data, aeCache);
             if (fwdAssocs.isEmpty())
                 throw new DicomServiceException(Status.UnableToProcess);
 

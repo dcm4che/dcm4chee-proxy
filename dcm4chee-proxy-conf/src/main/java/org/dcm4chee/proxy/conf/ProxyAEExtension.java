@@ -39,58 +39,26 @@
 package org.dcm4chee.proxy.conf;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.ConnectException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 
-import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-
-import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.AttributeCoercions;
-import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
-import org.dcm4che.data.UID;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
-import org.dcm4che.io.SAXTransformer;
-import org.dcm4che.io.SAXWriter;
 import org.dcm4che.net.AEExtension;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.Dimse;
-import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.Status;
 import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.net.pdu.AAssociateAC;
-import org.dcm4che.net.pdu.AAssociateRQ;
-import org.dcm4che.net.pdu.CommonExtendedNegotiation;
-import org.dcm4che.net.pdu.ExtendedNegotiation;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
-import org.dcm4chee.proxy.common.RetryObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -141,7 +109,7 @@ public class ProxyAEExtension extends AEExtension {
         return spoolDirectory;
     }
     
-    public File getSpoolDirectoryPath() throws IOException {
+    public final File getSpoolDirectoryPath() throws IOException {
         File path = new File(spoolDirectory);
         if (!path.isAbsolute())
             path = jbossServerDataDir != null 
@@ -151,7 +119,7 @@ public class ProxyAEExtension extends AEExtension {
         return path;
     }
 
-    public File getAuditDirectoryPath() throws IOException {
+    public final File getAuditDirectoryPath() throws IOException {
         File path = new File(getSpoolDirectoryPath(), "audit");
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
@@ -181,7 +149,7 @@ public class ProxyAEExtension extends AEExtension {
         return path;
     }
 
-    public File getFailedAuditDirectoryPath() throws IOException {
+    public final File getFailedAuditDirectoryPath() throws IOException {
         File path = new File(getAuditDirectoryPath(), AuditDirectory.FAILED.getDirectoryName());
         if (!path.isAbsolute())
             path = jbossServerDataDir != null
@@ -241,7 +209,7 @@ public class ProxyAEExtension extends AEExtension {
         return path;
     }
 
-    private void makeDirs(File path) throws IOException {
+    public static void makeDirs(File path) throws IOException {
         if (!path.mkdirs())
             if (!path.exists())
                 throw new IOException("Cannot create path " + path);
@@ -291,7 +259,7 @@ public class ProxyAEExtension extends AEExtension {
         this.forwardOptions = forwardOptions;
     }
 
-    public static String getSeparator() {
+    public final String getSeparator() {
         return separator;
     }
 
@@ -308,30 +276,6 @@ public class ProxyAEExtension extends AEExtension {
         return (List<ForwardRule>) as.getProperty(FORWARD_RULES);
     }
 
-    private File getLogDir(AuditDirectory auditDir, String callingAET, String calledAET, String studyIUID, Integer retry)
-            throws IOException {
-        File path = null;
-        String subDirs = getSeparator() + calledAET + getSeparator() + callingAET + getSeparator() + studyIUID;
-        switch (auditDir) {
-        case TRANSFERRED:
-            path = new File(getTransferredAuditDirectoryPath().getPath() + subDirs);
-            break;
-        case FAILED:
-            path = new File(getFailedAuditDirectoryPath().getPath()  + subDirs + getSeparator() + retry);
-            break;
-        case DELETED:
-            path = new File(getDeleteAuditDirectoryPath().getPath() + subDirs);
-            break;
-        default:
-            LOG.error("Unrecognized Audit Directory: " + auditDir.getDirectoryName());
-            break;
-        }
-        if (path == null)
-            throw new DicomServiceException(Status.UnableToProcess);
-        makeDirs(path);
-        return path;
-    }
-
     public AttributeCoercion getAttributeCoercion(String aeTitle, String sopClass,
             Role role, Dimse dimse) {
         return attributeCoercions.findAttributeCoercion(sopClass, dimse, role, aeTitle);
@@ -339,51 +283,6 @@ public class ProxyAEExtension extends AEExtension {
 
     public AttributeCoercions getAttributeCoercions() {
         return attributeCoercions;
-    }
-
-    public List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule, Attributes data)
-            throws ConfigurationException, DicomServiceException {
-        List<String> destinationAETs = new ArrayList<String>();
-        if (rule.containsTemplateURI()) {
-            ProxyDeviceExtension proxyDevExt = as.getApplicationEntity().getDevice()
-                    .getDeviceExtension(ProxyDeviceExtension.class);
-            destinationAETs.addAll(getDestinationAETsFromTemplate(rule.getDestinationTemplate(), proxyDevExt, data));
-        } else
-            destinationAETs.addAll(rule.getDestinationAETitles());
-        LOG.info("{}: sending data to {} based on ForwardRule \"{}\"",
-                new Object[] { as, destinationAETs, rule.getCommonName() });
-        return destinationAETs;
-    }
-
-    public List<String> getDestinationAETsFromTemplate(String uri, ProxyDeviceExtension proxyDevExt, Attributes data)
-            throws ConfigurationException {
-        final List<String> result = new ArrayList<String>();
-        try {
-            Templates templates = proxyDevExt.getTemplates(uri);
-            SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
-            TransformerHandler handler = transFac.newTransformerHandler(templates);
-            handler.setResult(new SAXResult(new DefaultHandler() {
-
-                @Override
-                public void startElement(String uri, String localName, String qName, org.xml.sax.Attributes attributes)
-                        throws SAXException {
-                    if (qName.equals("Destination")) {
-                        result.add(attributes.getValue("aet"));
-                    }
-                }
-
-            }));
-            SAXWriter saxWriter = new SAXWriter(handler);
-            saxWriter.write(data);
-        } catch (Exception e) {
-            LOG.error("Error parsing template {}: {}", uri, e);
-            throw new ConfigurationException(e.getMessage());
-        }
-        if (result.isEmpty()) {
-            LOG.error("Parsing template {} returned no result", uri);
-            throw new ConfigurationException();
-        }
-        return result;
     }
 
     public String getProxyPIXConsumerApplication() {
@@ -463,318 +362,8 @@ public class ProxyAEExtension extends AEExtension {
             addAttributeCoercion(ac);
     }
 
-    public List<ForwardRule> filterForwardRulesByCallingAET(String callingAET) {
-        List<ForwardRule> filterList = new ArrayList<ForwardRule>();
-        for (ForwardRule rule : getForwardRules()) {
-            List<String> callingAETs = rule.getCallingAETs();
-            if ((callingAETs.isEmpty() || callingAETs.contains(callingAET))
-                    && rule.getReceiveSchedule().isNow(new GregorianCalendar())) {
-                LOG.debug(
-                        "Adding forward rule \"{}\" based on i) Calling AET = {} and ii) receive schedule days = {}, hours = {}",
-                        new Object[] { rule.getCommonName(), rule.getCallingAETs(), rule.getReceiveSchedule().getDays(),
-                                rule.getReceiveSchedule().getHours() });
-                filterList.add(rule);
-            }
-        }
-        List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
-        for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
-            ForwardRule rule = iterator.next();
-            for (ForwardRule fwr : filterList) {
-                if (rule.getCommonName().equals(fwr.getCommonName()))
-                    continue;
-                if (rule.getCallingAETs() == null && fwr.getCallingAETs() != null
-                        && fwr.getCallingAETs().equals(callingAET)) {
-                    LOG.debug(
-                            "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
-                            new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAETs() });
-                    returnList.remove(rule);
-                }
-            }
-        }
-        return returnList;
-    }
-
-    public List<ForwardRule> filterForwardRulesOnDimseRQ(List<ForwardRule> fwdRules, String cuid, Dimse dimse) {
-        List<ForwardRule> filterList = new ArrayList<ForwardRule>();
-        for (ForwardRule rule : fwdRules) {
-            if (rule.getDimse().isEmpty() && rule.getSopClasses().isEmpty()
-                    || rule.getSopClasses().contains(cuid) && rule.getDimse().isEmpty()
-                    || rule.getDimse().contains(dimse) 
-                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(cuid)))
-                filterList.add(rule);
-        }
-        List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
-        for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
-            ForwardRule rule = iterator.next();
-            for (ForwardRule fwr : filterList) {
-                if (rule.getCommonName().equals(fwr.getCommonName()))
-                    continue;
-                if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
-                    returnList.remove(rule);
-                    break;
-                }
-                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty())
-                    returnList.remove(rule);
-            }
-        }
-        return returnList;
-    }
-
-    public Attributes coerceDataset(Association as, Role role, Dimse dimse, Attributes attrs, Attributes cmd,
-            ProxyDeviceExtension proxyDevExt) throws IOException {
-        AttributeCoercion ac = getAttributeCoercion(as.getRemoteAET(), cmd.getString(dimse.tagOfSOPClassUID()), role, dimse);
-        return (ac != null)
-            ? coerceAttributes(as, attrs, ac, proxyDevExt)
-            : attrs;
-    }
-
-    public Attributes coerceAttributes(Association as, Attributes attrs, AttributeCoercion ac,
-            ProxyDeviceExtension proxyDevExt) {
-        Attributes tmp = new Attributes(attrs);
-        LOG.debug("{}: apply attribute coercion {} (dimse={}, role={}{}{})",
-                new Object[] { 
-                    as, 
-                    ac.getURI(), 
-                    ac.getDIMSE(), 
-                    ac.getRole(), 
-                    ac.getAETitles().length == 0 ? "" : ", aet=" + Arrays.toString(ac.getAETitles()),
-                    ac.getSOPClasses().length == 0 ? "" : ", sopClass=" + Arrays.toString(ac.getSOPClasses())
-        });
-        Attributes modify = new Attributes();
-        try {
-            SAXWriter w = SAXTransformer.getSAXWriter(proxyDevExt.getTemplates(ac.getURI()), modify);
-            w.setIncludeKeyword(false);
-            w.write(tmp);
-        } catch (Exception e) {
-            new IOException(e);
-        }
-        if (LOG.isDebugEnabled() && !modify.isEmpty())
-            LOG.debug("{}: attribute coercion result:{}{}",
-                    new Object[] { as, newline, modify.toString(Integer.MAX_VALUE, 200) });
-        tmp.addAll(modify);
-        return tmp;
-    }
-
-    public void createStartLogFile(AuditDirectory auditDir, String callingAET, String calledAET, String proxyHostname, 
-            Properties fileInfo, Integer retry) throws IOException {
-        String studyIUID = fileInfo.containsKey("study-iuid") 
-                ? fileInfo.getProperty("study-iuid")
-                : fileInfo.getProperty("sop-instance-uid");
-        File file = new File(getLogDir(auditDir, callingAET, calledAET, studyIUID, retry), "start.log");
-        if (!file.exists()) {
-            try {
-                Properties prop = new Properties();
-                prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
-                String patID = fileInfo.getProperty("patient-id");
-                prop.setProperty("patient-id", (patID == null || patID.length() == 0) ? "<UNKOWN>" : patID);
-                prop.setProperty("hostname", fileInfo.getProperty("hostname"));
-                prop.setProperty("proxy-hostname", proxyHostname);
-                prop.store(new FileOutputStream(file), null);
-            } catch (IOException e) {
-                LOG.debug("Failed to create log file: " + e.getMessage());
-            }
-        }
-    }
-
-    public File writeLogFile(AuditDirectory auditDir, String callingAET, String calledAET, Properties fileInfo, 
-            long size, Integer retry) {
-        Properties prop = new Properties();
-        File file = null;
-        try {
-            String studyIUID = fileInfo.containsKey("study-iuid") 
-                    ? fileInfo.getProperty("study-iuid")
-                    : fileInfo.getProperty("sop-instance-uid");
-            file = new File(getLogDir(auditDir, callingAET, calledAET, studyIUID , retry), 
-                    fileInfo.getProperty("sop-instance-uid").concat(".log"));
-            prop.setProperty("sop-class-uid", fileInfo.getProperty("sop-class-uid"));
-            prop.setProperty("size", String.valueOf(size));
-            prop.setProperty("time", String.valueOf(System.currentTimeMillis()));
-            prop.store(new FileOutputStream(file), null);
-        } catch (IOException e) {
-            LOG.debug("Failed to create log file: " + e.getMessage());
-        }
-        return file;
-    }
-
     public void addAttributeCoercion(AttributeCoercion ac) {
         attributeCoercions.add(ac);
-    }
-
-    public Properties getFileInfoProperties(File file) throws IOException {
-        String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
-        return getPropertiesFromInfoFile(infoFileName);
-    }
-
-    public Properties getPropertiesFromInfoFile(String infoFileName) throws FileNotFoundException, IOException {
-        Properties prop = new Properties();
-        FileInputStream inStream = null;
-        try {
-            LOG.debug("Loading info file {}", infoFileName);
-            inStream = new FileInputStream(infoFileName);
-            prop.load(inStream);
-        } finally {
-            inStream.close();
-        }
-        return prop;
-    }
-
-    public HashMap<String, Association> openForwardAssociations(Association asAccepted, List<ForwardRule> forwardRules,
-            Attributes data, ApplicationEntityCache aeCache) throws DicomServiceException {
-        HashMap<String, Association> fwdAssocs = new HashMap<String, Association>(forwardRules.size());
-        for (ForwardRule rule : forwardRules) {
-            String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule
-                    .getUseCallingAET();
-            List<String> destinationAETs = new ArrayList<String>();
-            try {
-                destinationAETs = getDestinationAETsFromForwardRule(asAccepted, rule, data);
-            } catch (ConfigurationException e) {
-                LOG.error("Failed to get destination AET from forward rule {}: {}", rule.getCommonName(), e);
-                asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConfigurationException.getSuffix() + "0");
-                return fwdAssocs;
-            }
-            for (String calledAET : destinationAETs) {
-                try {
-                    Association asInvoked = openForwardAssociation(asAccepted, rule, callingAET, calledAET,
-                            copyOf(asAccepted, rule), aeCache);
-                    if (asInvoked != null)
-                        fwdAssocs.put(calledAET, asInvoked);
-                } catch (IncompatibleConnectionException e) {
-                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
-                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.IncompatibleConnectionException.getSuffix() + "0");
-                } catch (GeneralSecurityException e) {
-                    LOG.error("Failed to create SSL context: ", e.getMessage());
-                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
-                } catch (ConfigurationException e) {
-                    LOG.error("Unable to load configuration for destination AET {}: {}", new Object[] { calledAET, e });
-                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConfigurationException.getSuffix() + "0");
-                } catch (ConnectException e) {
-                    LOG.error("Unable to connect to {}: {}", new Object[] { calledAET, e });
-                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
-                } catch (Exception e) {
-                    LOG.error("Unexpected exception: ", e);
-                    asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, ".err");
-                }
-            }
-        }
-        return fwdAssocs;
-    }
-
-    public Association openForwardAssociation(Association asAccepted, ForwardRule rule, String callingAET,
-            String calledAET, AAssociateRQ rq, ApplicationEntityCache aeCache) throws IOException,
-            InterruptedException, IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
-        rq.setCallingAET(callingAET);
-        rq.setCalledAET(calledAET);
-        if (forwardOptions.containsKey(asAccepted.getRemoteAET()) && forwardOptions.get(asAccepted.getRemoteAET()).isConvertEmf2Sf())
-            addEnhancedTS(rq);
-        else if (forwardOptions.containsKey(calledAET) && forwardOptions.get(calledAET).isConvertEmf2Sf())
-            addReducedTS(rq);
-        Association asInvoked = getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
-        asInvoked.setProperty(FORWARD_ASSOCIATION, asAccepted);
-        asInvoked.setProperty(ForwardRule.class.getName(), rule);
-        return asInvoked;
-    }
-
-    private void addEnhancedTS(AAssociateRQ rq) {
-        List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
-        int pcSize = rq.getNumberOfPresentationContexts();
-        HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
-        for (PresentationContext pc : rq.getPresentationContexts())
-            as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
-        addTsSopClass(UID.CTImageStorage, UID.EnhancedCTImageStorage, newPcList, pcSize, as_ts);
-        addTsSopClass(UID.MRImageStorage, UID.EnhancedMRImageStorage, newPcList, pcSize, as_ts);
-        addTsSopClass(UID.PositronEmissionTomographyImageStorage, UID.EnhancedPETImageStorage, newPcList, pcSize, as_ts);
-        for (PresentationContext pc : newPcList)
-            rq.addPresentationContext(pc);
-    }
-    
-    public void addReducedTS(AAssociateRQ rq) {
-        List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
-        int pcSize = rq.getNumberOfPresentationContexts();
-        HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
-        for (PresentationContext pc : rq.getPresentationContexts())
-            as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
-        addTsSopClass(UID.EnhancedCTImageStorage, UID.CTImageStorage, newPcList, pcSize, as_ts);
-        addTsSopClass(UID.EnhancedMRImageStorage, UID.MRImageStorage, newPcList, pcSize, as_ts);
-        addTsSopClass(UID.EnhancedPETImageStorage, UID.PositronEmissionTomographyImageStorage, newPcList, pcSize, as_ts);
-        for (PresentationContext pc : newPcList)
-            rq.addPresentationContext(pc);
-    }
-
-    private void addTsSopClass(String tsA, String tsB, List<PresentationContext> newPcList,
-            int pcSize, HashMap<String, String[]> as_ts) {
-        String[] imageStorageTS = as_ts.get(tsA);
-        if (imageStorageTS != null)
-            if (!as_ts.containsKey(tsB))
-                newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, tsB, imageStorageTS));
-    }
-
-    public AAssociateRQ copyOf(Association as, ForwardRule rule) {
-        AAssociateRQ rq = as.getAAssociateRQ();
-        AAssociateRQ copy = new AAssociateRQ();
-        if (rule != null && rule.isExclusiveUseDefinedTC())
-            for (PresentationContext pc : filterMatchingPC(as))
-                copy.addPresentationContext(pc);
-        else
-            for (PresentationContext pc : rq.getPresentationContexts())
-                copy.addPresentationContext(pc);
-        copy.setReservedBytes(rq.getReservedBytes());
-        copy.setProtocolVersion(rq.getProtocolVersion());
-        copy.setMaxPDULength(rq.getMaxPDULength());
-        copy.setMaxOpsInvoked(rq.getMaxOpsInvoked());
-        copy.setMaxOpsPerformed(rq.getMaxOpsPerformed());
-        copy.setCalledAET(rq.getCalledAET());
-        copy.setCallingAET(rq.getCallingAET());
-        copy.setApplicationContext(rq.getApplicationContext());
-        copy.setImplClassUID(rq.getImplClassUID());
-        copy.setImplVersionName(rq.getImplVersionName());
-        copy.setUserIdentityRQ(rq.getUserIdentityRQ());
-        for (RoleSelection rs : rq.getRoleSelections())
-            copy.addRoleSelection(rs);
-        for (ExtendedNegotiation en : rq.getExtendedNegotiations())
-            copy.addExtendedNegotiation(en);
-        for (CommonExtendedNegotiation cen : rq.getCommonExtendedNegotiations())
-            copy.addCommonExtendedNegotiation(cen);
-        return copy;
-    }
-
-
-    private List<PresentationContext> filterMatchingPC(Association as) {
-        AAssociateRQ rq = as.getAAssociateRQ();
-        AAssociateAC ac = as.getAAssociateAC();
-        List<PresentationContext> returnList = new ArrayList<PresentationContext>(rq.getNumberOfPresentationContexts());
-        for (int i = 0; i < rq.getNumberOfPresentationContexts(); i++) {
-            int pcid = i * 2 + 1;
-            PresentationContext pcAC = ac.getPresentationContext(pcid);
-            PresentationContext pcRQ = rq.getPresentationContext(pcid);
-            List<String> tss = new ArrayList<String>(pcAC.getTransferSyntaxes().length);
-            tss.add(UID.ImplicitVRLittleEndian);
-            for (String otherTss : pcAC.getTransferSyntaxes())
-                if (!tss.contains(otherTss))
-                    tss.add(otherTss);
-            returnList.add(new PresentationContext(pcid, pcRQ.getAbstractSyntax(), (String[]) tss
-                    .toArray(new String[tss.size()])));
-        }
-        return returnList;
-    }
-
-    public static String getMatchingTsuid(Association asInvoked, String tsuid, String cuid) {
-        Set<String> tsuids = asInvoked.getTransferSyntaxesFor(cuid);
-        return tsuids.contains(tsuid) 
-                ? tsuid 
-                : tsuids.isEmpty() 
-                    ? null 
-                    : tsuids.iterator().next();
-    }
-
-    public boolean requiresMultiFrameConversion(ProxyAEExtension proxyAEE, String destinationAET, String sopClass) {
-        HashMap<String, ForwardOption> fwdOptions = proxyAEE.getForwardOptions();
-        ForwardOption fwdOption = fwdOptions.get(destinationAET);
-        if (fwdOption != null)
-            return (fwdOption.isConvertEmf2Sf() 
-                        && (sopClass.equals(UID.EnhancedCTImageStorage)
-                            || sopClass.equals(UID.EnhancedMRImageStorage) 
-                            || sopClass.equals(UID.EnhancedPETImageStorage)));
-        return false;
     }
 
     public Attributes parseAttributesWithLazyBulkData(Association as, File file)
@@ -790,18 +379,6 @@ public class ProxyAEExtension extends AEExtension {
         } finally {
             in.close();
         }
-    }
-
-    public FileFilter infoFileFilter() {
-        return new FileFilter() {
-            
-            @Override
-            public boolean accept(File pathname) {
-                if (pathname.getPath().endsWith(".info"))
-                    return true;
-                return false;
-            }
-        };
     }
 
 }

@@ -36,13 +36,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.dcm4chee.proxy.wado;
+package org.dcm4chee.proxy.utils;
 
-import org.dcm4che.net.Association;
-import org.dcm4che.net.pdu.AAssociateRQ;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4chee.proxy.Proxy;
-import org.dcm4chee.proxy.conf.ForwardRule;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,26 +53,39 @@ import org.slf4j.LoggerFactory;
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  * 
  */
-public class ForwardConnectionUtils {
+public class InfoFileUtils {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ForwardConnectionUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InfoFileUtils.class);
 
-    public static Association openForwardAssociation(ProxyAEExtension proxyAEE, ForwardRule rule, String callingAET,
-            String calledAET, String cuid, String tsuid, String clazz) {
-        AAssociateRQ rq = new AAssociateRQ();
-        rq.addPresentationContext(new PresentationContext(1, cuid, tsuid));
-        rq.setCallingAET(callingAET);
-        rq.setCalledAET(calledAET);
-        Association asInvoked = null;
+    public static Properties getFileInfoProperties(ProxyAEExtension proxyAEE, File file) throws IOException {
+        String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
+        return getPropertiesFromInfoFile(proxyAEE, infoFileName);
+    }
+
+    public static Properties getPropertiesFromInfoFile(ProxyAEExtension proxyAEE, String infoFileName)
+            throws FileNotFoundException, IOException {
+        Properties prop = new Properties();
+        FileInputStream inStream = null;
         try {
-            asInvoked = proxyAEE.getApplicationEntity().connect(Proxy.getInstance().findApplicationEntity(calledAET),
-                    rq);
-        } catch (Exception e) {
-            LOG.error("{}: Error opening forward connection: {}", clazz, e);
-            if (LOG.isDebugEnabled())
-                e.printStackTrace();
+            LOG.debug("{}: Loading info file {}", proxyAEE, infoFileName);
+            inStream = new FileInputStream(infoFileName);
+            prop.load(inStream);
+        } finally {
+            inStream.close();
         }
-        return asInvoked;
+        return prop;
+    }
+
+    public static FileFilter infoFileFilter() {
+        return new FileFilter() {
+            
+            @Override
+            public boolean accept(File pathname) {
+                if (pathname.getPath().endsWith(".info"))
+                    return true;
+                return false;
+            }
+        };
     }
 
 }

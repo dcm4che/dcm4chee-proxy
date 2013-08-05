@@ -80,6 +80,10 @@ import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.InfoFileUtils;
+import org.dcm4chee.proxy.utils.LogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -374,11 +378,11 @@ public class ForwardFiles {
         if (!dir.exists())
             return null;
 
-        Properties nCreateProp = proxyAEE.getFileInfoProperties(file);
+        Properties nCreateProp = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
         String sopInstanceUID = nCreateProp.getProperty("sop-instance-uid");
-        File[] nSetInfoFiles = dir.listFiles(proxyAEE.infoFileFilter());
+        File[] nSetInfoFiles = dir.listFiles(InfoFileUtils.infoFileFilter());
         for (File nSetInfoFile : nSetInfoFiles) {
-            Properties nSetProp = proxyAEE.getPropertiesFromInfoFile(nSetInfoFile.getPath());
+            Properties nSetProp = InfoFileUtils.getPropertiesFromInfoFile(proxyAEE, nSetInfoFile.getPath());
             if (nSetProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
                 return new File(nSetInfoFile.getPath().substring(0, nSetInfoFile.getPath().indexOf('.')) + ".dcm");
         }
@@ -436,12 +440,12 @@ public class ForwardFiles {
     private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason, Integer retry) {
         try {
             String path = file.getPath();
-            Properties prop = proxyAEE.getFileInfoProperties(file);
+            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
             if (proxyAEE.isEnableAuditLog() && path.contains("cstore")) {
                 String callingAET = prop.getProperty("source-aet");
-                proxyAEE.createStartLogFile(AuditDirectory.DELETED, callingAET, calledAET, proxyAEE
+                LogUtils.createStartLogFile(proxyAEE, AuditDirectory.DELETED, callingAET, calledAET, proxyAEE
                         .getApplicationEntity().getConnections().get(0).getHostname(), prop, retry);
-                proxyAEE.writeLogFile(AuditDirectory.DELETED, callingAET, calledAET, prop, file.length(), retry);
+                LogUtils.writeLogFile(proxyAEE, AuditDirectory.DELETED, callingAET, calledAET, prop, file.length(), retry);
             }
             if (path.contains("ncreate"))
                 deletePendingNSet(proxyAEE, calledAET, file, prop);
@@ -469,7 +473,7 @@ public class ForwardFiles {
         if (nSetDir.exists() && nSetDir.list() != null && nSetDir.list().length != 0) {
             String sopInstanceUID = prop.getProperty("sop-instance-uid");
             for (File nSetFile : nSetDir.listFiles(fileFilter(proxyAEE, calledAET))) {
-                Properties nSetProp = proxyAEE.getFileInfoProperties(nSetFile);
+                Properties nSetProp = InfoFileUtils.getFileInfoProperties(proxyAEE, nSetFile);
                 if (nSetProp.getProperty("sop-instance-uid").equals(sopInstanceUID)) {
                     if (nSetFile.delete())
                         LOG.debug("Delete {} before deleting matching N-CREATE file {}", nSetFile, file);
@@ -502,7 +506,7 @@ public class ForwardFiles {
     protected void forwardScheduledMPPS(ProxyAEExtension proxyAEE, File[] files, String destinationAETitle,
             String protocol) throws IOException {
         for (File file : files) {
-            Properties prop = proxyAEE.getFileInfoProperties(file);
+            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
             String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
                     .getProperty("source-aet");
             try {
@@ -572,23 +576,24 @@ public class ForwardFiles {
         if (proxyAEE.isEnableAuditLog() && file.getPath().contains("cstore")) {
             String sourceAET = prop.getProperty("source-aet");
             int retry = getPreviousRetries(proxyAEE, file);
-            proxyAEE.createStartLogFile(AuditDirectory.FAILED, sourceAET, calledAET, proxyAEE.getApplicationEntity()
-                    .getConnections().get(0).getHostname(), prop, retry);
-            proxyAEE.writeLogFile(AuditDirectory.FAILED, sourceAET, calledAET, prop, file.length(), retry);
+            LogUtils.createStartLogFile(proxyAEE, AuditDirectory.FAILED, sourceAET, calledAET, proxyAEE
+                    .getApplicationEntity().getConnections().get(0).getHostname(), prop, retry);
+            LogUtils.writeLogFile(proxyAEE, AuditDirectory.FAILED, sourceAET, calledAET, prop, file.length(), retry);
         }
     }
 
-    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, 
-            File file) throws IOException {
+    private boolean pendingNCreateForwarding(ProxyAEExtension proxyAEE, String destinationAETitle, File file)
+            throws IOException {
         File dir = new File(proxyAEE.getNCreateDirectoryPath(), destinationAETitle);
         if (!dir.exists())
             return false;
 
-        Properties nSetProp = proxyAEE.getFileInfoProperties(file);
+        Properties nSetProp = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
         String sopInstanceUID = nSetProp.getProperty("sop-instance-uid");
-        File[] nCreateInfoFiles = dir.listFiles(proxyAEE.infoFileFilter());
+        File[] nCreateInfoFiles = dir.listFiles(InfoFileUtils.infoFileFilter());
         for (File nCreateInfoFile : nCreateInfoFiles) {
-            Properties nCreateProp = proxyAEE.getPropertiesFromInfoFile(nCreateInfoFile.getAbsolutePath());
+            Properties nCreateProp = InfoFileUtils.getPropertiesFromInfoFile(proxyAEE,
+                    nCreateInfoFile.getAbsolutePath());
             if (nCreateProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
                 return true;
         }
@@ -668,7 +673,7 @@ public class ForwardFiles {
 
     private void forwardScheduledNAction(ProxyAEExtension proxyAEE, String calledAET, File[] files) throws IOException {
         for (File file : files) {
-            Properties prop = proxyAEE.getFileInfoProperties(file);
+            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
             String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
                     .getProperty("source-aet");
             try {
@@ -737,7 +742,7 @@ public class ForwardFiles {
                     String filePath = file.getPath();
                     File destDir = null;
                     try {
-                        destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
+                        destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
                                 + asInvoked.getCalledAET());
                     } catch (IOException e) {
                         LOG.error("{}: error creating directory {}: {}", new Object[]{as, destDir, e.getMessage()});
@@ -809,25 +814,24 @@ public class ForwardFiles {
     private void processForwardTask(ProxyAEExtension proxyAEE, ForwardTask ft) throws IOException {
         AAssociateRQ rq = ft.getAAssociateRQ();
         Association asInvoked = null;
-        Properties prop = proxyAEE.getFileInfoProperties(ft.getFiles().get(0));
+        Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, ft.getFiles().get(0));
         try {
             if (proxyAEE.getForwardOptions().containsKey(rq.getCalledAET())
                     && proxyAEE.getForwardOptions().get(rq.getCalledAET()).isConvertEmf2Sf())
-                proxyAEE.addReducedTS(rq);
+                ForwardConnectionUtils.addReducedTS(rq);
             asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(rq.getCalledAET()), rq);
             for (File file : ft.getFiles()) {
-                prop = proxyAEE.getFileInfoProperties(file);
+                prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
                 try {
                     String cuid = prop.getProperty("sop-class-uid");
-                    if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getCalledAET(), cuid))
+                    if (ForwardConnectionUtils.requiresMultiFrameConversion(proxyAEE, asInvoked.getCalledAET(), cuid))
                         processEmf2Sf(proxyAEE, asInvoked, prop, file);
                     else if (asInvoked.isReadyForDataTransfer()) {
                         Attributes attrs = proxyAEE.parseAttributesWithLazyBulkData(asInvoked, file);
                         AttributeCoercion ac = proxyAEE.getAttributeCoercion(asInvoked.getCalledAET(), cuid, Role.SCP,
                                 Dimse.C_STORE_RQ);
                         if (ac != null)
-                            attrs = proxyAEE.coerceAttributes(asInvoked, attrs, ac, asInvoked.getApplicationEntity()
-                                    .getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+                            attrs = AttributeCoercionUtils.coerceAttributes(asInvoked, proxyAEE, attrs, ac);
                         forwardScheduledCStoreFile(proxyAEE, asInvoked, new DataWriterAdapter(attrs), -1, file, prop, file.length());
                     } else
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, rq.getCalledAET(), prop);
@@ -930,7 +934,7 @@ public class ForwardFiles {
                     case Status.Success:
                     case Status.CoercionOfDataElements: {
                         if (proxyAEE.isEnableAuditLog())
-                            proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, asInvoked.getCallingAET(),
+                            LogUtils.writeLogFile(proxyAEE, AuditDirectory.TRANSFERRED, asInvoked.getCallingAET(),
                                     asInvoked.getRemoteAET(), prop, fileSize, -1);
                         if (frame > 0)
                             return;
@@ -956,7 +960,7 @@ public class ForwardFiles {
             };
             if (proxyAEE.isEnableAuditLog()) {
                 String sourceAET = prop.getProperty("source-aet");
-                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
+                LogUtils.createStartLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
                         asInvoked.getConnection().getHostname(), prop, 0);
             }
             asInvoked.cstore(cuid, iuid, 0, data, tsuid, rspHandler);
@@ -1005,7 +1009,7 @@ public class ForwardFiles {
 
     private void addFileToFwdTaskMap(ProxyAEExtension proxyAEE, String calledAET, File file, HashMap<String, ForwardTask> map)
             throws IOException {
-        Properties prop = proxyAEE.getFileInfoProperties(file);
+        Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
         String callingAET = prop.containsKey("use-calling-aet") 
                 ? prop.getProperty("use-calling-aet") 
                 : prop.getProperty("source-aet");

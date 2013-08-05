@@ -65,6 +65,8 @@ import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.Schedule;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.ForwardRuleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +100,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
     }
 
     private void filterForwardRulesOnNegotiationRQ(Association as, AAssociateRQ rq, ProxyAEExtension proxyAEE) {
-        List<ForwardRule> returnList = proxyAEE.filterForwardRulesByCallingAET(rq.getCallingAET());
+        List<ForwardRule> returnList = ForwardRuleUtils.filterForwardRulesByCallingAET(proxyAEE, rq.getCallingAET());
         as.setProperty(ProxyAEExtension.FORWARD_RULES, returnList);
     }
 
@@ -178,7 +180,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     : proxyAEE.getApplicationEntity().getAETitle();
         try {
             AAssociateRQ forwardRq = copyOf(rq);
-            Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET, forwardRq, aeCache);
+            Association asCalled = ForwardConnectionUtils.openForwardAssociation(proxyAEE, asAccepted, forwardRule,
+                    callingAET, calledAET, forwardRq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
             asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
             AAssociateAC acCalled = asCalled.getAAssociateAC();

@@ -89,6 +89,9 @@ import org.dcm4che.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.ForwardRuleUtils;
+import org.dcm4chee.proxy.utils.InfoFileUtils;
 import org.jboss.resteasy.util.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +151,7 @@ public class Mpps extends DicomService {
             Attributes data) throws ConfigurationException, IOException {
         ApplicationEntity ae = as.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(proxyAEE.getCurrentForwardRules(as),
+        List<ForwardRule> forwardRules = ForwardRuleUtils.filterForwardRulesOnDimseRQ(proxyAEE.getCurrentForwardRules(as),
                 cmd.getString(dimse.tagOfSOPClassUID()), dimse);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no matching forward rule");
@@ -161,7 +164,7 @@ public class Mpps extends DicomService {
         String tsuid = UID.ExplicitVRLittleEndian;
         Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
         for (ForwardRule rule : forwardRules) {
-            List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule, data);
+            List<String> destinationAETs = ForwardRuleUtils.getDestinationAETsFromForwardRule(as, rule, data);
             processDestinationAETs(as, dimse, fmi, data, proxyAEE, iuid, rule, destinationAETs);
         }
         try {
@@ -214,7 +217,7 @@ public class Mpps extends DicomService {
         Attributes ncreateAttrs = proxyAEE.parseAttributesWithLazyBulkData(as, ncreateFile);
         Attributes mergedAttrs = new Attributes(data);
         mergedAttrs.merge(ncreateAttrs);
-        Properties prop = proxyAEE.getFileInfoProperties(ncreateFile);
+        Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, ncreateFile);
         Calendar timeStamp = new GregorianCalendar();
         String patientID = ncreateAttrs.getString(Tag.PatientID);
         String doseIuid = UIDUtils.createUID();
@@ -244,8 +247,8 @@ public class Mpps extends DicomService {
     private File getNCreateFile(ProxyAEExtension proxyAEE, String iuid) throws IOException {
         for (String calledAET : proxyAEE.getDoseSrPath().list()) {
             File calledAETPath = new File (proxyAEE.getDoseSrPath(), calledAET);
-            for (File file : calledAETPath.listFiles(proxyAEE.infoFileFilter())) {
-                Properties prop = proxyAEE.getFileInfoProperties(file);
+            for (File file : calledAETPath.listFiles(InfoFileUtils.infoFileFilter())) {
+                Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
                 String fileInstanceUID = prop.getProperty("sop-instance-uid");
                 if (fileInstanceUID.equals(iuid))
                     return new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".ncreate");
@@ -430,7 +433,7 @@ public class Mpps extends DicomService {
                 }
             }
         };
-        asInvoked.ncreate(cuid, iuid, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+        asInvoked.ncreate(cuid, iuid, data, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 
     private void onNSetRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes cmd, Attributes data)
@@ -472,7 +475,7 @@ public class Mpps extends DicomService {
                 }
             }
         };
-        asInvoked.nset(cuid, iuid, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+        asInvoked.nset(cuid, iuid, data, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 
     private AuditMessage createAuditMessage(ApplicationEntity ae, Calendar timeStamp, String eventOutcomeIndicator,

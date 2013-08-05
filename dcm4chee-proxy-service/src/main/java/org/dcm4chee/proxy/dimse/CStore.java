@@ -83,7 +83,11 @@ import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
-import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
+import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.ForwardRuleUtils;
+import org.dcm4chee.proxy.utils.InfoFileUtils;
+import org.dcm4chee.proxy.utils.LogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,7 +122,7 @@ public class CStore extends BasicCStoreSCP {
                         Role.SCP, ((Association)forwardAssociationProperty).getRemoteAET()) != null
                 || proxyAEE.isEnableAuditLog()
                 || (forwardAssociationProperty instanceof HashMap<?, ?>)
-                || (forwardAssociationProperty instanceof Association && proxyAEE.requiresMultiFrameConversion(
+                || (forwardAssociationProperty instanceof Association && ForwardConnectionUtils.requiresMultiFrameConversion(
                         proxyAEE, ((Association) forwardAssociationProperty).getRemoteAET(),
                         rq.getString(Tag.AffectedSOPClassUID))) 
                 || proxyAEE.isAssociationFromDestinationAET(asAccepted))
@@ -193,7 +197,7 @@ public class CStore extends BasicCStoreSCP {
             AAssociateRQ rq = asAccepted.getAAssociateRQ();
             ForwardRule rule = cmoveInfoObject.getRule();
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule.getUseCallingAET();
-            Association asInvoked = proxyAEE.openForwardAssociation(asAccepted, rule, callingAET,
+            Association asInvoked = ForwardConnectionUtils.openForwardAssociation(proxyAEE, asAccepted, rule, callingAET,
                     cmoveInfoObject.getMoveDestinationAET(), rq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_CMOVE_INFO, cmoveInfoObject);
@@ -217,8 +221,7 @@ public class CStore extends BasicCStoreSCP {
         String tsuid = pc.getTransferSyntax();
         Attributes fmi = as.createFileMetaInformation(iuid, cuid, tsuid);
         Attributes attrs = data.readDataset(tsuid);
-        attrs = proxyAEE.coerceDataset(as, Role.SCU, Dimse.C_STORE_RQ, attrs, rq, as.getApplicationEntity().getDevice()
-                .getDeviceExtension(ProxyDeviceExtension.class));
+        attrs = AttributeCoercionUtils.coerceDataset(proxyAEE, as, Role.SCU, Dimse.C_STORE_RQ, attrs, rq);
         try {
             out.writeDataset(fmi, attrs);
             fout.flush();
@@ -276,7 +279,7 @@ public class CStore extends BasicCStoreSCP {
     private void processForwardRules(ProxyAEExtension proxyAEE, Association asAccepted,
             Object forwardAssociationProperty, PresentationContext pc, Dimse dimse, Attributes rq, Attributes rsp,
             File file, Attributes fmi) throws IOException, DicomServiceException, ConfigurationException {
-        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(
+        List<ForwardRule> forwardRules = ForwardRuleUtils.filterForwardRulesOnDimseRQ(
                 proxyAEE.getCurrentForwardRules(asAccepted), rq.getString(dimse.tagOfSOPClassUID()), Dimse.C_STORE_RQ);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("no matching forward rule");
@@ -290,9 +293,9 @@ public class CStore extends BasicCStoreSCP {
                 List<String> destinationAETs = new ArrayList<String>();
                 if (rule.containsTemplateURI()) {
                     Attributes data = proxyAEE.parseAttributesWithLazyBulkData(asAccepted, file);
-                    destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, data);
+                    destinationAETs = ForwardRuleUtils.getDestinationAETsFromForwardRule(asAccepted, rule, data);
                 } else
-                    destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(asAccepted, rule, null);
+                    destinationAETs = ForwardRuleUtils.getDestinationAETsFromForwardRule(asAccepted, rule, null);
                 for (String calledAET : destinationAETs) {
                     if (prevDestinationAETs.contains(calledAET)) {
                         LOG.info("{}: Found previously used destination AET {} in rule {}, will not send data again", 
@@ -325,7 +328,7 @@ public class CStore extends BasicCStoreSCP {
                     asAccepted.getAAssociateRQ(), forwardAssociationProperty, proxyAEE, rule);
             if (asInvoked != null) {
                 asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
-                if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID)))
+                if (ForwardConnectionUtils.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID)))
                     processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, file);
                 else
                     forwardObject(asAccepted, asInvoked, pc, rq, file, fmi);
@@ -382,8 +385,7 @@ public class CStore extends BasicCStoreSCP {
         rq.setCalledAET(calledAET);
         Association asInvoked = null;
         try {
-            asInvoked = as.getApplicationEntity().getAEExtension(ProxyAEExtension.class)
-                    .openForwardAssociation(as, rule, callingAET, calledAET, rq, aeCache);
+            asInvoked = ForwardConnectionUtils.openForwardAssociation(proxyAEE, as, rule, callingAET, calledAET, rq, aeCache);
         } catch (GeneralSecurityException e) {
             LOG.error("Failed to create SSL context: ", e.getMessage());
             as.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.GeneralSecurityException.getSuffix() + "0");
@@ -411,22 +413,22 @@ public class CStore extends BasicCStoreSCP {
     protected void forwardObject(Association asAccepted, Association asInvoked, PresentationContext pc, Attributes rq,
             File dataFile, Attributes fmi) throws IOException {
         ProxyAEExtension proxyAEE = asAccepted.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
-        if (proxyAEE.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID))) {
+        if (ForwardConnectionUtils.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(),
+                rq.getString(Tag.AffectedSOPClassUID))) {
             processMultiFrame(proxyAEE, asAccepted, asInvoked, pc, rq, dataFile);
             return;
         }
         Attributes attrs = proxyAEE.parseAttributesWithLazyBulkData(asAccepted, dataFile);
-        attrs = proxyAEE.coerceDataset(asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, rq, asInvoked
-                .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class));
+        attrs = AttributeCoercionUtils.coerceDataset(proxyAEE, asInvoked, Role.SCP, Dimse.C_STORE_RQ, attrs, rq);
         File logFile = null;
         try {
             if (proxyAEE.isEnableAuditLog()) {
                 String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-                Properties prop = proxyAEE.getFileInfoProperties(dataFile);
-                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), 
+                Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, dataFile);
+                LogUtils.createStartLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
                         asInvoked.getConnection().getHostname(), prop, 0);
-                logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(), prop,
-                        dataFile.length(), 0);
+                logFile = LogUtils.writeLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET,
+                        asInvoked.getRemoteAET(), prop, dataFile.length(), 0);
             }
             forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile, null);
         } catch (Exception e) {
@@ -463,12 +465,12 @@ public class CStore extends BasicCStoreSCP {
                 forwardRq.setString(Tag.AffectedSOPInstanceUID, VR.UI, attrs.getString(Tag.SOPInstanceUID));
                 forwardRq.setString(Tag.AffectedSOPClassUID, VR.UI, attrs.getString(Tag.SOPClassUID));
                 if (proxyAEE.isEnableAuditLog()) {
-                    Properties prop = proxyAEE.getFileInfoProperties(dataFile);
+                    Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, dataFile);
                     String sourceAET = prop.getProperty("source-aet");
-                    proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
-                            asInvoked.getConnection().getHostname(), prop, 0);
-                    logFile = proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
-                            prop, attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
+                    LogUtils.createStartLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET,
+                            asInvoked.getRemoteAET(), asInvoked.getConnection().getHostname(), prop, 0);
+                    logFile = LogUtils.writeLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET,
+                            asInvoked.getRemoteAET(), prop, attrs.calcLength(DicomEncodingOptions.DEFAULT, true), 0);
                 }
                 forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), frameNumber,
                         logFile, dataFile, sourceUID);
@@ -611,9 +613,9 @@ public class CStore extends BasicCStoreSCP {
 
         if (info != null)
             asInvoked.cstore(cuid, iuid, priority, info.getMoveOriginatorAET(), info.getSourceMsgId(), data,
-                    ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+                    ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
         else
-            asInvoked.cstore(cuid, iuid, priority, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
-                    rspHandler);
+            asInvoked.cstore(cuid, iuid, priority, data,
+                    ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 }

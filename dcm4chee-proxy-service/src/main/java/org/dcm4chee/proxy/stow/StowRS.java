@@ -47,7 +47,6 @@ import java.io.OutputStream;
 import java.io.SyncFailedException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -72,7 +71,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.lf5.util.StreamUtils;
-import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Attributes.Visitor;
@@ -87,7 +85,6 @@ import org.dcm4che.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.io.SAXReader;
 import org.dcm4che.io.SAXTransformer;
-import org.dcm4che.io.SAXWriter;
 import org.dcm4che.mime.MultipartInputStream;
 import org.dcm4che.mime.MultipartParser;
 import org.dcm4che.net.Association;
@@ -104,7 +101,10 @@ import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
-import org.dcm4chee.proxy.wado.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.ForwardRuleUtils;
+import org.dcm4chee.proxy.utils.LogUtils;
 import org.dcm4chee.proxy.wado.MediaTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +139,6 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private final Attributes response = new Attributes();
     private Sequence sopSequence;
     private Sequence failedSOPSequence;
-    public static final String newline = System.getProperty("line.separator");
     List<ForwardRule> fwdRules = new ArrayList<>();
 
     @Override
@@ -396,7 +395,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 Properties prop = setInfoFileProperties(fmi, attrs, sourceAET);
                 validateStudyIUID(attrs);
                 String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
-                attrs = coerceAttributes(sourceAET, cuid, TransferCapability.Role.SCU, attrs);
+                attrs = AttributeCoercionUtils.coerceAttributes(proxyAEE, sourceAET, cuid, TransferCapability.Role.SCU,
+                        Dimse.C_STORE_RQ, attrs, this);
                 if (proxyAEE.getApplicationEntity().getAETitle().equals(aet)) {
                     if (fwdRules.isEmpty())
                         setForwardRules(attrs, cuid, sourceAET);
@@ -440,7 +440,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                             LOG.info("{}: Please check configured forward rules for overlapping time with duplicate destination AETs");
                             continue;
                         }
-                        Attributes destAttrs = coerceAttributes(destinationAET, cuid, TransferCapability.Role.SCP, attrs);
+                        Attributes destAttrs = AttributeCoercionUtils.coerceAttributes(proxyAEE, destinationAET, cuid,
+                                TransferCapability.Role.SCP, Dimse.C_STORE_RQ, attrs, this);
                         dst = storeDestinationAETCopy(fileInfo, fmi, destinationAET, destAttrs);
                         storeInfoFile(prop, dst);
                         prevDestinationAETs.add(destinationAET);
@@ -520,40 +521,6 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         return new File(dir, fileName.substring(0, fileName.lastIndexOf('.')) + ".dcm");
     }
 
-    private Attributes coerceAttributes(String aet, String cuid, Role role, Attributes attrs) {
-        AttributeCoercion ac = proxyAEE.getAttributeCoercion(aet, cuid, role, Dimse.C_STORE_RQ);
-        return (ac != null)
-                ? coerceAttributes(attrs, ac)
-                : attrs;
-    }
-
-    public Attributes coerceAttributes(Attributes attrs, AttributeCoercion ac) {
-        Attributes tmp = new Attributes(attrs);
-        LOG.debug("Apply attribute coercion {} (dimse={}, role={}{}{})",
-                new Object[] { 
-                    ac.getURI(), 
-                    ac.getDIMSE(), 
-                    ac.getRole(), 
-                    ac.getAETitles().length == 0 ? "" : ", aet=" + Arrays.toString(ac.getAETitles()),
-                    ac.getSOPClasses().length == 0 ? "" : ", sopClass=" + Arrays.toString(ac.getSOPClasses())
-        });
-        Attributes modify = new Attributes();
-        try {
-            ProxyDeviceExtension proxyDevExt = proxyAEE.getApplicationEntity().getDevice()
-                    .getDeviceExtension(ProxyDeviceExtension.class);
-            SAXWriter w = SAXTransformer.getSAXWriter(proxyDevExt.getTemplates(ac.getURI()), modify);
-            w.setIncludeKeyword(false);
-            w.write(tmp);
-        } catch (Exception e) {
-            new IOException(e);
-        }
-        if (LOG.isDebugEnabled() && !modify.isEmpty())
-            LOG.debug("Attribute coercion result:{}{}",
-                    new Object[] { newline, modify.toString(Integer.MAX_VALUE, 200) });
-        tmp.addAll(modify);
-        return tmp;
-    }
-
     private void setSopRef(Attributes fmi, Attributes attrs) {
         Attributes sopRef = new Attributes(5);
         sopRef.setString(Tag.ReferencedSOPClassUID, VR.UI, fmi.getString(Tag.MediaStorageSOPClassUID));
@@ -612,8 +579,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         LOG.info("{}: Please check configured forward rules for overlapping time with duplicate destination AETs");
                         continue;
                     }
-                    Attributes destAttrs = coerceAttributes(destinationAET, cuid, TransferCapability.Role.SCP,
-                            fileInfo.attrs);
+                    Attributes destAttrs = AttributeCoercionUtils.coerceAttributes(proxyAEE, destinationAET, cuid,
+                            TransferCapability.Role.SCP, Dimse.C_STORE_RQ, fileInfo.attrs, this);
                     validateStudyIUID(destAttrs);
                     file = createDestinationAETFile(fileInfo.file.getName(), destinationAET);
                     writeDicomInstance(file, fmi, destAttrs);
@@ -633,17 +600,15 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     }
 
     private void setForwardRules(Attributes attrs, String cuid, String sourceAET) throws ConfigurationException {
-        fwdRules = proxyAEE.filterForwardRulesByCallingAET(sourceAET);
-        fwdRules = proxyAEE.filterForwardRulesOnDimseRQ(fwdRules, cuid, Dimse.C_STORE_RQ);
+        fwdRules = ForwardRuleUtils.filterForwardRulesByCallingAET(proxyAEE, sourceAET);
+        fwdRules = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, cuid, Dimse.C_STORE_RQ);
     }
 
     private List<String> getDestinationAETsFromForwardRule(ForwardRule rule, Attributes attrs)
             throws ConfigurationException {
-        if (rule.containsTemplateURI()) {
-            ProxyDeviceExtension proxyDevExt = proxyAEE.getApplicationEntity().getDevice()
-                    .getDeviceExtension(ProxyDeviceExtension.class);
-            return proxyAEE.getDestinationAETsFromTemplate(rule.getDestinationTemplate(), proxyDevExt, attrs);
-        } else
+        if (rule.containsTemplateURI())
+            return ForwardRuleUtils.getDestinationAETsFromTemplate(proxyAEE, rule.getDestinationTemplate(), attrs);
+        else
             return rule.getDestinationAETitles();
     }
 
@@ -770,8 +735,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private void storeToCalledAETSpoolDir(FileInfo fileInfo, String calledAET, Properties prop, Attributes fmi) {
         File file = null;
         try {
-            Attributes destAttrs = coerceAttributes(aet, prop.getProperty("sop-class-uid"),
-                    TransferCapability.Role.SCP, fileInfo.attrs);
+            Attributes destAttrs = AttributeCoercionUtils.coerceAttributes(proxyAEE, aet, prop.getProperty("sop-class-uid"),
+                    TransferCapability.Role.SCP, Dimse.C_STORE_RQ, fileInfo.attrs, this);
             validateStudyIUID(destAttrs);
             file = createDestinationAETFile(fileInfo.file.getName(), aet);
             writeDicomInstance(file, fmi, destAttrs);
@@ -803,7 +768,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 case org.dcm4che.net.Status.Success:
                 case org.dcm4che.net.Status.CoercionOfDataElements: {
                     if (proxyAEE.isEnableAuditLog())
-                        proxyAEE.writeLogFile(AuditDirectory.TRANSFERRED, as.getCallingAET(),
+                        LogUtils.writeLogFile(proxyAEE, AuditDirectory.TRANSFERRED, as.getCallingAET(),
                                 as.getRemoteAET(), prop, fileSize, -1);
                     break;
                 }
@@ -825,7 +790,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         try {
             if (proxyAEE.isEnableAuditLog()) {
                 String sourceAET = prop.getProperty("source-aet");
-                proxyAEE.createStartLogFile(AuditDirectory.TRANSFERRED, sourceAET, as.getRemoteAET(), as
+                LogUtils.createStartLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET, as.getRemoteAET(), as
                         .getConnection().getHostname(), prop, 0);
             }
             as.cstore(cuid, iuid, 0, data, tsuid, rspHandler);
@@ -837,21 +802,6 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                     : org.dcm4che.net.Status.ProcessingFailure;
             storageFailed(fmi, failureReason);
         }
-    }
-
-    private static void deleteSendFile(Association as, File file) {
-        if (file.delete())
-            LOG.debug("{}: delete {}", as, file);
-        else
-            LOG.debug("{}: failed to delete {}", as, file);
-        File infoFile = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
-        if (infoFile.delete())
-            LOG.debug("{}: delete {}", as, infoFile);
-        else
-            LOG.debug("{}: failed to delete {}", as, infoFile);
-        File path = new File(file.getParent());
-        if (path.list().length == 0)
-            path.delete();
     }
 
     private void renameFile(ProxyAEExtension proxyAEE, String suffix, File file, String calledAET, Properties prop) {
@@ -880,9 +830,9 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             Properties prop) throws IOException {
         if (proxyAEE.isEnableAuditLog() && file.getPath().contains("cstore")) {
             String sourceAET = prop.getProperty("source-aet");
-            proxyAEE.createStartLogFile(AuditDirectory.FAILED, sourceAET, calledAET, proxyAEE.getApplicationEntity()
+            LogUtils.createStartLogFile(proxyAEE, AuditDirectory.FAILED, sourceAET, calledAET, proxyAEE.getApplicationEntity()
                     .getConnections().get(0).getHostname(), prop, 0);
-            proxyAEE.writeLogFile(AuditDirectory.FAILED, sourceAET, calledAET, prop, file.length(), 0);
+            LogUtils.writeLogFile(proxyAEE, AuditDirectory.FAILED, sourceAET, calledAET, prop, file.length(), 0);
         }
     }
 }

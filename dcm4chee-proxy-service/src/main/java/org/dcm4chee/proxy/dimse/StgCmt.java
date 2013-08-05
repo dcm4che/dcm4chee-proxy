@@ -73,6 +73,9 @@ import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
+import org.dcm4chee.proxy.utils.ForwardRuleUtils;
+import org.dcm4chee.proxy.utils.InfoFileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,7 +136,7 @@ public class StgCmt extends DicomService {
             Attributes data) throws IOException, ConfigurationException {
         ApplicationEntity ae = as.getApplicationEntity();
         ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
-        List<ForwardRule> forwardRules = proxyAEE.filterForwardRulesOnDimseRQ(proxyAEE.getCurrentForwardRules(as),
+        List<ForwardRule> forwardRules = ForwardRuleUtils.filterForwardRulesOnDimseRQ(proxyAEE.getCurrentForwardRules(as),
                 rq.getString(dimse.tagOfSOPClassUID()), dimse);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("No matching forward rule");
@@ -142,7 +145,7 @@ public class StgCmt extends DicomService {
             throw new ConfigurationException("More than one matching forward rule");
 
         ForwardRule rule = forwardRules.get(0);
-        List<String> destinationAETs = proxyAEE.getDestinationAETsFromForwardRule(as, rule, data);
+        List<String> destinationAETs = ForwardRuleUtils.getDestinationAETsFromForwardRule(as, rule, data);
         switch (destinationAETs.size()) {
         case 0:
             throw new ConfigurationException("No destination");
@@ -166,7 +169,7 @@ public class StgCmt extends DicomService {
             }
         }
         try {
-            AAssociateRQ rqCopy = proxyAEE.copyOf(asAccepted, rule);
+            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOf(asAccepted, rule);
             rqCopy.setCallingAET(callingAET);
             rqCopy.setCalledAET(calledAET);
             Association asInvoked = proxyAEE.getApplicationEntity().connect(
@@ -242,8 +245,8 @@ public class StgCmt extends DicomService {
     private File getTransactionUIDFile(ProxyAEExtension proxyAEE, Attributes data) throws IOException {
         for (String calledAET : proxyAEE.getNeventDirectoryPath().list()) {
             File calledAETPath = new File (proxyAEE.getNeventDirectoryPath(), calledAET);
-            for (File file : calledAETPath.listFiles(proxyAEE.infoFileFilter())) {
-                Properties prop = proxyAEE.getFileInfoProperties(file);
+            for (File file : calledAETPath.listFiles(InfoFileUtils.infoFileFilter())) {
+                Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
                 String transactionUID = prop.getProperty("transaction-uid");
                 if (transactionUID.equals(data.getString(Tag.TransactionUID)))
                     return new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".naction");
@@ -277,11 +280,11 @@ public class StgCmt extends DicomService {
             PresentationContext pc, Attributes data, final Attributes eventInfo, File file) {
         String calledAEString = null;
         try {
-            Properties prop = proxyAEE.getFileInfoProperties(file);
+            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
             calledAEString = prop.getProperty("source-aet");
             ApplicationEntity ae = asAccepted.getApplicationEntity();
             ApplicationEntity calledAE = aeCache.findApplicationEntity(calledAEString);
-            AAssociateRQ rqCopy = proxyAEE.copyOf(asAccepted, null);
+            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOf(asAccepted, null);
             rqCopy.setCalledAET(calledAEString);
             if (!ae.getAETitle().equals("*"))
                 rqCopy.setCallingAET(ae.getAETitle());
@@ -349,7 +352,7 @@ public class StgCmt extends DicomService {
             }
         };
         asInvoked.neventReport(cuid, iuid, eventTypeId, data,
-                ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+                ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 
     private void onNActionRQ(final Association asAccepted, Association asInvoked, final PresentationContext pc,
@@ -373,7 +376,7 @@ public class StgCmt extends DicomService {
                     String fileName = file.getName();
                     File destDir = null;
                     try {
-                        destDir = new File(proxyAEE.getNeventDirectoryPath() + ProxyAEExtension.getSeparator()
+                        destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
                                 + asInvoked.getCalledAET());
                         destDir.mkdirs();
                     } catch (IOException e) {
@@ -430,7 +433,7 @@ public class StgCmt extends DicomService {
                 }
             }
         };
-        asInvoked.naction(cuid, iuid, actionTypeId, data, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+        asInvoked.naction(cuid, iuid, actionTypeId, data, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
                 rspHandler);
     }
 

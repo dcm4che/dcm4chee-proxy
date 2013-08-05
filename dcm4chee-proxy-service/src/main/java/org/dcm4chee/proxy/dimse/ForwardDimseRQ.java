@@ -64,9 +64,10 @@ import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.CMoveInfoObject;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
-import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.pix.IDWithIssuer;
 import org.dcm4chee.proxy.pix.PIXConsumer;
+import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
+import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,32 +165,29 @@ public class ForwardDimseRQ {
                     }
                     if (rspData != null) {
                         if (dimse == Dimse.C_FIND_RQ)
-                            rspData = proxyAEE.coerceDataset(
+                            rspData = AttributeCoercionUtils.coerceDataset(
+                                    proxyAEE,
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
                                     rspData,
-                                    rq,
-                                    asAccepted.getApplicationEntity().getDevice()
-                                            .getDeviceExtension(ProxyDeviceExtension.class));
+                                    rq);
                         else if (dimse == Dimse.C_GET_RQ)
-                            rspData = proxyAEE.coerceDataset(
+                            rspData = AttributeCoercionUtils.coerceDataset(
+                                    proxyAEE,
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_GET_RSP,
                                     rspData,
-                                    rq,
-                                    asAccepted.getApplicationEntity().getDevice()
-                                            .getDeviceExtension(ProxyDeviceExtension.class));
+                                    rq);
                         else if (dimse == Dimse.C_MOVE_RQ)
-                            rspData = proxyAEE.coerceDataset(
+                            rspData = AttributeCoercionUtils.coerceDataset(
+                                    proxyAEE,
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_MOVE_RSP,
                                     rspData,
-                                    rq,
-                                    asAccepted.getApplicationEntity().getDevice()
-                                            .getDeviceExtension(ProxyDeviceExtension.class));
+                                    rq);
                     }
                     asAccepted.writeDimseRSP(pc, cmd, rspData);
                 } catch (IOException e) {
@@ -217,15 +215,15 @@ public class ForwardDimseRQ {
             String cuid = rq.getString(dimse.tagOfSOPClassUID());
             switch (dimse) {
             case C_FIND_RQ:
-                asInvoked.cfind(cuid, priority, coercedData, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                asInvoked.cfind(cuid, priority, coercedData, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
                         rspHandler);
                 break;
             case C_GET_RQ:
-                asInvoked.cget(cuid, priority, coercedData, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                asInvoked.cget(cuid, priority, coercedData, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
                         rspHandler);
                 break;
             case C_MOVE_RQ:
-                asInvoked.cmove(cuid, priority, coercedData, ProxyAEExtension.getMatchingTsuid(asInvoked, tsuid, cuid),
+                asInvoked.cmove(cuid, priority, coercedData, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
                         getMoveDestination(proxyAEE), rspHandler);
                 break;
             default:
@@ -333,8 +331,7 @@ public class ForwardDimseRQ {
 
     private void coerceAndForward(ProxyAEExtension proxyAEE, Association fwdAssoc, Attributes attrs, boolean adjustPatientID)
             throws IOException, InterruptedException {
-        Attributes coercedData = new Attributes(proxyAEE.coerceDataset(fwdAssoc, Role.SCP, dimse, attrs, rq, asAccepted
-                .getApplicationEntity().getDevice().getDeviceExtension(ProxyDeviceExtension.class)));
+        Attributes coercedData = new Attributes(AttributeCoercionUtils.coerceDataset(proxyAEE, fwdAssoc, Role.SCP, dimse, attrs, rq));
         forwardDimseRQ(fwdAssoc, coercedData, adjustPatientID);
     }
 
