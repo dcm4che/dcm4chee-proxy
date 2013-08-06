@@ -301,7 +301,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         && (subtype.equalsIgnoreCase("dicom")
                                 || subtype.equalsIgnoreCase("octet-stream")
                                 || subtype.equalsIgnoreCase("zip")
-                                || subtype.equalsIgnoreCase("x-zip"));
+                                || subtype.equalsIgnoreCase("x-zip")
+                                || subtype.equalsIgnoreCase("x-zip-compressed"));
             }
 
             @Override
