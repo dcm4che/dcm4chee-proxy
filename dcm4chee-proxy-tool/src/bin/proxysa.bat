@@ -7,7 +7,7 @@ if not "%ECHO%" == ""  echo %ECHO%
 if "%OS%" == "Windows_NT"  setlocal
 
 set MAIN_CLASS=org.dcm4chee.proxy.tool.ProxySA
-set MAIN_JAR=dcm4chee-proxy-tool-1.0.0-SNAPSHOT.jar
+set MAIN_JAR=dcm4chee-proxy-tool-1.0.0.jar
 
 set DCM4CHE_VERSION=3.2.1
 
@@ -58,8 +58,8 @@ set CP=%CP%;%PROXY_HOME%\lib\dcm4che-audit-%DCM4CHE_VERSION%.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-net-audit-%DCM4CHE_VERSION%.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-ldap-audit-%DCM4CHE_VERSION%.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-conf-prefs-audit-%DCM4CHE_VERSION%.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-conf-1.0.0-SNAPSHOT.jar
-set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-service-1.0.0-SNAPSHOT.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-conf-1.0.0.jar
+set CP=%CP%;%PROXY_HOME%\lib\dcm4chee-proxy-service-1.0.0.jar
 set CP=%CP%;%PROXY_HOME%\lib\dcm4che-jdbc-prefs-tool-1.0.0.jar
 set CP=%CP%;%PROXY_HOME%\lib\slf4j-api-1.6.4.jar
 set CP=%CP%;%PROXY_HOME%\lib\slf4j-log4j12-1.6.4.jar

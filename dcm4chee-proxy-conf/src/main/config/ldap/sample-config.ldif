@@ -612,7 +612,7 @@ dicomAuthorizedNodeCertificateReference: dicomDeviceName=hl7snd,cn=Devices,c
  n=DICOM Configuration,dc=example,dc=com
 dicomManufacturer: dcm4che
 dicomManufacturerModelName: dcm4chee-proxy
-dicomSoftwareVersion: 1.0.0-SNAPSHOT
+dicomSoftwareVersion: 1.0.0
 dicomThisNodeCertificateReference: dicomDeviceName=dcm4chee-proxy,cn=Devices
  ,cn=DICOM Configuration,dc=example,dc=com
 userCertificate;binary:: MIICUTCCAbqgAwIBAgIEUYOaiTANBgkqhkiG9w0BAQUFADBtMQs
