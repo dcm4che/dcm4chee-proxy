@@ -202,10 +202,19 @@ public class Proxy extends DeviceService implements ProxyMBean {
         String registeredAETitles[] = dicomConfiguration.listRegisteredAETitles();
         StringBuilder result = new StringBuilder();
         boolean separator = false;
+        result.append("{\n\"registeredAETs\": [");        
         for (String aet : registeredAETitles) {
-            result.append((separator ? "," : "") + aet);
+        	ApplicationEntity entity = aeCache.findApplicationEntity(aet);
+        	String description = "";
+        	if (entity != null && entity.getDescription() != null)
+        	{
+        		description = entity.getDescription();
+        	}
+        	result.append((separator ? "," : "") + "\n{\"aeTitle\": \"" + aet + "\",");
+        	result.append("\"description\": \"" + description + "\"}");
             separator = true;
         }
+        result.append("\n]\n}");
         return result.toString();
     }
 
