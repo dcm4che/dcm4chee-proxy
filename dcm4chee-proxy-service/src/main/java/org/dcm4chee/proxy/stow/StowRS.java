@@ -48,6 +48,7 @@ import java.io.SyncFailedException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -95,6 +96,8 @@ import org.dcm4che.net.DimseRSPHandler;
 import org.dcm4che.net.IncompatibleConnectionException;
 import org.dcm4che.net.TransferCapability;
 import org.dcm4che.net.TransferCapability.Role;
+import org.dcm4che.net.pdu.AAssociateRQ;
+import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4che.util.SafeClose;
 import org.dcm4chee.proxy.Proxy;
@@ -103,6 +106,7 @@ import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
+import org.dcm4chee.proxy.resteasy.LogInterceptor;
 import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
 import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
 import org.dcm4chee.proxy.utils.ForwardRuleUtils;
@@ -143,6 +147,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private Sequence failedSOPSequence;
     List<ForwardRule> fwdRules = new ArrayList<>();
     HashMap<String, Association> fwdAssocs = new HashMap<>();
+    HashMap<String, List<String>> presentationContext = new HashMap<>();
 
     @Override
     public String toString() {
@@ -199,8 +204,10 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         if (sopSequence.isEmpty())
             throw new WebApplicationException(Status.CONFLICT);
 
-        return Response.status(failedSOPSequence.isEmpty() ? Status.OK : Status.ACCEPTED).entity(this)
-                .type(MediaTypes.APPLICATION_DICOM_XML_TYPE).build();
+        return Response.status(failedSOPSequence.isEmpty() 
+                    ? Status.OK 
+                    : Status.ACCEPTED)
+                .entity(this).type(MediaTypes.APPLICATION_DICOM_XML_TYPE).build();
     }
 
     private void init(String studyInstanceUID) throws DicomServiceException {
@@ -227,23 +234,25 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
 
     @Override
     public void bodyPart(int partNumber, MultipartInputStream in) throws IOException {
-        Map<String, String> headerParams = in.readHeaderParams();
-        String mediaTypeStr = headerParams.get("content-type");
-        String bulkdataURI = headerParams.get("content-location");
-        LOG.info("{} >> {}:STOW-RS[Content-Type={}, Content-Location={}]", new Object[] { this, partNumber,
-                mediaTypeStr, bulkdataURI });
+        Map<String, List<String>> headerParams = in.readHeaderParams();
+        LOG.info("{}: storeInstances: Extract Part #{}{}",
+                new Object[] { this, partNumber, LogInterceptor.toString(headerParams) });
+        String mediaTypeStr = firstOf(headerParams.get("content-type"));
         try {
-            MediaType mediaType = (mediaTypeStr != null) ? MediaType.valueOf(mediaTypeStr) : MediaType.TEXT_PLAIN_TYPE;
+            MediaType mediaType = mediaTypeStr != null
+                    ? MediaType.valueOf(mediaTypeStr)
+                    : MediaType.TEXT_PLAIN_TYPE;
+            String bulkdataURI = firstOf(headerParams.get("content-location"));
             if (creatorType.accept(mediaType, bulkdataURI)) {
                 if (in.isZIP()) {
                     ZipInputStream zip = new ZipInputStream(in);
                     ZipEntry zipEntry;
                     while ((zipEntry = zip.getNextEntry()) != null) {
                         if (!zipEntry.isDirectory())
-                            storeSpoolFile(zip, mediaType, bulkdataURI);
+                            storeFile(zip, mediaType, bulkdataURI);
                     }
                 } else {
-                    storeSpoolFile(in, mediaType, bulkdataURI);
+                    storeFile(in, mediaType, bulkdataURI);
                 }
             } else {
                 LOG.info("{}: Ignore Part with Content-Type={}", this, mediaType);
@@ -255,8 +264,11 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         }
     }
 
-    private void storeSpoolFile(InputStream in, MediaType mediaType, String bulkdataURI) throws IOException,
-            FileNotFoundException {
+    private String firstOf(List<String> list) {
+        return list != null && !list.isEmpty() ? list.get(0) : null;
+    }
+
+    private void storeFile(InputStream in, MediaType mediaType, String bulkdataURI) throws IOException {
         File file = File.createTempFile("dcm", ".part", proxyAEE.getCStoreDirectoryPath());
         LOG.info("{}: WRITE {}", this, file);
         OutputStream out = new FileOutputStream(file);
@@ -290,7 +302,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         DicomCreator {
             @Override
             void storeInstances(StowRS stowRS) {
-                stowRS.storeDicomInstances();
+                stowRS.processDicomInstances();
             }
 
             @Override
@@ -391,28 +403,31 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private Attributes readFileMetaInformation(File file) throws IOException {
         DicomInputStream in = new DicomInputStream(file);
         try {
-            return in.readFileMetaInformation();
+            Attributes fmi = in.readFileMetaInformation();
+            if (fmi == null) {
+                fmi = in.readDataset(-1, Tag.StudyInstanceUID).createFileMetaInformation(UID.ImplicitVRLittleEndian);
+            }
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, request.getRemoteAddr());
+            return fmi;
         } finally {
             SafeClose.close(in);
         }
     }
 
-    private void storeDicomInstances() {
+    private void processDicomInstances() {
+        setPresentationContext();
         for (FileInfo fileInfo : files) {
             try {
-                fileInfo.attrs = readFileMetaInformation(fileInfo.file);
-                Attributes fmi, attrs;
+                Attributes attrs;
                 DicomInputStream in = new DicomInputStream(fileInfo.file);
                 try {
                     in.setIncludeBulkData(IncludeBulkData.URI);
-                    fmi = in.readFileMetaInformation();
                     attrs = in.readDataset(-1, -1);
                 } finally {
                     SafeClose.close(in);
                 }
-                String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-                if (sourceAET == null)
-                    sourceAET = request.getRemoteAddr();
+                Attributes fmi = fileInfo.attrs;
+                String sourceAET = request.getRemoteAddr();
                 Properties prop = setInfoFileProperties(fmi, attrs, sourceAET);
                 validateStudyIUID(attrs);
                 String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
@@ -424,12 +439,47 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                     processForwardRules(fileInfo, fmi, attrs, sourceAET, prop, cuid);
                 } else
                     processSingleForwardDestination(fileInfo, attrs, fmi, null, prop, sourceAET);
-                deleteFile(fileInfo.file);
-            } catch (DicomServiceException | ConfigurationException e) {
+            } catch (ConfigurationException e) {
+                LOG.error("{}: error processing {}: {}", new Object[]{this, fileInfo.file, e});
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
                 throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-            } catch (IOException ioe) {
-                throw new WebApplicationException(Status.BAD_REQUEST);
+            } catch (IOException e) {
+                LOG.error("{}: error processing {}: {}", new Object[] { this, fileInfo.file, e });
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
+            } finally {
+                if (fileInfo.file.exists())
+                    deleteFile(fileInfo.file);
             }
+        }
+    }
+
+    private void setPresentationContext() {
+        List<FileInfo> dontProcess = new ArrayList<>();
+        for (FileInfo fileInfo : files) {
+            try {
+                fileInfo.attrs = readFileMetaInformation(fileInfo.file);
+                String cuid = fileInfo.attrs.getString(Tag.MediaStorageSOPClassUID);
+                String tsuid = fileInfo.attrs.getString(Tag.TransferSyntaxUID);
+                if (presentationContext.containsKey(cuid)) {
+                    List<String> tsuids = presentationContext.get(cuid);
+                    if(!tsuids.contains(tsuid))
+                        tsuids.add(tsuid);
+                } else {
+                    presentationContext.put(cuid, new ArrayList<String>(Arrays.asList(tsuid)));
+                }
+            } catch (IOException e) {
+                LOG.error("{}: error reading file meta information from {}: {}", new Object[] { this, fileInfo.file, e });
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
+                dontProcess.add(fileInfo);
+            }
+        }
+        for (FileInfo fileInfo : dontProcess) {
+            addFailedForward(null, org.dcm4che.net.Status.UnableToProcess);
+            deleteFile(fileInfo.file);
+            files.remove(fileInfo);
         }
     }
 
@@ -437,7 +487,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             Properties prop, String cuid) {
         if (fwdRules.isEmpty()) {
             LOG.error("{}: No active forward rule matching request", this);
-            storageFailed(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
+            addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
             return;
         }
         if (fwdRules.size() == 1) {
@@ -471,7 +521,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                             e.printStackTrace();
                         int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
                                 : org.dcm4che.net.Status.ProcessingFailure;
-                        storageFailed(fileInfo.attrs, failureReason);
+                        addFailedForward(fileInfo.attrs, failureReason);
                         if (dst != null && dst.exists())
                             deleteFile(dst);
                     }
@@ -481,7 +531,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 LOG.error("{}: Failed to retrieve Destination AET from forward rule {}", this, rule.getCommonName());
                 if (LOG.isDebugEnabled())
                     e.printStackTrace();
-                storageFailed(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
+                addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
             }
         }
     }
@@ -569,9 +619,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 continue;
 
             String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);
-            String sourceAET = fmi.getString(Tag.SourceApplicationEntityTitle);
-            if (sourceAET == null)
-                sourceAET = request.getRemoteAddr();
+            String sourceAET = request.getRemoteAddr();
             Properties prop = setInfoFileProperties(fmi, fileInfo.attrs, sourceAET);
             if (proxyAEE.getApplicationEntity().getAETitle().equals(aet))
                 processForwardRules(fileInfo, fmi, cuid, sourceAET, prop);
@@ -613,7 +661,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 e.printStackTrace();
             int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
                     : org.dcm4che.net.Status.ProcessingFailure;
-            storageFailed(fmi, failureReason);
+            addFailedForward(fmi, failureReason);
             if (file != null && file.exists())
                 deleteFile(file);
         }
@@ -673,20 +721,22 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         TransferCapability tc = proxyAEE.getApplicationEntity().getTransferCapabilityFor(fmi.getString(Tag.MediaStorageSOPClassUID),
                 Role.SCP);
         if (tc == null) {
-            storageFailed(fmi, org.dcm4che.net.Status.SOPclassNotSupported);
+            addFailedForward(fmi, org.dcm4che.net.Status.SOPclassNotSupported);
             return false;
         }
         if (!tc.containsTransferSyntax(fmi.getString(Tag.TransferSyntaxUID))) {
-            storageFailed(fmi, TRANSFER_SYNTAX_NOT_SUPPORTED);
+            addFailedForward(fmi, TRANSFER_SYNTAX_NOT_SUPPORTED);
             return false;
         }
         return true;
     }
 
-    private void storageFailed(Attributes fmi, int failureReason) {
+    private void addFailedForward(Attributes fmi, int failureReason) {
         Attributes sopRef = new Attributes(3);
-        sopRef.setString(Tag.ReferencedSOPClassUID, VR.UI, fmi.getString(Tag.MediaStorageSOPClassUID));
-        sopRef.setString(Tag.ReferencedSOPInstanceUID, VR.UI, fmi.getString(Tag.MediaStorageSOPInstanceUID));
+        if (fmi != null) {
+            sopRef.setString(Tag.ReferencedSOPClassUID, VR.UI, fmi.getString(Tag.MediaStorageSOPClassUID));
+            sopRef.setString(Tag.ReferencedSOPInstanceUID, VR.UI, fmi.getString(Tag.MediaStorageSOPInstanceUID));
+        }
         sopRef.setInt(Tag.FailureReason, VR.US, failureReason);
         failedSOPSequence.add(sopRef);
     }
@@ -727,19 +777,33 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 if (fwdAssocs.containsKey(calledAET))
                     as = fwdAssocs.get(calledAET);
                 else {
-                    as = ForwardConnectionUtils.openForwardAssociation(proxyAEE, rule, callingAET, calledAET,
-                            fmi.getString(Tag.MediaStorageSOPClassUID), fmi.getString(Tag.TransferSyntaxUID));
+                    AAssociateRQ rq = new AAssociateRQ();
+                    for (String cuid : presentationContext.keySet()) {
+                        List<String> tsuids = presentationContext.get(cuid);
+                        String[] tsuidsArray = new String[tsuids.size()];
+                        tsuids.toArray(tsuidsArray);
+                        rq.addPresentationContext(new PresentationContext(2 * rq.getNumberOfPresentationContexts() + 1,
+                                cuid, tsuidsArray));
+                    }
+                    rq.setCalledAET(calledAET);
+                    rq.setCallingAET(callingAET);
+                    as = ForwardConnectionUtils.openForwardAssociation(proxyAEE, rule, callingAET, calledAET, rq);
                     fwdAssocs.put(calledAET, as);
                 }
                 forwardFile(as, attrs, fileInfo.file, prop, fileInfo.file.length(), fmi);
             } catch (IOException | InterruptedException | IncompatibleConnectionException | GeneralSecurityException e) {
                 LOG.error("{}: Error opening forward connection: {}", this, e);
+                if (LOG.isDebugEnabled())
+                    e.printStackTrace();
                 if (proxyAEE.isAcceptDataOnFailedAssociation())
                     storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
+                else
+                    addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
             } catch (ConfigurationException e) {
                 LOG.error("{}: Error opening forward connection: {}", this, e);
                 if (LOG.isDebugEnabled())
                     e.printStackTrace();
+                addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
             }
         } else
             storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
@@ -761,7 +825,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 e.printStackTrace();
             int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
                     : org.dcm4che.net.Status.ProcessingFailure;
-            storageFailed(fmi, failureReason);
+            addFailedForward(fmi, failureReason);
             if (file != null && file.exists())
                 deleteFile(file);
         }
@@ -796,6 +860,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         LOG.error("{}: error renaming file {}: {}", new Object[] { as, file.getPath(), e.getMessage() });
                         if (LOG.isDebugEnabled())
                             e.printStackTrace();
+                        addFailedForward(fmi, org.dcm4che.net.Status.ProcessingFailure);
                     }
                 }
                 }
@@ -809,12 +874,13 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             }
             as.cstore(cuid, iuid, 0, new DataWriterAdapter(attrs), tsuid, rspHandler);
         } catch (Exception e) {
-            LOG.info("{}: Storage Failed {}", this, e);
+            LOG.error("{}: forward {} failed: {}", new Object[] { this, file, e });
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
-            int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
+            int failureReason = e instanceof DicomServiceException 
+                    ? ((DicomServiceException) e).getStatus()
                     : org.dcm4che.net.Status.ProcessingFailure;
-            storageFailed(fmi, failureReason);
+            addFailedForward(fmi, failureReason);
         }
     }
 

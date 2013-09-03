@@ -76,15 +76,9 @@ public class ForwardConnectionUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ForwardConnectionUtils.class);
 
     public static Association openForwardAssociation(ProxyAEExtension proxyAEE, ForwardRule rule, String callingAET,
-            String calledAET, String cuid, String tsuid) throws IOException, InterruptedException,
+            String calledAET, AAssociateRQ rq) throws IOException, InterruptedException,
             IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
-        AAssociateRQ rq = new AAssociateRQ();
-        rq.addPresentationContext(new PresentationContext(1, cuid, tsuid));
-        rq.setCallingAET(callingAET);
-        rq.setCalledAET(calledAET);
-        Association asInvoked = null;
-        asInvoked = proxyAEE.getApplicationEntity().connect(Proxy.getInstance().findApplicationEntity(calledAET), rq);
-        return asInvoked;
+        return proxyAEE.getApplicationEntity().connect(Proxy.getInstance().findApplicationEntity(calledAET), rq);
     }
 
     public static Association openForwardAssociation(ProxyAEExtension proxyAEE, Association asAccepted,
