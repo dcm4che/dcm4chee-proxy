@@ -12,20 +12,6 @@ ads-enabled: TRUE
 ads-jdbmpartitionoptimizerenabled: TRUE
 ads-partitioncachesize: 100
 ads-partitionsynconwrite: TRUE
-ads-indexes: apacheRdn
-ads-indexes: apacheSubLevel
-ads-indexes: apachePresence
-ads-indexes: apacheOneLevel
-ads-indexes: apacheOneAlias
-ads-indexes: apacheSubAlias
-ads-indexes: apacheAlias
-ads-indexes: entryUUID
-ads-indexes: entryCSN
-ads-indexes: dc
-ads-indexes: krb5PrincipalName
-ads-indexes: objectClass
-ads-indexes: ou
-ads-indexes: uid
 
 dn: ou=indexes,ads-partitionId=nodomain,ou=partitions,ads-directoryServiceId=
  default,ou=config
