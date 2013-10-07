@@ -70,7 +70,7 @@
             <entry key="dicomManufacturer" value="dcm4che"/>
             <entry key="dicomManufacturerModelName" value="dcm4chee-proxy"/>
             <entry key="dicomSoftwareVersion.#" value="1"/>
-            <entry key="dicomSoftwareVersion.1" value="1.0.0-SNAPSHOT"/>
+            <entry key="dicomSoftwareVersion.1" value="1.1.0-SNAPSHOT"/>
             <entry key="dicomThisNodeCertificateReference.#" value="1"/>
             <entry key="dicomThisNodeCertificateReference.1" value="dicomConfigurationRoot/dicomDevicesRoot/dcm4chee-proxy"/>
             <entry key="userCertificate.#" value="1"/>

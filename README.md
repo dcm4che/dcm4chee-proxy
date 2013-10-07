@@ -207,7 +207,7 @@ Standalone Application
 ----------------------
 The dcm4chee-proxy can be run as a standlone application from the command line.
 After building the project, the command line version can be found in
-`dcm4chee-proxy-tool/target/dcm4chee-proxy-tool-1.0.0-SNAPSHOT-bin.zip`.
+`dcm4chee-proxy-tool/target/dcm4chee-proxy-tool-1.1.0-SNAPSHOT-bin.zip`.
 The standalone app can be started by executing `./bin/proxysa` (or `proxysa.bat`)
 and specifying the device name to be loaded from the configuration backend (LDAP or Java Preferences).
 

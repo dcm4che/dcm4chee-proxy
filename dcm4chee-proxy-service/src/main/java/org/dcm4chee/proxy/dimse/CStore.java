@@ -114,18 +114,7 @@ public class CStore extends BasicCStoreSCP {
 
         ProxyAEExtension proxyAEE = asAccepted.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
         Object forwardAssociationProperty = asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
-        if (forwardAssociationProperty == null
-                || proxyAEE.isAcceptDataOnFailedAssociation()
-                || proxyAEE.getAttributeCoercions().findAttributeCoercion(rq.getString(Tag.AffectedSOPClassUID), dimse,
-                        Role.SCU, asAccepted.getRemoteAET()) != null
-                || proxyAEE.getAttributeCoercions().findAttributeCoercion(rq.getString(Tag.AffectedSOPClassUID), dimse,
-                        Role.SCP, ((Association)forwardAssociationProperty).getRemoteAET()) != null
-                || proxyAEE.isEnableAuditLog()
-                || (forwardAssociationProperty instanceof HashMap<?, ?>)
-                || (forwardAssociationProperty instanceof Association && ForwardConnectionUtils.requiresMultiFrameConversion(
-                        proxyAEE, ((Association) forwardAssociationProperty).getRemoteAET(),
-                        rq.getString(Tag.AffectedSOPClassUID))) 
-                || proxyAEE.isAssociationFromDestinationAET(asAccepted))
+        if (spoolRequest(asAccepted, dimse, rq, proxyAEE, forwardAssociationProperty))
             spool(proxyAEE, asAccepted, pc, dimse, rq, data, null);
         else {
             try {
@@ -138,6 +127,23 @@ public class CStore extends BasicCStoreSCP {
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
             }
         }
+    }
+
+    private boolean spoolRequest(Association asAccepted, Dimse dimse, Attributes rq, ProxyAEExtension proxyAEE,
+            Object forwardAssociationProperty) {
+        return forwardAssociationProperty == null
+                || proxyAEE.isAcceptDataOnFailedAssociation()
+                || proxyAEE.getAttributeCoercions().findAttributeCoercion(rq.getString(Tag.AffectedSOPClassUID), dimse,
+                        Role.SCU, asAccepted.getRemoteAET()) != null
+                || proxyAEE.getAttributeCoercions().findAttributeCoercion(rq.getString(Tag.AffectedSOPClassUID), dimse,
+                        Role.SCP, ((Association)forwardAssociationProperty).getRemoteAET()) != null
+                || proxyAEE.isEnableAuditLog()
+                || (forwardAssociationProperty instanceof HashMap<?, ?>)
+                || (forwardAssociationProperty instanceof Association && ForwardConnectionUtils
+                        .requiresMultiFrameConversion(proxyAEE,
+                                ((Association) forwardAssociationProperty).getRemoteAET(),
+                                rq.getString(Tag.AffectedSOPClassUID))) 
+                || proxyAEE.isAssociationFromDestinationAET(asAccepted);
     }
 
     protected void spool(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc, Dimse dimse,
