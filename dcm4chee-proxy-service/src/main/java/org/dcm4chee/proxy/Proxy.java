@@ -45,6 +45,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.BindException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 
@@ -293,16 +294,51 @@ public class Proxy extends DeviceService implements ProxyMBean {
             ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
             if (proxyAEE != null) {
                 LOG.info("Reset spool files for {} on {}", ae.getAETitle(), action);
+                // clear cstore spool dir
                 renameSndFiles(proxyAEE.getCStoreDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getCStoreDirectoryPath(), action);
+                deleteIncompleteDcmFiles(proxyAEE.getCStoreDirectoryPath(), action);
+                // clear naction spool dir
                 renameSndFiles(proxyAEE.getNactionDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getNactionDirectoryPath(), action);
+                // clear ncreate spool dir
                 renameSndFiles(proxyAEE.getNCreateDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getNCreateDirectoryPath(), action);
+                // clear nset spool dir
                 renameSndFiles(proxyAEE.getNSetDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getNSetDirectoryPath(), action);
             }
         }
+    }
+
+    private void deleteIncompleteDcmFiles(File path, String action) {
+        String[] dirs = path.list(dirFilter());
+        for (String dir : dirs)
+            deleteIncompleteDcmFiles(new File(path, dir), action);
+
+        String[] dcmFiles = path.list(dcmFileFilter());
+        ArrayList<File> infoFiles = listFiles(infoFileFilter(), path);
+        for (String dcmFile : dcmFiles) {
+            File file = new File(path, dcmFile);
+            File infoFile = new File(file.getPath().substring(0, file.getPath().length() - 3).concat("info"));
+            if (infoFiles.contains(infoFile))
+                continue;
+
+            if (file.delete())
+                LOG.info("Delete incomplete dcm file {} (without info file) on {}", file.getPath(), action);
+            else
+                LOG.info("Failed to delete incomplete dcm file {} (without info file) on {}", file.getPath(), action);
+        }
+    }
+
+    public ArrayList<File> listFiles(FilenameFilter filter, File dir) {
+        String ss[] = dir.list();
+        if (ss == null) return null;
+        ArrayList<File> files = new ArrayList<>();
+        for (String s : ss)
+            if ((filter == null) || filter.accept(dir, s))
+                files.add(new File(dir, s));
+        return files;
     }
 
     private void renameSndFiles(File path, String action) {
@@ -327,6 +363,26 @@ public class Proxy extends DeviceService implements ProxyMBean {
             @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith(".snd");
+            }
+        };
+    }
+
+    private FilenameFilter dcmFileFilter() {
+        return new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".dcm");
+            }
+        };
+    }
+
+    private FilenameFilter infoFileFilter() {
+        return new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".info");
             }
         };
     }
