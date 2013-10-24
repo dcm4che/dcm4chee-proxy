@@ -173,13 +173,9 @@ public class ProxyAssociationHandler extends AssociationHandler {
         AAssociateAC ac = new AAssociateAC();
         ac.setCalledAET(rq.getCalledAET());
         ac.setCallingAET(rq.getCallingAET());
-        String callingAET = (forwardRule.getUseCallingAET() != null) 
-                ? forwardRule.getUseCallingAET() 
-                : (proxyAEE.getApplicationEntity().getAETitle().equals("*")) 
-                    ? rq.getCallingAET() 
-                    : proxyAEE.getApplicationEntity().getAETitle();
         try {
             AAssociateRQ forwardRq = copyOf(rq);
+            String callingAET = (forwardRule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : forwardRule.getUseCallingAET();
             Association asCalled = ForwardConnectionUtils.openForwardAssociation(proxyAEE, asAccepted, forwardRule,
                     callingAET, calledAET, forwardRq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
