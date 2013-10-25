@@ -512,7 +512,6 @@ public class ProxyDeviceTest {
                 UID.ImplicitVRLittleEndian));
         ae.addTransferCapability(new TransferCapability(name + " SCU", cuid, TransferCapability.Role.SCU,
                 UID.ImplicitVRLittleEndian));
-
     }
 
     private void addTCs(ApplicationEntity ae, EnumSet<QueryOption> queryOpts, TransferCapability.Role role,

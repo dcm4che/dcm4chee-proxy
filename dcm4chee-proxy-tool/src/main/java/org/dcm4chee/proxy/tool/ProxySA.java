@@ -120,7 +120,6 @@ public class ProxySA {
     private static DicomConfiguration newLdapProxyConfiguration(HL7Configuration hl7Config)
             throws ConfigurationException {
         LdapDicomConfiguration config = new LdapDicomConfiguration();
-        config.addDicomConfigurationExtension(new LdapHL7Configuration());
         config.addDicomConfigurationExtension(new LdapProxyConfigurationExtension());
         config.addDicomConfigurationExtension(new LdapAuditLoggerConfiguration());
         config.addDicomConfigurationExtension(new LdapAuditRecordRepositoryConfiguration());
@@ -130,7 +129,6 @@ public class ProxySA {
 
     private static DicomConfiguration newPreferencesProxyConfiguration(HL7Configuration hl7Config) {
         PreferencesDicomConfiguration config = new PreferencesDicomConfiguration();
-        config.addDicomConfigurationExtension(new PreferencesHL7Configuration());
         config.addDicomConfigurationExtension(new PreferencesProxyConfigurationExtension());
         config.addDicomConfigurationExtension(new PreferencesAuditLoggerConfiguration());
         config.addDicomConfigurationExtension(new PreferencesAuditRecordRepositoryConfiguration());
