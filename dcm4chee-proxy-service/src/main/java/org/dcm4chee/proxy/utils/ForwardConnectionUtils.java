@@ -118,7 +118,7 @@ public class ForwardConnectionUtils {
             for (String calledAET : destinationAETs) {
                 try {
                     Association asInvoked = openForwardAssociation(proxyAEE, asAccepted, rule, callingAET, calledAET,
-                            copyOf(asAccepted, rule), aeCache);
+                            copyOfMatchingAAssociateRQ(asAccepted), aeCache);
                     if (asInvoked != null)
                         fwdAssocs.put(calledAET, asInvoked);
                 } catch (IncompatibleConnectionException e) {
@@ -146,15 +146,12 @@ public class ForwardConnectionUtils {
         return fwdAssocs;
     }
 
-    public static AAssociateRQ copyOf(Association as, ForwardRule rule) {
+    public static AAssociateRQ copyOfMatchingAAssociateRQ(Association as) {
+        LOG.debug("{}: generating copy of association request with acknowledged transfer capabilities", as);
         AAssociateRQ rq = as.getAAssociateRQ();
         AAssociateRQ copy = new AAssociateRQ();
-        if (rule != null && rule.isExclusiveUseDefinedTC())
-            for (PresentationContext pc : filterMatchingPC(as))
-                copy.addPresentationContext(pc);
-        else
-            for (PresentationContext pc : rq.getPresentationContexts())
-                copy.addPresentationContext(pc);
+        for (PresentationContext pc : filterMatchingPC(as))
+            copy.addPresentationContext(pc);
         copy.setReservedBytes(rq.getReservedBytes());
         copy.setProtocolVersion(rq.getProtocolVersion());
         copy.setMaxPDULength(rq.getMaxPDULength());
@@ -218,7 +215,6 @@ public class ForwardConnectionUtils {
             PresentationContext pcAC = ac.getPresentationContext(pcid);
             PresentationContext pcRQ = rq.getPresentationContext(pcid);
             List<String> tss = new ArrayList<String>(pcAC.getTransferSyntaxes().length);
-            tss.add(UID.ImplicitVRLittleEndian);
             for (String otherTss : pcAC.getTransferSyntaxes())
                 if (!tss.contains(otherTss))
                     tss.add(otherTss);

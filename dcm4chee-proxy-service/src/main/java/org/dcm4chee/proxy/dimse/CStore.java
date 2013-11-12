@@ -122,7 +122,6 @@ public class CStore extends BasicCStoreSCP {
                         new InputStreamDataWriter(data), -1, null, null, null);
             } catch (Exception e) {
                 LOG.error(asAccepted + ": error forwarding C-STORE-RQ: " + e.getMessage());
-                asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
                 asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, RetryObject.ConnectionException.getSuffix() + "0");
                 super.onDimseRQ(asAccepted, pc, dimse, rq, data);
             }
@@ -159,21 +158,10 @@ public class CStore extends BasicCStoreSCP {
             else
                 processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, dimse, cmd, rsp, file, fmi);
         } catch (Exception e) {
-            if (proxyAEE.isAcceptDataOnFailedAssociation())
-                try {
-                    processForwardRules(proxyAEE, asAccepted, forwardAssociationProperty, pc, dimse, cmd, rsp, file, fmi);
-                } catch (ConfigurationException c) {
-                    LOG.error("{}: configuration error while processing C-STORE-RQ: {}", new Object[]{asAccepted, c.getMessage()});
-                    if (file.exists())
-                        deleteFile(asAccepted, file);
-                    throw new DicomServiceException(Status.UnableToProcess, c.getCause());
-                }
-            else {
-                LOG.error("{}: error processing C-STORE-RQ: {}", new Object[]{asAccepted, e.getMessage()});
-                if (file.exists())
-                    deleteFile(asAccepted, file);
-                throw new DicomServiceException(Status.UnableToProcess);
-            }
+            LOG.error("{}: error processing C-STORE-RQ: {}", new Object[] { asAccepted, e });
+            if (file.exists())
+                deleteFile(asAccepted, file);
+            throw new DicomServiceException(Status.UnableToProcess, e.getCause());
         }
     }
 
@@ -331,7 +319,7 @@ public class CStore extends BasicCStoreSCP {
         if (forwardOption == null || forwardOption.getSchedule().isNow(new GregorianCalendar())) {
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule.getUseCallingAET();
             Association asInvoked = getSingleForwardDestination(asAccepted, callingAET, calledAET,
-                    asAccepted.getAAssociateRQ(), forwardAssociationProperty, proxyAEE, rule);
+                    ForwardConnectionUtils.copyOfMatchingAAssociateRQ(asAccepted), forwardAssociationProperty, proxyAEE, rule);
             if (asInvoked != null) {
                 asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
                 if (ForwardConnectionUtils.requiresMultiFrameConversion(proxyAEE, asInvoked.getRemoteAET(), rq.getString(Tag.AffectedSOPClassUID)))
@@ -438,10 +426,14 @@ public class CStore extends BasicCStoreSCP {
             }
             forward(proxyAEE, asAccepted, asInvoked, pc, rq, new DataWriterAdapter(attrs), -1, logFile, dataFile, null);
         } catch (Exception e) {
-            asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
             if (logFile != null)
                 logFile.delete();
             LOG.error("{}: error forwarding object {}: {}", new Object[] { asAccepted, dataFile, e.getMessage() });
+            if (proxyAEE.isAcceptDataOnFailedAssociation()) {
+                asAccepted.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
+                storeToCalledAETSpoolDir(proxyAEE, asAccepted, pc, rq, dataFile, asInvoked.getCalledAET());
+            } else
+                throw new DicomServiceException(Status.UnableToProcess, e.getCause());
         }
     }
 
@@ -481,7 +473,6 @@ public class CStore extends BasicCStoreSCP {
                 forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq, new DataWriterAdapter(attrs), frameNumber,
                         logFile, dataFile, sourceUID);
             } catch (Exception e) {
-                asAccepted.clearProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
                 if (logFile != null)
                     logFile.delete();
                 log = false;

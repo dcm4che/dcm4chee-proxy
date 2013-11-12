@@ -169,30 +169,27 @@ public class StgCmt extends DicomService {
             }
         }
         try {
-            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOf(asAccepted, rule);
+            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOfMatchingAAssociateRQ(asAccepted);
             rqCopy.setCallingAET(callingAET);
             rqCopy.setCalledAET(calledAET);
-            Association asInvoked = proxyAEE.getApplicationEntity().connect(
-                    aeCache.findApplicationEntity(rqCopy.getCalledAET()), rqCopy);
+            Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET),
+                    rqCopy);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
             asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
             onNActionRQ(asAccepted, asInvoked, pc, rq, data, rule);
         } catch (IOException e) {
             LOG.error("{}: Error connecting to {}: {}", new Object[] { asAccepted, calledAET, e.getMessage() });
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0",
-                    rule);
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0", rule);
         } catch (InterruptedException e) {
             LOG.error("{}: Unexpected exception: {}", asAccepted, e.getMessage());
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0",
-                    rule);
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0", rule);
         } catch (IncompatibleConnectionException e) {
             LOG.error("{}: Unable to connect to {}: {}", new Object[] { asAccepted, calledAET, e.getMessage() });
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0",
-                    rule);
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0", rule);
         } catch (GeneralSecurityException e) {
             LOG.error("{}: Failed to create SSL context: {}", asAccepted, e.getMessage());
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data,
-                    RetryObject.GeneralSecurityException.getSuffix() + "0", rule);
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.GeneralSecurityException.getSuffix() + "0",
+                    rule);
         }
     }
 
@@ -284,7 +281,7 @@ public class StgCmt extends DicomService {
             calledAEString = prop.getProperty("source-aet");
             ApplicationEntity ae = asAccepted.getApplicationEntity();
             ApplicationEntity calledAE = aeCache.findApplicationEntity(calledAEString);
-            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOf(asAccepted, null);
+            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOfMatchingAAssociateRQ(asAccepted);
             rqCopy.setCalledAET(calledAEString);
             if (!ae.getAETitle().equals("*"))
                 rqCopy.setCallingAET(ae.getAETitle());
