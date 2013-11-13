@@ -302,7 +302,7 @@ public class ProxyDeviceTest {
         ProxyDeviceExtension proxyDev = new ProxyDeviceExtension();
         device.addDeviceExtension(proxyDev);
         device.setManufacturerModelName("dcm4chee-proxy");
-        device.setSoftwareVersions("1.0.0");
+        device.setSoftwareVersions("1.0.1");
         device.setManufacturer("dcm4che");
 
         device.setKeyStoreURL("${jboss.server.config.url}/dcm4chee-proxy/key.jks");

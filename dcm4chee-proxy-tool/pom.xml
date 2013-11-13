@@ -12,7 +12,7 @@
   <properties>
     <hibernate.version>4.0.1.Final</hibernate.version>
     <log4j.version>1.2.16</log4j.version>
-    <dcm4chee-proxy.version>1.0.0</dcm4chee-proxy.version>
+    <dcm4chee-proxy.version>1.0.1</dcm4chee-proxy.version>
     <skipTests>true</skipTests>
   </properties>
   <build>
