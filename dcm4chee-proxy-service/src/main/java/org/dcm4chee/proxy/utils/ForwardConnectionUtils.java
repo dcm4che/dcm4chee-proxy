@@ -210,16 +210,10 @@ public class ForwardConnectionUtils {
         AAssociateRQ rq = as.getAAssociateRQ();
         AAssociateAC ac = as.getAAssociateAC();
         List<PresentationContext> returnList = new ArrayList<PresentationContext>(rq.getNumberOfPresentationContexts());
-        for (int i = 0; i < rq.getNumberOfPresentationContexts(); i++) {
-            int pcid = i * 2 + 1;
-            PresentationContext pcAC = ac.getPresentationContext(pcid);
-            PresentationContext pcRQ = rq.getPresentationContext(pcid);
-            List<String> tss = new ArrayList<String>(pcAC.getTransferSyntaxes().length);
-            for (String otherTss : pcAC.getTransferSyntaxes())
-                if (!tss.contains(otherTss))
-                    tss.add(otherTss);
-            returnList.add(new PresentationContext(pcid, pcRQ.getAbstractSyntax(), (String[]) tss
-                    .toArray(new String[tss.size()])));
+        for (PresentationContext pc : rq.getPresentationContexts()) {
+            PresentationContext pcAC = ac.getPresentationContext(pc.getPCID());
+            if (pcAC.getResult() == PresentationContext.ACCEPTANCE)
+                returnList.add(new PresentationContext(pc.getPCID(), pc.getAbstractSyntax(), pcAC.getTransferSyntax()));
         }
         return returnList;
     }
