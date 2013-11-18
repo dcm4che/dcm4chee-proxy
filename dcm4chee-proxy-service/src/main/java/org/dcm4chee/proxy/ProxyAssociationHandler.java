@@ -117,7 +117,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             for (ForwardRule fwr : filterList) {
                 if (rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
-                if (rule.getCallingAETs() == null && fwr.getCallingAETs() != null
+                if (rule.getCallingAETs().isEmpty() && !fwr.getCallingAETs().isEmpty()
                         && fwr.getCallingAETs().contains(rq.getCallingAET())) {
                     LOG.debug(
                             "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
