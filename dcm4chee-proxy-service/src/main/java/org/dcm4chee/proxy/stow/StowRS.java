@@ -596,10 +596,10 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         sopRef.setString(Tag.ReferencedSOPClassUID, VR.UI, fmi.getString(Tag.MediaStorageSOPClassUID));
         String iuid = fmi.getString(Tag.MediaStorageSOPInstanceUID);
         sopRef.setString(Tag.ReferencedSOPInstanceUID, VR.UI, iuid);
-        sopRef.setString(Tag.RetrieveURI, VR.UT, wadoURL
-                + attrs.getString(Tag.StudyInstanceUID) + "/series/"
-                + attrs.getString(Tag.SeriesInstanceUID) + "/instances/"
-                + iuid);
+//        sopRef.setString(Tag.RetrieveURI, VR.UT, wadoURL
+//                + attrs.getString(Tag.StudyInstanceUID) + "/series/"
+//                + attrs.getString(Tag.SeriesInstanceUID) + "/instances/"
+//                + iuid);
         sopSequence.add(sopRef);
     }
 
