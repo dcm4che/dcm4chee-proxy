@@ -224,9 +224,9 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
 
     public void initResponse() {
         wadoURL = uriInfo.getBaseUri() + "wado/" + aet + "/studies/";
-        if (studyInstanceUID != null)
-            response.setString(Tag.RetrieveURI, VR.UT, wadoURL + studyInstanceUID);
-        else
+//        if (studyInstanceUID != null)
+//            response.setString(Tag.RetrieveURI, VR.UT, wadoURL + studyInstanceUID);
+//        else
             response.setNull(Tag.RetrieveURI, VR.UT);
         sopSequence = response.newSequence(Tag.ReferencedSOPSequence, files.size());
         failedSOPSequence = response.newSequence(Tag.FailedSOPSequence, files.size());
@@ -600,6 +600,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
 //                + attrs.getString(Tag.StudyInstanceUID) + "/series/"
 //                + attrs.getString(Tag.SeriesInstanceUID) + "/instances/"
 //                + iuid);
+        sopRef.setNull(Tag.RetrieveURI, VR.UT);
         sopSequence.add(sopRef);
     }
 
