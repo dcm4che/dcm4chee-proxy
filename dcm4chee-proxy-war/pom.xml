@@ -72,15 +72,15 @@
   <profiles>
     <profile>
       <id>standard</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <properties>
         <profile.dependencies>org.dcm4che.mime,org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.prefs-hl7,org.dcm4che.emf,org.dcm4che.conf.ldap-hl7,org.dcm4che.conf.ldap-audit,org.dcm4che.conf.prefs-audit</profile.dependencies>
       </properties>
     </profile>
     <profile>
       <id>jdbc-prefs</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <properties>
         <profile.dependencies>org.dcm4che.mime,org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.prefs-hl7,org.dcm4che.emf,org.dcm4che.conf.ldap-hl7,org.dcm4che.conf.ldap-audit,org.dcm4che.conf.prefs-audit,deployment.dcm4che-jdbc-prefs-ejb-1.0.0.jar</profile.dependencies>
       </properties>
