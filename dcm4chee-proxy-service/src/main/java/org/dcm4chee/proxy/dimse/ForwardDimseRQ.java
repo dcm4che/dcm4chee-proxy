@@ -162,30 +162,11 @@ public class ForwardDimseRQ {
                         rspData.setString(Tag.PatientID, VR.LO, data.getString(Tag.PatientID));
                         rspData.setString(Tag.IssuerOfPatientID, VR.LO, data.getString(Tag.IssuerOfPatientID));
                     }
-                    if (rspData != null) {
-                        if (dimse == Dimse.C_FIND_RQ)
+                    if (rspData != null && dimse == Dimse.C_FIND_RQ) {
                             rspData = proxyAEE.coerceDataset(
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
-                                    rspData,
-                                    rq,
-                                    asAccepted.getApplicationEntity().getDevice()
-                                            .getDeviceExtension(ProxyDeviceExtension.class));
-                        else if (dimse == Dimse.C_GET_RQ)
-                            rspData = proxyAEE.coerceDataset(
-                                    asAccepted,
-                                    Role.SCU,
-                                    Dimse.C_GET_RSP,
-                                    rspData,
-                                    rq,
-                                    asAccepted.getApplicationEntity().getDevice()
-                                            .getDeviceExtension(ProxyDeviceExtension.class));
-                        else if (dimse == Dimse.C_MOVE_RQ)
-                            rspData = proxyAEE.coerceDataset(
-                                    asAccepted,
-                                    Role.SCU,
-                                    Dimse.C_MOVE_RSP,
                                     rspData,
                                     rq,
                                     asAccepted.getApplicationEntity().getDevice()
