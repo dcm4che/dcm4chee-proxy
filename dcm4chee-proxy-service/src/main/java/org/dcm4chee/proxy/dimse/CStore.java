@@ -179,10 +179,13 @@ public class CStore extends BasicCStoreSCP {
                 || !cmoveInfoObject.getCalledAET().equals(asAccepted.getRemoteAET()))
             return null;
 
+        LOG.debug("{}: found matching C-MOVE-RQ with move-originator = {} and move-destination = {}", new Object[] {
+                asAccepted, cmoveInfoObject.getMoveOriginatorAET(), cmoveInfoObject.getMoveDestinationAET()});
         try {
             AAssociateRQ rq = asAccepted.getAAssociateRQ();
             ForwardRule rule = cmoveInfoObject.getRule();
             String callingAET = (rule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : rule.getUseCallingAET();
+            LOG.debug("{}: opening connection to move-destination {}", asAccepted, cmoveInfoObject.getMoveDestinationAET());
             Association asInvoked = proxyAEE.openForwardAssociation(asAccepted, rule, callingAET,
                     cmoveInfoObject.getMoveDestinationAET(), rq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
