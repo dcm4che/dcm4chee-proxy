@@ -469,21 +469,42 @@ public class ProxyAEExtension extends AEExtension {
             if (rule.getDimse().isEmpty() && rule.getSopClasses().isEmpty()
                     || rule.getSopClasses().contains(rqSopClass) && rule.getDimse().isEmpty()
                     || rule.getDimse().contains(dimse) 
-                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(rqSopClass)))
+                        && (rule.getSopClasses().isEmpty() || rule.getSopClasses().contains(rqSopClass))) {
+                LOG.debug(
+                        "Filter on DIMSE RQ: add forward rule \"{}\" based on DIMSE = \"{}\" and SOPClasses = \"{}\"",
+                        new Object[] { 
+                                rule.getCommonName(), 
+                                rule.getDimse().isEmpty() ? "<EMPTY>" : rule.getDimse(),
+                                rule.getSopClasses().isEmpty() ? "<EMPTY>" : rule.getSopClasses()});
                 filterList.add(rule);
+            }
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
+        int i = 0;
         for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
-            for (ForwardRule fwr : filterList) {
-                if (rule.getCommonName().equals(fwr.getCommonName()))
-                    continue;
+            i++;
+            for (int j = i; j < filterList.size(); j++) {
+                ForwardRule fwr = filterList.get(j);
                 if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
+                    LOG.debug(
+                            "Filter on DIMSE RQ: remove forward rule \"{}\" with DIMSE = <EMPTY> due to rule \"{}\" with DIMSE = \"{}\"",
+                            new Object[] { 
+                                    rule.getCommonName(), 
+                                    fwr.getCommonName(),
+                                    fwr.getDimse()});
                     returnList.remove(rule);
                     break;
                 }
-                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty())
+                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty()) {
+                    LOG.debug(
+                            "Filter on DIMSE RQ: remove forward rule \"{}\" with SOP Class = <EMPTY> due to rule \"{}\" with SOP Class = \"{}\"",
+                            new Object[] { 
+                                    rule.getCommonName(), 
+                                    fwr.getCommonName(),
+                                    fwr.getSopClasses()});
                     returnList.remove(rule);
+                }
             }
         }
         return returnList;

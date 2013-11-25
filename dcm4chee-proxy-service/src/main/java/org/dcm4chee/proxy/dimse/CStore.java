@@ -170,6 +170,8 @@ public class CStore extends BasicCStoreSCP {
     private Association getCMoveDestinationAS(ProxyAEExtension proxyAEE, Association asAccepted, Attributes cmd)
             throws DicomServiceException {
         int moveOriMsgId = cmd.getInt(Tag.MoveOriginatorMessageID, 0);
+        if (moveOriMsgId == 0)
+            return null;
         String originatorCallingAET = cmd.getString(Tag.MoveOriginatorApplicationEntityTitle);
         CMoveInfoObject cmoveInfoObject = proxyAEE.getCMoveInfoObject(moveOriMsgId);
         if (cmoveInfoObject == null 
