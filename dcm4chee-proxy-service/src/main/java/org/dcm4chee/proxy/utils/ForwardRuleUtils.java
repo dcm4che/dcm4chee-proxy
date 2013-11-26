@@ -168,12 +168,15 @@ public class ForwardRuleUtils {
             }
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
+        int i = 0;
         for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
-            for (ForwardRule fwr : filterList) {
-                if (rule.getCommonName().equals(fwr.getCommonName()))
-                    continue;
+            i++;
+            for (int j = i; j < filterList.size(); j++) {
+                if (returnList.get(j) == null)
+                    break;
 
+                ForwardRule fwr = filterList.get(j);
                 if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
                     LOG.debug(
                             "Filter on DIMSE RQ: remove forward rule \"{}\" with DIMSE = <EMPTY> due to rule \"{}\" with DIMSE = \"{}\"",
