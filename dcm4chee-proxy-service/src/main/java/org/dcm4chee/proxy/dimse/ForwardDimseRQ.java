@@ -114,21 +114,21 @@ public class ForwardDimseRQ {
         final ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
         final int msgId = rq.getInt(Tag.MessageID, 0);
         int rspMsgId = msgId;
+        ForwardRule fwdRule = (ForwardRule) asInvoked.getProperty(ForwardRule.class.getName());
         if (dimse == Dimse.C_MOVE_RQ) {
-            CMoveInfoObject infoObject = new CMoveInfoObject(
-                    asAccepted.getRemoteAET(),
-                    rq.getString(Tag.MoveDestination), 
-                    asInvoked.getCalledAET(), 
-                    asInvoked.getCallingAET(),
-                    rq.getInt(Tag.MessageID, 0),
-                    (ForwardRule) asInvoked.getProperty(ForwardRule.class.getName()));
-            int newMsgId = proxyAEE.getNewCMoveMessageID(infoObject);
-            if (newMsgId == -1) {
-                LOG.error("Cannot forward C-MOVE-RQ to " + asInvoked.getRemoteAET()
-                        + ": no free message id due to too many active c-move-requests");
-                throw new DicomServiceException(Status.UnableToProcess);
-            }
-            rspMsgId = newMsgId;
+            if (fwdRule.getUseCallingAET() != null) {
+                CMoveInfoObject infoObject = new CMoveInfoObject(asAccepted.getRemoteAET(),
+                        rq.getString(Tag.MoveDestination), asInvoked.getCalledAET(), asInvoked.getCallingAET(),
+                        rq.getInt(Tag.MessageID, 0), (ForwardRule) asInvoked.getProperty(ForwardRule.class.getName()));
+                int newMsgId = proxyAEE.getNewCMoveMessageID(infoObject);
+                if (newMsgId == -1) {
+                    LOG.error("Cannot forward C-MOVE-RQ to " + asInvoked.getRemoteAET()
+                            + ": no free message id due to too many active c-move-requests");
+                    throw new DicomServiceException(Status.UnableToProcess);
+                }
+                rspMsgId = newMsgId;
+            } else if (adjustPatientID)
+                rspMsgId = asInvoked.nextMessageID();
         } else if (adjustPatientID) {
             rspMsgId = asInvoked.nextMessageID();
         }
@@ -198,16 +198,17 @@ public class ForwardDimseRQ {
             String cuid = rq.getString(dimse.tagOfSOPClassUID());
             switch (dimse) {
             case C_FIND_RQ:
-                asInvoked.cfind(cuid, priority, coercedData, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
-                        rspHandler);
+                asInvoked.cfind(cuid, priority, coercedData,
+                        ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
                 break;
             case C_GET_RQ:
-                asInvoked.cget(cuid, priority, coercedData, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
-                        rspHandler);
+                asInvoked.cget(cuid, priority, coercedData,
+                        ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
                 break;
             case C_MOVE_RQ:
-                asInvoked.cmove(cuid, priority, coercedData, ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
-                        getMoveDestination(proxyAEE), rspHandler);
+                asInvoked.cmove(cuid, priority, coercedData,
+                        ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid),
+                        getMoveDestination(proxyAEE, fwdRule), rspHandler);
                 break;
             default:
                 throw new DicomServiceException(Status.UnrecognizedOperation);
@@ -222,10 +223,10 @@ public class ForwardDimseRQ {
         }
     }
 
-    private String getMoveDestination(ProxyAEExtension proxyAEE) {
-        return proxyAEE.getApplicationEntity().getAETitle().equals("*")
-                ? rq.getString(Tag.MoveDestination)
-                : proxyAEE.getApplicationEntity().getAETitle();
+    private String getMoveDestination(ProxyAEExtension proxyAEE, ForwardRule fwdRule) {
+        return fwdRule.getUseCallingAET() != null
+                ? fwdRule.getUseCallingAET()
+                : rq.getString(Tag.MoveDestination);
     }
 
     private void sendFinalDimseRSP() {
