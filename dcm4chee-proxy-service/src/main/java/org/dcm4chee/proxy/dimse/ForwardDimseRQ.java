@@ -163,29 +163,12 @@ public class ForwardDimseRQ {
                         rspData.setString(Tag.PatientID, VR.LO, data.getString(Tag.PatientID));
                         rspData.setString(Tag.IssuerOfPatientID, VR.LO, data.getString(Tag.IssuerOfPatientID));
                     }
-                    if (rspData != null) {
-                        if (dimse == Dimse.C_FIND_RQ)
+                    if (rspData != null && dimse == Dimse.C_FIND_RQ) {
                             rspData = AttributeCoercionUtils.coerceDataset(
                                     proxyAEE,
                                     asAccepted,
                                     Role.SCU,
                                     Dimse.C_FIND_RSP,
-                                    rspData,
-                                    rq);
-                        else if (dimse == Dimse.C_GET_RQ)
-                            rspData = AttributeCoercionUtils.coerceDataset(
-                                    proxyAEE,
-                                    asAccepted,
-                                    Role.SCU,
-                                    Dimse.C_GET_RSP,
-                                    rspData,
-                                    rq);
-                        else if (dimse == Dimse.C_MOVE_RQ)
-                            rspData = AttributeCoercionUtils.coerceDataset(
-                                    proxyAEE,
-                                    asAccepted,
-                                    Role.SCU,
-                                    Dimse.C_MOVE_RSP,
                                     rspData,
                                     rq);
                     }
