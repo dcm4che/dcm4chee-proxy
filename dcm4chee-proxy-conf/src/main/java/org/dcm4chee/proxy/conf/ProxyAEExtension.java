@@ -480,30 +480,31 @@ public class ProxyAEExtension extends AEExtension {
             }
         }
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
-        int i = 0;
-        for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
-            ForwardRule rule = iterator.next();
-            i++;
-            for (int j = i; j < filterList.size(); j++) {
-                ForwardRule fwr = filterList.get(j);
-                if (rule.getDimse().isEmpty() && !fwr.getDimse().isEmpty()) {
+        for (int i = 0; i < filterList.size(); i++) {
+            ForwardRule rule1 = filterList.get(i);
+            for (int j = i + 1; j < filterList.size(); j++) {
+                if (returnList.get(j) == null)
+                    continue;
+
+                ForwardRule rule2 = filterList.get(j);
+                if (rule1.getDimse().isEmpty() && !rule2.getDimse().isEmpty()) {
                     LOG.debug(
                             "Filter on DIMSE RQ: remove forward rule \"{}\" with DIMSE = <EMPTY> due to rule \"{}\" with DIMSE = \"{}\"",
                             new Object[] { 
-                                    rule.getCommonName(), 
-                                    fwr.getCommonName(),
-                                    fwr.getDimse()});
-                    returnList.remove(rule);
-                    break;
+                                    rule1.getCommonName(), 
+                                    rule2.getCommonName(),
+                                    rule2.getDimse()});
+                    returnList.remove(rule1);
+                    continue;
                 }
-                if (rule.getSopClasses().isEmpty() && !fwr.getSopClasses().isEmpty()) {
+                if (rule1.getSopClasses().isEmpty() && !rule2.getSopClasses().isEmpty()) {
                     LOG.debug(
                             "Filter on DIMSE RQ: remove forward rule \"{}\" with SOP Class = <EMPTY> due to rule \"{}\" with SOP Class = \"{}\"",
                             new Object[] { 
-                                    rule.getCommonName(), 
-                                    fwr.getCommonName(),
-                                    fwr.getSopClasses()});
-                    returnList.remove(rule);
+                                    rule1.getCommonName(), 
+                                    rule2.getCommonName(),
+                                    rule2.getSopClasses()});
+                    returnList.remove(rule1);
                 }
             }
         }
