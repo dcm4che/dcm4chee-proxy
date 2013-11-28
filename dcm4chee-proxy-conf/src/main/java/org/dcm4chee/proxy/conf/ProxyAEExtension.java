@@ -49,7 +49,6 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -482,11 +481,14 @@ public class ProxyAEExtension extends AEExtension {
         List<ForwardRule> returnList = new ArrayList<ForwardRule>(filterList);
         for (int i = 0; i < filterList.size(); i++) {
             ForwardRule rule1 = filterList.get(i);
+            if (!returnList.contains(rule1))
+                continue;
+
             for (int j = i + 1; j < filterList.size(); j++) {
-                if (returnList.get(j) == null)
+                ForwardRule rule2 = filterList.get(j);
+                if (!returnList.contains(rule2))
                     continue;
 
-                ForwardRule rule2 = filterList.get(j);
                 if (rule1.getDimse().isEmpty() && !rule2.getDimse().isEmpty()) {
                     LOG.debug(
                             "Filter on DIMSE RQ: remove forward rule \"{}\" with DIMSE = <EMPTY> due to rule \"{}\" with DIMSE = \"{}\"",
@@ -495,7 +497,7 @@ public class ProxyAEExtension extends AEExtension {
                                     rule2.getCommonName(),
                                     rule2.getDimse()});
                     returnList.remove(rule1);
-                    continue;
+                    break;
                 }
                 if (rule1.getSopClasses().isEmpty() && !rule2.getSopClasses().isEmpty()) {
                     LOG.debug(
@@ -505,6 +507,27 @@ public class ProxyAEExtension extends AEExtension {
                                     rule2.getCommonName(),
                                     rule2.getSopClasses()});
                     returnList.remove(rule1);
+                    break;
+                }
+                if (rule2.getDimse().isEmpty() && !rule1.getDimse().isEmpty()) {
+                    LOG.debug(
+                            "Filter on DIMSE RQ: remove forward rule \"{}\" with DIMSE = <EMPTY> due to rule \"{}\" with DIMSE = \"{}\"",
+                            new Object[] { 
+                                    rule2.getCommonName(), 
+                                    rule1.getCommonName(),
+                                    rule1.getDimse()});
+                    returnList.remove(rule2);
+                    continue;
+                }
+                if (rule2.getSopClasses().isEmpty() && !rule1.getSopClasses().isEmpty()) {
+                    LOG.debug(
+                            "Filter on DIMSE RQ: remove forward rule \"{}\" with SOP Class = <EMPTY> due to rule \"{}\" with SOP Class = \"{}\"",
+                            new Object[] { 
+                                    rule2.getCommonName(), 
+                                    rule1.getCommonName(),
+                                    rule1.getSopClasses()});
+                    returnList.remove(rule2);
+                    continue;
                 }
             }
         }
