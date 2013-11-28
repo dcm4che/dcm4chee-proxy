@@ -115,7 +115,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
         for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
             for (ForwardRule fwr : filterList) {
-                if (rule.getCommonName().equals(fwr.getCommonName()))
+                if (!returnList.contains(fwr) || rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
                 if (rule.getCallingAETs().isEmpty() && !fwr.getCallingAETs().isEmpty()
                         && fwr.getCallingAETs().contains(rq.getCallingAET())) {
@@ -123,6 +123,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                             "Removing forward rule \"{}\" with Calling AET = NULL due to rule \"{}\" with matching Calling AET = {}",
                             new Object[] { rule.getCommonName(), fwr.getCommonName(), fwr.getCallingAETs() });
                     returnList.remove(rule);
+                    break;
                 }
             }
         }
