@@ -151,6 +151,7 @@
       <artifactId>maven-scm-plugin</artifactId>
       <version>1.8.1</version>
       <type>maven-plugin</type>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.dcm4che</groupId>
