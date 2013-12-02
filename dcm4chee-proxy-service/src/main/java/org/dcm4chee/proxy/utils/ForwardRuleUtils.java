@@ -136,7 +136,7 @@ public class ForwardRuleUtils {
         for (Iterator<ForwardRule> iterator = filterList.iterator(); iterator.hasNext();) {
             ForwardRule rule = iterator.next();
             for (ForwardRule fwr : filterList) {
-                if (rule.getCommonName().equals(fwr.getCommonName()))
+                if (!returnList.contains(fwr) || rule.getCommonName().equals(fwr.getCommonName()))
                     continue;
                 if (rule.getCallingAETs().isEmpty()
                         && !fwr.getCallingAETs().isEmpty()
