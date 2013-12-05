@@ -109,14 +109,17 @@ public class ForwardRuleTest {
 
     private void assertRule1(List<ForwardRule> result) {
         Assert.assertEquals(1, result.size());
-        Assert.assertEquals(1, result.get(0).getDestinationAETitles().size());
-        Assert.assertEquals("DCM4CHEE", result.get(0).getDestinationAETitles().get(0));
+        Assert.assertEquals("Rule1", result.get(0).getCommonName());
     }
 
     private void assertRule2(List<ForwardRule> result) {
         Assert.assertEquals(1, result.size());
-        Assert.assertEquals(1, result.get(0).getDestinationAETitles().size());
-        Assert.assertEquals("STORESCP", result.get(0).getDestinationAETitles().get(0));
+        Assert.assertEquals("Rule2", result.get(0).getCommonName());
+    }
+
+    private void assertRule3(List<ForwardRule> result) {
+        Assert.assertEquals(1, result.size());
+        Assert.assertEquals("Rule3", result.get(0).getCommonName());
     }
 
     @Test
@@ -127,59 +130,37 @@ public class ForwardRuleTest {
         ForwardRule fwdRule1 = new ForwardRule();
         fwdRule1.setCommonName("Rule1");
         List<String> dest1 = new ArrayList<String>(1);
-        dest1.add("aet:DCM4CHEE");
+        dest1.add("aet:AET1");
         fwdRule1.setDestinationURIs(dest1);
-        List<Dimse> dimse1 = new ArrayList<>(1);
-        dimse1.add(Dimse.C_STORE_RQ);
-        fwdRule1.setDimse(dimse1);
         fwdRules.add(fwdRule1);
 
         ForwardRule fwdRule2 = new ForwardRule();
         fwdRule2.setCommonName("Rule2");
         List<String> dest2 = new ArrayList<String>(1);
-        dest2.add("aet:STORESCP");
+        dest2.add("aet:AET2");
+        List<Dimse> dimse2 = new ArrayList<>(1);
+        dimse2.add(Dimse.C_STORE_RQ);
+        fwdRule2.setDimse(dimse2);
         fwdRule2.setDestinationURIs(dest2);
         fwdRules.add(fwdRule2);
 
+        ForwardRule fwdRule3 = new ForwardRule();
+        fwdRule3.setCommonName("Rule3");
+        List<String> dest3 = new ArrayList<String>(1);
+        dest3.add("aet:AET3");
+        List<Dimse> dimse3 = new ArrayList<>(1);
+        dimse3.add(Dimse.C_STORE_RQ);
+        fwdRule3.setDimse(dimse3);
+        fwdRule3.setDestinationURIs(dest3);
+        List<String> sopClass3 = new ArrayList<>(1);
+        sopClass3.add(UID.MRImageStorage);
+        fwdRule3.setSopClasses(sopClass3);
+        fwdRules.add(fwdRule3);
         proxyAEE.setForwardRules(fwdRules);
 
-        List<ForwardRule> result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, null, Dimse.C_STORE_RQ);
-        assertRule1(result);
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, null, Dimse.C_FIND_RQ);
-        assertRule2(result);
-
-        fwdRules.remove(fwdRule1);
-        fwdRule1.setDimse(new ArrayList<Dimse>(0));
-        List<String> sopClasses = new ArrayList<>(1);
-        sopClasses.add(UID.MRImageStorage);
-        fwdRule1.setSopClasses(sopClasses);
-        fwdRules.add(fwdRule1);
-        proxyAEE.setForwardRules(fwdRules);
-
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.MRImageStorage, null);
-        assertRule1(result);
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.CTImageStorage, null);
-        assertRule2(result);
-
-        fwdRules.remove(fwdRule2);
-        List<Dimse> dimse2 = new ArrayList<Dimse>(1);
-        dimse2.add(Dimse.C_STORE_RQ);
-        fwdRule2.setDimse(dimse2);
-        fwdRule2.setSopClasses(sopClasses);
-        fwdRules.add(fwdRule2);
-        proxyAEE.setForwardRules(fwdRules);
-
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.MRImageStorage, null);
-        assertRule1(result);
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.MRImageStorage, Dimse.C_STORE_RQ);
-        assertRule2(result);
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.CTImageStorage, null);
-        assertEmpty(result);
-        result = ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.CTImageStorage, Dimse.C_STORE_RQ);
-        assertEmpty(result);
+        assertRule1(ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.StudyRootQueryRetrieveInformationModelFIND, Dimse.C_FIND_RQ));
+        assertRule2(ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.CTImageStorage, Dimse.C_STORE_RQ));
+        assertRule3(ForwardRuleUtils.filterForwardRulesOnDimseRQ(fwdRules, UID.MRImageStorage, Dimse.C_STORE_RQ));
     }
 
-    private void assertEmpty(List<ForwardRule> result) {
-        Assert.assertEquals(0, result.size());
-    }
 }
