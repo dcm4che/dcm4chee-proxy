@@ -24,12 +24,12 @@ Before building the proxy, check out and build the [dcm4che-3.x DICOM Toolkit] (
 dcm4chee-proxy
 --------------
 
-To build the dcm4chee-proxy, run `mvn clean install` in the root directory.
+To build the dcm4chee-proxy, run `mvn clean install -P standard` in the root directory.
 On success, a JBoss AS7 deployable file can be found in dcm4chee-proxy-war/target/dcm4chee-proxy-war-<version>.war
 and the command line proxy-version can be found in dcm4chee-proxy-tool/target/dcm4chee-proxy-tool-<version>.zip.
 The standard build includes configuration support for LDAP and Java Preferences.
 
-To build the proxy with a dependency for use with dcm4che-jdbc-prefs, run `mvn clean install -P jdbc-prefs`.
+To build the proxy with a dependency for use with dcm4che-jdbc-prefs, run `mvn clean install -P jdbc-prefs` (default).
 
 Configuration
 =============
