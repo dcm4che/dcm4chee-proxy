@@ -401,13 +401,18 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     }
 
     private Attributes readFileMetaInformation(File file) throws IOException {
+        LOG.debug("{}: readFileMetaInformation from {}", this, file.getPath());
         DicomInputStream in = new DicomInputStream(file);
         try {
             Attributes fmi = in.readFileMetaInformation();
             if (fmi == null) {
+                LOG.debug("{}: create new fileMetaInformation from dataset", this);
+                in.setIncludeBulkData(IncludeBulkData.URI);
                 fmi = in.readDataset(-1, Tag.StudyInstanceUID).createFileMetaInformation(UID.ImplicitVRLittleEndian);
             }
-            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, request.getRemoteAddr());
+            String sourceAET = request.getRemoteAddr();
+            LOG.debug("{}: set sourceApplicationEntityTitle to {}", this, sourceAET);
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, sourceAET);
             return fmi;
         } finally {
             SafeClose.close(in);
@@ -417,10 +422,12 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private void processDicomInstances() {
         setPresentationContext();
         for (FileInfo fileInfo : files) {
+            LOG.debug("{}: processing DICOM instance {}", this, fileInfo.file);
             try {
                 Attributes attrs;
                 DicomInputStream in = new DicomInputStream(fileInfo.file);
                 try {
+                    LOG.debug("{}: readDataset from {}", this, fileInfo.file);
                     in.setIncludeBulkData(IncludeBulkData.URI);
                     attrs = in.readDataset(-1, -1);
                 } finally {
@@ -490,6 +497,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
             return;
         }
+        LOG.debug("{}: processing forward rules for {}", this, fileInfo.file);
         if (fwdRules.size() == 1) {
             processSingleForwardDestination(fileInfo, attrs, fmi, fwdRules.get(0), prop, sourceAET);
             return;
@@ -538,6 +546,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
 
     private File storeDestinationAETCopy(FileInfo fileInfo, Attributes fmi, String destinationAET, Attributes destAttrs)
             throws IOException, FileNotFoundException, SyncFailedException {
+        LOG.debug("{}: store file {} to destination aet dir {}", new Object[]{this, fileInfo.file, destinationAET});
         File dst;
         dst = createDestinationAETFile(fileInfo.file.getName(), destinationAET);
         FileOutputStream fout = new FileOutputStream(dst);
@@ -613,7 +622,6 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             }
         }
         for (FileInfo fileInfo : files) {
-            resolveBulkdata(fileInfo.attrs);
             String tsuid = resolveBulkdata(fileInfo.attrs);
             Attributes fmi = fileInfo.attrs.createFileMetaInformation(tsuid);
             if (!checkTransferCapability(fmi))
@@ -771,6 +779,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             calledAET = aet;
             callingAET = proxyAEE.getApplicationEntity().getAETitle();
         }
+        LOG.debug("{}: process single forward destination {}", this, calledAET);
         ForwardOption forwardOption = proxyAEE.getForwardOptions().get(calledAET);
         if (forwardOption == null || forwardOption.getSchedule().isNow(new GregorianCalendar())) {
             try {
