@@ -74,6 +74,8 @@ public class AuditLog {
 
     protected static final Logger LOG = LoggerFactory.getLogger(AuditLog.class);
 
+    private final String separator = System.getProperty("file.separator");
+
     private static AuditLogger logger;
 
     public AuditLog(AuditLogger logger) {
@@ -136,7 +138,6 @@ public class AuditLog {
             return;
 
         for (String numRetry : studyIUIDDir.list()) {
-            String separator = System.getProperty("file.separator");
             File startLog = new File(studyIUIDDir + separator + numRetry + separator + "start.log");
             long lastModified = startLog.lastModified();
             long now = System.currentTimeMillis();
@@ -145,7 +146,7 @@ public class AuditLog {
             if (!(now > lastModified + proxyDev.getSchedulerInterval() * 1000 * 2))
                 return;
 
-            writeFailedLogMessage(ae, studyIUIDDir, numRetry, auditDir, separator);
+            writeFailedLogMessage(ae, studyIUIDDir, numRetry, auditDir);
         }
     }
 
@@ -153,7 +154,6 @@ public class AuditLog {
         if (!studyIUIDDir.exists())
             return;
 
-        String separator = System.getProperty("file.separator");
         File startLog = new File(studyIUIDDir + separator + "start.log");
         long lastModified = startLog.lastModified();
         long now = System.currentTimeMillis();
@@ -161,10 +161,10 @@ public class AuditLog {
         if (!(now > lastModified + proxyDev.getSchedulerInterval() * 1000 * 2))
             return;
 
-        writeLogMessage(ae, studyIUIDDir, auditDir, separator);
+        writeLogMessage(ae, studyIUIDDir, auditDir);
     }
 
-    private void writeLogMessage(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir, String separator) throws IOException {
+    private void writeLogMessage(ApplicationEntity ae, File studyIUIDDir, AuditDirectory auditDir) throws IOException {
         File[] logFiles = studyIUIDDir.listFiles(fileFilter());
         if (logFiles != null && logFiles.length > 1) {
             Log log = new Log();
@@ -209,32 +209,35 @@ public class AuditLog {
             }
             boolean deleteStudyDir = deleteLogFiles(logFiles);
             if (deleteStudyDir)
-                deleteStudyDir(studyIUIDDir, separator);
+                deleteStudyDir(studyIUIDDir);
         }
     }
 
-    private void deleteStudyDir(File studyIUIDDir, String separator) {
+    private synchronized void deleteStudyDir(File studyIUIDDir) {
         for (String dir : studyIUIDDir.list()) {
             File subDir = new File(studyIUIDDir + separator + dir);
-            if (subDir.listFiles().length > 0)
+            if (subDir.listFiles() == null || subDir.listFiles().length > 0)
                 return;
 
-            LOG.debug("Delete dir " + subDir.getAbsolutePath());
-            if (!subDir.delete())
+            if (subDir.delete())
+                LOG.debug("Delete dir " + subDir.getAbsolutePath());
+            else
                 LOG.error("Failed to delete " + subDir.getAbsolutePath());
         }
         if (studyIUIDDir.list().length == 0) {
-            LOG.debug("Delete dir " + studyIUIDDir.getAbsolutePath());
-            if (!studyIUIDDir.delete())
+            if (studyIUIDDir.delete())
+                LOG.debug("Delete dir " + studyIUIDDir.getAbsolutePath());
+            else
                 LOG.error("Failed to delete " + studyIUIDDir.getAbsolutePath());
         }
     }
 
-    private boolean deleteLogFiles(File[] logFiles) {
+    private synchronized boolean deleteLogFiles(File[] logFiles) {
         boolean deleteStudyDir = true;
         for (File file : logFiles) {
-            LOG.debug("Delete log file " + file.getAbsolutePath());
-            if (!file.delete()) {
+            if (file.delete()) 
+                LOG.debug("Delete log file " + file.getAbsolutePath());
+            else {
                 LOG.error("Failed to delete " + file.getAbsolutePath());
                 deleteStudyDir = false;
             }
@@ -242,8 +245,7 @@ public class AuditLog {
         return deleteStudyDir;
     }
 
-    private void writeFailedLogMessage(ApplicationEntity ae, File studyIUIDDir, String retry, AuditDirectory auditDir,
-            String separator) throws IOException {
+    private void writeFailedLogMessage(ApplicationEntity ae, File studyIUIDDir, String retry, AuditDirectory auditDir) throws IOException {
         File retryDir = new File(studyIUIDDir + separator + retry);
         File[] logFiles = retryDir.listFiles(fileFilter());
         if (logFiles != null && logFiles.length > 1) {
@@ -273,7 +275,7 @@ public class AuditLog {
             }
             boolean deleteStudyDir = deleteLogFiles(logFiles);
             if (deleteStudyDir)
-                deleteStudyDir(studyIUIDDir, separator);
+                deleteStudyDir(studyIUIDDir);
         }
     }
 
