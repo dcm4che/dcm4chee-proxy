@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.dcm4che.dcm4chee-proxy</groupId>
     <artifactId>dcm4chee-proxy-parent</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
   </parent>
   <artifactId>dcm4chee-proxy-tool</artifactId>
   <name>dcm4chee-proxy-tool</name>
@@ -12,7 +12,7 @@
   <properties>
     <hibernate.version>4.0.1.Final</hibernate.version>
     <log4j.version>1.2.16</log4j.version>
-    <dcm4chee-proxy.version>1.0.1</dcm4chee-proxy.version>
+    <dcm4chee-proxy.version>1.0.2</dcm4chee-proxy.version>
     <skipTests>true</skipTests>
   </properties>
   <build>
