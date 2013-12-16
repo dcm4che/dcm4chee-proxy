@@ -176,11 +176,12 @@ public class ProxyAssociationHandler extends AssociationHandler {
         try {
             AAssociateRQ forwardRq = copyOf(rq);
             String callingAET = (forwardRule.getUseCallingAET() == null) ? asAccepted.getCallingAET() : forwardRule.getUseCallingAET();
-            Association asCalled = ForwardConnectionUtils.openForwardAssociation(proxyAEE, asAccepted, forwardRule,
+            Association asInvoked = ForwardConnectionUtils.openForwardAssociation(proxyAEE, asAccepted, forwardRule,
                     callingAET, calledAET, forwardRq, aeCache);
-            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
-            asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
-            AAssociateAC acCalled = asCalled.getAAssociateAC();
+            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_RULE, forwardRule);
+            AAssociateAC acCalled = asInvoked.getAAssociateAC();
             if (forwardRule.isExclusiveUseDefinedTC()) {
                 AAssociateAC acProxy = super.makeAAssociateAC(asAccepted, forwardRq, null);
                 LOG.debug("{}: generating subset of transfer capabilities", asAccepted);
@@ -190,16 +191,16 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     ac.addPresentationContext(pcLocal.isAccepted() ? pcCalled : pcLocal);
                 }
             } else
-                addPresentationContext(asAccepted, proxyAEE, calledAET, ac, callingAET, asCalled, acCalled);
+                addPresentationContext(asAccepted, proxyAEE, calledAET, ac, callingAET, asInvoked, acCalled);
             for (RoleSelection rs : acCalled.getRoleSelections())
                 ac.addRoleSelection(rs);
             for (ExtendedNegotiation extNeg : acCalled.getExtendedNegotiations())
                 ac.addExtendedNegotiation(extNeg);
             for (CommonExtendedNegotiation extNeg : acCalled.getCommonExtendedNegotiations())
                 ac.addCommonExtendedNegotiation(extNeg);
-            ac.setMaxPDULength(asCalled.getConnection().getReceivePDULength());
-            ac.setMaxOpsInvoked(minZeroAsMax(rq.getMaxOpsInvoked(), asCalled.getConnection().getMaxOpsPerformed()));
-            ac.setMaxOpsPerformed(minZeroAsMax(rq.getMaxOpsPerformed(), asCalled.getConnection().getMaxOpsInvoked()));
+            ac.setMaxPDULength(asInvoked.getConnection().getReceivePDULength());
+            ac.setMaxOpsInvoked(minZeroAsMax(rq.getMaxOpsInvoked(), asInvoked.getConnection().getMaxOpsPerformed()));
+            ac.setMaxOpsPerformed(minZeroAsMax(rq.getMaxOpsPerformed(), asInvoked.getConnection().getMaxOpsInvoked()));
             return ac;
         } catch (ConfigurationException e) {
             LOG.error("Unable to load configuration for destination AET: ", e.getMessage());

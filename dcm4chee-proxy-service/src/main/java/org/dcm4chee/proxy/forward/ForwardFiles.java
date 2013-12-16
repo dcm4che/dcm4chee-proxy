@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -54,6 +55,7 @@ import org.dcm4che.conf.api.ApplicationEntityCache;
 import org.dcm4che.conf.api.AttributeCoercion;
 import org.dcm4che.conf.api.ConfigurationException;
 import org.dcm4che.data.Attributes;
+import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
 import org.dcm4che.emf.MultiframeExtractor;
@@ -190,30 +192,38 @@ public class ForwardFiles {
     }
 
     private void processNAction(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) throws IOException {
-        for (String calledAET : proxyAEE.getNactionDirectoryPath().list(dirFilter())) {
-            File dir = new File(proxyAEE.getNactionDirectoryPath(), calledAET);
-            File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
-            if (files == null || files.length == 0)
-                continue;
-
-            LOG.debug("Processing schedule N-ACTION data ...");
-            if (!forwardOptions.keySet().contains(calledAET)) {
-                // process destinations without forward schedule
-                LOG.debug("No forward schedule for {}, sending existing N-ACTION data now", calledAET);
-                startForwardScheduledNAction(proxyAEE, calledAET, files);
-            } else
-                for (Entry<String, ForwardOption> entry : forwardOptions.entrySet()) {
-                    boolean isMatchingAET = calledAET.equals(entry.getKey());
-                    if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
-                        LOG.debug("Found currently active forward schedule for {}, sending existing N-ACTION data now",
-                                calledAET);
-                        startForwardScheduledNAction(proxyAEE, calledAET, files);
-                    } else if (isMatchingAET) {
-                        LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={})", new Object[] {
-                                calledAET, entry.getValue().getSchedule().getDays(),
-                                entry.getValue().getSchedule().getHours() });
+        for (String transactionUID : proxyAEE.getNactionDirectoryPath().list(dirFilter())) {
+            File parent = new File(proxyAEE.getNactionDirectoryPath(), transactionUID);
+            if (parent.list().length == 0) {
+                LOG.debug("Delete empty dir {}", parent);
+                parent.delete();
+                return;
+            }
+            for (String calledAET : parent.list()) {
+                File dir = new File (parent, calledAET);
+                File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
+                if (files == null || files.length == 0)
+                    continue;
+    
+                LOG.debug("Processing schedule N-ACTION data ...");
+                if (!forwardOptions.keySet().contains(calledAET)) {
+                    // process destinations without forward schedule
+                    LOG.debug("No forward schedule for {}, sending existing N-ACTION data now", calledAET);
+                    startForwardScheduledNAction(proxyAEE, calledAET, files);
+                } else
+                    for (Entry<String, ForwardOption> entry : forwardOptions.entrySet()) {
+                        boolean isMatchingAET = calledAET.equals(entry.getKey());
+                        if (isMatchingAET && entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
+                            LOG.debug("Found currently active forward schedule for {}, sending existing N-ACTION data now",
+                                    calledAET);
+                            startForwardScheduledNAction(proxyAEE, calledAET, files);
+                        } else if (isMatchingAET) {
+                            LOG.debug("Found forward schedule for {}, but is inactive (days={}, hours={})", new Object[] {
+                                    calledAET, entry.getValue().getSchedule().getDays(),
+                                    entry.getValue().getSchedule().getHours() });
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -364,7 +374,7 @@ public class ForwardFiles {
                     new Object[] { file, dst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dst });
-        File infoFile = new File(path.substring(0, path.indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.')) + ".info");
         File infoDst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".info");
         if (infoFile.renameTo(infoDst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
@@ -382,7 +392,7 @@ public class ForwardFiles {
         String sopInstanceUID = nCreateProp.getProperty("sop-instance-uid");
         File[] nSetInfoFiles = dir.listFiles(InfoFileUtils.infoFileFilter());
         for (File nSetInfoFile : nSetInfoFiles) {
-            Properties nSetProp = InfoFileUtils.getPropertiesFromInfoFile(proxyAEE, nSetInfoFile.getPath());
+            Properties nSetProp = InfoFileUtils.getFileInfoProperties(proxyAEE, nSetInfoFile);
             if (nSetProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
                 return new File(nSetInfoFile.getPath().substring(0, nSetInfoFile.getPath().indexOf('.')) + ".dcm");
         }
@@ -592,8 +602,7 @@ public class ForwardFiles {
         String sopInstanceUID = nSetProp.getProperty("sop-instance-uid");
         File[] nCreateInfoFiles = dir.listFiles(InfoFileUtils.infoFileFilter());
         for (File nCreateInfoFile : nCreateInfoFiles) {
-            Properties nCreateProp = InfoFileUtils.getPropertiesFromInfoFile(proxyAEE,
-                    nCreateInfoFile.getAbsolutePath());
+            Properties nCreateProp = InfoFileUtils.getFileInfoProperties(proxyAEE, nCreateInfoFile);
             if (nCreateProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
                 return true;
         }
@@ -677,6 +686,11 @@ public class ForwardFiles {
             String callingAET = prop.containsKey("use-calling-aet") ? prop.getProperty("use-calling-aet") : prop
                     .getProperty("source-aet");
             try {
+                DicomInputStream in = new DicomInputStream(file);
+                Attributes attrs = in.readDataset(-1, -1);
+                if (pendingCStoreFileForwarding(proxyAEE, calledAET, attrs))
+                    continue;
+
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
                         UID.ExplicitVRLittleEndian));
@@ -685,11 +699,12 @@ public class ForwardFiles {
                 Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
                 try {
                     if (asInvoked.isReadyForDataTransfer()) {
-                        forwardScheduledNAction(proxyAEE, asInvoked, file, prop);
+                        forwardScheduledNAction(proxyAEE, asInvoked, file, prop, attrs);
                     } else {
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
                     }
                 } finally {
+                    in.close();
                     if (asInvoked != null) {
                         try {
                             asInvoked.waitForOutstandingRSP();
@@ -724,13 +739,30 @@ public class ForwardFiles {
         }
     }
 
+    private boolean pendingCStoreFileForwarding(ProxyAEExtension proxyAEE, String calledAET, Attributes eventInfo)
+            throws IOException {
+        File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
+        if (!dir.exists())
+            return false;
+
+        String[] files = dir.list();
+        Sequence referencedSOPSequence = eventInfo.getSequence(Tag.ReferencedSOPSequence);
+        Iterator<Attributes> it = referencedSOPSequence.iterator();
+        while (it.hasNext()) {
+            Attributes item = it.next();
+            String referencedSOPInstanceUID = item.getString(Tag.ReferencedSOPInstanceUID);
+            for (String file : files)
+                if (file.startsWith(referencedSOPInstanceUID))
+                    return true;
+        }
+        return false;
+    }
+
     private void forwardScheduledNAction(final ProxyAEExtension proxyAEE, final Association as, final File file,
-            final Properties prop) throws IOException, InterruptedException {
+            final Properties prop, Attributes attrs) throws IOException, InterruptedException {
         String iuid = prop.getProperty("sop-instance-uid");
         String cuid = prop.getProperty("sop-class-uid");
         String tsuid = UID.ExplicitVRLittleEndian;
-        DicomInputStream in = new DicomInputStream(file);
-        Attributes attrs = in.readDataset(-1, -1);
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
@@ -738,8 +770,6 @@ public class ForwardFiles {
                 int status = cmd.getInt(Tag.Status, -1);
                 switch (status) {
                 case Status.Success: {
-                    String fileName = file.getName();
-                    String filePath = file.getPath();
                     File destDir = null;
                     try {
                         destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
@@ -751,12 +781,13 @@ public class ForwardFiles {
                         break;
                     }
                     destDir.mkdirs();
+                    String fileName = file.getName();
                     File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
                             + ".naction");
                     if (file.renameTo(dest)) {
                         dest.setLastModified(System.currentTimeMillis());
                         LOG.debug("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
-                        File infoFile = new File(filePath.substring(0, filePath.indexOf('.'))  + ".info");
+                        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.'))  + ".info");
                         File infoFileDest = new File(destDir, infoFile.getName());
                         if (infoFile.renameTo(infoFileDest))
                             LOG.debug("{}: RENAME {} to {}",
@@ -779,11 +810,7 @@ public class ForwardFiles {
                 }
             }
         };
-        try {
-            as.naction(cuid, iuid, 1, attrs, tsuid, rspHandler);
-        } finally {
-            in.close();
-        }
+        as.naction(cuid, iuid, 1, attrs, tsuid, rspHandler);
     }
 
     private void startForwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final String calledAET,

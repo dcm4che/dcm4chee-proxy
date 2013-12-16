@@ -58,17 +58,18 @@ public class InfoFileUtils {
     private static final Logger LOG = LoggerFactory.getLogger(InfoFileUtils.class);
 
     public static Properties getFileInfoProperties(ProxyAEExtension proxyAEE, File file) throws IOException {
-        String infoFileName = file.getPath().substring(0, file.getPath().indexOf('.')) + ".info";
-        return getPropertiesFromInfoFile(proxyAEE, infoFileName);
+        String infoFileName = file.getName().substring(0, file.getName().indexOf('.')) + ".info";
+        return getPropertiesFromInfoFile(proxyAEE, file.getParent(), infoFileName);
     }
 
-    public static Properties getPropertiesFromInfoFile(ProxyAEExtension proxyAEE, String infoFileName)
+    public static Properties getPropertiesFromInfoFile(ProxyAEExtension proxyAEE, String path, String infoFileName)
             throws FileNotFoundException, IOException {
         Properties prop = new Properties();
         FileInputStream inStream = null;
         try {
-            LOG.debug("{}: Loading info file {}", proxyAEE, infoFileName);
-            inStream = new FileInputStream(infoFileName);
+            File infoFile = new File(path, infoFileName);
+            LOG.debug("{}: Loading info file {}", proxyAEE, infoFile);
+            inStream = new FileInputStream(infoFile);
             prop.load(inStream);
         } finally {
             inStream.close();
