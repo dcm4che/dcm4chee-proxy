@@ -227,7 +227,8 @@ public class StgCmt extends DicomService {
             abortForward(pc, asAccepted, Commands.mkNEventReportRSP(rq, Status.InvalidArgumentValue));
             return;
         }
-        if (hasPendingNActionRQ(proxyAEE, transactionUID) || requiresMergeNEventReportRQ(proxyAEE, transactionUID))
+        if (hasPendingNActionRQ(proxyAEE, new File(proxyAEE.getNactionDirectoryPath(), transactionUID)) 
+                || requiresMergeNEventReportRQ(proxyAEE, new File(proxyAEE.getNeventDirectoryPath(), transactionUID)))
             storeNEventReportRQ(proxyAEE, asAccepted, pc, rq, data, transactionUID, nactionRqFile);
         else {
             forwardNEventReportRQ(proxyAEE, asAccepted, pc, rq, data, nactionRqFile);
@@ -242,39 +243,39 @@ public class StgCmt extends DicomService {
         asAccepted.writeDimseRSP(pc, Commands.mkNEventReportRSP(rq, Status.Success));
     }
 
-    public static boolean hasPendingNActionRQ(ProxyAEExtension proxyAEE, String transactionUID) throws IOException {
-        File transUidDir = new File(proxyAEE.getNactionDirectoryPath(), transactionUID);
-        if (transUidDir.exists()) {
+    public static boolean hasPendingNActionRQ(ProxyAEExtension proxyAEE, File transactionUidDir) throws IOException {
+        if (transactionUidDir.exists()) {
             try {
-                return transUidDir.list().length > 0;
+                return transactionUidDir.list().length > 0;
             } catch (Exception e) {
-                LOG.debug("Error reading from {}, possibly removed meanwhile", transUidDir);
+                LOG.debug("Error reading from {}, possibly removed meanwhile", transactionUidDir);
             }
         }
         return false;
     }
 
-    public static boolean hasPendingNEventReportRQ(ProxyAEExtension proxyAEE, String transactionUID) throws IOException {
-        File transUidDir = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
-        if (transUidDir.exists()) {
+    public static boolean hasPendingNEventReportRQ(ProxyAEExtension proxyAEE, File transactionUidDir) throws IOException {
+        if (transactionUidDir.exists()) {
             try {
-                for (String calledAET : transUidDir.list()) {
-                    File calledAETDir = new File(transactionUID, calledAET);
-                    File[] neventFiles = calledAETDir.listFiles(neventFileFilter());
-                    if (neventFiles.length < 1)
+                for (String calledAET : transactionUidDir.list()) {
+                    File[] neventFiles = new File(transactionUidDir, calledAET).listFiles(neventFileFilter());
+                    if (neventFiles == null || neventFiles.length == 0)
                         return true;
                 }
             } catch (Exception e) {
-                LOG.debug("Error reading from {}, possibly removed meanwhile", transUidDir);
+                LOG.debug("Error reading from {}, possibly removed meanwhile", transactionUidDir);
             }
         }
         return false;
     }
 
-    public static boolean requiresMergeNEventReportRQ(ProxyAEExtension proxyAEE, String transactionUID)
+    private static boolean requiresMergeNEventReportRQ(ProxyAEExtension proxyAEE, File transactionUidDir)
             throws IOException {
-        File transUidDir = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
-        return transUidDir.exists() ? transUidDir.list() != null ? transUidDir.list().length > 1 : false : false;
+        return transactionUidDir.exists() 
+                ? transactionUidDir.list() != null 
+                    ? transactionUidDir.list().length > 1 
+                    : false 
+                : false;
     }
 
     public static File getNactionRQFile(ProxyAEExtension proxyAEE, String transactionUID, String calledAET)

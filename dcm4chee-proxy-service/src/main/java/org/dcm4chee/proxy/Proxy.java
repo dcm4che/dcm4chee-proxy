@@ -299,11 +299,15 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 deletePartFiles(proxyAEE.getCStoreDirectoryPath(), action);
                 deleteIncompleteDcmFiles(proxyAEE.getCStoreDirectoryPath(), action);
                 // clear naction spool dir
-                renameSndFiles(proxyAEE.getNactionDirectoryPath(), action);
-                deletePartFiles(proxyAEE.getNactionDirectoryPath(), action);
+                for (File path : proxyAEE.getNactionDirectoryPath().listFiles()) {
+                    renameSndFiles(path, action);
+                    deletePartFiles(path, action);
+                }
                 // clear nevent spool dir
-                renameSndFiles(proxyAEE.getNeventDirectoryPath(), action);
-                deletePartFiles(proxyAEE.getNeventDirectoryPath(), action);
+                for (File path : proxyAEE.getNeventDirectoryPath().listFiles()) {
+                    renameSndFiles(path, action);
+                    deletePartFiles(path, action);
+                }
                 // clear ncreate spool dir
                 renameSndFiles(proxyAEE.getNCreateDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getNCreateDirectoryPath(), action);
@@ -345,8 +349,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     private void renameSndFiles(File path, String action) {
-        for (String calledAET : path.list(dirFilter())) {
-            File dir = new File(path, calledAET);
+        for (String aet : path.list(dirFilter())) {
+            File dir = new File(path, aet);
             File[] sndFiles = dir.listFiles(sndFileFilter());
             for (File sndFile : sndFiles) {
                 String sndFileName = sndFile.getPath();
@@ -360,7 +364,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         }
     }
 
-    private FilenameFilter sndFileFilter() {
+    public static FilenameFilter sndFileFilter() {
         return new FilenameFilter() {
 
             @Override

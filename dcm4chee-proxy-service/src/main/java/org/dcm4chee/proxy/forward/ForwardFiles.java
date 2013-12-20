@@ -82,6 +82,7 @@ import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
 import org.dcm4che.net.pdu.RoleSelection;
 import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4chee.proxy.Proxy;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -237,93 +238,137 @@ public class ForwardFiles {
 
     private void processNEventReport(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions)
             throws IOException {
-        for (String transactionUID : proxyAEE.getNeventDirectoryPath().list(dirFilter())) {
-            File parent = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
-            if (parent.list().length == 0) {
-                LOG.debug("Delete empty dir {}", parent);
-                parent.delete();
+        for (File transactionUidDir : proxyAEE.getNeventDirectoryPath().listFiles(dirFilter())) {
+            if (transactionUidDir.list().length == 0) {
+                LOG.debug("Delete empty dir {}", transactionUidDir);
+                transactionUidDir.delete();
                 continue;
             }
-            if (StgCmt.hasPendingNActionRQ(proxyAEE, transactionUID) 
-                    || StgCmt.hasPendingNEventReportRQ(proxyAEE, transactionUID))
+            if (StgCmt.hasPendingNActionRQ(proxyAEE, new File(proxyAEE.getNactionDirectoryPath(), transactionUidDir.getName())) 
+                    || StgCmt.hasPendingNEventReportRQ(proxyAEE, transactionUidDir))
                 continue;
 
-            processNEventReportTransactionUID(proxyAEE, forwardOptions, transactionUID, parent);
+            processNEventReportTransactionUID(proxyAEE, forwardOptions, transactionUidDir);
         }
     }
 
     private void processNEventReportTransactionUID(ProxyAEExtension proxyAEE,
-            HashMap<String, ForwardOption> forwardOptions, String transactionUID, File parent) throws IOException {
-        for (String remoteAET : parent.list()) {
-            File dir = new File(parent, remoteAET);
-            File[] files = dir.listFiles(fileFilter(proxyAEE, remoteAET));
-            if (files == null || files.length == 0)
-                return;
-
-            if (files.length > 1) {
-                LOG.error("Found more than one NEventReportRQ files in {}. "
-                        + "Needs to be resolved before further processing!", dir);
+            HashMap<String, ForwardOption> forwardOptions, File transactionUidDir) throws IOException {
+        String[] aets = transactionUidDir.list();
+        if (aets.length > 1) {
+            mergeNEventReportRQs(proxyAEE, transactionUidDir);
+            aets = transactionUidDir.list();
+            if (aets.length > 1) {
+                LOG.error("Error merging n-event-reports in {}", transactionUidDir);
                 return;
             }
-            LOG.debug("Processing schedule N-EVENT-REPORT data ...");
-            if (StgCmt.requiresMergeNEventReportRQ(proxyAEE, transactionUID)) {
-                File mergedNeventReport = mergeNEventReportRQs(proxyAEE, transactionUID, parent);
-                if (mergedNeventReport == null) {
-                    LOG.error("Error merging N-EVENT-REPORTs from {} ff.", parent);
-                    return;
-                }
-                files = new File[1];
-                files[0] = mergedNeventReport;
-            }
-            startForwardScheduledNEventReport(proxyAEE, files);
         }
+        File aetDir = new File(transactionUidDir, aets[0]);
+        File[] neventFiles = aetDir.listFiles(fileFilter(proxyAEE, aets[0]));
+        if (neventFiles == null || neventFiles.length == 0)
+            return;
+
+        if (neventFiles.length > 1) {
+            LOG.error("Found more than one NEventReportRQ files in {}. "
+                    + "Needs to be resolved before further processing!", aetDir);
+            return;
+        }
+        LOG.debug("Processing schedule N-EVENT-REPORT data ...");
+        startForwardScheduledNEventReport(proxyAEE, neventFiles);
     }
 
-    private File mergeNEventReportRQs(ProxyAEExtension proxyAEE, String transactionUID, File parent) throws IOException {
-        File file = null;
-        String[] aets = parent.list();
+    private void mergeNEventReportRQs(ProxyAEExtension proxyAEE, File transactionUidDir) throws IOException {
+        String[] aets = transactionUidDir.list();
         Attributes mergedAttrs = new Attributes();
         File[] nevent = null;
         Attributes attrs;
+        // TODO: implement AND / OR configuration in proxyAEE
+        boolean mergeWithANDLogic = false;
         for (int i = 0; i < aets.length; ++i) {
             String aet = aets[i];
-            File aetDir = new File(parent, aet);
-            nevent = aetDir.listFiles(fileFilter(proxyAEE, aet));
+            File aetDir = new File(transactionUidDir, aet);
+            File[] neventFiles = aetDir.listFiles(fileFilter(proxyAEE, aet));
+            nevent = createSendFileList(neventFiles);
+            if (nevent.length != neventFiles.length) {
+                LOG.error("Error renaming nevent files for further processing");
+                resetSendFiles(nevent);
+                return;
+            }
             DicomInputStream in = new DicomInputStream(nevent[0]);
             try {
                 attrs = in.readDataset(-1, -1);
             } finally {
                 in.close();
             }
+            attrs = reformatReferencedSopSequenceAttrs(attrs);
             if (i == 0)
                 mergedAttrs.addAll(attrs);
             else {
-                // merge attrs using AND/OR logic specified in configuration
-                // TODO
-                LOG.info("TODO: merge n-event-report datasets");
+                Sequence mergedSequence = mergedAttrs.getSequence(Tag.ReferencedSOPSequence);
+                Iterator<Attributes> mergedSequenceIter = mergedSequence.iterator();
+                Iterator<Attributes> newSequenceIter = attrs.getSequence(Tag.ReferencedSOPSequence).iterator();
+                while (newSequenceIter.hasNext()) {
+                    Attributes newItem = newSequenceIter.next();
+                    boolean contains = false;
+                    int mergedSeqIndex = -1;
+                    while (mergedSequenceIter.hasNext()) {
+                        Attributes mergedItem = mergedSequenceIter.next();
+                        if (mergedItem.getString(Tag.ReferencedSOPInstanceUID).equals(
+                                newItem.getString(Tag.ReferencedSOPInstanceUID))) {
+                            contains = true;
+                            mergedSeqIndex = mergedSequence.indexOf(mergedItem);
+                            break;
+                        }
+                    }
+                    if (contains && mergeWithANDLogic)
+                        mergedSequence.remove(mergedSeqIndex);
+                    else if (!contains && !mergeWithANDLogic)
+                        mergedSequence.add(newItem);
+                }
             }
         }
         if (nevent.length == 0 || mergedAttrs.isEmpty()) {
             LOG.error("Error reading datasets from stored N-EVENT-REPORT files");
-            return null;
+            return;
         }
         Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, nevent[0]);
-        File mergeDir = new File(parent, "MERGEDNEVENT");
+        File mergeDir = new File(transactionUidDir, "MERGEDNEVENT");
         mergeDir.mkdir();
-        file = storeMergedNEvent(mergedAttrs, prop, mergeDir);
+        storeMergedNEvent(mergedAttrs, prop, mergeDir);
         // cleanup obsolete aet dirs and files
         for (int i = 0; i < aets.length; ++i) {
             String aet = aets[i];
-            File aetDir = new File(parent, aet);
-            nevent = aetDir.listFiles(fileFilter(proxyAEE, aet));
+            File aetDir = new File(transactionUidDir, aet);
+            nevent = aetDir.listFiles(Proxy.sndFileFilter());
             deleteFile(nevent[0]);
             File[] naction = aetDir.listFiles(StgCmt.nactionFileFilter());
             deleteFile(naction[0]);
         }
-        return file;
     }
 
-    private File storeMergedNEvent(Attributes mergedAttrs, Properties prop, File mergeDir) throws IOException,
+    private Attributes reformatReferencedSopSequenceAttrs(Attributes attrs) {
+        if (attrs.contains(Tag.RetrieveAETitle) || attrs.contains(Tag.StorageMediaFileSetID)) {
+            final String retrieveAET = attrs.getString(Tag.RetrieveAETitle);
+            final String storageMediaFileSetID = attrs.getString(Tag.StorageMediaFileSetID);
+            final String storageMediaFileSetUID = attrs.getString(Tag.StorageMediaFileSetUID);
+            Iterator<Attributes> iter = attrs.getSequence(Tag.ReferencedSOPSequence).iterator();
+            while (iter.hasNext()) {
+                Attributes seqAttrs = iter.next();
+                if (retrieveAET != null)
+                    seqAttrs.setString(Tag.RetrieveAETitle, VR.AE, retrieveAET);
+                if (storageMediaFileSetID != null || storageMediaFileSetUID != null) {
+                    seqAttrs.setString(Tag.StorageMediaFileSetID, VR.SH, storageMediaFileSetID);
+                    seqAttrs.setString(Tag.StorageMediaFileSetUID, VR.UI, storageMediaFileSetUID);
+                }
+            }
+            attrs.remove(Tag.RetrieveAETitle);
+            attrs.remove(Tag.StorageMediaFileSetID);
+            attrs.remove(Tag.StorageMediaFileSetUID);
+        }
+        return attrs;
+    }
+
+    private void storeMergedNEvent(Attributes mergedAttrs, Properties prop, File mergeDir) throws IOException,
             DicomServiceException, FileNotFoundException {
         File file;
         file = File.createTempFile("dcm", ".nevent", mergeDir);
@@ -361,7 +406,6 @@ public class ForwardFiles {
         } finally {
             infoOut.close();
         }
-        return file;
     }
 
     private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions)
@@ -654,6 +698,14 @@ public class ForwardFiles {
             LOG.error("Error forwarding scheduled MPPS " + e.getMessage());
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
+        }
+    }
+
+    private void resetSendFiles(File[] sendFiles) {
+        for (File file : sendFiles) {
+            String sndFileName = file.getPath();
+            File dst = new File(sndFileName.substring(0, sndFileName.length() - 4));
+            file.renameTo(dst);
         }
     }
 
