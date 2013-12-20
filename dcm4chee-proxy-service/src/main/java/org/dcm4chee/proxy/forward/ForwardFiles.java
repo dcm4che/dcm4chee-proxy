@@ -40,6 +40,8 @@ package org.dcm4chee.proxy.forward;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -58,10 +60,12 @@ import org.dcm4che.data.Attributes;
 import org.dcm4che.data.Sequence;
 import org.dcm4che.data.Tag;
 import org.dcm4che.data.UID;
+import org.dcm4che.data.VR;
 import org.dcm4che.emf.MultiframeExtractor;
 import org.dcm4che.io.DicomEncodingOptions;
 import org.dcm4che.io.DicomInputStream;
 import org.dcm4che.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che.io.DicomOutputStream;
 import org.dcm4che.net.ApplicationEntity;
 import org.dcm4che.net.Association;
 import org.dcm4che.net.AssociationStateException;
@@ -76,12 +80,15 @@ import org.dcm4che.net.pdu.AAbort;
 import org.dcm4che.net.pdu.AAssociateRJ;
 import org.dcm4che.net.pdu.AAssociateRQ;
 import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che.net.pdu.RoleSelection;
+import org.dcm4che.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.Retry;
+import org.dcm4chee.proxy.dimse.StgCmt;
 import org.dcm4chee.proxy.utils.AttributeCoercionUtils;
 import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
 import org.dcm4chee.proxy.utils.InfoFileUtils;
@@ -108,6 +115,7 @@ public class ForwardFiles {
         try {
             processCStore(proxyAEE, forwardOptions);
             processNAction(proxyAEE, forwardOptions);
+            processNEventReport(proxyAEE, forwardOptions);
             ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice()
                     .getDeviceExtension(ProxyDeviceExtension.class)).getFileForwardingExecutor().execute(
                     new Runnable() {
@@ -227,7 +235,137 @@ public class ForwardFiles {
         }
     }
 
-    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions) throws IOException {
+    private void processNEventReport(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions)
+            throws IOException {
+        for (String transactionUID : proxyAEE.getNeventDirectoryPath().list(dirFilter())) {
+            File parent = new File(proxyAEE.getNeventDirectoryPath(), transactionUID);
+            if (parent.list().length == 0) {
+                LOG.debug("Delete empty dir {}", parent);
+                parent.delete();
+                continue;
+            }
+            if (StgCmt.hasPendingNActionRQ(proxyAEE, transactionUID) 
+                    || StgCmt.hasPendingNEventReportRQ(proxyAEE, transactionUID))
+                continue;
+
+            processNEventReportTransactionUID(proxyAEE, forwardOptions, transactionUID, parent);
+        }
+    }
+
+    private void processNEventReportTransactionUID(ProxyAEExtension proxyAEE,
+            HashMap<String, ForwardOption> forwardOptions, String transactionUID, File parent) throws IOException {
+        for (String remoteAET : parent.list()) {
+            File dir = new File(parent, remoteAET);
+            File[] files = dir.listFiles(fileFilter(proxyAEE, remoteAET));
+            if (files == null || files.length == 0)
+                return;
+
+            if (files.length > 1) {
+                LOG.error("Found more than one NEventReportRQ files in {}. "
+                        + "Needs to be resolved before further processing!", dir);
+                return;
+            }
+            LOG.debug("Processing schedule N-EVENT-REPORT data ...");
+            if (StgCmt.requiresMergeNEventReportRQ(proxyAEE, transactionUID)) {
+                File mergedNeventReport = mergeNEventReportRQs(proxyAEE, transactionUID, parent);
+                if (mergedNeventReport == null) {
+                    LOG.error("Error merging N-EVENT-REPORTs from {} ff.", parent);
+                    return;
+                }
+                files = new File[1];
+                files[0] = mergedNeventReport;
+            }
+            startForwardScheduledNEventReport(proxyAEE, files);
+        }
+    }
+
+    private File mergeNEventReportRQs(ProxyAEExtension proxyAEE, String transactionUID, File parent) throws IOException {
+        File file = null;
+        String[] aets = parent.list();
+        Attributes mergedAttrs = new Attributes();
+        File[] nevent = null;
+        Attributes attrs;
+        for (int i = 0; i < aets.length; ++i) {
+            String aet = aets[i];
+            File aetDir = new File(parent, aet);
+            nevent = aetDir.listFiles(fileFilter(proxyAEE, aet));
+            DicomInputStream in = new DicomInputStream(nevent[0]);
+            try {
+                attrs = in.readDataset(-1, -1);
+            } finally {
+                in.close();
+            }
+            if (i == 0)
+                mergedAttrs.addAll(attrs);
+            else {
+                // merge attrs using AND/OR logic specified in configuration
+                // TODO
+                LOG.info("TODO: merge n-event-report datasets");
+            }
+        }
+        if (nevent.length == 0 || mergedAttrs.isEmpty()) {
+            LOG.error("Error reading datasets from stored N-EVENT-REPORT files");
+            return null;
+        }
+        Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, nevent[0]);
+        File mergeDir = new File(parent, "MERGEDNEVENT");
+        mergeDir.mkdir();
+        file = storeMergedNEvent(mergedAttrs, prop, mergeDir);
+        // cleanup obsolete aet dirs and files
+        for (int i = 0; i < aets.length; ++i) {
+            String aet = aets[i];
+            File aetDir = new File(parent, aet);
+            nevent = aetDir.listFiles(fileFilter(proxyAEE, aet));
+            deleteFile(nevent[0]);
+            File[] naction = aetDir.listFiles(StgCmt.nactionFileFilter());
+            deleteFile(naction[0]);
+        }
+        return file;
+    }
+
+    private File storeMergedNEvent(Attributes mergedAttrs, Properties prop, File mergeDir) throws IOException,
+            DicomServiceException, FileNotFoundException {
+        File file;
+        file = File.createTempFile("dcm", ".nevent", mergeDir);
+        DicomOutputStream stream = null;
+        try {
+            stream = new DicomOutputStream(file);
+            String iuid = UID.StorageCommitmentPushModelSOPInstance;
+            String cuid = UID.StorageCommitmentPushModelSOPClass;
+            String tsuid = UID.ExplicitVRLittleEndian;
+            Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
+            // using use-calling-aet, which is called-aet from previous
+            // n-action-rq (cf. org.dcm4chee.proxy.dimse.StgCmt.createRQFile)
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, prop.getProperty("use-calling-aet"));
+            LOG.debug("Create {}", file.getPath());
+            stream.writeDataset(fmi, mergedAttrs);
+        } catch (Exception e) {
+            LOG.error("Failed to create file {}: {}", new Object[] { file, e });
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
+        } finally {
+            stream.close();
+        }
+        File infoFile = new File(mergeDir, file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+        FileOutputStream infoOut = new FileOutputStream(infoFile);
+        try {
+            LOG.debug("Create {}", infoFile);
+            prop.store(infoOut, null);
+        } catch (Exception e) {
+            LOG.error("Failed to create info-file {}: {} ", file, e.getMessage());
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+            file.delete();
+            throw new DicomServiceException(Status.OutOfResources, e.getCause());
+        } finally {
+            infoOut.close();
+        }
+        return file;
+    }
+
+    private void processCStore(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions)
+            throws IOException {
         for (String calledAET : proxyAEE.getCStoreDirectoryPath().list(dirFilter())) {
             File dir = new File(proxyAEE.getCStoreDirectoryPath(), calledAET);
             File[] files = dir.listFiles(fileFilter(proxyAEE, calledAET));
@@ -264,14 +402,14 @@ public class ForwardFiles {
                 String path = file.getPath();
                 int interval = proxyAEE.getApplicationEntity().getDevice()
                         .getDeviceExtension(ProxyDeviceExtension.class).getSchedulerInterval();
-                if (path.endsWith(".dcm")) {
+                if (path.endsWith(".dcm") || path.endsWith(".nevent")) {
                     if (now > (file.lastModified() + interval))
                         return true;
                     else
                         return false;
                 }
     
-                if (path.endsWith(".part") || path.endsWith(".snd") || path.endsWith(".info"))
+                if (path.endsWith(".part") || path.endsWith(".snd") || path.endsWith(".info") || path.endsWith(".naction"))
                     return false;
     
                 try {
@@ -438,13 +576,19 @@ public class ForwardFiles {
                     new Object[] { file, dstFile, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dstFile });
-        File infoFile = new File(path.substring(0, path.indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         File infoDst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".info");
         if (infoFile.renameTo(infoDst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { infoFile, infoDst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { infoFile, infoDst });
+        File parentDir = file.getParentFile();
+        if (parentDir.list().length == 0)
+            if (parentDir.delete())
+                LOG.debug("Delete empty dir {}", parentDir);
+            else
+                LOG.error("Error deleting dir {}", parentDir);
     }
 
     private void deleteFailedFile(ProxyAEExtension proxyAEE, String calledAET, File file, String reason, Integer retry) {
@@ -626,7 +770,7 @@ public class ForwardFiles {
                 case Status.Success:
                     LOG.debug("{}: forwarded file {} with status {}",
                             new Object[] { as, file, Integer.toHexString(status) + 'H' });
-                    deleteSendFile(as, file);
+                    deleteFile(as, file);
                     break;
                 default: {
                     LOG.debug("{}: failed to forward file {} with error status {}",
@@ -665,6 +809,25 @@ public class ForwardFiles {
         });
     }
 
+    private void startForwardScheduledNEventReport(final ProxyAEExtension proxyAEE, File[] files) throws IOException {
+        final File[] sendFiles = createSendFileList(files);
+        final Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, files[0]);
+        ((ProxyDeviceExtension) proxyAEE.getApplicationEntity().getDevice()
+                .getDeviceExtension(ProxyDeviceExtension.class)).getFileForwardingExecutor().execute(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    forwardScheduledNEventReport(proxyAEE, prop.getProperty("nevent-destination"), sendFiles);
+                } catch (IOException e) {
+                    LOG.error("Error forwarding scheduled N-EVENT-REPORT-RQ: " + e.getMessage());
+                    if (LOG.isDebugEnabled())
+                        e.printStackTrace();
+                }
+            }
+        });
+    }
+
     private File[] createSendFileList(File[] files) {
         ArrayList<File> sendFilesList = new ArrayList<File>();
         for (File file : files) {
@@ -693,13 +856,70 @@ public class ForwardFiles {
 
                 AAssociateRQ rq = new AAssociateRQ();
                 rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
-                        UID.ExplicitVRLittleEndian));
+                        UID.ImplicitVRLittleEndian));
+                rq.addRoleSelection(new RoleSelection(prop.getProperty("sop-class-uid"), true, true));
                 rq.setCallingAET(callingAET);
                 rq.setCalledAET(calledAET);
                 Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
                 try {
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledNAction(proxyAEE, asInvoked, file, prop, attrs);
+                    } else {
+                        renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
+                    }
+                } finally {
+                    in.close();
+                    if (asInvoked != null) {
+                        try {
+                            asInvoked.waitForOutstandingRSP();
+                            asInvoked.release();
+                        } catch (InterruptedException e) {
+                            LOG.error(asInvoked + ": unexpected exception: " + e.getMessage());
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
+                        } catch (IOException e) {
+                            LOG.error(asInvoked + ": failed to release association: " + e.getMessage());
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage());
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
+            } catch (IncompatibleConnectionException e) {
+                LOG.error(e.getMessage());
+                renameFile(proxyAEE, RetryObject.IncompatibleConnectionException.getSuffix(), file, calledAET, prop);
+            } catch (ConfigurationException e) {
+                LOG.error(e.getMessage());
+                renameFile(proxyAEE, RetryObject.ConfigurationException.getSuffix(), file, calledAET, prop);
+            } catch (IOException e) {
+                LOG.error(e.getMessage());
+                renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
+            } catch (GeneralSecurityException e) {
+                LOG.error(e.getMessage());
+                renameFile(proxyAEE, RetryObject.GeneralSecurityException.getSuffix(), file, calledAET, prop);
+            }
+        }
+    }
+
+    protected void forwardScheduledNEventReport(ProxyAEExtension proxyAEE, String calledAET, File[] files) throws IOException {
+        for (File file : files) {
+            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
+            String callingAET = prop.getProperty("use-calling-aet");
+            try {
+                DicomInputStream in = new DicomInputStream(file);
+                Attributes attrs = in.readDataset(-1, -1);
+                AAssociateRQ rq = new AAssociateRQ();
+                rq.addPresentationContext(new PresentationContext(1, UID.StorageCommitmentPushModelSOPClass,
+                        UID.ImplicitVRLittleEndian));
+                rq.addRoleSelection(new RoleSelection(prop.getProperty("sop-class-uid"), true, true));
+                rq.setCallingAET(callingAET);
+                rq.setCalledAET(calledAET);
+                Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
+                try {
+                    if (asInvoked.isReadyForDataTransfer()) {
+                        forwardScheduledNEventReport(proxyAEE, asInvoked, file, prop, attrs);
                     } else {
                         renameFile(proxyAEE, RetryObject.ConnectionException.getSuffix(), file, calledAET, prop);
                     }
@@ -759,10 +979,10 @@ public class ForwardFiles {
     }
 
     private void forwardScheduledNAction(final ProxyAEExtension proxyAEE, final Association as, final File file,
-            final Properties prop, Attributes attrs) throws IOException, InterruptedException {
+            final Properties prop, final Attributes attrs) throws IOException, InterruptedException {
         String iuid = prop.getProperty("sop-instance-uid");
         String cuid = prop.getProperty("sop-class-uid");
-        String tsuid = UID.ExplicitVRLittleEndian;
+        String tsuid = UID.ImplicitVRLittleEndian;
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
@@ -770,36 +990,47 @@ public class ForwardFiles {
                 int status = cmd.getInt(Tag.Status, -1);
                 switch (status) {
                 case Status.Success: {
-                    File destDir = null;
-                    try {
-                        destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
-                                + asInvoked.getCalledAET());
-                    } catch (IOException e) {
-                        LOG.error("{}: error creating directory {}: {}", new Object[]{as, destDir, e.getMessage()});
-                        if(LOG.isDebugEnabled())
-                            e.printStackTrace();
-                        break;
+                    String callingAET = asInvoked.getAAssociateRQ().getCallingAET();
+                    String proxyAET = asInvoked.getApplicationEntity().getAETitle();
+                    if (callingAET.equals(proxyAET)) {
+                        // n-event-report-rq will come to this proxy AET, save n-action-rq
+                        File destDir = null;
+                        String transactionUID = attrs.getString(Tag.TransactionUID);
+                        try {
+                            destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
+                                    + transactionUID + proxyAEE.getSeparator() + asInvoked.getCalledAET());
+                        } catch (IOException e) {
+                            LOG.error("{}: error creating directory {}: {}", new Object[]{as, destDir, e.getMessage()});
+                            if(LOG.isDebugEnabled())
+                                e.printStackTrace();
+                            break;
+                        }
+                        destDir.mkdirs();
+                        String fileName = file.getName();
+                        File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
+                                + ".naction");
+                        if (file.renameTo(dest)) {
+                            dest.setLastModified(System.currentTimeMillis());
+                            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
+                            File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.'))  + ".info");
+                            File infoFileDest = new File(destDir, infoFile.getName());
+                            if (infoFile.renameTo(infoFileDest))
+                                LOG.debug("{}: RENAME {} to {}",
+                                        new Object[] { as, infoFile.getPath(), infoFileDest.getPath() });
+                            else
+                                LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, infoFile.getPath(),
+                                        infoFileDest.getPath() });
+                            File path = new File(file.getParent());
+                            if (path.list().length == 0)
+                                path.delete();
+                        } else
+                            LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
+                    } else {
+                        // n-event-report-rq will not come back to this proxy AET, don't need to save n-action-rq
+                        LOG.debug("{}: delete forwarded N-ACTION-RQ due to Calling AET ({}) != Proxy AET ({})",
+                                new Object[] { as, callingAET, proxyAET });
+                        deleteFile(asInvoked, file);
                     }
-                    destDir.mkdirs();
-                    String fileName = file.getName();
-                    File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
-                            + ".naction");
-                    if (file.renameTo(dest)) {
-                        dest.setLastModified(System.currentTimeMillis());
-                        LOG.debug("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
-                        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.'))  + ".info");
-                        File infoFileDest = new File(destDir, infoFile.getName());
-                        if (infoFile.renameTo(infoFileDest))
-                            LOG.debug("{}: RENAME {} to {}",
-                                    new Object[] { as, infoFile.getPath(), infoFileDest.getPath() });
-                        else
-                            LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, infoFile.getPath(),
-                                    infoFileDest.getPath() });
-                        File path = new File(file.getParent());
-                        if (path.list().length == 0)
-                            path.delete();
-                    } else
-                        LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
                     break;
                 }
                 default: {
@@ -811,6 +1042,40 @@ public class ForwardFiles {
             }
         };
         as.naction(cuid, iuid, 1, attrs, tsuid, rspHandler);
+    }
+
+    private void forwardScheduledNEventReport(final ProxyAEExtension proxyAEE, final Association as, final File file,
+            final Properties prop, Attributes attrs) throws IOException, InterruptedException {
+        String iuid = prop.getProperty("sop-instance-uid");
+        String cuid = prop.getProperty("sop-class-uid");
+        String tsuid = UID.ImplicitVRLittleEndian;
+        int eventTypeId;
+        // TODO: set event type id based on evaluation of RetrieveAETs of referencedSopInstanceUIDs
+        if (attrs.getInt(Tag.RetrieveAETitle, 0) != 0)
+            eventTypeId = 1;
+        else 
+            eventTypeId = 2;
+        DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
+            @Override
+            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+                super.onDimseRSP(asInvoked, cmd, data);
+                int status = cmd.getInt(Tag.Status, -1);
+                switch (status) {
+                case Status.Success: {
+                    LOG.debug("{}: successfully forwarded N-EVENT-REPORT file {} to {}",
+                            new Object[] { as, file, as.getRemoteAET() });
+                    deleteFile(as, file);
+                    break;
+                }
+                default: {
+                    LOG.error("{}: failed to forward N-EVENT-REPORT-RQ file {} with error status {}", new Object[] {
+                            as, file, Integer.toHexString(status) + 'H' });
+                    renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
+                }
+                }
+            }
+        };
+        as.neventReport(cuid, iuid, eventTypeId, attrs, tsuid, rspHandler);
     }
 
     private void startForwardScheduledCStoreFiles(final ProxyAEExtension proxyAEE, final String calledAET,
@@ -966,7 +1231,7 @@ public class ForwardFiles {
                         if (frame > 0)
                             return;
     
-                        deleteSendFile(asInvoked, file);
+                        deleteFile(asInvoked, file);
                         break;
                     }
                     default: {
@@ -1124,16 +1389,31 @@ public class ForwardFiles {
         return new File(pathname);
     }
 
-    private static void deleteSendFile(Association as, File file) {
+    private static void deleteFile(Association as, File file) {
         if (file.delete())
             LOG.debug("{}: delete {}", as, file);
         else
             LOG.debug("{}: failed to delete {}", as, file);
-        File infoFile = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         if (infoFile.delete())
             LOG.debug("{}: delete {}", as, infoFile);
         else
             LOG.debug("{}: failed to delete {}", as, infoFile);
+        File path = new File(file.getParent());
+        if (path.list().length == 0)
+            path.delete();
+    }
+    
+    private static void deleteFile(File file) {
+        if (file.delete())
+            LOG.debug("Delete {}", file);
+        else
+            LOG.debug("Failed to delete {}", file);
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
+        if (infoFile.delete())
+            LOG.debug("Delete {}", infoFile);
+        else
+            LOG.debug("Failed to delete {}", infoFile);
         File path = new File(file.getParent());
         if (path.list().length == 0)
             path.delete();

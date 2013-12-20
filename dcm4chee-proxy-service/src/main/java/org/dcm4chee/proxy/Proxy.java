@@ -301,6 +301,9 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 // clear naction spool dir
                 renameSndFiles(proxyAEE.getNactionDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getNactionDirectoryPath(), action);
+                // clear nevent spool dir
+                renameSndFiles(proxyAEE.getNeventDirectoryPath(), action);
+                deletePartFiles(proxyAEE.getNeventDirectoryPath(), action);
                 // clear ncreate spool dir
                 renameSndFiles(proxyAEE.getNCreateDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getNCreateDirectoryPath(), action);

@@ -68,7 +68,7 @@ public class InfoFileUtils {
         FileInputStream inStream = null;
         try {
             File infoFile = new File(path, infoFileName);
-            LOG.debug("{}: Loading info file {}", proxyAEE, infoFile);
+            LOG.debug("{}: Loading info file {}", proxyAEE.getApplicationEntity().getAETitle(), infoFile);
             inStream = new FileInputStream(infoFile);
             prop.load(inStream);
         } finally {
