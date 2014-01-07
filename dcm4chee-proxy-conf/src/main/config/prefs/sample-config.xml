@@ -94,6 +94,7 @@
                 <entry key="dcmDeleteFailedDataWithoutRetryConfiguration" value="true"/>
                 <entry key="dcmDestinationAETitle" value="DCM4CHEE"/>
                 <entry key="dcmEnableAuditLog" value="false"/>
+                <entry key="dcmMergeStgCmtMessagesUsingANDLogic" value="false"/>
                 <entry key="dcmProxyNetworkAE" value="true"/>
                 <entry key="dcmSpoolDirectory" value="/tmp/proxy/"/>
                 <entry key="dicomAssociationAcceptor" value="true"/>
@@ -150,6 +151,7 @@
                     <entry key="dcmScheduleDays" value="Sun-Sat"/>
                     <entry key="dcmScheduleHours" value="0-23"/>
                     <entry key="dicomDescription" value="Example ForwardRule for MPPS to Dose SR conversion"/>
+                    <entry key="doseSrIODTemplateURI" value="${jboss.server.config.url}/dcm4chee-proxy/dcm4chee-proxy-xr-dosesr-iod.xml"/>
                     <entry key="labeledURI.#" value="1"/>
                     <entry key="labeledURI.1" value="aet:DCM4CHEE"/>
                   </map>

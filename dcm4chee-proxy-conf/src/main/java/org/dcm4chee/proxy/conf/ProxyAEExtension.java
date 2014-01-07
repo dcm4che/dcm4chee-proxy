@@ -92,6 +92,7 @@ public class ProxyAEExtension extends AEExtension {
     private String remotePIXManagerApplication;
     private boolean deleteFailedDataWithoutRetryConfiguration;
     private String fallbackDestinationAET;
+    private boolean mergeStgCmtMessagesUsingANDLogic;
     private CMoveInfoObject[] CMoveMessageID = new CMoveInfoObject[256];
 
     public boolean isAcceptDataOnFailedAssociation() {
@@ -322,6 +323,14 @@ public class ProxyAEExtension extends AEExtension {
         this.fallbackDestinationAET = fallbackDestinationAET;
     }
 
+    public boolean isMergeStgCmtMessagesUsingANDLogic() {
+        return mergeStgCmtMessagesUsingANDLogic;
+    }
+
+    public void setMergeStgCmtMessagesUsingANDLogic(boolean mergeStgCmtMessagesWithANDLogic) {
+        this.mergeStgCmtMessagesUsingANDLogic = mergeStgCmtMessagesWithANDLogic;
+    }
+
     public int getNewCMoveMessageID(CMoveInfoObject info) {
         for (int index = 0; index < 256; index++)
             if (CMoveMessageID[index] == null) {
@@ -362,6 +371,7 @@ public class ProxyAEExtension extends AEExtension {
         setRemotePIXManagerApplication(proxyAEE.remotePIXManagerApplication);
         setDeleteFailedDataWithoutRetryConfiguration(proxyAEE.deleteFailedDataWithoutRetryConfiguration);
         setFallbackDestinationAET(proxyAEE.fallbackDestinationAET);
+        setMergeStgCmtMessagesUsingANDLogic(proxyAEE.mergeStgCmtMessagesUsingANDLogic);
         attributeCoercions.clear();
         for (AttributeCoercion ac : proxyAEE.getAttributeCoercions())
             addAttributeCoercion(ac);

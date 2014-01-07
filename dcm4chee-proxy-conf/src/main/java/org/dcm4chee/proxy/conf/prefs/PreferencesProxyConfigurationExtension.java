@@ -85,22 +85,24 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
 
     @Override
     protected void storeTo(ApplicationEntity ae, Preferences prefs) {
-        ProxyAEExtension proxyAE = ae.getAEExtension(ProxyAEExtension.class);
-        if (proxyAE == null)
+        ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+        if (proxyAEE == null)
             return;
 
         prefs.putBoolean("dcmProxyNetworkAE", true);
-        PreferencesUtils.storeNotNull(prefs, "dcmSpoolDirectory", proxyAE.getSpoolDirectory());
+        PreferencesUtils.storeNotNull(prefs, "dcmSpoolDirectory", proxyAEE.getSpoolDirectory());
         PreferencesUtils.storeNotNull(prefs, "dcmAcceptDataOnFailedAssociation",
-                proxyAE.isAcceptDataOnFailedAssociation());
-        PreferencesUtils.storeNotNull(prefs, "dcmEnableAuditLog", proxyAE.isEnableAuditLog());
+                proxyAEE.isAcceptDataOnFailedAssociation());
+        PreferencesUtils.storeNotNull(prefs, "dcmEnableAuditLog", proxyAEE.isEnableAuditLog());
         PreferencesUtils
-                .storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAE.getProxyPIXConsumerApplication());
+                .storeNotNull(prefs, "hl7ProxyPIXConsumerApplication", proxyAEE.getProxyPIXConsumerApplication());
         PreferencesUtils
-                .storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAE.getRemotePIXManagerApplication());
+                .storeNotNull(prefs, "hl7RemotePIXManagerApplication", proxyAEE.getRemotePIXManagerApplication());
         PreferencesUtils.storeNotNull(prefs, "dcmDeleteFailedDataWithoutRetryConfiguration",
-                proxyAE.isDeleteFailedDataWithoutRetryConfiguration());
-        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", proxyAE.getFallbackDestinationAET());
+                proxyAEE.isDeleteFailedDataWithoutRetryConfiguration());
+        PreferencesUtils.storeNotNull(prefs, "dcmDestinationAETitle", proxyAEE.getFallbackDestinationAET());
+        PreferencesUtils.storeNotNull(prefs, "dcmMergeStgCmtMessagesUsingANDLogic",
+                proxyAEE.isMergeStgCmtMessagesUsingANDLogic());
     }
 
     @Override
@@ -131,6 +133,7 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(prefs.getBoolean(
                 "dcmDeleteFailedDataWithoutRetryConfiguration", false));
         proxyAEE.setFallbackDestinationAET(prefs.get("dcmDestinationAETitle", null));
+        proxyAEE.setMergeStgCmtMessagesUsingANDLogic(prefs.getBoolean("dcmMergeStgCmtMessagesUsingANDLogic", false));
     }
 
     @Override
@@ -304,6 +307,8 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
                 pa.isDeleteFailedDataWithoutRetryConfiguration(), pb.isDeleteFailedDataWithoutRetryConfiguration());
         PreferencesUtils.storeDiff(prefs, "dcmDestinationAETitle", pa.getFallbackDestinationAET(),
                 pb.getFallbackDestinationAET());
+        PreferencesUtils.storeDiff(prefs, "dcmMergeStgCmtMessagesUsingANDLogic",
+                pa.isMergeStgCmtMessagesUsingANDLogic(), pb.isMergeStgCmtMessagesUsingANDLogic());
     }
 
     @Override

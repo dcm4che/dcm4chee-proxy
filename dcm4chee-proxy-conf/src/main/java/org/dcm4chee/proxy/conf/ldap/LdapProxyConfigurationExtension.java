@@ -100,6 +100,7 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         LdapUtils.storeNotNull(attrs, "dcmDeleteFailedDataWithoutRetryConfiguration",
                 proxyAEE.isDeleteFailedDataWithoutRetryConfiguration());
         LdapUtils.storeNotNull(attrs, "dcmDestinationAETitle", proxyAEE.getFallbackDestinationAET());
+        LdapUtils.storeBoolean(attrs, "dcmMergeStgCmtMessagesUsingANDLogic", proxyAEE.isMergeStgCmtMessagesUsingANDLogic());
     }
 
     @Override
@@ -132,6 +133,8 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         proxyAEE.setDeleteFailedDataWithoutRetryConfiguration(LdapUtils.booleanValue(
                 attrs.get("dcmDeleteFailedDataWithoutRetryConfiguration"), Boolean.FALSE));
         proxyAEE.setFallbackDestinationAET(LdapUtils.stringValue(attrs.get("dcmDestinationAETitle"), null));
+        proxyAEE.setMergeStgCmtMessagesUsingANDLogic(LdapUtils.booleanValue(
+                attrs.get("dcmMergeStgCmtMessagesUsingANDLogic"), Boolean.FALSE));
     }
 
     @Override
@@ -344,6 +347,8 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
                 pa.isDeleteFailedDataWithoutRetryConfiguration(), pb.isDeleteFailedDataWithoutRetryConfiguration());
         LdapUtils.storeDiff(mods, "dcmDestinationAETitle", pa.getFallbackDestinationAET(),
                 pb.getFallbackDestinationAET());
+        LdapUtils.storeDiff(mods, "dcmMergeStgCmtMessagesUsingANDLogic", pa.isMergeStgCmtMessagesUsingANDLogic(),
+                pb.isMergeStgCmtMessagesUsingANDLogic());
     }
 
     @Override

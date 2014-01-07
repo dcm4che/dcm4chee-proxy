@@ -282,8 +282,7 @@ public class ForwardFiles {
         Attributes mergedAttrs = new Attributes();
         File[] nevent = null;
         Attributes attrs;
-        // TODO: implement AND / OR configuration in proxyAEE
-        boolean mergeWithANDLogic = false;
+        boolean mergeUsingANDLogic = proxyAEE.isMergeStgCmtMessagesUsingANDLogic();
         for (int i = 0; i < aets.length; ++i) {
             String aet = aets[i];
             File aetDir = new File(transactionUidDir, aet);
@@ -310,20 +309,27 @@ public class ForwardFiles {
                 while (newSequenceIter.hasNext()) {
                     Attributes newItem = newSequenceIter.next();
                     boolean contains = false;
-                    int mergedSeqIndex = -1;
                     while (mergedSequenceIter.hasNext()) {
                         Attributes mergedItem = mergedSequenceIter.next();
                         if (mergedItem.getString(Tag.ReferencedSOPInstanceUID).equals(
                                 newItem.getString(Tag.ReferencedSOPInstanceUID))) {
                             contains = true;
-                            mergedSeqIndex = mergedSequence.indexOf(mergedItem);
                             break;
                         }
                     }
-                    if (contains && mergeWithANDLogic)
-                        mergedSequence.remove(mergedSeqIndex);
-                    else if (!contains && !mergeWithANDLogic)
-                        mergedSequence.add(newItem);
+                    if (!contains && !mergeUsingANDLogic) {
+                        Sequence failedSOPSequence = attrs.getSequence(Tag.FailedSOPSequence);
+                        Iterator<Attributes> failedSequenceIter = failedSOPSequence.iterator();
+                        while (failedSequenceIter.hasNext()) {
+                            Attributes failedItem = failedSequenceIter.next();
+                            if (failedItem.getString(Tag.ReferencedSOPInstanceUID).equals(
+                                    newItem.getString(Tag.ReferencedSOPInstanceUID))) {
+                                failedSOPSequence.remove(failedItem);
+                                mergedSequence.add(newItem);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1101,12 +1107,7 @@ public class ForwardFiles {
         String iuid = prop.getProperty("sop-instance-uid");
         String cuid = prop.getProperty("sop-class-uid");
         String tsuid = UID.ImplicitVRLittleEndian;
-        int eventTypeId;
-        // TODO: set event type id based on evaluation of RetrieveAETs of referencedSopInstanceUIDs
-        if (attrs.getInt(Tag.RetrieveAETitle, 0) != 0)
-            eventTypeId = 1;
-        else 
-            eventTypeId = 2;
+        int eventTypeId = attrs.contains(Tag.FailedAttributesSequence) ? 2 : 1;
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
