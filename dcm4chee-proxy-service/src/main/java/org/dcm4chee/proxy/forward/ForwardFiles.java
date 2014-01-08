@@ -304,33 +304,8 @@ public class ForwardFiles {
                 mergedAttrs.addAll(attrs);
             else {
                 Sequence mergedSequence = mergedAttrs.getSequence(Tag.ReferencedSOPSequence);
-                Iterator<Attributes> mergedSequenceIter = mergedSequence.iterator();
-                Iterator<Attributes> newSequenceIter = attrs.getSequence(Tag.ReferencedSOPSequence).iterator();
-                while (newSequenceIter.hasNext()) {
-                    Attributes newItem = newSequenceIter.next();
-                    boolean contains = false;
-                    while (mergedSequenceIter.hasNext()) {
-                        Attributes mergedItem = mergedSequenceIter.next();
-                        if (mergedItem.getString(Tag.ReferencedSOPInstanceUID).equals(
-                                newItem.getString(Tag.ReferencedSOPInstanceUID))) {
-                            contains = true;
-                            break;
-                        }
-                    }
-                    if (!contains && !mergeUsingANDLogic) {
-                        Sequence failedSOPSequence = attrs.getSequence(Tag.FailedSOPSequence);
-                        Iterator<Attributes> failedSequenceIter = failedSOPSequence.iterator();
-                        while (failedSequenceIter.hasNext()) {
-                            Attributes failedItem = failedSequenceIter.next();
-                            if (failedItem.getString(Tag.ReferencedSOPInstanceUID).equals(
-                                    newItem.getString(Tag.ReferencedSOPInstanceUID))) {
-                                failedSOPSequence.remove(failedItem);
-                                mergedSequence.add(newItem);
-                                break;
-                            }
-                        }
-                    }
-                }
+                matchReferencedSopSequence(attrs, mergedAttrs, mergeUsingANDLogic, mergedSequence);
+                matchFailedSopSequence(attrs, mergedAttrs, mergeUsingANDLogic, mergedSequence);
             }
         }
         if (nevent.length == 0 || mergedAttrs.isEmpty()) {
@@ -349,6 +324,79 @@ public class ForwardFiles {
             deleteFile(nevent[0]);
             File[] naction = aetDir.listFiles(StgCmt.nactionFileFilter());
             deleteFile(naction[0]);
+        }
+    }
+
+    private void matchFailedSopSequence(Attributes attrs, Attributes mergedAttrs, boolean mergeUsingANDLogic,
+            Sequence mergedSequence) throws DicomServiceException {
+        if (!attrs.contains(Tag.FailedSOPSequence))
+            return;
+
+        Sequence newFailedSopSequence = attrs.getSequence(Tag.FailedSOPSequence);
+        Iterator<Attributes> newFailedSeqIter = newFailedSopSequence.iterator();
+        Sequence mergedFailedSequence;
+        if (!mergedAttrs.contains(Tag.FailedSOPSequence))
+            mergedFailedSequence = mergedAttrs.newSequence(Tag.FailedSOPSequence, newFailedSopSequence.size());
+        else
+            mergedFailedSequence = mergedAttrs.getSequence(Tag.FailedSOPSequence);
+        while (newFailedSeqIter.hasNext()) {
+            Attributes newFailedItem = newFailedSeqIter.next();
+            String newFailedSopInst = newFailedItem.getString(Tag.ReferencedSOPInstanceUID);
+            Iterator<Attributes> mergedFailedSequenceIter = mergedFailedSequence.iterator();
+            boolean contains = false;
+            while (mergedFailedSequenceIter.hasNext()) {
+                Attributes failedItem = mergedFailedSequenceIter.next();
+                if (failedItem.getString(Tag.ReferencedSOPInstanceUID).equals(newFailedSopInst)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains && mergeUsingANDLogic) {
+                Iterator<Attributes> mergedSequenceIter = mergedSequence.iterator();
+                while (mergedSequenceIter.hasNext()) {
+                    Attributes mergedItem = mergedSequenceIter.next();
+                    if (mergedItem.getString(Tag.ReferencedSOPInstanceUID).equals(newFailedSopInst)) {
+                        mergedSequence.remove(mergedItem);
+                        mergedFailedSequence.add(new Attributes(newFailedItem));
+                        break;
+                    }
+                }
+            }
+        }
+        if (mergedFailedSequence.size() == 0)
+            mergedAttrs.remove(Tag.FailedSOPSequence);
+    }
+
+    private void matchReferencedSopSequence(Attributes attrs, Attributes mergedAttrs, boolean mergeUsingANDLogic,
+            Sequence mergedSequence) throws DicomServiceException {
+        Iterator<Attributes> newSequenceIter = attrs.getSequence(Tag.ReferencedSOPSequence).iterator();
+        while (newSequenceIter.hasNext()) {
+            Attributes newItem = newSequenceIter.next();
+            String newRefSopInst = newItem.getString(Tag.ReferencedSOPInstanceUID);
+            boolean contains = false;
+            Iterator<Attributes> mergedSequenceIter = mergedSequence.iterator();
+            while (mergedSequenceIter.hasNext()) {
+                Attributes mergedItem = mergedSequenceIter.next();
+                if (mergedItem.getString(Tag.ReferencedSOPInstanceUID).equals(newRefSopInst)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains && !mergeUsingANDLogic) {
+                if (!mergedAttrs.contains(Tag.FailedSOPSequence))
+                    throw new DicomServiceException(Status.UnableToPerformSubOperations);
+
+                Sequence mergedFailedSequence = mergedAttrs.getSequence(Tag.FailedSOPSequence);
+                Iterator<Attributes> mergedFailedSequenceIter = mergedFailedSequence.iterator();
+                while (mergedFailedSequenceIter.hasNext()) {
+                    Attributes failedItem = mergedFailedSequenceIter.next();
+                    if (failedItem.getString(Tag.ReferencedSOPInstanceUID).equals(newRefSopInst)) {
+                        mergedFailedSequence.remove(failedItem);
+                        mergedSequence.add(new Attributes(newItem));
+                        break;
+                    }
+                }
+            }
         }
     }
 
