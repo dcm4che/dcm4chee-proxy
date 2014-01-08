@@ -365,6 +365,8 @@ public class ForwardFiles {
         }
         if (mergedFailedSequence.size() == 0)
             mergedAttrs.remove(Tag.FailedSOPSequence);
+        if (mergedSequence.size() == 0)
+            mergedAttrs.remove(Tag.ReferencedSOPSequence);
     }
 
     private void matchReferencedSopSequence(Attributes attrs, Attributes mergedAttrs, boolean mergeUsingANDLogic,
@@ -396,8 +398,12 @@ public class ForwardFiles {
                         break;
                     }
                 }
+                if (mergedFailedSequence.size() == 0)
+                    mergedAttrs.remove(Tag.FailedSOPSequence);
             }
         }
+        if (mergedSequence.size() == 0)
+            mergedAttrs.remove(Tag.ReferencedSOPSequence);
     }
 
     private Attributes reformatReferencedSopSequenceAttrs(Attributes attrs) {
