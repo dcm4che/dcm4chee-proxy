@@ -205,6 +205,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             Association asCalled = proxyAEE.openForwardAssociation(asAccepted, forwardRule, callingAET, calledAET, forwardRq, aeCache);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asCalled);
             asCalled.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
+            asCalled.setProperty(ProxyAEExtension.FORWARD_RULE, forwardRule);
             AAssociateAC acCalled = asCalled.getAAssociateAC();
             if (forwardRule.isExclusiveUseDefinedTC()) {
                 AAssociateAC acProxy = super.makeAAssociateAC(asAccepted, forwardRq, null);
