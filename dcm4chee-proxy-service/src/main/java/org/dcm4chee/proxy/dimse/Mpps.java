@@ -55,37 +55,39 @@ import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 
-import org.dcm4che.audit.AuditMessage;
-import org.dcm4che.audit.AuditMessages;
-import org.dcm4che.audit.AuditMessages.EventActionCode;
-import org.dcm4che.audit.AuditMessages.EventID;
-import org.dcm4che.audit.AuditMessages.EventOutcomeIndicator;
-import org.dcm4che.audit.ParticipantObjectDescription;
-import org.dcm4che.audit.SOPClass;
-import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.IOD;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.data.VR;
-import org.dcm4che.data.ValidationResult;
-import org.dcm4che.io.ContentHandlerAdapter;
-import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.io.SAXWriter;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.AssociationStateException;
-import org.dcm4che.net.Commands;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSPHandler;
-import org.dcm4che.net.Status;
-import org.dcm4che.net.audit.AuditLogger;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.DicomService;
-import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.StringUtils;
-import org.dcm4che.util.UIDUtils;
+import org.dcm4che3.audit.AuditMessage;
+import org.dcm4che3.audit.AuditMessages;
+import org.dcm4che3.audit.AuditMessages.EventActionCode;
+import org.dcm4che3.audit.AuditMessages.EventID;
+import org.dcm4che3.audit.AuditMessages.EventOutcomeIndicator;
+import org.dcm4che3.audit.ParticipantObjectDescription;
+import org.dcm4che3.audit.SOPClass;
+import org.dcm4che3.conf.api.ConfigurationException;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.IOD;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.data.ValidationResult;
+import org.dcm4che3.io.ContentHandlerAdapter;
+import org.dcm4che3.io.DicomOutputStream;
+import org.dcm4che3.io.SAXWriter;
+import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.Association;
+import org.dcm4che3.net.AssociationStateException;
+import org.dcm4che3.net.Commands;
+import org.dcm4che3.net.Dimse;
+import org.dcm4che3.net.DimseRSPHandler;
+import org.dcm4che3.net.PDVInputStream;
+import org.dcm4che3.net.Status;
+import org.dcm4che3.net.audit.AuditLogger;
+import org.dcm4che3.net.pdu.PresentationContext;
+import org.dcm4che3.net.service.AbstractDicomService;
+import org.dcm4che3.net.service.DicomService;
+import org.dcm4che3.net.service.DicomServiceException;
+import org.dcm4che3.util.StringUtils;
+import org.dcm4che3.util.UIDUtils;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
@@ -99,7 +101,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>
  */
-public class Mpps extends DicomService {
+public class Mpps extends AbstractDicomService {
 
     protected static final Logger LOG = LoggerFactory.getLogger(Mpps.class);
     private static AuditLogger logger;
@@ -120,7 +122,7 @@ public class Mpps extends DicomService {
             onNSetRQ(asAccepted, pc, dimse, cmd, data);
             break;
         default:
-            super.onDimseRQ(asAccepted, pc, dimse, cmd, data);
+            throw new DicomServiceException(Status.UnrecognizedOperation);
         }
     }
 

@@ -49,12 +49,12 @@ import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 
-import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.data.Attributes;
-import org.dcm4che.io.SAXWriter;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che3.conf.api.ConfigurationException;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.io.SAXWriter;
+import org.dcm4che3.net.Association;
+import org.dcm4che3.net.Dimse;
+import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;

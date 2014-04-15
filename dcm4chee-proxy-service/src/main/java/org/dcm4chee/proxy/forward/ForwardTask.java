@@ -42,8 +42,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dcm4che.net.pdu.AAssociateRQ;
-import org.dcm4che.net.pdu.PresentationContext;
+import org.dcm4che3.net.pdu.AAssociateRQ;
+import org.dcm4che3.net.pdu.PresentationContext;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>

@@ -42,7 +42,7 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Calendar;
 
-import org.dcm4che.util.StringUtils;
+import org.dcm4che3.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>

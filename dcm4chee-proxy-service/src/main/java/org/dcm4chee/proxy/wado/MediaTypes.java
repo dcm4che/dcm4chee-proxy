@@ -39,7 +39,7 @@ package org.dcm4chee.proxy.wado;
 
 import javax.ws.rs.core.MediaType;
 
-import org.dcm4che.data.UID;
+import org.dcm4che3.data.UID;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>

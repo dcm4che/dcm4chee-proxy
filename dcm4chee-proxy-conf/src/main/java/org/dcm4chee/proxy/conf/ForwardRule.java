@@ -42,7 +42,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dcm4che.net.Dimse;
+import org.dcm4che3.net.Dimse;
 
 /**
  * @author Michael Backhaus <michael.backaus@agfa.com>

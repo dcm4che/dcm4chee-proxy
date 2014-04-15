@@ -38,12 +38,12 @@
 
 package org.dcm4chee.proxy.pix;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Issuer;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.VR;
-import org.dcm4che.util.StringUtils;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Issuer;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -93,7 +93,7 @@ public class IDWithIssuer {
         if (id == null)
             return null;
 
-        Issuer issuerOfPatientID = Issuer.issuerOfPatientID(keys);
+        Issuer issuerOfPatientID = Issuer.fromIssuerOfPatientID(keys);
         return new IDWithIssuer(id,
                 issuerOfPatientID != null
                     ? issuerOfPatientID

@@ -47,11 +47,11 @@ import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.dcm4che.conf.prefs.PreferencesDicomConfigurationExtension;
-import org.dcm4che.conf.prefs.PreferencesUtils;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Device;
-import org.dcm4che.net.Dimse;
+import org.dcm4che3.conf.prefs.PreferencesDicomConfigurationExtension;
+import org.dcm4che3.conf.prefs.PreferencesUtils;
+import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.Device;
+import org.dcm4che3.net.Dimse;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;

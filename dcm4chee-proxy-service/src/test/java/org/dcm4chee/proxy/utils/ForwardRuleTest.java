@@ -42,8 +42,8 @@ import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import org.dcm4che.data.UID;
-import org.dcm4che.net.Dimse;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.net.Dimse;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.Schedule;

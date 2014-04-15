@@ -43,8 +43,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.dcm4che.net.Status;
-import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che3.net.Status;
+import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.slf4j.Logger;

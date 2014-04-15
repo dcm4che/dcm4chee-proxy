@@ -43,9 +43,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.dcm4che.conf.api.ApplicationEntityCache;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Device;
+import org.dcm4che3.conf.api.ApplicationEntityCache;
+import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.Device;
 import org.dcm4chee.proxy.audit.AuditLog;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;

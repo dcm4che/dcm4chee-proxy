@@ -49,27 +49,29 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.dcm4che.conf.api.ApplicationEntityCache;
-import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.data.VR;
-import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.Commands;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSPHandler;
-import org.dcm4che.net.IncompatibleConnectionException;
-import org.dcm4che.net.Status;
-import org.dcm4che.net.pdu.AAssociateRJ;
-import org.dcm4che.net.pdu.AAssociateRQ;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.pdu.RoleSelection;
-import org.dcm4che.net.service.DicomService;
-import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che3.conf.api.ApplicationEntityCache;
+import org.dcm4che3.conf.api.ConfigurationException;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.io.DicomOutputStream;
+import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.Association;
+import org.dcm4che3.net.Commands;
+import org.dcm4che3.net.Dimse;
+import org.dcm4che3.net.DimseRSPHandler;
+import org.dcm4che3.net.IncompatibleConnectionException;
+import org.dcm4che3.net.PDVInputStream;
+import org.dcm4che3.net.Status;
+import org.dcm4che3.net.pdu.AAssociateRJ;
+import org.dcm4che3.net.pdu.AAssociateRQ;
+import org.dcm4che3.net.pdu.PresentationContext;
+import org.dcm4che3.net.pdu.RoleSelection;
+import org.dcm4che3.net.service.AbstractDicomService;
+import org.dcm4che3.net.service.DicomService;
+import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
 import org.dcm4chee.proxy.conf.ForwardRule;
@@ -83,7 +85,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class StgCmt extends DicomService {
+public class StgCmt extends AbstractDicomService {
 
     protected static final Logger LOG = LoggerFactory.getLogger(StgCmt.class);
 
@@ -105,7 +107,7 @@ public class StgCmt extends DicomService {
             processNActionRQ(asAccepted, pc, dimse, rq, data);
             break;
         default:
-            super.onDimseRQ(asAccepted, pc, dimse, rq, data);
+            throw new DicomServiceException(Status.UnrecognizedOperation);
         }
     }
 
@@ -596,5 +598,19 @@ public class StgCmt extends DicomService {
             LOG.error("{}: failed to RENAME {} to {}",
                     new Object[] { asAccepted, file.getPath(), dest.getPath() });
     }
+
+	@Override
+	public void onDimseRQ(Association as, PresentationContext pc, Dimse dimse,
+			Attributes cmd, PDVInputStream data) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onClose(Association as) {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 }

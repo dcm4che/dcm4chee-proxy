@@ -38,7 +38,7 @@
 
 package org.dcm4chee.proxy;
 
-import static org.dcm4che.audit.AuditMessages.createEventIdentification;
+import static org.dcm4che3.audit.AuditMessages.createEventIdentification;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -49,23 +49,23 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 
-import org.dcm4che.audit.AuditMessage;
-import org.dcm4che.audit.AuditMessages;
-import org.dcm4che.audit.AuditMessages.EventActionCode;
-import org.dcm4che.audit.AuditMessages.EventID;
-import org.dcm4che.audit.AuditMessages.EventOutcomeIndicator;
-import org.dcm4che.audit.AuditMessages.EventTypeCode;
-import org.dcm4che.audit.AuditMessages.RoleIDCode;
-import org.dcm4che.conf.api.ApplicationEntityCache;
-import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.conf.api.ConfigurationNotFoundException;
-import org.dcm4che.conf.api.DicomConfiguration;
-import org.dcm4che.conf.api.hl7.HL7ApplicationCache;
-import org.dcm4che.conf.api.hl7.HL7Configuration;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.DeviceService;
-import org.dcm4che.net.audit.AuditLogger;
-import org.dcm4che.net.service.DicomServiceRegistry;
+import org.dcm4che3.audit.AuditMessage;
+import org.dcm4che3.audit.AuditMessages;
+import org.dcm4che3.audit.AuditMessages.EventActionCode;
+import org.dcm4che3.audit.AuditMessages.EventID;
+import org.dcm4che3.audit.AuditMessages.EventOutcomeIndicator;
+import org.dcm4che3.audit.AuditMessages.EventTypeCode;
+import org.dcm4che3.audit.AuditMessages.RoleIDCode;
+import org.dcm4che3.conf.api.ApplicationEntityCache;
+import org.dcm4che3.conf.api.ConfigurationException;
+import org.dcm4che3.conf.api.ConfigurationNotFoundException;
+import org.dcm4che3.conf.api.DicomConfiguration;
+import org.dcm4che3.conf.api.hl7.HL7ApplicationCache;
+import org.dcm4che3.conf.api.hl7.HL7Configuration;
+import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.DeviceService;
+import org.dcm4che3.net.audit.AuditLogger;
+import org.dcm4che3.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.audit.AuditLog;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;

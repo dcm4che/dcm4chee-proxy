@@ -42,16 +42,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import org.dcm4che.conf.api.ApplicationEntityCache;
-import org.dcm4che.data.Attributes;
-import org.dcm4che.net.ApplicationEntity;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.Status;
-import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.DicomService;
-import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che3.conf.api.ApplicationEntityCache;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.Association;
+import org.dcm4che3.net.Dimse;
+import org.dcm4che3.net.Status;
+import org.dcm4che3.net.TransferCapability.Role;
+import org.dcm4che3.net.pdu.PresentationContext;
+import org.dcm4che3.net.service.AbstractDicomService;
+import org.dcm4che3.net.service.DicomService;
+import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.pix.PIXConsumer;
@@ -64,7 +65,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
  */
-public class CGet extends DicomService {
+public class CGet extends AbstractDicomService {
 
     protected static final Logger LOG = LoggerFactory.getLogger(CGet.class);
 

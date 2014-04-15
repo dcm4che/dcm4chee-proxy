@@ -73,33 +73,33 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.lf5.util.StreamUtils;
-import org.dcm4che.conf.api.ConfigurationException;
-import org.dcm4che.data.Attributes;
-import org.dcm4che.data.Attributes.Visitor;
-import org.dcm4che.data.BulkData;
-import org.dcm4che.data.Fragments;
-import org.dcm4che.data.Sequence;
-import org.dcm4che.data.Tag;
-import org.dcm4che.data.UID;
-import org.dcm4che.data.VR;
-import org.dcm4che.io.DicomInputStream;
-import org.dcm4che.io.DicomInputStream.IncludeBulkData;
-import org.dcm4che.io.DicomOutputStream;
-import org.dcm4che.io.SAXReader;
-import org.dcm4che.io.SAXTransformer;
-import org.dcm4che.mime.MultipartInputStream;
-import org.dcm4che.mime.MultipartParser;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.DataWriterAdapter;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSPHandler;
-import org.dcm4che.net.IncompatibleConnectionException;
-import org.dcm4che.net.TransferCapability;
-import org.dcm4che.net.TransferCapability.Role;
-import org.dcm4che.net.pdu.AAssociateRQ;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.DicomServiceException;
-import org.dcm4che.util.SafeClose;
+import org.dcm4che3.conf.api.ConfigurationException;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Attributes.Visitor;
+import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.Sequence;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
+import org.dcm4che3.io.DicomInputStream;
+import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.io.DicomOutputStream;
+import org.dcm4che3.io.SAXReader;
+import org.dcm4che3.io.SAXTransformer;
+import org.dcm4che3.mime.MultipartInputStream;
+import org.dcm4che3.mime.MultipartParser;
+import org.dcm4che3.net.Association;
+import org.dcm4che3.net.DataWriterAdapter;
+import org.dcm4che3.net.Dimse;
+import org.dcm4che3.net.DimseRSPHandler;
+import org.dcm4che3.net.IncompatibleConnectionException;
+import org.dcm4che3.net.TransferCapability;
+import org.dcm4che3.net.TransferCapability.Role;
+import org.dcm4che3.net.pdu.AAssociateRQ;
+import org.dcm4che3.net.pdu.PresentationContext;
+import org.dcm4che3.net.service.DicomServiceException;
+import org.dcm4che3.util.SafeClose;
 import org.dcm4chee.proxy.Proxy;
 import org.dcm4chee.proxy.common.AuditDirectory;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -484,7 +484,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             }
         }
         for (FileInfo fileInfo : dontProcess) {
-            addFailedForward(null, org.dcm4che.net.Status.UnableToProcess);
+            addFailedForward(null, org.dcm4che3.net.Status.UnableToProcess);
             deleteFile(fileInfo.file);
             files.remove(fileInfo);
         }
@@ -494,7 +494,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             Properties prop, String cuid) {
         if (fwdRules.isEmpty()) {
             LOG.error("{}: No active forward rule matching request", this);
-            addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
+            addFailedForward(fileInfo.attrs, org.dcm4che3.net.Status.ProcessingFailure);
             return;
         }
         LOG.debug("{}: processing forward rules for {}", this, fileInfo.file);
@@ -528,7 +528,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         if (LOG.isDebugEnabled())
                             e.printStackTrace();
                         int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
-                                : org.dcm4che.net.Status.ProcessingFailure;
+                                : org.dcm4che3.net.Status.ProcessingFailure;
                         addFailedForward(fileInfo.attrs, failureReason);
                         if (dst != null && dst.exists())
                             deleteFile(dst);
@@ -539,7 +539,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 LOG.error("{}: Failed to retrieve Destination AET from forward rule {}", this, rule.getCommonName());
                 if (LOG.isDebugEnabled())
                     e.printStackTrace();
-                addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
+                addFailedForward(fileInfo.attrs, org.dcm4che3.net.Status.ProcessingFailure);
             }
         }
     }
@@ -669,7 +669,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
             int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
-                    : org.dcm4che.net.Status.ProcessingFailure;
+                    : org.dcm4che3.net.Status.ProcessingFailure;
             addFailedForward(fmi, failureReason);
             if (file != null && file.exists())
                 deleteFile(file);
@@ -693,7 +693,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         final String[] tsuids = { UID.ExplicitVRLittleEndian };
         attrs.accept(new Visitor() {
             @Override
-            public void visit(Attributes attrs, int tag, VR vr, Object value) {
+            public boolean visit(Attributes attrs, int tag, VR vr, Object value) {
                 if (value instanceof Sequence) {
                     Sequence sq = (Sequence) value;
                     for (Attributes item : sq)
@@ -716,8 +716,9 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         }
                     }
                 }
+                return true;
             }
-        });
+        }, true);
         return tsuids[0];
     }
 
@@ -730,7 +731,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
         TransferCapability tc = proxyAEE.getApplicationEntity().getTransferCapabilityFor(fmi.getString(Tag.MediaStorageSOPClassUID),
                 Role.SCP);
         if (tc == null) {
-            addFailedForward(fmi, org.dcm4che.net.Status.SOPclassNotSupported);
+            addFailedForward(fmi, org.dcm4che3.net.Status.SOPclassNotSupported);
             return false;
         }
         if (!tc.containsTransferSyntax(fmi.getString(Tag.TransferSyntaxUID))) {
@@ -808,12 +809,12 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 if (proxyAEE.isAcceptDataOnFailedAssociation())
                     storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
                 else
-                    addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
+                    addFailedForward(fileInfo.attrs, org.dcm4che3.net.Status.ProcessingFailure);
             } catch (ConfigurationException e) {
                 LOG.error("{}: Error opening forward connection: {}", this, e);
                 if (LOG.isDebugEnabled())
                     e.printStackTrace();
-                addFailedForward(fileInfo.attrs, org.dcm4che.net.Status.ProcessingFailure);
+                addFailedForward(fileInfo.attrs, org.dcm4che3.net.Status.ProcessingFailure);
             }
         } else
             storeToCalledAETSpoolDir(fileInfo, calledAET, prop, fmi);
@@ -834,7 +835,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
             int failureReason = e instanceof DicomServiceException ? ((DicomServiceException) e).getStatus()
-                    : org.dcm4che.net.Status.ProcessingFailure;
+                    : org.dcm4che3.net.Status.ProcessingFailure;
             addFailedForward(fmi, failureReason);
             if (file != null && file.exists())
                 deleteFile(file);
@@ -853,8 +854,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 super.onDimseRSP(as, cmd, data);
                 int status = cmd.getInt(Tag.Status, -1);
                 switch (status) {
-                case org.dcm4che.net.Status.Success:
-                case org.dcm4che.net.Status.CoercionOfDataElements: {
+                case org.dcm4che3.net.Status.Success:
+                case org.dcm4che3.net.Status.CoercionOfDataElements: {
                     if (proxyAEE.isEnableAuditLog())
                         LogUtils.writeLogFile(proxyAEE, AuditDirectory.TRANSFERRED, as.getCallingAET(),
                                 as.getRemoteAET(), prop, fileSize, -1);
@@ -870,7 +871,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         LOG.error("{}: error renaming file {}: {}", new Object[] { as, file.getPath(), e.getMessage() });
                         if (LOG.isDebugEnabled())
                             e.printStackTrace();
-                        addFailedForward(fmi, org.dcm4che.net.Status.ProcessingFailure);
+                        addFailedForward(fmi, org.dcm4che3.net.Status.ProcessingFailure);
                     }
                 }
                 }
@@ -889,7 +890,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 e.printStackTrace();
             int failureReason = e instanceof DicomServiceException 
                     ? ((DicomServiceException) e).getStatus()
-                    : org.dcm4che.net.Status.ProcessingFailure;
+                    : org.dcm4che3.net.Status.ProcessingFailure;
             addFailedForward(fmi, failureReason);
         }
     }

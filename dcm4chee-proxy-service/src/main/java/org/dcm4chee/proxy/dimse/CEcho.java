@@ -40,15 +40,15 @@ package org.dcm4chee.proxy.dimse;
 
 import java.io.IOException;
 
-import org.dcm4che.data.Attributes;
-import org.dcm4che.net.Association;
-import org.dcm4che.net.Dimse;
-import org.dcm4che.net.DimseRSP;
-import org.dcm4che.net.Status;
-import org.dcm4che.net.pdu.AAbort;
-import org.dcm4che.net.pdu.PresentationContext;
-import org.dcm4che.net.service.BasicCEchoSCP;
-import org.dcm4che.net.service.DicomServiceException;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.net.Association;
+import org.dcm4che3.net.Dimse;
+import org.dcm4che3.net.DimseRSP;
+import org.dcm4che3.net.Status;
+import org.dcm4che3.net.pdu.AAbort;
+import org.dcm4che3.net.pdu.PresentationContext;
+import org.dcm4che3.net.service.BasicCEchoSCP;
+import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

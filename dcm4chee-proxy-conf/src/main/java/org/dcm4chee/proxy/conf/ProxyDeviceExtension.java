@@ -44,10 +44,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerConfigurationException;
 
-import org.dcm4che.conf.api.hl7.HL7Configuration;
-import org.dcm4che.io.TemplatesCache;
-import org.dcm4che.net.DeviceExtension;
-import org.dcm4che.util.StringUtils;
+import org.dcm4che3.conf.api.hl7.HL7Configuration;
+import org.dcm4che3.io.TemplatesCache;
+import org.dcm4che3.net.DeviceExtension;
+import org.dcm4che3.util.StringUtils;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
