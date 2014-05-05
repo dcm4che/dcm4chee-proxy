@@ -599,18 +599,4 @@ public class StgCmt extends AbstractDicomService {
                     new Object[] { asAccepted, file.getPath(), dest.getPath() });
     }
 
-	@Override
-	public void onDimseRQ(Association as, PresentationContext pc, Dimse dimse,
-			Attributes cmd, PDVInputStream data) throws IOException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onClose(Association as) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
 }
