@@ -713,8 +713,17 @@ public class ForwardFiles {
                 LOG.error("Failed to delete {}", file);
                 return;
             }
+            File infoFile =null;
+            if(file.getName().contains("."))
+            {
+                infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info"); 
+            }
+            else
+            {
+               infoFile = new File(file.getParent(), file.getName() + ".info");
+            }
             
-            File infoFile = new File(file.getPath().substring(0, getDotIndex(file.getPath().substring(0,file.getPath().indexOf("conn")-1))) + ".info");
+            
             if (infoFile.delete())
                 LOG.debug("Delete {}", infoFile);
             else
@@ -726,17 +735,6 @@ public class ForwardFiles {
         }
     }
 
-    private int getDotIndex(String s)
-    {
-        for(int i=s.length()-1;i>0;i--)
-        {
-            if(Character.compare(s.charAt(i),'.')==0)
-            {
-                return i;
-            }
-        }
-        throw new IllegalArgumentException();
-    }
     private void deletePendingNSet(ProxyAEExtension proxyAEE, String calledAET, File file, Properties prop)
             throws IOException {
         File nSetDir = new File(proxyAEE.getNSetDirectoryPath(), calledAET);
