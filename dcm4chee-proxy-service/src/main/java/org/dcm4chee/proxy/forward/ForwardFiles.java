@@ -713,17 +713,8 @@ public class ForwardFiles {
                 LOG.error("Failed to delete {}", file);
                 return;
             }
-            File infoFile =null;
-            if(file.getName().contains("."))
-            {
-                infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info"); 
-            }
-            else
-            {
-               infoFile = new File(file.getParent(), file.getName() + ".info");
-            }
             
-            
+            File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
             if (infoFile.delete())
                 LOG.debug("Delete {}", infoFile);
             else
