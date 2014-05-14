@@ -713,7 +713,8 @@ public class ForwardFiles {
                 LOG.error("Failed to delete {}", file);
                 return;
             }
-            File infoFile = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+            
+            File infoFile = new File(file.getPath().substring(0, getDotIndex(file.getPath().substring(0,file.getPath().indexOf("conn")-1))) + ".info");
             if (infoFile.delete())
                 LOG.debug("Delete {}", infoFile);
             else
@@ -725,6 +726,17 @@ public class ForwardFiles {
         }
     }
 
+    private int getDotIndex(String s)
+    {
+        for(int i=s.length()-1;i>0;i--)
+        {
+            if(Character.compare(s.charAt(i),'.')==0)
+            {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
     private void deletePendingNSet(ProxyAEExtension proxyAEE, String calledAET, File file, Properties prop)
             throws IOException {
         File nSetDir = new File(proxyAEE.getNSetDirectoryPath(), calledAET);
@@ -972,8 +984,9 @@ public class ForwardFiles {
                 rq.addRoleSelection(new RoleSelection(prop.getProperty("sop-class-uid"), true, true));
                 rq.setCallingAET(callingAET);
                 rq.setCalledAET(calledAET);
-                Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
+                Association asInvoked=null;
                 try {
+                    asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
                     if (asInvoked.isReadyForDataTransfer()) {
                         forwardScheduledNAction(proxyAEE, asInvoked, file, prop, attrs);
                     } else {
