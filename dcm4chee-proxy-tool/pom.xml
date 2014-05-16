@@ -218,9 +218,9 @@
       <id>jdbc-prefs</id>
       <dependencies>
         <dependency>
-          <groupId>org.dcm4che</groupId>
+          <groupId>org.dcm4che.jdbc.prefs</groupId>
           <artifactId>dcm4che-jdbc-prefs-tool</artifactId>
-          <version>1.0.0</version>
+          <version>1.1.0-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>

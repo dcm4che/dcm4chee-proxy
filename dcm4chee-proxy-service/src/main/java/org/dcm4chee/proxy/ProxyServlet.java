@@ -44,7 +44,10 @@ import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.util.Properties;
+import java.util.prefs.Preferences;
 
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.servlet.ServletConfig;
@@ -60,6 +63,7 @@ import org.dcm4che3.conf.ldap.hl7.LdapHL7Configuration;
 import org.dcm4che3.conf.prefs.PreferencesDicomConfiguration;
 import org.dcm4che3.conf.prefs.audit.PreferencesAuditLoggerConfiguration;
 import org.dcm4che3.conf.prefs.audit.PreferencesAuditRecordRepositoryConfiguration;
+import org.dcm4che3.conf.prefs.cdi.PrefsFactory;
 import org.dcm4che3.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che3.util.SafeClose;
 import org.dcm4che3.util.StringUtils;
@@ -91,7 +95,7 @@ public class ProxyServlet extends HttpServlet {
         "jboss.server.log",
         "jboss.server.temp",
     };
-
+    
     private static void addJBossDirURLSystemProperties() {
         for (String key : JBOSS_PROPERITIES) {
             String url = new File(System.getProperty(key + ".dir")).toURI().toString();
@@ -99,6 +103,12 @@ public class ProxyServlet extends HttpServlet {
         }
     }
 
+    /**
+* Allows for custom Preferences implementations to be used, like jdbc-prefs
+*/
+    @Inject
+    Instance<PrefsFactory> prefsFactoryInstance;
+    
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -125,12 +135,21 @@ public class ProxyServlet extends HttpServlet {
                 dicomConfig = ldapConfig;
                 this.hl7Config = hl7Conf;
             } catch (FileNotFoundException e) {
+                // check if there is an implementation of PrefsFactory provided and construct DicomConfiguration accordingly
+                PreferencesDicomConfiguration prefsConfig;
+                if (!prefsFactoryInstance.isUnsatisfied()) {
+                    Preferences prefs = prefsFactoryInstance.get().getPreferences();
+                    LOG.info("Using custom Preferences implementation {}", prefs.getClass().toString());
+                    prefsConfig = new PreferencesDicomConfiguration(prefs);
+                } else
+                    prefsConfig = new PreferencesDicomConfiguration();
+                
                 String pf = System.getProperty("java.util.prefs.PreferencesFactory");
                 if (pf != null && pf.equals("org.dcm4che.jdbc.prefs.PreferencesFactoryImpl"))
                     LOG.info("Using JDBC Preferences as Configuration Backend");
                 else
                     LOG.info("Using Java Preferences as Configuration Backend");
-                PreferencesDicomConfiguration prefsConfig = new PreferencesDicomConfiguration();
+                
                 PreferencesHL7Configuration hl7Conf = new PreferencesHL7Configuration();
                 prefsConfig.addDicomConfigurationExtension(hl7Conf);
                 prefsConfig.addDicomConfigurationExtension(new PreferencesProxyConfigurationExtension());

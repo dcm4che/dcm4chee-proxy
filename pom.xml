@@ -44,7 +44,7 @@
   <packaging>pom</packaging>
   <name>dcm4chee-proxy-parent</name>
   <properties>
-    <dcm4che.version>3.3.3</dcm4che.version>
+    <dcm4che.version>3.3.4-SNAPSHOT</dcm4che.version>
   </properties>
   <build>
     <plugins>
@@ -64,4 +64,14 @@
     <module>dcm4chee-proxy-war</module>
     <module>dcm4chee-proxy-tool</module>
   </modules>
+  <dependencyManagement>
+  <dependencies>
+          <dependency>
+      <groupId>javax.enterprise</groupId>
+      <artifactId>cdi-api</artifactId>
+      <version>1.0-SP4</version>
+      <scope>import</scope>
+    </dependency>
+    </dependencies>
+  </dependencyManagement>
 </project>

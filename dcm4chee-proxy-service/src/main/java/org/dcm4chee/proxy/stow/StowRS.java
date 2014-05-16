@@ -691,34 +691,39 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
 
     private String resolveBulkdata(final Attributes attrs) {
         final String[] tsuids = { UID.ExplicitVRLittleEndian };
-        attrs.accept(new Visitor() {
-            @Override
-            public boolean visit(Attributes attrs, int tag, VR vr, Object value) {
-                if (value instanceof Sequence) {
-                    Sequence sq = (Sequence) value;
-                    for (Attributes item : sq)
-                        resolveBulkdata(item);
-                } else if (value instanceof BulkData) {
-                    FileInfo fileInfo = bulkdata.get(((BulkData) value).uri);
-                    if (fileInfo != null) {
-                        String tsuid = MediaTypes.transferSyntaxOf(fileInfo.mediaType);
-                        BulkData bd = new BulkData(
-                                fileInfo.file.toURI().toString(),
-                                0, (int) fileInfo.file.length(),
-                                attrs.bigEndian());
-                        if (tsuid.equals(UID.ExplicitVRLittleEndian)) {
-                            attrs.setValue(tag, vr, bd);
-                        } else {
-                            Fragments frags = attrs.newFragments(tag, vr, 2);
-                            frags.add(null);
-                            frags.add(bd);
-                            tsuids[0] = tsuid;
+        try {
+            attrs.accept(new Visitor() {
+                @Override
+                public boolean visit(Attributes attrs, int tag, VR vr, Object value) {
+                    if (value instanceof Sequence) {
+                        Sequence sq = (Sequence) value;
+                        for (Attributes item : sq)
+                            resolveBulkdata(item);
+                    } else if (value instanceof BulkData) {
+                        FileInfo fileInfo = bulkdata.get(((BulkData) value).uri);
+                        if (fileInfo != null) {
+                            String tsuid = MediaTypes.transferSyntaxOf(fileInfo.mediaType);
+                            BulkData bd = new BulkData(
+                                    fileInfo.file.toURI().toString(),
+                                    0, (int) fileInfo.file.length(),
+                                    attrs.bigEndian());
+                            if (tsuid.equals(UID.ExplicitVRLittleEndian)) {
+                                attrs.setValue(tag, vr, bd);
+                            } else {
+                                Fragments frags = attrs.newFragments(tag, vr, 2);
+                                frags.add(null);
+                                frags.add(bd);
+                                tsuids[0] = tsuid;
+                            }
                         }
                     }
+                    return true;
                 }
-                return true;
-            }
-        }, true);
+            }, true);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         return tsuids[0];
     }
 
