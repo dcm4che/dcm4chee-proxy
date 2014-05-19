@@ -353,13 +353,26 @@ public class Proxy extends DeviceService implements ProxyMBean {
             File dir = new File(path, aet);
             File[] sndFiles = dir.listFiles(sndFileFilter());
             for (File sndFile : sndFiles) {
-                String sndFileName = sndFile.getPath();
-                File dst = new File(sndFileName.substring(0, sndFileName.length() - 4));
-                if (sndFile.renameTo(dst))
-                    LOG.info("Rename {} to {} on {}", new Object[] { sndFile.getPath(), dst.getPath(), action });
-                else
-                    LOG.info("Failed to rename {} to {} on {}",
-                            new Object[] { sndFile.getPath(), dst.getPath(), action });
+                String sndFilePath = sndFile.getPath();
+                String sndFileName= sndFile.getName();
+                if(sndFileName.lastIndexOf('.')!=-1)
+                {
+                    File dst = new File(sndFilePath,sndFileName.substring(0, sndFileName.length() - 4));
+                    if (sndFile.renameTo(dst))
+                        LOG.info("Rename {} to {} on {}", new Object[] { sndFile.getPath(), dst.getPath(), action });
+                    else
+                        LOG.info("Failed to rename {} to {} on {}",
+                                new Object[] { sndFile.getPath(), dst.getPath(), action });
+                }
+                else{
+                    //delete snd files
+                    if(sndFile.delete())
+                        LOG.info("Delete {} on {}", new Object[] { sndFile.getPath(), action });
+                    else
+                        LOG.info("Failed to delete {}  on {}",
+                                new Object[] { sndFile.getPath(), action });
+                }
+               
             }
         }
     }

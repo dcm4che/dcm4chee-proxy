@@ -67,6 +67,8 @@ import org.dcm4che3.conf.prefs.cdi.PrefsFactory;
 import org.dcm4che3.conf.prefs.hl7.PreferencesHL7Configuration;
 import org.dcm4che3.util.SafeClose;
 import org.dcm4che3.util.StringUtils;
+import org.dcm4chee.proxy.conf.ProxyAEExtension;
+import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.conf.ldap.LdapProxyConfigurationExtension;
 import org.dcm4chee.proxy.conf.prefs.PreferencesProxyConfigurationExtension;
 import org.slf4j.Logger;
@@ -162,6 +164,7 @@ public class ProxyServlet extends HttpServlet {
             }
             proxy = new Proxy(dicomConfig, hl7Config, deviceName);
             proxy.start();
+            ProxyDeviceExtension proxyDev = proxy.getDevice().getDeviceExtension(ProxyDeviceExtension.class);
             mbean = ManagementFactory.getPlatformMBeanServer().registerMBean(proxy, new ObjectName(jmxName));
         } catch (Exception e) {
             if (LOG.isDebugEnabled())

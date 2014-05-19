@@ -185,6 +185,8 @@ public class StgCmt extends AbstractDicomService {
                     rqCopy);
             asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
             asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
+            //fix for the storage commitment break on deferred association with a null rule
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_RULE, rule);
             LOG.debug("{}: forward N-ACTION-RQ to {}", asAccepted, calledAET);
             onNActionRQ(asAccepted, asInvoked, pc, rq, data);
         } catch (IOException e) {

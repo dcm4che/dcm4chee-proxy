@@ -58,7 +58,17 @@ public class InfoFileUtils {
     private static final Logger LOG = LoggerFactory.getLogger(InfoFileUtils.class);
 
     public static Properties getFileInfoProperties(ProxyAEExtension proxyAEE, File file) throws IOException {
-        String infoFileName = file.getName().substring(0, file.getName().indexOf('.')) + ".info";
+        String[] fileList = file.getParentFile().list();
+        String infoFileName =null;
+        if(fileList.length >0)
+        {
+            for(String f:  fileList)
+            if(f.endsWith(".info"))
+            {
+                infoFileName = f;
+                }
+        }
+//        String infoFileName = file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info";
         return getPropertiesFromInfoFile(proxyAEE, file.getParent(), infoFileName);
     }
 
