@@ -127,13 +127,13 @@ public class ProxyDeviceTest {
     private static final Code INST_A = new Code("111.1111", "99DCM4CHEE", null, "Site A");
 
     private static final String[] IMAGE_TSUIDS = { UID.ImplicitVRLittleEndian, UID.ExplicitVRLittleEndian,
-            UID.DeflatedExplicitVRLittleEndian, UID.ExplicitVRBigEndian, UID.JPEGBaseline1, UID.JPEGExtended24,
+            UID.DeflatedExplicitVRLittleEndian, UID.JPEGBaseline1, UID.JPEGExtended24,
             UID.JPEGLossless, UID.JPEGLosslessNonHierarchical14, UID.JPEGLSLossless, UID.JPEGLSLossyNearLossless,
             UID.JPEG2000LosslessOnly, UID.JPEG2000, UID.RLELossless };
     private static final String[] VIDEO_TSUIDS = { UID.JPEGBaseline1, UID.MPEG2, UID.MPEG2MainProfileHighLevel,
             UID.MPEG4AVCH264BDCompatibleHighProfileLevel41, UID.MPEG4AVCH264HighProfileLevel41 };
     private static final String[] OTHER_TSUIDS = { UID.ImplicitVRLittleEndian, UID.ExplicitVRLittleEndian,
-            UID.DeflatedExplicitVRLittleEndian, UID.ExplicitVRBigEndian, };
+            UID.DeflatedExplicitVRLittleEndian, };
     private static final String[] IMAGE_CUIDS = { UID.ComputedRadiographyImageStorage,
             UID.DigitalXRayImageStorageForPresentation, UID.DigitalXRayImageStorageForProcessing,
             UID.DigitalMammographyXRayImageStorageForPresentation, UID.DigitalMammographyXRayImageStorageForProcessing,
