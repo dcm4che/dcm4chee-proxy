@@ -63,14 +63,12 @@ import org.dcm4che3.net.Commands;
 import org.dcm4che3.net.Dimse;
 import org.dcm4che3.net.DimseRSPHandler;
 import org.dcm4che3.net.IncompatibleConnectionException;
-import org.dcm4che3.net.PDVInputStream;
 import org.dcm4che3.net.Status;
 import org.dcm4che3.net.pdu.AAssociateRJ;
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.net.pdu.RoleSelection;
 import org.dcm4che3.net.service.AbstractDicomService;
-import org.dcm4che3.net.service.DicomService;
 import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -84,6 +82,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Hesham Elbadawi <bsdreko@gmail.com>
  */
 public class StgCmt extends AbstractDicomService {
 
@@ -96,9 +95,12 @@ public class StgCmt extends AbstractDicomService {
         this.aeCache = aeCache;
     }
 
+    /*
+     * Here process nevent and action request
+     */
     @Override
-    public void onDimseRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq, Attributes data)
-            throws IOException {
+    public void onDimseRQ(Association asAccepted, PresentationContext pc,
+            Dimse dimse, Attributes rq, Attributes data) throws IOException {
         switch (dimse) {
         case N_EVENT_REPORT_RQ:
             processNEventReportRQ(asAccepted, pc, dimse, rq, data);
@@ -111,189 +113,312 @@ public class StgCmt extends AbstractDicomService {
         }
     }
 
-    private void processNActionRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
-            Attributes data) throws IOException {
-        ProxyAEExtension proxyAEE = asAccepted.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
-        Association asInvoked = (Association) asAccepted.getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
+    /*
+     * Here if the association is directly forwarded (FORWARD_ASSOCIATION
+     * property was set in the proxy association handler since it was to be sent
+     * immediately [forward everything]) it will call onNActionRQ otherwise it
+     * will load the config from the forward rule by calling
+     * processNActionRQForwardRules
+     */
+
+    private void processNActionRQ(Association asAccepted,
+            PresentationContext pc, Dimse dimse, Attributes rq, Attributes data)
+            throws IOException {
+        ProxyAEExtension proxyAEE = asAccepted.getApplicationEntity()
+                .getAEExtension(ProxyAEExtension.class);
+        Association asInvoked = (Association) asAccepted
+                .getProperty(ProxyAEExtension.FORWARD_ASSOCIATION);
         if (asInvoked == null)
             try {
-                processNActionRQForwardRules(proxyAEE, asAccepted, pc, dimse, rq, data);
+                processNActionRQForwardRules(proxyAEE, asAccepted, pc, dimse,
+                        rq, data);
             } catch (ConfigurationException e) {
-                LOG.warn(asAccepted + ": cannot process N-ACTION-RQ: " + e.getMessage());
-                throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
+                LOG.warn(asAccepted + ": cannot process N-ACTION-RQ: "
+                        + e.getMessage());
+                throw new DicomServiceException(Status.ProcessingFailure,
+                        e.getCause());
             }
         else
             try {
                 onNActionRQ(asAccepted, asInvoked, pc, rq, data);
             } catch (Exception e) {
-                LOG.debug(asAccepted + ": error forwarding N-ACTION-RQ: " + e.getMessage());
+                LOG.debug(asAccepted + ": error forwarding N-ACTION-RQ: "
+                        + e.getMessage());
                 if (LOG.isDebugEnabled())
                     e.printStackTrace();
-                throw new DicomServiceException(Status.ProcessingFailure, e.getCause());
+                throw new DicomServiceException(Status.ProcessingFailure,
+                        e.getCause());
             }
     }
 
-    private void processNActionRQForwardRules(ProxyAEExtension proxyAEE, Association as, PresentationContext pc,
-            Dimse dimse, Attributes rq, Attributes data) throws ConfigurationException, IOException {
-        List<ForwardRule> forwardRules = ForwardRuleUtils.filterForwardRulesOnDimseRQ(
-                proxyAEE.getCurrentForwardRules(as), rq.getString(dimse.tagOfSOPClassUID()), dimse);
+    /*
+     * Here the rules are loaded to be able to create request files and respond
+     * to the first association next if the destination is only one
+     * processSingleNActionForwardDestination is invoked else it creates the
+     * files for each of the destinations and the scheduled thread takes care of
+     * sending them once a file is found in the directory monitored by the
+     * thread it is forwarded
+     */
+
+    private void processNActionRQForwardRules(ProxyAEExtension proxyAEE,
+            Association as, PresentationContext pc, Dimse dimse, Attributes rq,
+            Attributes data) throws ConfigurationException, IOException {
+        List<ForwardRule> forwardRules = ForwardRuleUtils
+                .filterForwardRulesOnDimseRQ(
+                        proxyAEE.getCurrentForwardRules(as),
+                        rq.getString(dimse.tagOfSOPClassUID()), dimse);
         if (forwardRules.size() == 0)
             throw new ConfigurationException("No matching forward rule");
 
-        else if (forwardRules.size() == 1 && forwardRules.get(0).getDestinationAETitles().size() == 1) {
+        else if (forwardRules.size() == 1
+                && forwardRules.get(0).getDestinationAETitles().size() == 1) {
             ForwardRule rule = forwardRules.get(0);
-            String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
+            String callingAET = (rule.getUseCallingAET() == null) ? as
+                    .getCallingAET() : rule.getUseCallingAET();
             String destinationAET = rule.getDestinationAETitles().get(0);
-            processSingleNActionForwardDestination(proxyAEE, as, pc, dimse, rq, data, callingAET, destinationAET, rule);
+            processSingleNActionForwardDestination(proxyAEE, as, pc, dimse, rq,
+                    data, callingAET, destinationAET, rule);
         } else {
             for (ForwardRule rule : forwardRules) {
-                String callingAET = (rule.getUseCallingAET() == null) ? as.getCallingAET() : rule.getUseCallingAET();
-                List<String> destinationAETs = ForwardRuleUtils.getDestinationAETsFromForwardRule(as, rule, data);
+                String callingAET = (rule.getUseCallingAET() == null) ? as
+                        .getCallingAET() : rule.getUseCallingAET();
+                List<String> destinationAETs = ForwardRuleUtils
+                        .getDestinationAETsFromForwardRule(as, rule, data);
                 for (String destinationAET : destinationAETs) {
-                    LOG.debug("{}: store N-ACTION-RQ for scheduled forwarding to {}", as, destinationAET);
-                    createRQFile(proxyAEE, as, rq, data, ".dcm", callingAET, destinationAET,
-                            proxyAEE.getNactionDirectoryPath(), null);
+                    LOG.debug(
+                            "{}: store N-ACTION-RQ for scheduled forwarding to {}",
+                            as, destinationAET);
+                    createRQFile(proxyAEE, as, rq, data, ".dcm", callingAET,
+                            destinationAET, proxyAEE.getNactionDirectoryPath(),
+                            null);
                 }
             }
             as.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.Success), rq);
         }
     }
 
-    private void processSingleNActionForwardDestination(ProxyAEExtension proxyAEE, Association asAccepted,
-            PresentationContext pc, Dimse dimse, Attributes rq, Attributes data, String callingAET, String calledAET,
+    /*
+     * Here files with the same ReferencedSOPInstance UID are checked in the dir
+     * of the destination and if found their files will be created and the
+     * response of the first association responded to if no files are pending
+     * with the same UID then it checks if there is a schedule with one called
+     * aet in the forward options if so it will store the files to be processed
+     * by the scheduler on their finally it creates a new association to the
+     * destination (assuming it is the case where it has to forward now) then
+     * invokes OnNActionRQ. On any exception the files are stored and are
+     * further more processed by the scheduler.
+     */
+    private void processSingleNActionForwardDestination(
+            ProxyAEExtension proxyAEE, Association asAccepted,
+            PresentationContext pc, Dimse dimse, Attributes rq,
+            Attributes data, String callingAET, String calledAET,
             ForwardRule rule) throws IOException, ConfigurationException {
         if (pendingFileForwarding(proxyAEE, calledAET, data)) {
-            LOG.debug("{}: store N-ACTION-RQ for scheduled forwarding to {} due to pending C-STORE files", asAccepted,
-                    calledAET);
-            createRQFile(proxyAEE, asAccepted, rq, data, ".dcm", callingAET, calledAET,
-                    proxyAEE.getNactionDirectoryPath(), null);
-            asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.Success), rq);
+            LOG.debug(
+                    "{}: store N-ACTION-RQ for scheduled forwarding to {} due to pending C-STORE files",
+                    asAccepted, calledAET);
+            createRQFile(proxyAEE, asAccepted, rq, data, ".dcm", callingAET,
+                    calledAET, proxyAEE.getNactionDirectoryPath(), null);
+            asAccepted.writeDimseRSP(pc,
+                    Commands.mkNActionRSP(rq, Status.Success), rq);
             return;
         }
-        for (Entry<String, ForwardOption> entry : proxyAEE.getForwardOptions().entrySet()) {
-            if (calledAET.equals(entry.getKey()) && !entry.getValue().getSchedule().isNow(new GregorianCalendar())) {
-                LOG.debug("{}: store N-ACTION-RQ for scheduled forwarding to {}", asAccepted, calledAET);
-                storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, ".dcm", callingAET, calledAET);
+        for (Entry<String, ForwardOption> entry : proxyAEE.getForwardOptions()
+                .entrySet()) {
+            if (calledAET.equals(entry.getKey())
+                    && !entry.getValue().getSchedule()
+                            .isNow(new GregorianCalendar())) {
+                LOG.debug(
+                        "{}: store N-ACTION-RQ for scheduled forwarding to {}",
+                        asAccepted, calledAET);
+                storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, ".dcm",
+                        callingAET, calledAET);
                 return;
             }
         }
         try {
-            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOfMatchingAAssociateRQ(asAccepted);
+            AAssociateRQ rqCopy = ForwardConnectionUtils
+                    .copyOfMatchingAAssociateRQ(asAccepted);
             rqCopy.setCallingAET(callingAET);
             rqCopy.setCalledAET(calledAET);
-            Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET),
-                    rqCopy);
-            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
-            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
-            //fix for the storage commitment break on deferred association with a null rule
+            Association asInvoked = proxyAEE.getApplicationEntity().connect(
+                    aeCache.findApplicationEntity(calledAET), rqCopy);
+            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION,
+                    asInvoked);
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION,
+                    asAccepted);
+            // fix for the storage commitment break on deferred association with
+            // a null rule
             asInvoked.setProperty(ProxyAEExtension.FORWARD_RULE, rule);
             LOG.debug("{}: forward N-ACTION-RQ to {}", asAccepted, calledAET);
             onNActionRQ(asAccepted, asInvoked, pc, rq, data);
         } catch (IOException e) {
-            LOG.error("{}: Error connecting to {}: {}", new Object[] { asAccepted, calledAET, e.getMessage() });
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0",
+            LOG.error("{}: Error connecting to {}: {}", new Object[] {
+                    asAccepted, calledAET, e.getMessage() });
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data,
+                    RetryObject.ConnectionException.getSuffix() + "0",
                     callingAET, calledAET);
         } catch (InterruptedException e) {
-            LOG.error("{}: Unexpected exception: {}", asAccepted, e.getMessage());
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0",
+            LOG.error("{}: Unexpected exception: {}", asAccepted,
+                    e.getMessage());
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data,
+                    RetryObject.ConnectionException.getSuffix() + "0",
                     callingAET, calledAET);
         } catch (IncompatibleConnectionException e) {
-            LOG.error("{}: Unable to connect to {}: {}", new Object[] { asAccepted, calledAET, e.getMessage() });
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.ConnectionException.getSuffix() + "0",
+            LOG.error("{}: Unable to connect to {}: {}", new Object[] {
+                    asAccepted, calledAET, e.getMessage() });
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data,
+                    RetryObject.ConnectionException.getSuffix() + "0",
                     callingAET, calledAET);
         } catch (GeneralSecurityException e) {
-            LOG.error("{}: Failed to create SSL context: {}", asAccepted, e.getMessage());
-            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data, RetryObject.GeneralSecurityException.getSuffix() + "0",
+            LOG.error("{}: Failed to create SSL context: {}", asAccepted,
+                    e.getMessage());
+            storeNActionRQ(proxyAEE, asAccepted, pc, rq, data,
+                    RetryObject.GeneralSecurityException.getSuffix() + "0",
                     callingAET, calledAET);
         }
     }
 
-    private void storeNActionRQ(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
-            Attributes rq, Attributes data, String suffix, String callingAET, String calledAET) throws IOException {
+    /*
+     * Here the request files are created to be processed later on by the
+     * scheduler and the response for the action request is writen for the first
+     * association.
+     */
+    private void storeNActionRQ(ProxyAEExtension proxyAEE,
+            Association asAccepted, PresentationContext pc, Attributes rq,
+            Attributes data, String suffix, String callingAET, String calledAET)
+            throws IOException {
         if (proxyAEE.isAcceptDataOnFailedAssociation()) {
-            createRQFile(proxyAEE, asAccepted, rq, data, suffix, callingAET, calledAET,
-                    proxyAEE.getNactionDirectoryPath(), null);
-            asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.Success), rq);
+            createRQFile(proxyAEE, asAccepted, rq, data, suffix, callingAET,
+                    calledAET, proxyAEE.getNactionDirectoryPath(), null);
+            asAccepted.writeDimseRSP(pc,
+                    Commands.mkNActionRSP(rq, Status.Success), rq);
         } else {
-            asAccepted.writeDimseRSP(pc, Commands.mkNActionRSP(rq, Status.ProcessingFailure), rq);
+            asAccepted.writeDimseRSP(pc,
+                    Commands.mkNActionRSP(rq, Status.ProcessingFailure), rq);
         }
     }
 
-    private void processNEventReportRQ(Association asAccepted, PresentationContext pc, Dimse dimse, Attributes rq,
-            Attributes data) throws IOException {
-        ProxyAEExtension proxyAEE = (ProxyAEExtension) asAccepted.getApplicationEntity().getAEExtension(
-                ProxyAEExtension.class);
+    /*
+     * Here if the naction RqFile is there that means that an N-Event Report
+     * should b stored to be trigered by the scheduler only if more N-Action
+     * Requests are to be processed or if more than one n-event report should be
+     * merged. Otherwise forward the n-event report directly.
+     */
+    private void processNEventReportRQ(Association asAccepted,
+            PresentationContext pc, Dimse dimse, Attributes rq, Attributes data)
+            throws IOException {
+        ProxyAEExtension proxyAEE = (ProxyAEExtension) asAccepted
+                .getApplicationEntity().getAEExtension(ProxyAEExtension.class);
         String transactionUID = data.getString(Tag.TransactionUID);
-        File nactionRqFile = getNactionRQFile(proxyAEE, transactionUID, asAccepted.getRemoteAET());
+        File nactionRqFile = getNactionRQFile(proxyAEE, transactionUID,
+                asAccepted.getRemoteAET());
         if (nactionRqFile == null || !nactionRqFile.exists()) {
-            LOG.debug(asAccepted + ": found no matching N-ACTION-RQ for N-EVENT-REPORT-RQ from "
+            LOG.debug(asAccepted
+                    + ": found no matching N-ACTION-RQ for N-EVENT-REPORT-RQ from "
                     + asAccepted.getRemoteAET());
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(rq, Status.InvalidArgumentValue));
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(rq, Status.InvalidArgumentValue));
             return;
         }
-        if (hasPendingNActionRQ(proxyAEE, new File(proxyAEE.getNactionDirectoryPath(), transactionUID)) 
-                || requiresMergeNEventReportRQ(proxyAEE, new File(proxyAEE.getNeventDirectoryPath(), transactionUID)))
-            storeNEventReportRQ(proxyAEE, asAccepted, pc, rq, data, transactionUID, nactionRqFile);
+        if (hasPendingNActionRQ(proxyAEE,
+                new File(proxyAEE.getNactionDirectoryPath(), transactionUID))
+                || requiresMergeNEventReportRQ(proxyAEE,
+                        new File(proxyAEE.getNeventDirectoryPath(),
+                                transactionUID)))
+            storeNEventReportRQ(proxyAEE, asAccepted, pc, rq, data,
+                    transactionUID, nactionRqFile);
         else {
-            forwardNEventReportRQ(proxyAEE, asAccepted, pc, rq, data, nactionRqFile);
+            forwardNEventReportRQ(proxyAEE, asAccepted, pc, rq, data,
+                    nactionRqFile);
         }
     }
 
-    private void storeNEventReportRQ(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
-            Attributes rq, Attributes data, String transactionUID, File nactionRqFile) throws IOException {
-        Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, nactionRqFile);
-        createRQFile(proxyAEE, asAccepted, rq, data, ".nevent", asAccepted.getCalledAET(),
-                asAccepted.getRemoteAET(), proxyAEE.getNeventDirectoryPath(), prop.getProperty("source-aet"));
-        asAccepted.writeDimseRSP(pc, Commands.mkNEventReportRSP(rq, Status.Success));
+    /* Triggers the creation of the nevent file */
+    private void storeNEventReportRQ(ProxyAEExtension proxyAEE,
+            Association asAccepted, PresentationContext pc, Attributes rq,
+            Attributes data, String transactionUID, File nactionRqFile)
+            throws IOException {
+        Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE,
+                nactionRqFile);
+        createRQFile(proxyAEE, asAccepted, rq, data, ".nevent",
+                asAccepted.getCalledAET(), asAccepted.getRemoteAET(),
+                proxyAEE.getNeventDirectoryPath(),
+                prop.getProperty("source-aet"));
+        asAccepted.writeDimseRSP(pc,
+                Commands.mkNEventReportRSP(rq, Status.Success));
     }
 
-    public static boolean hasPendingNActionRQ(ProxyAEExtension proxyAEE, File transactionUidDir) throws IOException {
+    /*
+     * searches for files in the naction directory which will be the case if
+     * more nactions are to be sent first in this case a merge for n-event
+     * reports is necessary
+     */
+    public static boolean hasPendingNActionRQ(ProxyAEExtension proxyAEE,
+            File transactionUidDir) throws IOException {
         if (transactionUidDir.exists()) {
             try {
                 return transactionUidDir.list().length > 0;
             } catch (Exception e) {
-                LOG.debug("Error reading from {}, possibly removed meanwhile", transactionUidDir);
+                LOG.debug("Error reading from {}, possibly removed meanwhile",
+                        transactionUidDir);
             }
         }
         return false;
     }
 
-    public static boolean hasPendingNEventReportRQ(ProxyAEExtension proxyAEE, File transactionUidDir) throws IOException {
+    /*
+     * searches for files in the event directory (used by the scheduler to
+     * determine if more nevents are to be forwarded)
+     */
+    public static boolean hasPendingNEventReportRQ(ProxyAEExtension proxyAEE,
+            File transactionUidDir) throws IOException {
         if (transactionUidDir.exists()) {
             try {
                 for (String calledAET : transactionUidDir.list()) {
-                    File[] neventFiles = new File(transactionUidDir, calledAET).listFiles(neventFileFilter());
+                    File[] neventFiles = new File(transactionUidDir, calledAET)
+                            .listFiles(neventFileFilter());
                     if (neventFiles == null || neventFiles.length == 0)
                         return true;
                 }
             } catch (Exception e) {
-                LOG.debug("Error reading from {}, possibly removed meanwhile", transactionUidDir);
+                LOG.debug("Error reading from {}, possibly removed meanwhile",
+                        transactionUidDir);
             }
         }
         return false;
     }
 
-    private static boolean requiresMergeNEventReportRQ(ProxyAEExtension proxyAEE, File transactionUidDir)
+    /*
+     * searches for files in the naction directory which will be the case if
+     * more nactions are to be sent first in this case a merge for n-event
+     * reports is necessary
+     */
+    private static boolean requiresMergeNEventReportRQ(
+            ProxyAEExtension proxyAEE, File transactionUidDir)
             throws IOException {
-        return transactionUidDir.exists() 
-                ? transactionUidDir.list() != null 
-                    ? transactionUidDir.list().length > 1 
-                    : false 
+        return transactionUidDir.exists() ? transactionUidDir.list() != null ? transactionUidDir
+                .list().length > 1 : false
                 : false;
     }
 
-    public static File getNactionRQFile(ProxyAEExtension proxyAEE, String transactionUID, String calledAET)
-            throws IOException {
+    /*
+     * Here retrieve the file for an naction request using the transactionUID
+     * (file identifier) and calledAET (folder)
+     */
+    public static File getNactionRQFile(ProxyAEExtension proxyAEE,
+            String transactionUID, String calledAET) throws IOException {
         for (String tsUIDDir : proxyAEE.getNeventDirectoryPath().list()) {
             if (tsUIDDir.equals(transactionUID)) {
-                File dir = new File(proxyAEE.getNeventDirectoryPath(), transactionUID + proxyAEE.getSeparator()
-                        + calledAET);
+                File dir = new File(proxyAEE.getNeventDirectoryPath(),
+                        transactionUID + proxyAEE.getSeparator() + calledAET);
                 if (dir.exists()) {
                     String[] files = dir.list(nactionFileFilter());
                     if (files.length == 0)
                         LOG.error("No naction file in {}", dir.getPath());
                     else if (files.length > 1)
-                        LOG.error("Cannot determine naction file: too many files with suffix *.naction in {}",
+                        LOG.error(
+                                "Cannot determine naction file: too many files with suffix *.naction in {}",
                                 dir.getPath());
                     else
                         return new File(dir, files[0]);
@@ -303,6 +428,9 @@ public class StgCmt extends AbstractDicomService {
         return null;
     }
 
+    /*
+     * File filter for .naction extension (.naction is a request)
+     */
     public static FilenameFilter nactionFileFilter() {
         return new FilenameFilter() {
 
@@ -323,18 +451,27 @@ public class StgCmt extends AbstractDicomService {
         };
     }
 
-    private boolean pendingFileForwarding(ProxyAEExtension proxyAEE, String destinationAET, Attributes eventInfo)
-            throws IOException {
+    /*
+     * checks for pending c-stores to be sent that should be forwarded before a
+     * storage commitment can be forwarded sometimes the instances queried for
+     * in the storage commitment may be scheduled for later forwarding therefore
+     * here if such files are awaiting forwarding, the storage commitment will
+     * be scheduled not directly forwarded.
+     */
+    private boolean pendingFileForwarding(ProxyAEExtension proxyAEE,
+            String destinationAET, Attributes eventInfo) throws IOException {
         File dir = new File(proxyAEE.getCStoreDirectoryPath(), destinationAET);
         if (!dir.exists())
             return false;
 
         String[] files = dir.list();
-        Sequence referencedSOPSequence = eventInfo.getSequence(Tag.ReferencedSOPSequence);
+        Sequence referencedSOPSequence = eventInfo
+                .getSequence(Tag.ReferencedSOPSequence);
         Iterator<Attributes> it = referencedSOPSequence.iterator();
         while (it.hasNext()) {
             Attributes item = it.next();
-            String referencedSOPInstanceUID = item.getString(Tag.ReferencedSOPInstanceUID);
+            String referencedSOPInstanceUID = item
+                    .getString(Tag.ReferencedSOPInstanceUID);
             for (String file : files)
                 if (file.startsWith(referencedSOPInstanceUID))
                     return true;
@@ -342,60 +479,91 @@ public class StgCmt extends AbstractDicomService {
         return false;
     }
 
-    private void forwardNEventReportRQ(ProxyAEExtension proxyAEE, Association asAccepted, PresentationContext pc,
-            Attributes data, final Attributes eventInfo, File nactionRqFile) {
+    /*
+     * Creates a new connection to the destination and adds the Forward
+     * Association property later on used by On NEvent Report (simmilar to what
+     * happens with processing naction request for single destination)
+     */
+    private void forwardNEventReportRQ(ProxyAEExtension proxyAEE,
+            Association asAccepted, PresentationContext pc, Attributes data,
+            final Attributes eventInfo, File nactionRqFile) {
         String calledAEString = null;
         try {
-            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, nactionRqFile);
+            Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE,
+                    nactionRqFile);
             calledAEString = prop.getProperty("source-aet");
             ApplicationEntity ae = asAccepted.getApplicationEntity();
-            ApplicationEntity calledAE = aeCache.findApplicationEntity(calledAEString);
-            AAssociateRQ rqCopy = ForwardConnectionUtils.copyOfMatchingAAssociateRQ(asAccepted);
+            ApplicationEntity calledAE = aeCache
+                    .findApplicationEntity(calledAEString);
+            AAssociateRQ rqCopy = ForwardConnectionUtils
+                    .copyOfMatchingAAssociateRQ(asAccepted);
             rqCopy.setCalledAET(calledAEString);
             if (!ae.getAETitle().equals("*"))
                 rqCopy.setCallingAET(ae.getAETitle());
-            rqCopy.addRoleSelection(new RoleSelection(UID.StorageCommitmentPushModelSOPClass, true, true));
+            rqCopy.addRoleSelection(new RoleSelection(
+                    UID.StorageCommitmentPushModelSOPClass, true, true));
             Association asInvoked = ae.connect(calledAE, rqCopy);
-            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asAccepted);
-            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION, asInvoked);
-            onNEventReportRQ(asAccepted, asInvoked, pc, data, eventInfo, nactionRqFile);
+            asInvoked.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION,
+                    asAccepted);
+            asAccepted.setProperty(ProxyAEExtension.FORWARD_ASSOCIATION,
+                    asInvoked);
+            onNEventReportRQ(asAccepted, asInvoked, pc, data, eventInfo,
+                    nactionRqFile);
         } catch (AAssociateRJ e) {
-            LOG.error(asAccepted + ": rejected association to forward AET: " + e.getReason());
+            LOG.error(asAccepted + ": rejected association to forward AET: "
+                    + e.getReason());
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(data, Status.Success));
         } catch (IOException e) {
-            LOG.error("{}: error connecting to {}: {}", new Object[] { asAccepted, calledAEString, e.getMessage() });
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            LOG.error("{}: error connecting to {}: {}", new Object[] {
+                    asAccepted, calledAEString, e.getMessage() });
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(data, Status.Success));
         } catch (ConfigurationException e) {
             LOG.error("{}: error loading AET {} from configuration: {}",
                     new Object[] { asAccepted, calledAEString, e.getMessage() });
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(data, Status.Success));
         } catch (InterruptedException e) {
             LOG.error("{}: {}", asAccepted, e.getMessage());
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(data, Status.Success));
         } catch (IncompatibleConnectionException e) {
             LOG.error("{}: incompatible connection to forward AET {}: {}",
                     new Object[] { asAccepted, calledAEString, e.getMessage() });
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(data, Status.Success));
         } catch (GeneralSecurityException e) {
-            LOG.error("{}: error creating SSL context: {}", asAccepted, e.getMessage());
-            abortForward(pc, asAccepted, Commands.mkNEventReportRSP(data, Status.Success));
+            LOG.error("{}: error creating SSL context: {}", asAccepted,
+                    e.getMessage());
+            abortForward(pc, asAccepted,
+                    Commands.mkNEventReportRSP(data, Status.Success));
         }
     }
 
-    private void abortForward(PresentationContext pc, Association asAccepted, Attributes response) {
+    /* closes the association with the caller and aborts the forward */
+    private void abortForward(PresentationContext pc, Association asAccepted,
+            Attributes response) {
         try {
             asAccepted.writeDimseRSP(pc, response);
         } catch (IOException e) {
-            LOG.error(asAccepted + ": error forwarding storage commitment: " + e.getMessage());
+            LOG.error(asAccepted + ": error forwarding storage commitment: "
+                    + e.getMessage());
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
         }
     }
 
-    private void onNEventReportRQ(final Association asAccepted, Association asInvoked, final PresentationContext pc,
-            Attributes rq, Attributes data, final File nactionRqFile) throws IOException, InterruptedException {
+    /*
+     * creates n-event report request and forwards N-event report response from
+     * the destination to the caller and deletes n-action files
+     */
+    private void onNEventReportRQ(final Association asAccepted,
+            Association asInvoked, final PresentationContext pc, Attributes rq,
+            Attributes data, final File nactionRqFile) throws IOException,
+            InterruptedException {
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
@@ -403,65 +571,88 @@ public class StgCmt extends AbstractDicomService {
         int msgId = rq.getInt(Tag.MessageID, 0);
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
-            public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
+            public void onDimseRSP(Association asInvoked, Attributes cmd,
+                    Attributes data) {
                 super.onDimseRSP(asInvoked, cmd, data);
                 try {
                     asAccepted.writeDimseRSP(pc, cmd, data);
                     deleteFile(asAccepted, nactionRqFile);
                 } catch (IOException e) {
                     int status = cmd.getInt(Tag.Status, -1);
-                    LOG.error("{}: failed to forward N-EVENT-REPORT-RQ with error status {}", new Object[] {
-                            asAccepted, Integer.toHexString(status) + 'H' });
+                    LOG.error(
+                            "{}: failed to forward N-EVENT-REPORT-RQ with error status {}",
+                            new Object[] { asAccepted,
+                                    Integer.toHexString(status) + 'H' });
                     if (LOG.isDebugEnabled())
                         e.printStackTrace();
                 }
             }
         };
-        asInvoked.neventReport(cuid, iuid, eventTypeId, data,
-                ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+        asInvoked
+                .neventReport(cuid, iuid, eventTypeId, data,
+                        ForwardConnectionUtils.getMatchingTsuid(asInvoked,
+                                tsuid, cuid), rspHandler);
     }
 
-    private void onNActionRQ(final Association asAccepted, final Association asInvoked, final PresentationContext pc,
-            final Attributes rq, final Attributes data) throws IOException, InterruptedException {
+    /*
+     * creates n-action request and forwards N-action response from the
+     * destination to the caller and deletes n-action files the .snd files are
+     * then renamed to .naction to be used by the n-event report process.
+     */
+    private void onNActionRQ(final Association asAccepted,
+            final Association asInvoked, final PresentationContext pc,
+            final Attributes rq, final Attributes data) throws IOException,
+            InterruptedException {
         int actionTypeId = rq.getInt(Tag.ActionTypeID, 0);
         String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.RequestedSOPClassUID);
         String iuid = rq.getString(Tag.RequestedSOPInstanceUID);
         int msgId = rq.getInt(Tag.MessageID, 0);
-        final ProxyAEExtension proxyAEE = (ProxyAEExtension) asAccepted.getApplicationEntity().getAEExtension(
-                ProxyAEExtension.class);
-        final File file = createRQFile(proxyAEE, asAccepted, rq, data, ".snd", asInvoked.getCallingAET(),
-                asInvoked.getCalledAET(), proxyAEE.getNactionDirectoryPath(), null);
+        final ProxyAEExtension proxyAEE = (ProxyAEExtension) asAccepted
+                .getApplicationEntity().getAEExtension(ProxyAEExtension.class);
+        final File file = createRQFile(proxyAEE, asAccepted, rq, data, ".snd",
+                asInvoked.getCallingAET(), asInvoked.getCalledAET(),
+                proxyAEE.getNactionDirectoryPath(), null);
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
-            public void onDimseRSP(Association as, Attributes cmd, Attributes rspData) {
+            public void onDimseRSP(Association as, Attributes cmd,
+                    Attributes rspData) {
                 super.onDimseRSP(as, cmd, rspData);
                 int status = cmd.getInt(Tag.Status, -1);
-                String filePath = file.getPath();
                 switch (status) {
                 case Status.Success: {
-                    ForwardRule rule = (ForwardRule) asInvoked.getProperty(ProxyAEExtension.FORWARD_RULE);
-                    String proxyAET = proxyAEE.getApplicationEntity().getAETitle();
+                    ForwardRule rule = (ForwardRule) asInvoked
+                            .getProperty(ProxyAEExtension.FORWARD_RULE);
+                    String proxyAET = proxyAEE.getApplicationEntity()
+                            .getAETitle();
                     String callingAET = rule.getUseCallingAET();
                     if (callingAET != null && callingAET.equals(proxyAET)) {
-                        // n-event-report-rq will come to this proxy AET, save n-action-rq
+                        // n-event-report-rq will come to this proxy AET, save
+                        // n-action-rq
                         try {
                             String fileName = file.getName();
-                            File destDir = new File(proxyAEE.getNeventDirectoryPath(),
-                                    data.getString(Tag.TransactionUID) + proxyAEE.getSeparator()
+                            File destDir = new File(
+                                    proxyAEE.getNeventDirectoryPath(),
+                                    data.getString(Tag.TransactionUID)
+                                            + proxyAEE.getSeparator()
                                             + asInvoked.getRemoteAET());
                             destDir.mkdirs();
-                            File dest = new File(destDir, fileName.substring(0, fileName.lastIndexOf('.')) + ".naction");
-                            renameFile(asAccepted, file, filePath, destDir, dest);
+                            File dest = new File(destDir, fileName.substring(0,
+                                    fileName.lastIndexOf('.')) + ".naction");
+                            renameFile(asAccepted, file, destDir,
+                                    dest);
                         } catch (IOException e) {
-                            LOG.error("{}: could not save NEventReportRQ: {}", new Object[] { asAccepted, e });
+                            LOG.error("{}: could not save NEventReportRQ: {}",
+                                    new Object[] { asAccepted, e });
                             if (LOG.isDebugEnabled())
                                 e.printStackTrace();
                             break;
                         }
                     } else {
-                        // n-event-report-rq will not come back to this proxy AET, don't need to save n-action-rq
-                        LOG.debug("{}: delete forwarded N-ACTION-RQ due to Calling AET ({}) != Proxy AET ({})",
+                        // n-event-report-rq will not come back to this proxy
+                        // AET, don't need to save n-action-rq
+                        LOG.debug(
+                                "{}: delete forwarded N-ACTION-RQ due to Calling AET ({}) != Proxy AET ({})",
                                 new Object[] { as, callingAET, proxyAET });
                         deleteFile(asAccepted, file);
                     }
@@ -471,25 +662,35 @@ public class StgCmt extends AbstractDicomService {
                         if (path.list().length == 0)
                             path.delete();
                     } catch (IOException e) {
-                        LOG.error(asAccepted + ": failed to forward N-ACTION-RSP: " + e.getMessage());
+                        LOG.error(asAccepted
+                                + ": failed to forward N-ACTION-RSP: "
+                                + e.getMessage());
                         if (LOG.isDebugEnabled())
                             e.printStackTrace();
                     }
                     break;
                 }
                 default: {
-                    LOG.warn("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { asAccepted,
-                            file, Integer.toHexString(status) + 'H' });
-                    File error = new File(filePath + '.' + Integer.toHexString(status) + 'H');
+                    LOG.warn(
+                            "{}: failed to forward N-ACTION file {} with error status {}",
+                            new Object[] { asAccepted, file,
+                                    Integer.toHexString(status) + 'H' });
+                    File error = new File(file.getPath() + '.'
+                            + Integer.toHexString(status) + 'H');
                     if (file.renameTo(error))
-                        LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted, filePath, error.getPath() });
+                        LOG.debug("{}: RENAME {} to {}", new Object[] {
+                                asAccepted, file.getPath(), error.getPath() });
                     else
-                        LOG.debug("{}: failed to RENAME {} to {}",
-                                new Object[] { asAccepted, filePath, error.getPath() });
+                        LOG.debug(
+                                "{}: failed to RENAME {} to {}",
+                                new Object[] { asAccepted, file.getPath(),
+                                        error.getPath() });
                     try {
                         asAccepted.writeDimseRSP(pc, cmd);
                     } catch (IOException e) {
-                        LOG.error(asAccepted + ": Failed to forward N-ACTION-RSP: " + e.getMessage());
+                        LOG.error(asAccepted
+                                + ": Failed to forward N-ACTION-RSP: "
+                                + e.getMessage());
                         if (LOG.isDebugEnabled())
                             e.printStackTrace();
                     }
@@ -497,12 +698,24 @@ public class StgCmt extends AbstractDicomService {
                 }
             }
         };
-        asInvoked.naction(cuid, iuid, actionTypeId, data,
-                ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+        asInvoked
+                .naction(cuid, iuid, actionTypeId, data, ForwardConnectionUtils
+                        .getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
     }
 
-    protected File createRQFile(ProxyAEExtension proxyAEE, Association asAccepted, Attributes rq, Attributes data,
-            String suffix, String callingAET, String calledAET, File parent, String neventDestinationAET) throws IOException {
+    /*
+     * Here create the request file as follows: .dcm means files were not
+     * forwarded yet for single or multiple destinations .nevent is a scheduled
+     * nevent report not yet sent .snd is a file that has started its
+     * association with the destination (can stay .snd until deleted or change
+     * to .conn$i on failure due to connection reasons or to error code)
+     * 
+     * The method is also responsible for the creation of .info files
+     */
+    protected File createRQFile(ProxyAEExtension proxyAEE,
+            Association asAccepted, Attributes rq, Attributes data,
+            String suffix, String callingAET, String calledAET, File parent,
+            String neventDestinationAET) throws IOException {
         String tsUID = data.getString(Tag.TransactionUID);
         File dir = new File(parent, tsUID + proxyAEE.getSeparator() + calledAET);
         if (!dir.exists()) {
@@ -520,12 +733,15 @@ public class StgCmt extends AbstractDicomService {
             String iuid = UID.StorageCommitmentPushModelSOPInstance;
             String cuid = UID.StorageCommitmentPushModelSOPClass;
             String tsuid = UID.ExplicitVRLittleEndian;
-            Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid, tsuid);
-            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE, asAccepted.getCallingAET());
+            Attributes fmi = Attributes.createFileMetaInformation(iuid, cuid,
+                    tsuid);
+            fmi.setString(Tag.SourceApplicationEntityTitle, VR.AE,
+                    asAccepted.getCallingAET());
             LOG.debug("{}: create {}", asAccepted, file.getPath());
             stream.writeDataset(fmi, data);
         } catch (Exception e) {
-            LOG.error("{}: Failed to create file {}: {}", new Object[] { asAccepted, file, e });
+            LOG.error("{}: Failed to create file {}: {}", new Object[] {
+                    asAccepted, file, e });
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
             file.delete();
@@ -559,7 +775,9 @@ public class StgCmt extends AbstractDicomService {
             prop.store(infoOut, null);
             return file;
         } catch (Exception e) {
-            LOG.error(asAccepted + ": Failed to create transaction UID info-file: " + e.getMessage());
+            LOG.error(asAccepted
+                    + ": Failed to create transaction UID info-file: "
+                    + e.getMessage());
             if (LOG.isDebugEnabled())
                 e.printStackTrace();
             file.delete();
@@ -570,35 +788,49 @@ public class StgCmt extends AbstractDicomService {
         }
     }
 
+    /*
+     * Used to delete the files if the destination forwards to another
+     * destination (calling aet not equal to proxy)
+     */
     private void deleteFile(Association as, File file) {
         if (file.delete())
             LOG.debug("{}: DELETE {}", new Object[] { as, file });
         else {
             LOG.error("{}: failed to DELETE {}", new Object[] { as, file });
         }
-        File info = new File(file.getPath().substring(0, file.getPath().lastIndexOf('.')) + ".info");
+        File info = new File(file.getParent(),file.getName().substring(0,
+                file.getName().lastIndexOf('.'))
+                + ".info");
         if (info.delete())
             LOG.debug("{}: DELETE {}", as, info);
         else
             LOG.error("{}: failed to DELETE {}", as, info);
     }
 
-    private void renameFile(final Association asAccepted, final File file, String filePath, File destDir, File dest) {
+    /*
+     * Used to rename .snd file to .naction in the nevent directory (basically a
+     * move since it's a different directory)
+     */
+    private void renameFile(final Association asAccepted, final File file,
+            File destDir, File dest) {
         if (file.renameTo(dest)) {
             dest.setLastModified(System.currentTimeMillis());
             LOG.debug("{}: RENAME {} to {}",
                     new Object[] { asAccepted, file.getPath(), dest.getPath() });
-            File infoFile = new File(filePath.substring(0, filePath.lastIndexOf('.')) + ".info");
+            File infoFile = new File(file.getParent(),file.getName().substring(0,
+                    file.getName().lastIndexOf('.'))
+                    + ".info");
             File infoFileDest = new File(destDir, infoFile.getName());
             if (infoFile.renameTo(infoFileDest))
-                LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted, infoFile.getPath(),
-                        infoFileDest.getPath() });
+                LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted,
+                        infoFile.getPath(), infoFileDest.getPath() });
             else
                 LOG.error("{}: failed to RENAME {} to {}",
-                        new Object[] { asAccepted, infoFile.getPath(), infoFileDest.getPath() });
+                        new Object[] { asAccepted, infoFile.getPath(),
+                                infoFileDest.getPath() });
         } else
-            LOG.error("{}: failed to RENAME {} to {}",
-                    new Object[] { asAccepted, file.getPath(), dest.getPath() });
+            LOG.error("{}: failed to RENAME {} to {}", new Object[] {
+                    asAccepted, file.getPath(), dest.getPath() });
     }
 
 }

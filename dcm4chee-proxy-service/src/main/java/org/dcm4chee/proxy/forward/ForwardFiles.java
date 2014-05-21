@@ -524,7 +524,7 @@ public class ForwardFiles {
                         if (proxyAEE.isDeleteFailedDataWithoutRetryConfiguration())
                             deleteFailedFile(proxyAEE, calledAET, file,
                                     ": delete files without retry configuration is ENABLED", 0);
-                        else
+                        else 
                             moveToNoRetryPath(proxyAEE, calledAET, file, ": delete files without retry configuration is DISABLED");
                     else if (checkNumberOfRetries(proxyAEE, matchingRetry, suffix, file, calledAET)
                             && checkSendFileDelay(now, file, matchingRetry))
@@ -610,14 +610,14 @@ public class ForwardFiles {
         File dstDir = new File(path.substring(0, path.indexOf(calledAET)) + proxyAEE.getFallbackDestinationAET());
         dstDir.mkdir();
         String fileName = file.getName();
-        File dst = new File(dstDir, fileName.substring(0, fileName.indexOf(".")) + ".dcm");
+        File dst = new File(dstDir, fileName.substring(0, fileName.lastIndexOf(".")) + ".dcm");
         if (file.renameTo(dst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { file, dst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dst });
-        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.')) + ".info");
-        File infoDst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.lastIndexOf('.')) + ".info");
+        File infoDst = new File(dstDir, fileName.substring(0, fileName.lastIndexOf('.')) + ".info");
         if (infoFile.renameTo(infoDst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { infoFile, infoDst, reason, proxyAEE.getFallbackDestinationAET() });
@@ -636,7 +636,7 @@ public class ForwardFiles {
         for (File nSetInfoFile : nSetInfoFiles) {
             Properties nSetProp = InfoFileUtils.getFileInfoProperties(proxyAEE, nSetInfoFile);
             if (nSetProp.getProperty("sop-instance-uid").equals(sopInstanceUID))
-                return new File(nSetInfoFile.getPath().substring(0, nSetInfoFile.getPath().indexOf('.')) + ".dcm");
+                return new File(nSetInfoFile.getParent(),nSetInfoFile.getName().substring(0, nSetInfoFile.getName().lastIndexOf('.')) + ".dcm");
         }
         return null;
     }
@@ -680,8 +680,8 @@ public class ForwardFiles {
                     new Object[] { file, dstFile, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dstFile });
-        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
-        File infoDst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+        File infoDst = new File(dstDir, fileName.substring(0, fileName.lastIndexOf('.')) + ".info");
         if (infoFile.renameTo(infoDst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { infoFile, infoDst, reason, proxyAEE.getFallbackDestinationAET() });
@@ -714,7 +714,7 @@ public class ForwardFiles {
                 return;
             }
             
-            File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
+            File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
             if (infoFile.delete())
                 LOG.debug("Delete {}", infoFile);
             else
@@ -740,7 +740,7 @@ public class ForwardFiles {
                         LOG.error("Failed to delete {}", nSetFile);
                         return;
                     }
-                    File infoFile = new File(nSetFile.getPath().substring(0, nSetFile.getPath().indexOf('.')) + ".info");
+                    File infoFile = new File(nSetFile.getPath().substring(0, nSetFile.getPath().lastIndexOf('.')) + ".info");
                     if (infoFile.delete())
                         LOG.debug("Delete {}", infoFile);
                     else
@@ -1121,12 +1121,12 @@ public class ForwardFiles {
                         }
                         destDir.mkdirs();
                         String fileName = file.getName();
-                        File dest = new File(destDir, fileName.substring(0, fileName.indexOf('.'))
+                        File dest = new File(destDir, fileName.substring(0, fileName.lastIndexOf('.'))
                                 + ".naction");
                         if (file.renameTo(dest)) {
                             dest.setLastModified(System.currentTimeMillis());
                             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
-                            File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.'))  + ".info");
+                            File infoFile = new File(file.getParent(), fileName.substring(0, fileName.lastIndexOf('.'))  + ".info");
                             File infoFileDest = new File(destDir, infoFile.getName());
                             if (infoFile.renameTo(infoFileDest))
                                 LOG.debug("{}: RENAME {} to {}",
@@ -1503,7 +1503,7 @@ public class ForwardFiles {
             LOG.debug("{}: delete {}", as, file);
         else
             LOG.debug("{}: failed to delete {}", as, file);
-        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
         if (infoFile.delete())
             LOG.debug("{}: delete {}", as, infoFile);
         else
@@ -1518,7 +1518,7 @@ public class ForwardFiles {
             LOG.debug("Delete {}", file);
         else
             LOG.debug("Failed to delete {}", file);
-        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
         if (infoFile.delete())
             LOG.debug("Delete {}", infoFile);
         else
