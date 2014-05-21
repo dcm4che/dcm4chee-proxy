@@ -79,12 +79,10 @@ import org.dcm4che3.net.AssociationStateException;
 import org.dcm4che3.net.Commands;
 import org.dcm4che3.net.Dimse;
 import org.dcm4che3.net.DimseRSPHandler;
-import org.dcm4che3.net.PDVInputStream;
 import org.dcm4che3.net.Status;
 import org.dcm4che3.net.audit.AuditLogger;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.net.service.AbstractDicomService;
-import org.dcm4che3.net.service.DicomService;
 import org.dcm4che3.net.service.DicomServiceException;
 import org.dcm4che3.util.StringUtils;
 import org.dcm4che3.util.UIDUtils;
@@ -253,7 +251,7 @@ public class Mpps extends AbstractDicomService {
                 Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, file);
                 String fileInstanceUID = prop.getProperty("sop-instance-uid");
                 if (fileInstanceUID.equals(iuid))
-                    return new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".ncreate");
+                    return new File(file.getParent(),file.getName().substring(0, file.getName().lastIndexOf('.')) + ".ncreate");
             }
         }
         return null;
@@ -264,7 +262,7 @@ public class Mpps extends AbstractDicomService {
             LOG.debug("{}: DELETE {}", as, file.getPath());
         else
             LOG.error("{}: failed to DELETE {}", as, file.getPath());
-        File info = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+        File info = new File(file.getParent(),file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
         if (info.delete())
             LOG.debug("{}: DELETE {}", as, info);
         else
