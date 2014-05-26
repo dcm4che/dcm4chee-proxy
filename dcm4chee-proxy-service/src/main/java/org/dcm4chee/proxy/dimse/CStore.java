@@ -351,7 +351,7 @@ public class CStore extends BasicCStoreSCP {
         LOG.debug("{}: rename {} to {}", new Object[]{asAccepted, file.getPath(), dst.getPath()});
         if (file.renameTo(dst)) {
             File infoFile = new File(proxyAEE.getCStoreDirectoryPath(), file.getName().substring(0,
-                    file.getName().indexOf('.')) + ".info");
+                    file.getName().lastIndexOf('.')) + ".info");
             File infoDst = new File(dir, infoFile.getName());
             infoFile.renameTo(infoDst);
             asAccepted.writeDimseRSP(pc, Commands.mkCStoreRSP(rq, Status.Success));
@@ -577,8 +577,30 @@ public class CStore extends BasicCStoreSCP {
                     } catch (IOException e) {
                         LOG.error(asInvoked + ": Failed to forward C-STORE RSP: " + e.getMessage());
                     } finally {
-                        if (cmd.getInt(Tag.Status, -1) == Status.Success && dataFile != null && dataFile.exists())
+                        if(dataFile != null && dataFile.exists()){
+                        if (cmd.getInt(Tag.Status, -1) == Status.Success ) //
                             deleteFile(asAccepted, dataFile);
+                        else if(cmd.getInt(Tag.Status, -1) != Status.Success)
+                        {
+                            //rename file to un expected error file
+                            try {
+                                File baseDIR = new File(proxyAEE.getCStoreDirectoryPath(),calledAET);
+                                if(!baseDIR.exists())
+                                   baseDIR.mkdir(); 
+                                File destination = new File(baseDIR,dataFile.getName().substring(0, dataFile.getName().lastIndexOf(".")) + ".err");
+                                File infoFile = new File(dataFile.getParent(), dataFile.getName().substring(0, dataFile.getName().lastIndexOf(".")) +".info");
+                                File destinationInfo = new File(baseDIR,dataFile.getName().substring(0, dataFile.getName().lastIndexOf(".")) + ".info");
+                                if(dataFile.renameTo(destination) && infoFile.renameTo(destinationInfo))
+                                LOG.debug("Error processing C-Store [ERR:"+cmd.getInt(Tag.Status, -1)+"] moved files to .err at"+ destination);
+                                else
+                                    LOG.info("Error processing C-Store [ERR:"+cmd.getInt(Tag.Status, -1)+"] failed to move file to "+destination);
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                LOG.error("File not Found or can't create {} in C-Store DIR path", new Object[]{calledAET});
+                            }
+                            LOG.info("Unexpected error in forwarding C-Store");
+                        }
+                        }
                     }
                 }
             }
