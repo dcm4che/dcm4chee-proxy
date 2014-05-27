@@ -143,14 +143,10 @@ public class ProxyServlet extends HttpServlet {
                     Preferences prefs = prefsFactoryInstance.get().getPreferences();
                     LOG.info("Using custom Preferences implementation {}", prefs.getClass().toString());
                     prefsConfig = new PreferencesDicomConfiguration(prefs);
-                } else
+                } else {
                     prefsConfig = new PreferencesDicomConfiguration();
-                
-                String pf = System.getProperty("java.util.prefs.PreferencesFactory");
-                if (pf != null && pf.equals("org.dcm4che.jdbc.prefs.PreferencesFactoryImpl"))
-                    LOG.info("Using JDBC Preferences as Configuration Backend");
-                else
-                    LOG.info("Using Java Preferences as Configuration Backend");
+                    LOG.info("Using default Preferences implementation {}", prefsConfig.getRootPrefs().getClass().toString());
+                }
                 
                 PreferencesHL7Configuration hl7Conf = new PreferencesHL7Configuration();
                 prefsConfig.addDicomConfigurationExtension(hl7Conf);
