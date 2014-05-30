@@ -181,7 +181,7 @@
             <Value number="1">DCMR</Value>
           </DicomAttribute>
           <DicomAttribute keyword="TemplateIdentifier" tag="0040DB00" vr="CS">
-            <Value number="1">10001</Value>
+            <Value number="1">10006</Value>
           </DicomAttribute>
         </Item>
       </DicomAttribute>
