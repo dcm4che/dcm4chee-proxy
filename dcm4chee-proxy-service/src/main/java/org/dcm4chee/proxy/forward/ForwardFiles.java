@@ -452,7 +452,7 @@ public class ForwardFiles {
         } finally {
             stream.close();
         }
-        File infoFile = new File(mergeDir, file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+        File infoFile = new File(mergeDir, file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         FileOutputStream infoOut = new FileOutputStream(infoFile);
         try {
             LOG.debug("Create {}", infoFile);
@@ -616,8 +616,8 @@ public class ForwardFiles {
                     new Object[] { file, dst, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dst });
-        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.lastIndexOf('.')) + ".info");
-        File infoDst = new File(dstDir, fileName.substring(0, fileName.lastIndexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.')) + ".info");
+        File infoDst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".info");
         if (infoFile.renameTo(infoDst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { infoFile, infoDst, reason, proxyAEE.getFallbackDestinationAET() });
@@ -680,8 +680,8 @@ public class ForwardFiles {
                     new Object[] { file, dstFile, reason, proxyAEE.getFallbackDestinationAET() });
         else
             LOG.error("Failed to rename {} to {}", new Object[] { file, dstFile });
-        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
-        File infoDst = new File(dstDir, fileName.substring(0, fileName.lastIndexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
+        File infoDst = new File(dstDir, fileName.substring(0, fileName.indexOf('.')) + ".info");
         if (infoFile.renameTo(infoDst))
             LOG.debug("Rename {} to {} {} and fallback AET is {}",
                     new Object[] { infoFile, infoDst, reason, proxyAEE.getFallbackDestinationAET() });
@@ -714,7 +714,7 @@ public class ForwardFiles {
                 return;
             }
             
-            File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+            File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
             if (infoFile.delete())
                 LOG.debug("Delete {}", infoFile);
             else
@@ -740,7 +740,7 @@ public class ForwardFiles {
                         LOG.error("Failed to delete {}", nSetFile);
                         return;
                     }
-                    File infoFile = new File(nSetFile.getPath().substring(0, nSetFile.getPath().lastIndexOf('.')) + ".info");
+                    File infoFile = new File(nSetFile.getParent(),nSetFile.getName().substring(0, nSetFile.getName().indexOf('.')) + ".info");
                     if (infoFile.delete())
                         LOG.debug("Delete {}", infoFile);
                     else
@@ -1126,7 +1126,7 @@ public class ForwardFiles {
                         if (file.renameTo(dest)) {
                             dest.setLastModified(System.currentTimeMillis());
                             LOG.debug("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
-                            File infoFile = new File(file.getParent(), fileName.substring(0, fileName.lastIndexOf('.'))  + ".info");
+                            File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.'))  + ".info");
                             File infoFileDest = new File(destDir, infoFile.getName());
                             if (infoFile.renameTo(infoFileDest))
                                 LOG.debug("{}: RENAME {} to {}",

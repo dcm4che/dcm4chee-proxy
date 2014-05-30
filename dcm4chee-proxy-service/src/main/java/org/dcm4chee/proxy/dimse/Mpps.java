@@ -262,7 +262,7 @@ public class Mpps extends AbstractDicomService {
             LOG.debug("{}: DELETE {}", as, file.getPath());
         else
             LOG.error("{}: failed to DELETE {}", as, file.getPath());
-        File info = new File(file.getParent(),file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+        File info = new File(file.getParent(),file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         if (info.delete())
             LOG.debug("{}: DELETE {}", as, info);
         else

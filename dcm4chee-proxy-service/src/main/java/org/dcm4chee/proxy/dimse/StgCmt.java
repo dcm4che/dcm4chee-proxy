@@ -799,7 +799,7 @@ public class StgCmt extends AbstractDicomService {
             LOG.error("{}: failed to DELETE {}", new Object[] { as, file });
         }
         File info = new File(file.getParent(),file.getName().substring(0,
-                file.getName().lastIndexOf('.'))
+                file.getName().indexOf('.'))
                 + ".info");
         if (info.delete())
             LOG.debug("{}: DELETE {}", as, info);

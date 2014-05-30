@@ -170,7 +170,7 @@ public class CStore extends BasicCStoreSCP {
             LOG.debug("{}: delete {}", as, file);
         else
             LOG.debug("{}: failed to delete {}", as, file);
-        File info = new File(file.getPath().substring(0, file.getPath().indexOf('.')) + ".info");
+        File info = new File(file.getParent(),file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         if (info.delete())
             LOG.debug("{}: delete {}", as, info);
         else
