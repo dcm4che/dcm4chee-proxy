@@ -112,6 +112,7 @@ import org.dcm4chee.proxy.utils.ForwardConnectionUtils;
 import org.dcm4chee.proxy.utils.ForwardRuleUtils;
 import org.dcm4chee.proxy.utils.LogUtils;
 import org.dcm4chee.proxy.wado.MediaTypes;
+import org.netbeans.lib.cvsclient.request.SetRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,10 +202,10 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     }
 
     private Response response() {
-        if (sopSequence.isEmpty())
-            throw new WebApplicationException(Status.CONFLICT);
+//        if (sopSequence.isEmpty())
+//            throw new WebApplicationException(Status.CONFLICT);
 
-        return Response.status(failedSOPSequence.isEmpty() 
+        return Response.status(sopSequence.isEmpty()?Status.CONFLICT:failedSOPSequence.isEmpty() 
                     ? Status.OK 
                     : Status.ACCEPTED)
                 .entity(this).type(MediaTypes.APPLICATION_DICOM_XML_TYPE).build();
@@ -644,6 +645,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
             if (fwdRules.isEmpty())
                 setForwardRules(fileInfo.attrs, cuid, sourceAET);
             List<String> prevDestinationAETs = new ArrayList<>();
+            Attributes destAttrs = null;
             for (ForwardRule rule : fwdRules) {
                 if (rule.getUseCallingAET() != null)
                     prop.setProperty("use-calling-aet", rule.getUseCallingAET());
@@ -656,7 +658,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                         LOG.info("{}: Please check configured forward rules for overlapping time with duplicate destination AETs");
                         continue;
                     }
-                    Attributes destAttrs = AttributeCoercionUtils.coerceAttributes(proxyAEE, destinationAET, cuid,
+                    destAttrs = AttributeCoercionUtils.coerceAttributes(proxyAEE, destinationAET, cuid,
                             TransferCapability.Role.SCP, Dimse.C_STORE_RQ, fileInfo.attrs, this);
                     validateStudyIUID(destAttrs);
                     file = createDestinationAETFile(fileInfo.file.getName(), destinationAET);
@@ -664,6 +666,8 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                     storeInfoFile(prop, file);
                 }
             }
+            if(destAttrs!=null)
+            setSopRef(fmi, destAttrs);
         } catch (Exception e) {
             LOG.info("{}: Storage Failed {}", this, e);
             if (LOG.isDebugEnabled())

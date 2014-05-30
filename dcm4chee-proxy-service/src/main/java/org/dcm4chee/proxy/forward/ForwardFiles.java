@@ -1503,7 +1503,7 @@ public class ForwardFiles {
             LOG.debug("{}: delete {}", as, file);
         else
             LOG.debug("{}: failed to delete {}", as, file);
-        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         if (infoFile.delete())
             LOG.debug("{}: delete {}", as, infoFile);
         else
@@ -1518,7 +1518,7 @@ public class ForwardFiles {
             LOG.debug("Delete {}", file);
         else
             LOG.debug("Failed to delete {}", file);
-        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info");
+        File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
         if (infoFile.delete())
             LOG.debug("Delete {}", infoFile);
         else
