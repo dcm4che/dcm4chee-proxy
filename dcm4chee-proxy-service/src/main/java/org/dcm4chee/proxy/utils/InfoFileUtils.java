@@ -66,7 +66,12 @@ public class InfoFileUtils {
             if(f.endsWith(".info"))
             {
                 infoFileName = f;
+                break;
                 }
+        }
+        else
+        {
+            throw new FileNotFoundException("Unable to find information file");
         }
 //        String infoFileName = file.getName().substring(0, file.getName().lastIndexOf('.')) + ".info";
         return getPropertiesFromInfoFile(proxyAEE, file.getParent(), infoFileName);
