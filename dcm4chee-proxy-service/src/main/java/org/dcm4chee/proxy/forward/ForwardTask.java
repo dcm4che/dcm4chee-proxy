@@ -42,8 +42,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.dcm4che3.data.UID;
 import org.dcm4che3.net.pdu.AAssociateRQ;
-import org.dcm4che3.net.pdu.PresentationContext;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -60,11 +60,17 @@ class ForwardTask {
     }
 
     public void addFile(File file, String cuid, String tsuid) {
-        if (!aarq.containsPresentationContextFor(cuid, tsuid))
-            aarq.addPresentationContext(
-                    new PresentationContext(
-                            aarq.getNumberOfPresentationContexts() * 2 + 1,
-                            cuid, tsuid));
+        if (aarq.addPresentationContextFor(cuid, tsuid)) {
+            if (!UID.ExplicitVRLittleEndian.equals(tsuid))
+                aarq.addPresentationContextFor(cuid, UID.ExplicitVRLittleEndian);
+            if (!UID.ImplicitVRLittleEndian.equals(tsuid))
+                aarq.addPresentationContextFor(cuid, UID.ImplicitVRLittleEndian);
+        }
+//        if (!aarq.containsPresentationContextFor(cuid, tsuid))
+//            aarq.addPresentationContext(
+//                    new PresentationContext(
+//                            aarq.getNumberOfPresentationContexts() * 2 + 1,
+//                            cuid, tsuid));
         files.add(file);
     }
 
