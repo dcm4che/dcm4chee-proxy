@@ -71,4 +71,8 @@ public interface ProxyMBean {
     @GET
     @Path("getRegisteredAETs")
     String getRegisteredAETs() throws Exception;
+    
+    @GET
+    @Path("setTransferCapabilities")
+    String setTransferCapabilities() throws Exception;
 }

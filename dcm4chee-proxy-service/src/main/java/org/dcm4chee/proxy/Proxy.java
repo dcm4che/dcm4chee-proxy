@@ -48,6 +48,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.dcm4che3.audit.AuditMessage;
 import org.dcm4che3.audit.AuditMessages;
@@ -63,10 +64,17 @@ import org.dcm4che3.conf.api.DicomConfiguration;
 import org.dcm4che3.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che3.conf.api.hl7.HL7Configuration;
 import org.dcm4che3.net.ApplicationEntity;
+import org.dcm4che3.net.Association;
 import org.dcm4che3.net.DeviceService;
+import org.dcm4che3.net.TransferCapability;
+import org.dcm4che3.net.TransferCapability.Role;
 import org.dcm4che3.net.audit.AuditLogger;
+import org.dcm4che3.net.pdu.AAssociateAC;
+import org.dcm4che3.net.pdu.AAssociateRQ;
+import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.net.service.DicomServiceRegistry;
 import org.dcm4chee.proxy.audit.AuditLog;
+import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
 import org.dcm4chee.proxy.conf.ProxyDeviceExtension;
 import org.dcm4chee.proxy.dimse.CEcho;
@@ -113,15 +121,18 @@ public class Proxy extends DeviceService implements ProxyMBean {
     private final Mpps mpps;
     private final int restartTimeout = getRestartTimeout();
 
-    public Proxy(DicomConfiguration dicomConfiguration, HL7Configuration hl7configuration, String deviceName)
+    public Proxy(DicomConfiguration dicomConfiguration,
+            HL7Configuration hl7configuration, String deviceName)
             throws ConfigurationException {
         try {
             init(dicomConfiguration.findDevice(deviceName));
         } catch (ConfigurationNotFoundException e) {
-            LOG.error("Could not find configuration for proxy device {}", deviceName);
+            LOG.error("Could not find configuration for proxy device {}",
+                    deviceName);
             throw new ConfigurationNotFoundException(e);
         } catch (ConfigurationException e) {
-            LOG.error("Error loading configuration for proxy device {}", deviceName);
+            LOG.error("Error loading configuration for proxy device {}",
+                    deviceName);
             throw new ConfigurationException(e);
         }
         this.dicomConfiguration = dicomConfiguration;
@@ -131,11 +142,14 @@ public class Proxy extends DeviceService implements ProxyMBean {
         this.cecho = new CEcho();
         this.cstore = new CStore(aeCache, "*");
         this.stgcmt = new StgCmt(aeCache);
-        this.cfind = new CFind(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.1", "1.2.840.10008.5.1.4.1.2.2.1",
+        this.cfind = new CFind(aeCache, pixConsumer,
+                "1.2.840.10008.5.1.4.1.2.1.1", "1.2.840.10008.5.1.4.1.2.2.1",
                 "1.2.840.10008.5.1.4.1.2.3.1", "1.2.840.10008.5.1.4.31");
-        this.cget = new CGet(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.3", "1.2.840.10008.5.1.4.1.2.2.3",
+        this.cget = new CGet(aeCache, pixConsumer,
+                "1.2.840.10008.5.1.4.1.2.1.3", "1.2.840.10008.5.1.4.1.2.2.3",
                 "1.2.840.10008.5.1.4.1.2.3.3");
-        this.cmove = new CMove(aeCache, pixConsumer, "1.2.840.10008.5.1.4.1.2.1.2", "1.2.840.10008.5.1.4.1.2.2.2",
+        this.cmove = new CMove(aeCache, pixConsumer,
+                "1.2.840.10008.5.1.4.1.2.1.2", "1.2.840.10008.5.1.4.1.2.2.2",
                 "1.2.840.10008.5.1.4.1.2.3.2");
         this.mpps = new Mpps(device.getDeviceExtension(AuditLogger.class));
         device.setDimseRQHandler(serviceRegistry());
@@ -153,15 +167,18 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     @Override
-    public void start() throws Exception  {
+    public void start() throws Exception {
+        
         if (isRunning())
             return;
-
-        scheduler = new Scheduler(aeCache, device, new AuditLog(device.getDeviceExtension(AuditLogger.class)));
+        
+        scheduler = new Scheduler(aeCache, device, new AuditLog(
+                device.getDeviceExtension(AuditLogger.class)));
         resetSpoolFiles("start-up");
         super.start();
         scheduler.start();
         log(AuditMessages.EventTypeCode.ApplicationStart);
+        
     }
 
     @Override
@@ -190,7 +207,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 start();
             } catch (BindException e) {
                 if (count < 0) {
-                    LOG.error("Error restarting {}: {}", instance.getDevice().getDeviceName(), e.getMessage());
+                    LOG.error("Error restarting {}: {}", instance.getDevice()
+                            .getDeviceName(), e.getMessage());
                     return;
                 }
                 count--;
@@ -198,21 +216,26 @@ public class Proxy extends DeviceService implements ProxyMBean {
             }
         }
     }
-
+    
+    public String setTransferCapabilities() throws Exception
+    {
+       return autoConfigTransferCapabilities("DCM4CHEE-PROXY");
+    }
     public String getRegisteredAETs() throws Exception {
-        String registeredAETitles[] = dicomConfiguration.listRegisteredAETitles();
+        String registeredAETitles[] = dicomConfiguration
+                .listRegisteredAETitles();
         StringBuilder result = new StringBuilder();
         boolean separator = false;
-        result.append("{\n\"registeredAETs\": [");        
+        result.append("{\n\"registeredAETs\": [");
         for (String aet : registeredAETitles) {
-        	ApplicationEntity entity = aeCache.findApplicationEntity(aet);
-        	String description = "";
-        	if (entity != null && entity.getDescription() != null)
-        	{
-        		description = entity.getDescription();
-        	}
-        	result.append((separator ? "," : "") + "\n{\"aeTitle\": \"" + aet + "\",");
-        	result.append("\"description\": \"" + description + "\"}");
+            ApplicationEntity entity = aeCache.findApplicationEntity(aet);
+            String description = "";
+            if (entity != null && entity.getDescription() != null) {
+                description = entity.getDescription();
+            }
+            result.append((separator ? "," : "") + "\n{\"aeTitle\": \"" + aet
+                    + "\",");
+            result.append("\"description\": \"" + description + "\"}");
             separator = true;
         }
         result.append("\n]\n}");
@@ -220,11 +243,14 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     private static int getRestartTimeout() {
-        String timeoutString = System.getProperty("org.dcm4chee.proxy.restart.timeout");
+        String timeoutString = System
+                .getProperty("org.dcm4chee.proxy.restart.timeout");
         try {
-            return (timeoutString == null) ? 10 : Integer.parseInt(timeoutString);
+            return (timeoutString == null) ? 10 : Integer
+                    .parseInt(timeoutString);
         } catch (NumberFormatException e) {
-            LOG.error("{} ({})", new Object[] { e, "org.dcm4chee.proxy.restart.timeout" });
+            LOG.error("{} ({})", new Object[] { e,
+                    "org.dcm4chee.proxy.restart.timeout" });
             return 10;
         }
     }
@@ -234,27 +260,29 @@ public class Proxy extends DeviceService implements ProxyMBean {
         if (logger != null && logger.isInstalled()) {
             Calendar timeStamp = logger.timeStamp();
             try {
-                logger.write(timeStamp, createApplicationActivityMessage(logger, timeStamp, eventType));
+                logger.write(
+                        timeStamp,
+                        createApplicationActivityMessage(logger, timeStamp,
+                                eventType));
             } catch (Exception e) {
-                LOG.error("Failed to write audit log message: " + e.getMessage());
-                if(LOG.isDebugEnabled())
+                LOG.error("Failed to write audit log message: "
+                        + e.getMessage());
+                if (LOG.isDebugEnabled())
                     e.printStackTrace();
             }
         }
     }
 
-    
-    private AuditMessage createApplicationActivityMessage(AuditLogger logger, Calendar timeStamp,
-            EventTypeCode eventType) {
+    private AuditMessage createApplicationActivityMessage(AuditLogger logger,
+            Calendar timeStamp, EventTypeCode eventType) {
         AuditMessage msg = new AuditMessage();
-        msg.setEventIdentification(createEventIdentification(EventID.ApplicationActivity, 
-                EventActionCode.Execute,
-                timeStamp, 
-                EventOutcomeIndicator.Success, 
-                null, 
-                eventType));
-        msg.getAuditSourceIdentification().add(logger.createAuditSourceIdentification());
-        msg.getActiveParticipant().add(logger.createActiveParticipant(true, RoleIDCode.Application));
+        msg.setEventIdentification(createEventIdentification(
+                EventID.ApplicationActivity, EventActionCode.Execute,
+                timeStamp, EventOutcomeIndicator.Success, null, eventType));
+        msg.getAuditSourceIdentification().add(
+                logger.createAuditSourceIdentification());
+        msg.getActiveParticipant().add(
+                logger.createActiveParticipant(true, RoleIDCode.Application));
         return msg;
     }
 
@@ -271,9 +299,10 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     @Override
-    public void reload() throws IOException, GeneralSecurityException, ConfigurationException {
+    public void reload() throws Exception {
         scheduler.stop();
-        device.getDeviceExtension(ProxyDeviceExtension.class).clearTemplatesCache();
+        device.getDeviceExtension(ProxyDeviceExtension.class)
+                .clearTemplatesCache();
         // Make sure the configuration is re-loaded from the backend
         dicomConfiguration.sync();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
@@ -281,25 +310,32 @@ public class Proxy extends DeviceService implements ProxyMBean {
         if (isRunning()) {
             device.rebindConnections();
             scheduler.start();
+            
         }
     }
 
     private void setConfigurationStaleTimeout() {
-        int staleTimeout = device.getDeviceExtension(ProxyDeviceExtension.class).getConfigurationStaleTimeout();
+        int staleTimeout = device
+                .getDeviceExtension(ProxyDeviceExtension.class)
+                .getConfigurationStaleTimeout();
         aeCache.setStaleTimeout(staleTimeout);
         hl7AppCache.setStaleTimeout(staleTimeout);
     }
 
     private void resetSpoolFiles(String action) throws IOException {
-        Collection<ApplicationEntity> proxyAEs = instance.getDevice().getApplicationEntities();
+        Collection<ApplicationEntity> proxyAEs = instance.getDevice()
+                .getApplicationEntities();
         for (ApplicationEntity ae : proxyAEs) {
-            ProxyAEExtension proxyAEE = ae.getAEExtension(ProxyAEExtension.class);
+            ProxyAEExtension proxyAEE = ae
+                    .getAEExtension(ProxyAEExtension.class);
             if (proxyAEE != null) {
-                LOG.info("Reset spool files for {} on {}", ae.getAETitle(), action);
+                LOG.info("Reset spool files for {} on {}", ae.getAETitle(),
+                        action);
                 // clear cstore spool dir
                 renameSndFiles(proxyAEE.getCStoreDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getCStoreDirectoryPath(), action);
-                deleteIncompleteDcmFiles(proxyAEE.getCStoreDirectoryPath(), action);
+                deleteIncompleteDcmFiles(proxyAEE.getCStoreDirectoryPath(),
+                        action);
                 // clear naction spool dir
                 for (File path : proxyAEE.getNactionDirectoryPath().listFiles()) {
                     renameSndFiles(path, action);
@@ -329,20 +365,26 @@ public class Proxy extends DeviceService implements ProxyMBean {
         ArrayList<File> infoFiles = listFiles(infoFileFilter(), path);
         for (String dcmFile : dcmFiles) {
             File file = new File(path, dcmFile);
-            File infoFile = new File(file.getPath().substring(0, file.getPath().length() - 3).concat("info"));
+            File infoFile = new File(file.getPath()
+                    .substring(0, file.getPath().length() - 3).concat("info"));
             if (infoFiles.contains(infoFile))
                 continue;
 
             if (file.delete())
-                LOG.info("Delete incomplete dcm file {} (without info file) on {}", file.getPath(), action);
+                LOG.info(
+                        "Delete incomplete dcm file {} (without info file) on {}",
+                        file.getPath(), action);
             else
-                LOG.info("Failed to delete incomplete dcm file {} (without info file) on {}", file.getPath(), action);
+                LOG.info(
+                        "Failed to delete incomplete dcm file {} (without info file) on {}",
+                        file.getPath(), action);
         }
     }
 
     public ArrayList<File> listFiles(FilenameFilter filter, File dir) {
         String ss[] = dir.list();
-        if (ss == null) return null;
+        if (ss == null)
+            return null;
         ArrayList<File> files = new ArrayList<>();
         for (String s : ss)
             if ((filter == null) || filter.accept(dir, s))
@@ -356,25 +398,27 @@ public class Proxy extends DeviceService implements ProxyMBean {
             File[] sndFiles = dir.listFiles(sndFileFilter());
             for (File sndFile : sndFiles) {
                 String sndFilePath = sndFile.getPath();
-                String sndFileName= sndFile.getName();
-                if(sndFileName.lastIndexOf('.')!=-1)
-                {
-                    File dst = new File(sndFilePath,sndFileName.substring(0, sndFileName.length() - 4));
+                String sndFileName = sndFile.getName();
+                if (sndFileName.lastIndexOf('.') != -1) {
+                    File dst = new File(sndFilePath, sndFileName.substring(0,
+                            sndFileName.length() - 4));
                     if (sndFile.renameTo(dst))
-                        LOG.info("Rename {} to {} on {}", new Object[] { sndFile.getPath(), dst.getPath(), action });
+                        LOG.info("Rename {} to {} on {}", new Object[] {
+                                sndFile.getPath(), dst.getPath(), action });
                     else
                         LOG.info("Failed to rename {} to {} on {}",
-                                new Object[] { sndFile.getPath(), dst.getPath(), action });
-                }
-                else{
-                    //delete snd files
-                    if(sndFile.delete())
-                        LOG.info("Delete {} on {}", new Object[] { sndFile.getPath(), action });
-                    else
-                        LOG.info("Failed to delete {}  on {}",
+                                new Object[] { sndFile.getPath(),
+                                        dst.getPath(), action });
+                } else {
+                    // delete snd files
+                    if (sndFile.delete())
+                        LOG.info("Delete {} on {}",
                                 new Object[] { sndFile.getPath(), action });
+                    else
+                        LOG.info("Failed to delete {}  on {}", new Object[] {
+                                sndFile.getPath(), action });
                 }
-               
+
             }
         }
     }
@@ -415,7 +459,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
             if (partFile.delete())
                 LOG.info("Delete {} on {}", partFile.getPath(), action);
             else
-                LOG.info("Failed to delete {} on {}", partFile.getPath(), action);
+                LOG.info("Failed to delete {} on {}", partFile.getPath(),
+                        action);
         }
     }
 
@@ -439,8 +484,60 @@ public class Proxy extends DeviceService implements ProxyMBean {
         };
     }
 
-    public ApplicationEntity findApplicationEntity(String aet) throws ConfigurationException {
+    public ApplicationEntity findApplicationEntity(String aet)
+            throws ConfigurationException {
         return aeCache.findApplicationEntity(aet);
+    }
+
+    public String autoConfigTransferCapabilities(String proxyAETitle) throws Exception {
+        ApplicationEntity prxAE = aeCache.findApplicationEntity(proxyAETitle);
+        ProxyAEExtension prxExt = prxAE
+                .getAEExtensionNotNull(ProxyAEExtension.class);
+        ArrayList<TransferCapability> proxyTCs = (ArrayList<TransferCapability>) prxAE
+                .getTransferCapabilities();
+
+        for (ForwardRule rule : prxExt.getForwardRules()) {
+            //for each ae in the rule
+            for (String aeTitle : rule.getDestinationAETitles()) {
+
+                ApplicationEntity ae = findApplicationEntity(aeTitle);
+                //Create the association request
+                AAssociateRQ aarq = new AAssociateRQ();
+                aarq.setCalledAET(ae.getAETitle());
+                aarq.setCallingAET(prxAE.getAETitle());
+                int i=1;
+                int tcCount = proxyTCs.size();
+                ArrayList<TransferCapability> fallBackTcs = proxyTCs;
+                    //break the tcs (maximum size is 128 for an association)
+                while(i-1 <tcCount){
+                for(Iterator<TransferCapability> iter = proxyTCs.iterator();iter.hasNext();iter.next()){
+                    TransferCapability tc  =iter.next();
+                    aarq.addPresentationContext(new PresentationContext(i,tc.getSopClass(),tc.getTransferSyntaxes()));
+                    iter.remove();
+                    i++;
+                    if(aarq.getPresentationContexts().size()>127)
+                        break;
+                }
+                Association asInvoked = prxAE.connect(aeCache.findApplicationEntity(ae.getAETitle()), aarq);
+                if(asInvoked.isReadyForDataTransfer()){
+                AAssociateAC tmpAC = asInvoked.getAAssociateAC();
+                for(PresentationContext pc:tmpAC.getPresentationContexts())
+                {
+                    if(pc.isAccepted())
+                    {
+                        ae.addTransferCapability(new TransferCapability(pc.getAbstractSyntax(), pc.getAbstractSyntax(), tmpAC.getRoleSelectionFor(pc.getAbstractSyntax()).isSCP()?Role.SCP:Role.SCU, pc.getTransferSyntaxes()));
+                    }
+                }
+                }
+//                else
+//                {
+//                    LOG.debug("Destination unreachable, using proxy config to load transfer capabilities for auto load by ui");
+//                    
+//                }
+                }
+            }
+        }
+        return "Successfully Set AETs Transfer Capabilities";
     }
 
 }

@@ -42,6 +42,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.dcm4che3.net.ApplicationEntity;
 import org.dcm4che3.net.Dimse;
 
 /**
@@ -130,7 +131,9 @@ public class ForwardRule implements Serializable {
     public void setReceiveSchedule(Schedule receiveTime) {
         this.receiveSchedule = receiveTime;
     }
-
+    // only in case of direct forwarding this checks if the pc is supported by the proxy's SOP classes
+    //use case is when a SOP class is to be completely denied from a forwarding destination when such destination
+    //has problems supporting it then set to true and remove from proxy's SOP classes
     public boolean isExclusiveUseDefinedTC() {
         return exclusiveUseDefinedTC;
     }
