@@ -63,7 +63,7 @@ public class InfoFileUtils {
         if(fileList.length >0)
         {
             for(String f:  fileList)
-            if(f.endsWith(".info"))
+            if(f.endsWith(".info") && file.getName().substring(0,(file.getName()).indexOf(".")).compareTo(f.substring(0,f.indexOf(".")))==0)
             {
                 infoFileName = f;
                 break;

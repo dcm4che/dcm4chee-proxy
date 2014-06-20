@@ -239,10 +239,17 @@ public class ForwardFiles {
     private void processNEventReport(ProxyAEExtension proxyAEE, HashMap<String, ForwardOption> forwardOptions)
             throws IOException {
         for (File transactionUidDir : proxyAEE.getNeventDirectoryPath().listFiles(dirFilter())) {
-            if (transactionUidDir.list().length == 0) {
-                LOG.debug("Delete empty dir {}", transactionUidDir);
-                transactionUidDir.delete();
-                continue;
+            if (folderSize(transactionUidDir)== 0) {
+                
+                deleteFolder(transactionUidDir);
+                if(!transactionUidDir.exists()){
+                    LOG.debug("Delete empty dir {}", transactionUidDir);
+                    continue;
+                    }
+                else
+                {
+                    LOG.debug("Failed to delete empty dir {}", transactionUidDir);
+                }
             }
             if (StgCmt.hasPendingNActionRQ(proxyAEE, new File(proxyAEE.getNactionDirectoryPath(), transactionUidDir.getName())) 
                     || StgCmt.hasPendingNEventReportRQ(proxyAEE, transactionUidDir))
@@ -251,7 +258,16 @@ public class ForwardFiles {
             processNEventReportTransactionUID(proxyAEE, forwardOptions, transactionUidDir);
         }
     }
-
+    private  long folderSize(File directory) {
+        long length = 0;
+        for (File file : directory.listFiles()) {
+            if (file.isFile())
+                length += file.length();
+            else
+                length += folderSize(file);
+        }
+        return length;
+    }
     private void processNEventReportTransactionUID(ProxyAEExtension proxyAEE,
             HashMap<String, ForwardOption> forwardOptions, File transactionUidDir) throws IOException {
         String[] aets = transactionUidDir.list();
@@ -1029,6 +1045,7 @@ public class ForwardFiles {
                         UID.ImplicitVRLittleEndian));
                 rq.addRoleSelection(new RoleSelection(prop.getProperty("sop-class-uid"), true, true));
                 rq.setCallingAET(callingAET);
+                LOG.info("Setting called AET to"+ calledAET);
                 rq.setCalledAET(calledAET);
                 Association asInvoked = proxyAEE.getApplicationEntity().connect(aeCache.findApplicationEntity(calledAET), rq);
                 try {
@@ -1229,7 +1246,7 @@ public class ForwardFiles {
                         processEmf2Sf(proxyAEE, asInvoked, prop, file);
                     else if (asInvoked.isReadyForDataTransfer()) {
                         Attributes attrs = proxyAEE.parseAttributesWithLazyBulkData(asInvoked, file);
-                        AttributeCoercion ac = proxyAEE.getAttributeCoercion(asInvoked.getCalledAET(), cuid, Role.SCP,
+                        AttributeCoercion ac = proxyAEE.getAttributeCoercion(asInvoked.getCalledAET(), cuid, Role.SCU,
                                 Dimse.C_STORE_RQ);
                         if (ac != null)
                             attrs = AttributeCoercionUtils.coerceAttributes(asInvoked, proxyAEE, attrs, ac);
@@ -1526,5 +1543,22 @@ public class ForwardFiles {
         File path = new File(file.getParent());
         if (path.list().length == 0)
             path.delete();
+    }
+
+    public static boolean deleteFolder(File directory) {
+        if(directory.exists()){
+            File[] files = directory.listFiles();
+            if(files!=null){
+                for(int i=0; i<files.length; i++) {
+                    if(files[i].isDirectory()) {
+                        deleteFolder(files[i]);
+                    }
+                    else {
+                        files[i].delete();
+                    }
+                }
+            }
+        }
+        return(directory.delete());
     }
 }
