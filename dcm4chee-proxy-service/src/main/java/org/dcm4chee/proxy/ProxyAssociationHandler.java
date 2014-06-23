@@ -41,7 +41,6 @@ package org.dcm4chee.proxy;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -55,8 +54,6 @@ import org.dcm4che3.net.Association;
 import org.dcm4che3.net.AssociationHandler;
 import org.dcm4che3.net.Connection;
 import org.dcm4che3.net.IncompatibleConnectionException;
-import org.dcm4che3.net.QueryOption;
-import org.dcm4che3.net.StorageOptions;
 import org.dcm4che3.net.TransferCapability;
 import org.dcm4che3.net.TransferCapability.Role;
 import org.dcm4che3.net.pdu.AAbort;
@@ -119,7 +116,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             return MatchTransferCapability(as, rq, proxyAEE);
         } catch (ConfigurationException e) {
             LOG.error(
-                    "Minimal Transfer capability error {}\n Using Proxy's local Transfer Capabilities",
+                    "Minimal Transfer capability error {}\n Unable to use minimal transfer capability matching for forwarding",
                     e);
             return super.makeAAssociateAC(as, rq, userIdentity);
         }
@@ -202,6 +199,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
             AAssociateRQ rq, PresentationContext prq, AAssociateAC ac,
             List<ApplicationEntity> listAEs) {
         TransferCapability tc = null;
+        boolean rejectedBefore = false;
         for (String requestedTS : prq.getTransferSyntaxes()) {
             String abstractSyntax = prq.getAbstractSyntax();
             int success = 0;
@@ -210,11 +208,13 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 if (tc != null)
                     if (tc.containsTransferSyntax(requestedTS))
                         success++;
-                    else
+                    else{
                         ac.addPresentationContext(new PresentationContext(
                                 prq.getPCID(),
                                 PresentationContext.TRANSFER_SYNTAX_NOT_SUPPORTED,
                                 requestedTS));
+                        rejectedBefore=true;
+                    }
                 else {
                     // here if the tc is not in an ae then the proxy is used as
                     // fall back (assumed all are supported)
@@ -224,13 +224,16 @@ public class ProxyAssociationHandler extends AssociationHandler {
                             .getTransferCapabilityFor(abstractSyntax, Role.SCP)
                             .containsTransferSyntax(requestedTS))
                         success++;
-                    else
+                    else{
                         ac.addPresentationContext(new PresentationContext(
                                 prq.getPCID(),
                                 PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED,
                                 requestedTS));
+                        rejectedBefore =true;
+                    }
                 }
             }
+            if(!rejectedBefore){
             if (success == listAEs.size())
                 ac.addPresentationContext(new PresentationContext(
                         prq.getPCID(), PresentationContext.ACCEPTANCE,
@@ -239,6 +242,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 ac.addPresentationContext(new PresentationContext(
                         prq.getPCID(), PresentationContext.PROVIDER_REJECTION,
                         requestedTS));
+            }
         }
     }
 
