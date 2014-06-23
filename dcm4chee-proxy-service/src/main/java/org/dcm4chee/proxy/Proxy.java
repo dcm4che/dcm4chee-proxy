@@ -41,14 +41,19 @@ package org.dcm4chee.proxy;
 import static org.dcm4che3.audit.AuditMessages.createEventIdentification;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.BindException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Properties;
+
 
 import org.dcm4che3.audit.AuditMessage;
 import org.dcm4che3.audit.AuditMessages;
@@ -63,16 +68,21 @@ import org.dcm4che3.conf.api.ConfigurationNotFoundException;
 import org.dcm4che3.conf.api.DicomConfiguration;
 import org.dcm4che3.conf.api.hl7.HL7ApplicationCache;
 import org.dcm4che3.conf.api.hl7.HL7Configuration;
+
 import org.dcm4che3.net.ApplicationEntity;
 import org.dcm4che3.net.Association;
+import org.dcm4che3.net.Connection;
+
 import org.dcm4che3.net.DeviceService;
+import org.dcm4che3.net.IncompatibleConnectionException;
 import org.dcm4che3.net.TransferCapability;
 import org.dcm4che3.net.TransferCapability.Role;
 import org.dcm4che3.net.audit.AuditLogger;
-import org.dcm4che3.net.pdu.AAssociateAC;
+
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.net.service.DicomServiceRegistry;
+
 import org.dcm4chee.proxy.audit.AuditLog;
 import org.dcm4chee.proxy.conf.ForwardRule;
 import org.dcm4chee.proxy.conf.ProxyAEExtension;
@@ -490,54 +500,201 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     public String autoConfigTransferCapabilities(String proxyAETitle) throws Exception {
-        ApplicationEntity prxAE = aeCache.findApplicationEntity(proxyAETitle);
+        
+        ApplicationEntity prxAE = findApplicationEntity(proxyAETitle);
         ProxyAEExtension prxExt = prxAE
                 .getAEExtensionNotNull(ProxyAEExtension.class);
-        ArrayList<TransferCapability> proxyTCs = (ArrayList<TransferCapability>) prxAE
-                .getTransferCapabilities();
-
-        for (ForwardRule rule : prxExt.getForwardRules()) {
-            //for each ae in the rule
-            for (String aeTitle : rule.getDestinationAETitles()) {
-
-                ApplicationEntity ae = findApplicationEntity(aeTitle);
-                //Create the association request
-                AAssociateRQ aarq = new AAssociateRQ();
-                aarq.setCalledAET(ae.getAETitle());
-                aarq.setCallingAET(prxAE.getAETitle());
-                int i=1;
-                int tcCount = proxyTCs.size();
-                ArrayList<TransferCapability> fallBackTcs = proxyTCs;
-                    //break the tcs (maximum size is 128 for an association)
-                while(i-1 <tcCount){
-                for(Iterator<TransferCapability> iter = proxyTCs.iterator();iter.hasNext();iter.next()){
-                    TransferCapability tc  =iter.next();
-                    aarq.addPresentationContext(new PresentationContext(i,tc.getSopClass(),tc.getTransferSyntaxes()));
-                    iter.remove();
-                    i++;
-                    if(aarq.getPresentationContexts().size()>127)
-                        break;
-                }
-                Association asInvoked = prxAE.connect(aeCache.findApplicationEntity(ae.getAETitle()), aarq);
-                if(asInvoked.isReadyForDataTransfer()){
-                AAssociateAC tmpAC = asInvoked.getAAssociateAC();
-                for(PresentationContext pc:tmpAC.getPresentationContexts())
+        String sourceaet = proxyAETitle;
+        //String destinationaet = //one of the aes in the conf
+            //   String probedae = //destination 
+                String callingaet = proxyAETitle;
+        
+                for(ForwardRule rule:prxExt.getForwardRules())
+                    for(String destinationAET :rule.getDestinationAETitles())
                 {
-                    if(pc.isAccepted())
-                    {
-                        ae.addTransferCapability(new TransferCapability(pc.getAbstractSyntax(), pc.getAbstractSyntax(), tmpAC.getRoleSelectionFor(pc.getAbstractSyntax()).isSCP()?Role.SCP:Role.SCU, pc.getTransferSyntaxes()));
-                    }
-                }
-                }
-//                else
-//                {
-//                    LOG.debug("Destination unreachable, using proxy config to load transfer capabilities for auto load by ui");
-//                    
-//                }
-                }
+                        Connection tmpConn = null;
+                        for(Connection tmp:aeCache.findApplicationEntity(destinationAET).getConnections())
+                        {
+                            if(tmp.isInstalled() && tmp.isServer() && !tmp.isTls())
+                            {
+                                tmpConn=tmp;
+                                break;
+                            }
+                        }
+                        
+        
+        String aeTitle = destinationAET;
+            try {
+                
+                LOG.info("Started Loading LDAP configuration");
+                ApplicationEntity sourceAE = prxAE;
+                ArrayList<TransferCapability> tcs = (ArrayList<TransferCapability>) sourceAE
+                        .getTransferCapabilities();
+                ArrayList<PresentationContext> pcs = addChunkedPCsandSend(prxAE,new AAssociateRQ(),tcs,tmpConn,destinationAET);
+                // print accepted ones
+                ArrayList<PresentationContext> acceptedPCs = new ArrayList<PresentationContext>();
+                for (PresentationContext pc : pcs)
+                    if (pc.isAccepted())
+                        acceptedPCs.add(pc);
+                
+                ApplicationEntity destinationAE = aeCache.findApplicationEntity(destinationAET);
+                
+                TransferCapability[] TCs = mergeTCs(acceptedPCs);
+                for (TransferCapability tc : TCs)
+                   destinationAE
+                            .addTransferCapability(tc);
+                
+            } catch (ConfigurationException e) {
+                LOG.error("Configuration backend error - {}", e);
             }
         }
-        return "Successfully Set AETs Transfer Capabilities";
+                return "success";
+        
+        
+        
+//        ArrayList<TransferCapability> proxyTCs = (ArrayList<TransferCapability>) prxAE
+//                .getTransferCapabilities();
+//
+//        for (ForwardRule rule : prxExt.getForwardRules()) {
+//            //for each ae in the rule
+//            for (String aeTitle : rule.getDestinationAETitles()) {
+//
+//                ApplicationEntity ae = findApplicationEntity(aeTitle);
+//                //Create the association request
+//                AAssociateRQ aarq = new AAssociateRQ();
+//                aarq.setCalledAET(ae.getAETitle());
+//                aarq.setCallingAET(prxAE.getAETitle());
+//                int i=1;
+//                int tcCount = proxyTCs.size();
+//                ArrayList<TransferCapability> fallBackTcs = proxyTCs;
+//                    //break the tcs (maximum size is 128 for an association)
+//                while(i-1 <tcCount){
+//                for(Iterator<TransferCapability> iter = proxyTCs.iterator();iter.hasNext();iter.next()){
+//                    TransferCapability tc  =iter.next();
+//                    aarq.addPresentationContext(new PresentationContext(i,tc.getSopClass(),tc.getTransferSyntaxes()));
+//                    iter.remove();
+//                    i++;
+//                    if(aarq.getPresentationContexts().size()>127)
+//                        break;
+//                }
+//                Association asInvoked = prxAE.connect(aeCache.findApplicationEntity(ae.getAETitle()), aarq);
+//                if(asInvoked.isReadyForDataTransfer()){
+//                AAssociateAC tmpAC = asInvoked.getAAssociateAC();
+//                for(PresentationContext pc:tmpAC.getPresentationContexts())
+//                {
+//                    if(pc.isAccepted())
+//                    {
+//                        ae.addTransferCapability(new TransferCapability(pc.getAbstractSyntax(), pc.getAbstractSyntax(), tmpAC.getRoleSelectionFor(pc.getAbstractSyntax()).isSCP()?Role.SCP:Role.SCU, pc.getTransferSyntaxes()));
+//                    }
+//                }
+//                }
+////                else
+////                {
+////                    LOG.debug("Destination unreachable, using proxy config to load transfer capabilities for auto load by ui");
+////                    
+////                }
+//                }
+//            }
+//        }
+//        return "Successfully Set AETs Transfer Capabilities";
     }
+        private  ArrayList<PresentationContext> addChunkedPCsandSend(
+                ApplicationEntity ae, AAssociateRQ rq,
+                ArrayList<TransferCapability> tcs, Connection destination, String probedAET) {
+            //initThreads(device);
+            int pcID = 1;
+            ArrayList<ArrayList<PresentationContext>> lst = new ArrayList<ArrayList<PresentationContext>>();
+            ArrayList<PresentationContext> fullListSingleTS = new ArrayList<PresentationContext>();
+            ArrayList<PresentationContext> allACPCs = new ArrayList<PresentationContext>();
 
+            for (TransferCapability tc : tcs)
+                for (String ts : tc.getTransferSyntaxes()) {
+                    fullListSingleTS.add(new PresentationContext(pcID, tc
+                            .getSopClass(), ts));
+                    pcID++;
+                    if (fullListSingleTS.size() > 127) {
+                        lst.add(fullListSingleTS);
+                        pcID = 1;
+                        fullListSingleTS = new ArrayList<PresentationContext>();
+                    }
+                }
+
+            rq.setCallingAET(ae.getAETitle());
+            rq.setCalledAET(probedAET);
+            // now start sending 128 each
+            for (ArrayList<PresentationContext> subList : lst) {
+                rq = new AAssociateRQ();
+                rq.setCallingAET(ae.getAETitle());
+                rq.setCalledAET(probedAET);
+                for (PresentationContext pc : subList)
+                    rq.addPresentationContext(pc);
+                try {
+                    
+                    Association as = openAssociation(ae, rq,
+                            destination);
+                    // cache the pcs
+                    for (PresentationContext pcAC : as.getAAssociateAC()
+                            .getPresentationContexts()) {
+                        if (pcAC.isAccepted())
+                            allACPCs.add(rq.getPresentationContext(pcAC
+                                    .getPCID()));
+                    }
+
+                    as.release();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // LOG.info("destination rejected the association for the following reason:\n"
+                    // + as.getException());
+                    System.exit(1);
+                }
+            }
+
+            return allACPCs;
+        }
+        public Association openAssociation(ApplicationEntity ae,
+                AAssociateRQ rq, Connection remote) throws IOException,
+                InterruptedException, IncompatibleConnectionException,
+                GeneralSecurityException {
+            Association as = ae.connect(remote, rq);
+            return as;
+        }
+        private  TransferCapability[] mergeTCs(
+                ArrayList<PresentationContext> acceptedPCs) {
+            ArrayList<TransferCapability> tmpTCs = new ArrayList<TransferCapability>();
+            for (PresentationContext pc : acceptedPCs) {
+                String abstractSyntax = pc.getAbstractSyntax();
+                if (containsAbstractSyntax(tmpTCs, abstractSyntax)) {
+                    continue;
+                }
+                TransferCapability tmpTC = new TransferCapability();
+                tmpTC.setRole(Role.SCP);
+                ArrayList<String> tmpTS = new ArrayList<String>();
+                tmpTC.setSopClass(abstractSyntax);
+                for (PresentationContext tmp : acceptedPCs) {
+
+                    if (tmp.getAbstractSyntax().compareToIgnoreCase(abstractSyntax) == 0) {
+                        if (!tmpTS.contains(tmp.getTransferSyntax())) {
+                            tmpTS.add(tmp.getTransferSyntax());
+                        }
+                    }
+                }
+                String[] tmpTSStr = new String[tmpTS.size()];
+                tmpTS.toArray(tmpTSStr);
+                tmpTC.setTransferSyntaxes(tmpTSStr);
+                tmpTCs.add(tmpTC);
+
+            }
+            TransferCapability[] TCs = new TransferCapability[tmpTCs.size()];
+            tmpTCs.toArray(TCs);
+            return TCs;
+        }
+        private  boolean containsAbstractSyntax(
+                ArrayList<TransferCapability> tmpTCs, String abstractSyntax) {
+            for (TransferCapability tc : tmpTCs) {
+                if (tc.getSopClass().compareToIgnoreCase(abstractSyntax) == 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
 }

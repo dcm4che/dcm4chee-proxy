@@ -114,21 +114,21 @@ public class ProxyAssociationHandler extends AssociationHandler {
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
         rq.addRoleSelection(new RoleSelection(
                 UID.StorageCommitmentPushModelSOPClass, true, true));
-        return super.makeAAssociateAC(as, rq, userIdentity);
-//        try {
-//            return MatchTransferCapability(as, rq, proxyAEE);
-//        } catch (ConfigurationException e) {
-//            LOG.error(
-//                    "Minimal Transfer capability error {}\n Using Proxy's local Transfer Capabilities",
-//                    e);
-//           
-//        }
+
+        try {
+            return MatchTransferCapability(as, rq, proxyAEE);
+        } catch (ConfigurationException e) {
+            LOG.error(
+                    "Minimal Transfer capability error {}\n Using Proxy's local Transfer Capabilities",
+                    e);
+            return super.makeAAssociateAC(as, rq, userIdentity);
+        }
     }
 
     private AAssociateAC MatchTransferCapability(Association as,
             AAssociateRQ rq, ProxyAEExtension proxyAEE)
             throws ConfigurationException {
-        
+
         AAssociateAC ac = new AAssociateAC();
         ac.setCalledAET(rq.getCalledAET());
         ac.setCallingAET(rq.getCallingAET());
@@ -167,14 +167,19 @@ public class ProxyAssociationHandler extends AssociationHandler {
             LOG.debug(pc.toString());
         // debug check for failed sop configuration
         if (LOG.isDebugEnabled()) {
-            boolean fullReject = false;
+            int fullReject = ac.getPresentationContexts().size();
             for (PresentationContext pc : ac.getPresentationContexts()) {
                 if (pc.isAccepted())
-                    fullReject = true;
+                    fullReject--;
             }
-            if (fullReject)
-                throw new ConfigurationException(
-                        "Unable to get matching minimal set of transfer syntax from destination AEs possible reason is missconfiguration for supported sop classes");
+            if (fullReject == ac.getPresentationContexts().size())
+                
+                        LOG.error("All transfer syntax were rejected, Unable to get matching minimal set of transfer syntax from destination AEs possible reason is missconfiguration for supported sop classes ");
+            else if (fullReject > 0) {
+                LOG.debug("Some minimal presentation context were accepted");
+            } else {
+                LOG.debug("All minimal presentation context were accepted");
+            }
         }
         return ac;
     }
@@ -193,8 +198,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
         return null;
     }
 
-    private void addMinimallySupported(ProxyAEExtension proxyAEE, AAssociateRQ rq,
-            PresentationContext prq, AAssociateAC ac,
+    private void addMinimallySupported(ProxyAEExtension proxyAEE,
+            AAssociateRQ rq, PresentationContext prq, AAssociateAC ac,
             List<ApplicationEntity> listAEs) {
         TransferCapability tc = null;
         for (String requestedTS : prq.getTransferSyntaxes()) {
@@ -210,16 +215,20 @@ public class ProxyAssociationHandler extends AssociationHandler {
                                 prq.getPCID(),
                                 PresentationContext.TRANSFER_SYNTAX_NOT_SUPPORTED,
                                 requestedTS));
-                else{
-                    //here if the tc is not in an ae then the proxy is used as fall back (assumed all are supported)
-                    //if it is supported by the proxy then the minimal is still taken between the proxy tc and other AEs
-                    if(proxyAEE.getApplicationEntity().getTransferCapabilityFor(abstractSyntax, Role.SCP).containsTransferSyntax(requestedTS))
-                        continue;
+                else {
+                    // here if the tc is not in an ae then the proxy is used as
+                    // fall back (assumed all are supported)
+                    // if it is supported by the proxy then the minimal is still
+                    // taken between the proxy tc and other AEs
+                    if (proxyAEE.getApplicationEntity()
+                            .getTransferCapabilityFor(abstractSyntax, Role.SCP)
+                            .containsTransferSyntax(requestedTS))
+                        success++;
                     else
-                    ac.addPresentationContext(new PresentationContext(prq
-                            .getPCID(),
-                            PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED,
-                            requestedTS));
+                        ac.addPresentationContext(new PresentationContext(
+                                prq.getPCID(),
+                                PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED,
+                                requestedTS));
                 }
             }
             if (success == listAEs.size())
