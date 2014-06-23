@@ -41,18 +41,13 @@ package org.dcm4chee.proxy;
 import static org.dcm4che3.audit.AuditMessages.createEventIdentification;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.BindException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Properties;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,7 +69,6 @@ import org.dcm4che3.conf.api.hl7.HL7Configuration;
 import org.dcm4che3.net.ApplicationEntity;
 import org.dcm4che3.net.Association;
 import org.dcm4che3.net.Connection;
-import org.dcm4che3.net.Device;
 import org.dcm4che3.net.DeviceService;
 import org.dcm4che3.net.IncompatibleConnectionException;
 import org.dcm4che3.net.TransferCapability;
@@ -101,6 +95,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Hesham Elbadawi <bsdreko@gmail.com>
  */
 public class Proxy extends DeviceService implements ProxyMBean {
 
@@ -513,15 +508,10 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 try {
                     prxAE = findApplicationEntity(proxyAETitle);
                 } catch (ConfigurationException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    LOG.error("Unable to find the proxyAETitle provided by the setTransferCapabilities web request, {}",e1);
                 }
                 ProxyAEExtension prxExt = prxAE
                         .getAEExtensionNotNull(ProxyAEExtension.class);
-                String sourceaet = proxyAETitle;
-                // String destinationaet = //one of the aes in the conf
-                // String probedae = //destination
-                String callingaet = proxyAETitle;
 
                 for (ForwardRule rule : prxExt.getForwardRules())
                     for (String destinationAET : rule.getDestinationAETitles()) {
@@ -539,21 +529,18 @@ public class Proxy extends DeviceService implements ProxyMBean {
                                 }
                             }
                         } catch (ConfigurationException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
+                            LOG.error("Error retrieving server connection for AE , {} during autoconfig, {}", destinationAET, e1);
                         }
 
-                        String aeTitle = destinationAET;
                         try {
 
-                            LOG.info("Started Loading LDAP configuration");
                             ApplicationEntity sourceAE = prxAE;
                             ArrayList<TransferCapability> tcs = (ArrayList<TransferCapability>) sourceAE
                                     .getTransferCapabilities();
                             ArrayList<PresentationContext> pcs = addChunkedPCsandSend(
                                     prxAE, new AAssociateRQ(), tcs, tmpConn,
                                     destinationAET);
-                            // print accepted ones
+                            // add accepted ones
                             ArrayList<PresentationContext> acceptedPCs = new ArrayList<PresentationContext>();
                             for (PresentationContext pc : pcs)
                                 if (pc.isAccepted())
@@ -563,9 +550,6 @@ public class Proxy extends DeviceService implements ProxyMBean {
                                     .findApplicationEntity(destinationAET);
 
                             TransferCapability[] finalTCs = mergeTCs(acceptedPCs);
-
-                            LOG.info("Number of accepted TCS "
-                                    + finalTCs.length);
 
                             for (TransferCapability tc : finalTCs) {
                                 tc.setCommonName(tc.getSopClass());
@@ -582,7 +566,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
                     }
             }
         });
-        return "success";
+        
+        return "successful";
     }
 
     private ArrayList<PresentationContext> addChunkedPCsandSend(
@@ -628,9 +613,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 as.release();
             } catch (Exception e) {
                 e.printStackTrace();
-                // LOG.info("destination rejected the association for the following reason:\n"
-                // + as.getException());
-                System.exit(1);
+                 LOG.info("Unable to connect to AE, {}", e);
             }
         }
 
