@@ -121,7 +121,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     private PIXConsumer pixConsumer;
     private static Scheduler scheduler;
     private final HL7ApplicationCache hl7AppCache;
-    private final ApplicationEntityCache aeCache;
+    private ApplicationEntityCache aeCache;
     private final CEcho cecho;
     private final CStore cstore;
     private final StgCmt stgcmt;
@@ -227,8 +227,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
         }
     }
 
-    public String setTransferCapabilities() throws Exception {
-        return instance.autoConfigTransferCapabilities("DCM4CHEE-PROXY");
+    public String setTransferCapabilities(String aeTitle) throws Exception {
+        return instance.autoConfigTransferCapabilities(aeTitle);
     }
 
     public String getRegisteredAETs() throws Exception {
@@ -316,6 +316,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         // Make sure the configuration is re-loaded from the backend
         dicomConfiguration.sync();
         device.reconfigure(dicomConfiguration.findDevice(device.getDeviceName()));
+        this.aeCache = new ApplicationEntityCache(dicomConfiguration);
         setConfigurationStaleTimeout();
         if (isRunning()) {
             device.rebindConnections();

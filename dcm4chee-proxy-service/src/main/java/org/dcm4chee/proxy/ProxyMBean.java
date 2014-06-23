@@ -40,6 +40,7 @@ package org.dcm4chee.proxy;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
@@ -73,6 +74,6 @@ public interface ProxyMBean {
     String getRegisteredAETs() throws Exception;
     
     @GET
-    @Path("setTransferCapabilities")
-    String setTransferCapabilities() throws Exception;
+    @Path("setTransferCapabilities/{proxyAETitle}")
+    String setTransferCapabilities(@PathParam("proxyAETitle") String aet) throws Exception;
 }
