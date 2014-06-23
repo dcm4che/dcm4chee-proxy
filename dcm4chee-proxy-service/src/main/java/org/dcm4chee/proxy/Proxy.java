@@ -495,79 +495,97 @@ public class Proxy extends DeviceService implements ProxyMBean {
         return aeCache.findApplicationEntity(aet);
     }
 
-    public String autoConfigTransferCapabilities(final String proxyAETitle)
-            throws Exception {
-        ProxyDeviceExtension proxyAEE = this.device
-                .getDeviceExtension(ProxyDeviceExtension.class);
+    public String autoConfigTransferCapabilities(final String proxyAETitle) {
 
-        proxyAEE.getFileForwardingExecutor().execute(new Runnable() {
+        try {
+            ProxyDeviceExtension proxyAEE = this.device
+                    .getDeviceExtensionNotNull(ProxyDeviceExtension.class);
 
-            @Override
-            public void run() {
-                ApplicationEntity prxAE = null;
-                try {
-                    prxAE = findApplicationEntity(proxyAETitle);
-                } catch (ConfigurationException e1) {
-                    LOG.error("Unable to find the proxyAETitle provided by the setTransferCapabilities web request, {}",e1);
-                }
-                ProxyAEExtension prxExt = prxAE
-                        .getAEExtensionNotNull(ProxyAEExtension.class);
+            try {
+                final ApplicationEntity prxAE = findApplicationEntity(proxyAETitle);
 
-                for (ForwardRule rule : prxExt.getForwardRules())
-                    for (String destinationAET : rule.getDestinationAETitles()) {
-                        LOG.info("setting the tcs for the application entity "
-                                + destinationAET);
-                        Connection tmpConn = null;
-                        try {
-                            for (Connection tmp : aeCache
-                                    .findApplicationEntity(destinationAET)
-                                    .getConnections()) {
-                                if (tmp.isInstalled() && tmp.isServer()
-                                        && !tmp.isTls()) {
-                                    tmpConn = tmp;
-                                    break;
+                proxyAEE.getFileForwardingExecutor().execute(new Runnable() {
+
+                    @Override
+                    public void run() {
+
+                        ProxyAEExtension prxExt = prxAE
+                                .getAEExtensionNotNull(ProxyAEExtension.class);
+
+                        for (ForwardRule rule : prxExt.getForwardRules())
+                            for (String destinationAET : rule
+                                    .getDestinationAETitles()) {
+                                Connection tmpConn = null;
+                                try {
+                                    for (Connection tmp : aeCache
+                                            .findApplicationEntity(
+                                                    destinationAET)
+                                            .getConnections()) {
+                                        if (tmp.isInstalled() && tmp.isServer()
+                                                && !tmp.isTls()) {
+                                            tmpConn = tmp;
+                                            break;
+                                        }
+                                    }
+                                } catch (ConfigurationException e1) {
+                                    LOG.error(
+                                            "Error retrieving server connection for AE , {} during autoconfig, {}",
+                                            destinationAET, e1);
                                 }
+
+                                try {
+
+                                    ApplicationEntity sourceAE = prxAE;
+                                    ArrayList<TransferCapability> tcs = (ArrayList<TransferCapability>) sourceAE
+                                            .getTransferCapabilities();
+                                    ArrayList<PresentationContext> pcs = addChunkedPCsandSend(
+                                            prxAE, new AAssociateRQ(), tcs,
+                                            tmpConn, destinationAET);
+                                    // add accepted ones
+                                    ArrayList<PresentationContext> acceptedPCs = new ArrayList<PresentationContext>();
+                                    for (PresentationContext pc : pcs)
+                                        if (pc.isAccepted())
+                                            acceptedPCs.add(pc);
+
+                                    ApplicationEntity destinationAE = aeCache
+                                            .findApplicationEntity(destinationAET);
+
+                                    TransferCapability[] finalTCs = mergeTCs(acceptedPCs);
+
+                                    for (TransferCapability tc : finalTCs) {
+                                        tc.setCommonName(tc.getSopClass());
+                                        destinationAE.addTransferCapability(tc);
+                                    }
+                                    if (finalTCs.length != 0)
+                                        LOG.debug(
+                                                "Added acceptable transfer capabilities for AE {},"
+                                                        + " Used the AE {} as source for transfer capabilities",
+                                                destinationAET,
+                                                sourceAE.getAETitle());
+                                    dicomConfiguration.merge(destinationAE
+                                            .getDevice());
+                                    dicomConfiguration.sync();
+
+                                } catch (ConfigurationException e) {
+                                    LOG.error(
+                                            "Configuration backend error - {}",
+                                            e);
+
+                                }
+
                             }
-                        } catch (ConfigurationException e1) {
-                            LOG.error("Error retrieving server connection for AE , {} during autoconfig, {}", destinationAET, e1);
-                        }
-
-                        try {
-
-                            ApplicationEntity sourceAE = prxAE;
-                            ArrayList<TransferCapability> tcs = (ArrayList<TransferCapability>) sourceAE
-                                    .getTransferCapabilities();
-                            ArrayList<PresentationContext> pcs = addChunkedPCsandSend(
-                                    prxAE, new AAssociateRQ(), tcs, tmpConn,
-                                    destinationAET);
-                            // add accepted ones
-                            ArrayList<PresentationContext> acceptedPCs = new ArrayList<PresentationContext>();
-                            for (PresentationContext pc : pcs)
-                                if (pc.isAccepted())
-                                    acceptedPCs.add(pc);
-
-                            ApplicationEntity destinationAE = aeCache
-                                    .findApplicationEntity(destinationAET);
-
-                            TransferCapability[] finalTCs = mergeTCs(acceptedPCs);
-
-                            for (TransferCapability tc : finalTCs) {
-                                tc.setCommonName(tc.getSopClass());
-                                destinationAE.addTransferCapability(tc);
-                            }
-                            dicomConfiguration.merge(destinationAE.getDevice());
-                            dicomConfiguration.sync();
-
-                        } catch (ConfigurationException e) {
-                            LOG.error("Configuration backend error - {}", e);
-
-                        }
-
                     }
+                });
+            } catch (ConfigurationException e1) {
+                LOG.error(
+                        "Unable to find the proxyAETitle provided by the setTransferCapabilities web request, {}",
+                        e1);
+                return "unable to start autoconfiguration- exception: \n" + e1;
             }
-        });
-        
-        return "successful";
+        } catch (Exception e) {
+            return "unable to start autoconfiguration- exception: \n" + e;
+        }
+        return "successfully started autoconfiguration";
     }
 
     private ArrayList<PresentationContext> addChunkedPCsandSend(
@@ -613,7 +631,10 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 as.release();
             } catch (Exception e) {
                 e.printStackTrace();
-                 LOG.info("Unable to connect to AE, {}", e);
+                LOG.info(
+                        "Unable to connect to AE, {}, Will not set the AE transfer capabilities in the configuration",
+                        e);
+                break;
             }
         }
 
