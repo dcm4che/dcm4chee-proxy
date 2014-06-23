@@ -39,6 +39,7 @@
 package org.dcm4chee.proxy;
 
 import java.io.IOException;
+import java.rmi.UnexpectedException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -155,7 +156,12 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 }
             }
         for (PresentationContext prq : rq.getPresentationContexts()) {
-            addMinimallySupported(proxyAEE, rq, prq, ac, listAEs);
+            try {
+                addMinimallySupported(proxyAEE, rq, prq, ac, listAEs);
+            } catch (UnexpectedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
 
         // debug minimal TS
@@ -197,8 +203,9 @@ public class ProxyAssociationHandler extends AssociationHandler {
 
     private void addMinimallySupported(ProxyAEExtension proxyAEE,
             AAssociateRQ rq, PresentationContext prq, AAssociateAC ac,
-            List<ApplicationEntity> listAEs) {
+            List<ApplicationEntity> listAEs) throws UnexpectedException {
         TransferCapability tc = null;
+        int rejection =0;
         boolean rejectedBefore = false;
         for (String requestedTS : prq.getTransferSyntaxes()) {
             String abstractSyntax = prq.getAbstractSyntax();
@@ -209,11 +216,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     if (tc.containsTransferSyntax(requestedTS))
                         success++;
                     else{
-                        ac.addPresentationContext(new PresentationContext(
-                                prq.getPCID(),
-                                PresentationContext.TRANSFER_SYNTAX_NOT_SUPPORTED,
-                                requestedTS));
                         rejectedBefore=true;
+                        rejection = 1;
                     }
                 else {
                     // here if the tc is not in an ae then the proxy is used as
@@ -225,11 +229,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
                             .containsTransferSyntax(requestedTS))
                         success++;
                     else{
-                        ac.addPresentationContext(new PresentationContext(
-                                prq.getPCID(),
-                                PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED,
-                                requestedTS));
                         rejectedBefore =true;
+                        rejection = 2;
                     }
                 }
             }
@@ -242,6 +243,27 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 ac.addPresentationContext(new PresentationContext(
                         prq.getPCID(), PresentationContext.PROVIDER_REJECTION,
                         requestedTS));
+            }
+            else
+            {
+                if(rejection == 0)
+                {
+                    throw new UnexpectedException("Unable to determine rejection state");
+                }
+                else if(rejection == 1)
+                {
+                    ac.addPresentationContext(new PresentationContext(
+                            prq.getPCID(),
+                            PresentationContext.TRANSFER_SYNTAX_NOT_SUPPORTED,
+                            requestedTS));
+                }
+                else 
+                {
+                    ac.addPresentationContext(new PresentationContext(
+                            prq.getPCID(),
+                            PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED,
+                            requestedTS));
+                }
             }
         }
     }
