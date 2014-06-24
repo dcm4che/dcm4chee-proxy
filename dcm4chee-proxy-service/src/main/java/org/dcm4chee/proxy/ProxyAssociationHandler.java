@@ -225,6 +225,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     // if it is supported by the proxy then the minimal is still
                     // taken between the proxy tc and other AEs
                     if (proxyAEE.getApplicationEntity()
+                            .getTransferCapabilityFor(abstractSyntax, Role.SCP)!=null &&
+                            proxyAEE.getApplicationEntity()
                             .getTransferCapabilityFor(abstractSyntax, Role.SCP)
                             .containsTransferSyntax(requestedTS))
                         success++;
