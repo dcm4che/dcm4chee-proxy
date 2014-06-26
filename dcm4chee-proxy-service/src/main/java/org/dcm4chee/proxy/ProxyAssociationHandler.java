@@ -82,22 +82,6 @@ import org.slf4j.LoggerFactory;
  */
 public class ProxyAssociationHandler extends AssociationHandler {
 
-    private final String[] TRANSFER_SYNTAX_ACCEPTANCE_OREDER_IMAGE = {
-            "1.2.840.10008.1.2.4.70", "1.2.840.10008.1.2.4.57",
-            "1.2.840.10008.1.2.1", "1.2.840.10008.1.2",
-            "1.2.840.10008.1.2.4.50", "1.2.840.10008.1.2.4.51" };
-    private final String[] TRANSFER_SYNTAX_ACCEPTANCE_OREDER_VIDEO = {
-            "1.2.840.10008.1.2.4.50", "1.2.840.10008.1.2.4.101",
-            "1.2.840.10008.1.2.4.100" };
-    private final String[] TRANSFER_SYNTAX_ACCEPTANCE_OREDER_WAV = {
-            "1.2.840.10008.1.2.1", "1.2.840.10008.1.2" };
-    private final String[] TRANSFER_SYNTAX_ACCEPTANCE_OREDER_SR = {
-            "1.2.840.10008.1.2.1.99", "1.2.840.10008.1.2.1",
-            "1.2.840.10008.1.2" };
-    private final String[] TRANSFER_SYNTAX_ACCEPTANCE_OTHER = {
-            "1.2.840.10008.1.2.1", "1.2.840.10008.1.2"
-
-    };
     private static final Logger LOG = LoggerFactory
             .getLogger(ProxyAssociationHandler.class);
 
@@ -154,6 +138,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 conn.getMaxOpsInvoked()));
         UserIdentityAC acIDRsp = authenticateAE(rq);
         ac.setUserIdentityAC(acIDRsp);
+
         @SuppressWarnings("unchecked")
         List<ForwardRule> lstRules = (List<ForwardRule>) as
                 .getProperty(ProxyAEExtension.FORWARD_RULES);
@@ -191,8 +176,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     fullReject--;
             }
             if (fullReject == ac.getPresentationContexts().size())
-
-                LOG.error("All transfer syntax were rejected, Unable to get matching minimal set of transfer syntax from destination AEs possible reason is missconfiguration for supported sop classes ");
+                
+                        LOG.error("All transfer syntax were rejected, Unable to get matching minimal set of transfer syntax from destination AEs possible reason is missconfiguration for supported sop classes ");
             else if (fullReject > 0) {
                 LOG.debug("Some minimal presentation context were accepted");
             } else {
@@ -216,133 +201,73 @@ public class ProxyAssociationHandler extends AssociationHandler {
         return null;
     }
 
-    private List<String> getCommonTS(String abstractSyntax,
-            String[] toBeCheckedTS, List<ApplicationEntity> listAEs,
-            ProxyAEExtension proxyAEE) {
-        List<String> accepted = new ArrayList<String>();
-        TransferCapability tc;
-        int reject = 0;
-
-        for (String ts : toBeCheckedTS) {
-            for (ApplicationEntity ae : listAEs) {
-                if (ae.getTransferCapabilities().size() > 0) {
-                    tc = ae.getTransferCapabilityFor(abstractSyntax, Role.SCP);
-                    if (tc == null || !tc.containsTransferSyntax(ts)) {
-                        reject++;
-                    }
-                } else {
-                    tc = proxyAEE.getApplicationEntity()
-                            .getTransferCapabilityFor(abstractSyntax, Role.SCP);
-                    if (tc == null || !tc.containsTransferSyntax(ts)) {
-                        reject++;
-                    }
-                }
-            }
-
-            if (reject == 0)
-                accepted.add(ts);
-
-        }
-        return accepted;
-    }
-
-    private boolean isSupportedAbstractSyntax(String abstractSyntax,
-            List<ApplicationEntity> listAEs, ProxyAEExtension prxAE) {
-
-        for (ApplicationEntity ae : listAEs)
-            if (ae.getTransferCapabilityFor(abstractSyntax, Role.SCP) != null)
-                continue;
-            else if (prxAE.getApplicationEntity().getTransferCapabilityFor(
-                    abstractSyntax, Role.SCP) != null
-                    && ae.getTransferCapabilities().size() == 0)
-                continue;
-            else
-                return false;
-
-        return true;
-    }
-
     private void addMinimallySupported(ProxyAEExtension proxyAEE,
             AAssociateRQ rq, PresentationContext prq, AAssociateAC ac,
             List<ApplicationEntity> listAEs) throws UnexpectedException {
-        boolean acceptedByOrder = false;
-        String abstractSyntax = prq.getAbstractSyntax();
-
-        // first check for abstract syntax rejection
-        if (!isSupportedAbstractSyntax(abstractSyntax, listAEs, proxyAEE)) {
-            ac.addPresentationContext(new PresentationContext(prq.getPCID(),
-                    PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED, prq
-                            .getTransferSyntax()));
-            return;
-        }
-        // second check for transfer syntax not supported
-        List<String> acceptedTS = getCommonTS(abstractSyntax,
-                prq.getTransferSyntaxes(), listAEs, proxyAEE);
-
-        if (acceptedTS.size() == 0) {
-            // reject for ts reason
-            ac.addPresentationContext(new PresentationContext(prq.getPCID(),
-                    PresentationContext.TRANSFER_SYNTAX_NOT_SUPPORTED, prq
-                            .getTransferSyntax()));
-            return;
-        } else if (acceptedTS.size() > 1) {
-            // Preferred ts acceptance
-            String[] order = null;
-            if (UID.nameOf(abstractSyntax).toLowerCase()
-                    .contains("image storage")) {
-                order = TRANSFER_SYNTAX_ACCEPTANCE_OREDER_IMAGE;
-            } else if (UID.nameOf(abstractSyntax).toLowerCase()
-                    .contains("video")) {
-                order = TRANSFER_SYNTAX_ACCEPTANCE_OREDER_VIDEO;
-            } else if (UID.nameOf(abstractSyntax).toLowerCase()
-                    .contains("waveform")) {
-                order = TRANSFER_SYNTAX_ACCEPTANCE_OREDER_WAV;
-            } else if (UID.nameOf(abstractSyntax).toLowerCase()
-                    .contains("sr storage")) {
-                order = TRANSFER_SYNTAX_ACCEPTANCE_OREDER_SR;
-            } else {
-                order = TRANSFER_SYNTAX_ACCEPTANCE_OTHER;
-            }
-
-            for (String currentInOrder : order){
-                for (String ts : acceptedTS) {
-                    if (ts.compareToIgnoreCase(currentInOrder) == 0) {
-                        ac.addPresentationContext(new PresentationContext(prq
-                                .getPCID(), PresentationContext.ACCEPTANCE, ts));
-                        ac.addRoleSelection(rq.getRoleSelectionFor(abstractSyntax));
-                        acceptedByOrder = true;
+        TransferCapability tc = null;
+        int rejection =0;
+        boolean rejectedBefore = false;
+        for (String requestedTS : prq.getTransferSyntaxes()) {
+            String abstractSyntax = prq.getAbstractSyntax();
+            int success = 0;
+            for (ApplicationEntity ae : listAEs) {
+                tc = ae.getTransferCapabilityFor(abstractSyntax, Role.SCP);
+                if (tc != null)
+                    if (tc.containsTransferSyntax(requestedTS))
+                        success++;
+                    else{
+                        rejectedBefore=true;
+                        rejection = 1;
+                    }
+                else {
+                    // here if the tc is not in an ae then the proxy is used as
+                    // fall back (assumed all are supported)
+                    // if it is supported by the proxy then the minimal is still
+                    // taken between the proxy tc and other AEs
+                    if (proxyAEE.getApplicationEntity()
+                            .getTransferCapabilityFor(abstractSyntax, Role.SCP)!=null &&
+                            proxyAEE.getApplicationEntity()
+                            .getTransferCapabilityFor(abstractSyntax, Role.SCP)
+                            .containsTransferSyntax(requestedTS))
+                        success++;
+                    else{
+                        rejectedBefore =true;
+                        rejection = 2;
                     }
                 }
-                if(acceptedByOrder)
-                    break;
             }
-            if (!acceptedByOrder) {
+            if(!rejectedBefore){
+            if (success == listAEs.size())
                 ac.addPresentationContext(new PresentationContext(
-                        prq.getPCID(),
-                        PresentationContext.ACCEPTANCE,
-                        getCompressed(acceptedTS) != null ? getCompressed(acceptedTS)
-                                : acceptedTS.get(0)));
-                ac.addRoleSelection(rq.getRoleSelectionFor(abstractSyntax));
+                        prq.getPCID(), PresentationContext.ACCEPTANCE,
+                        requestedTS));
+            else
+                ac.addPresentationContext(new PresentationContext(
+                        prq.getPCID(), PresentationContext.PROVIDER_REJECTION,
+                        requestedTS));
             }
-
-        } else {
-            // just accept this one
-            ac.addPresentationContext(new PresentationContext(prq.getPCID(),
-                    PresentationContext.ACCEPTANCE, acceptedTS.get(0)));
-        }
-
-    }
-
-    private String getCompressed(List<String> acceptedTS) {
-        for (String ts : acceptedTS) {
-            if (UID.nameOf(ts).contains("JPEG")
-                    || UID.nameOf(ts).contains("MPEG2")
-                    || UID.nameOf(ts).contains("Deflated")
-                    || UID.nameOf(ts).contains("MPEG-4")) {
-                return ts;
+            else
+            {
+                if(rejection == 0)
+                {
+                    throw new UnexpectedException("Unable to determine rejection state");
+                }
+                else if(rejection == 1)
+                {
+                    ac.addPresentationContext(new PresentationContext(
+                            prq.getPCID(),
+                            PresentationContext.TRANSFER_SYNTAX_NOT_SUPPORTED,
+                            requestedTS));
+                }
+                else 
+                {
+                    ac.addPresentationContext(new PresentationContext(
+                            prq.getPCID(),
+                            PresentationContext.ABSTRACT_SYNTAX_NOT_SUPPORTED,
+                            requestedTS));
+                }
             }
         }
-        return null;
     }
 
     // Currently Extended negotiations should not be supported
