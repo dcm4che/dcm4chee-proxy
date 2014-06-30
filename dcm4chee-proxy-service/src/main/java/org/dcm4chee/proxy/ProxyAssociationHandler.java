@@ -309,7 +309,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     if (ts.compareToIgnoreCase(currentInOrder) == 0) {
                         ac.addPresentationContext(new PresentationContext(prq
                                 .getPCID(), PresentationContext.ACCEPTANCE, ts));
-                        ac.addRoleSelection(rq.getRoleSelectionFor(abstractSyntax));
+                        ac.addRoleSelection((RoleSelection) (rq.getRoleSelectionFor(abstractSyntax)==null?(rq.getRoleSelections().isEmpty()?new RoleSelection(abstractSyntax, true, true):rq.getRoleSelections().toArray()[0]):rq.getRoleSelectionFor(abstractSyntax)));
                         acceptedByOrder = true;
                     }
                 }
