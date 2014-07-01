@@ -331,6 +331,11 @@ public class ForwardFiles {
         Properties prop = InfoFileUtils.getFileInfoProperties(proxyAEE, nevent[0]);
         File mergeDir = new File(transactionUidDir, "MERGEDNEVENT");
         mergeDir.mkdir();
+        
+        //here check for the dicom conformance of the nevent
+      if (mergedAttrs.getSequence(Tag.FailedSOPSequence)!=null && mergedAttrs.getSequence(Tag.FailedSOPSequence).size() == 0)
+          mergedAttrs.remove(Tag.FailedSOPSequence);
+      //referencessop sequence can be empty alongside failed ones or not empty so no check here 
         storeMergedNEvent(mergedAttrs, prop, mergeDir);
         // cleanup obsolete aet dirs and files
         for (int i = 0; i < aets.length; ++i) {
@@ -379,10 +384,11 @@ public class ForwardFiles {
                 }
             }
         }
-        if (mergedFailedSequence.size() == 0)
-            mergedAttrs.remove(Tag.FailedSOPSequence);
-        if (mergedSequence.size() == 0)
-            mergedAttrs.remove(Tag.ReferencedSOPSequence);
+//        if (mergedFailedSequence.size() == 0)
+//            mergedAttrs.remove(Tag.FailedSOPSequence);
+        //this breaks the merge completely
+//        if (mergedSequence.size() == 0)
+//            mergedAttrs.remove(Tag.ReferencedSOPSequence);
     }
 
     private void matchReferencedSopSequence(Attributes attrs, Attributes mergedAttrs, boolean mergeUsingANDLogic,
@@ -414,12 +420,14 @@ public class ForwardFiles {
                         break;
                     }
                 }
-                if (mergedFailedSequence.size() == 0)
-                    mergedAttrs.remove(Tag.FailedSOPSequence);
+                //handled later after all are merged
+//                if (mergedFailedSequence.size() == 0)
+//                    mergedAttrs.remove(Tag.FailedSOPSequence);
             }
         }
-        if (mergedSequence.size() == 0)
-            mergedAttrs.remove(Tag.ReferencedSOPSequence);
+        //will break the merge function
+/*        if (mergedSequence.size() == 0)
+            mergedAttrs.remove(Tag.ReferencedSOPSequence);*/
     }
 
     private Attributes reformatReferencedSopSequenceAttrs(Attributes attrs) {
@@ -1180,7 +1188,7 @@ public class ForwardFiles {
         String iuid = prop.getProperty("sop-instance-uid");
         String cuid = prop.getProperty("sop-class-uid");
         String tsuid = UID.ImplicitVRLittleEndian;
-        int eventTypeId = attrs.contains(Tag.FailedAttributesSequence) ? 2 : 1;
+        int eventTypeId = attrs.contains(Tag.FailedSOPSequence) ? 2 : 1;
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {

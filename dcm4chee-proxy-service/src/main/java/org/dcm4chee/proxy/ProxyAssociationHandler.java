@@ -129,14 +129,17 @@ public class ProxyAssociationHandler extends AssociationHandler {
 //        rq.addRoleSelection(new RoleSelection(
 //                UID.StorageCommitmentPushModelSOPClass, true, true));
 
+        if(!proxyAEE.isAssociationFromDestinationAET(as)){
         try {
             return MatchTransferCapability(as, rq, proxyAEE);
         } catch (ConfigurationException e) {
             LOG.error(
                     "Minimal Transfer capability error {}\n Unable to use minimal transfer capability matching for forwarding",
                     e);
-            return super.makeAAssociateAC(as, rq, userIdentity);
         }
+        }
+            return super.makeAAssociateAC(as, rq, userIdentity);
+        
     }
 
     private AAssociateAC MatchTransferCapability(Association as,
