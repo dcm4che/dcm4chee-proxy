@@ -163,14 +163,6 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.24
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.25 
-  NAME 'doseSrIODTemplateURI'
-  DESC 'String : URI of Dose SR validation template'
-  EQUALITY caseExactMatch
-  SUBSTR caseExactSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 
-  SINGLE-VALUE )
-  
 attributetype ( 1.2.40.0.13.1.2.15.0.3.26 
   NAME 'dcmMergeStgCmtMessagesUsingANDLogic'
   DESC 'Boolean : merge multiple StgCmt messages using AND logic (otherwise OR)'
@@ -240,6 +232,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
   SUP top
   STRUCTURAL
   MUST (
+  cn $
     labeledURI )
   MAY (
     dcmForwardRuleDimse $
@@ -252,8 +245,7 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.5
     dcmMpps2DoseSrTemplateURI $
     doseSrIODTemplateURI $
     dcmPIXQuery $
-    dicomDescription $
-    doseSrIODTemplateURI ) )
+    dicomDescription ) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.6 
   NAME 'dcmProxyHL7Application'

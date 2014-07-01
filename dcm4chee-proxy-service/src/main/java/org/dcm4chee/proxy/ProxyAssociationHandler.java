@@ -126,8 +126,8 @@ public class ProxyAssociationHandler extends AssociationHandler {
         // Scheduled forwarding
 
         as.setProperty(ProxyAEExtension.FILE_SUFFIX, ".dcm");
-        rq.addRoleSelection(new RoleSelection(
-                UID.StorageCommitmentPushModelSOPClass, true, true));
+//        rq.addRoleSelection(new RoleSelection(
+//                UID.StorageCommitmentPushModelSOPClass, true, true));
 
         try {
             return MatchTransferCapability(as, rq, proxyAEE);
@@ -199,6 +199,13 @@ public class ProxyAssociationHandler extends AssociationHandler {
                 LOG.debug("All minimal presentation context were accepted");
             }
         }
+        //fix for role selection
+        for(RoleSelection rs: rq.getRoleSelections())
+        {
+            
+            ac.addRoleSelection(new RoleSelection(rs.getSOPClassUID(), true, true));    
+        }
+        
         return ac;
     }
 
@@ -309,7 +316,6 @@ public class ProxyAssociationHandler extends AssociationHandler {
                     if (ts.compareToIgnoreCase(currentInOrder) == 0) {
                         ac.addPresentationContext(new PresentationContext(prq
                                 .getPCID(), PresentationContext.ACCEPTANCE, ts));
-                        ac.addRoleSelection((RoleSelection) (rq.getRoleSelectionFor(abstractSyntax)==null?(rq.getRoleSelections().isEmpty()?new RoleSelection(abstractSyntax, true, true):rq.getRoleSelections().toArray()[0]):rq.getRoleSelectionFor(abstractSyntax)));
                         acceptedByOrder = true;
                     }
                 }
@@ -322,7 +328,6 @@ public class ProxyAssociationHandler extends AssociationHandler {
                         PresentationContext.ACCEPTANCE,
                         getCompressed(acceptedTS) != null ? getCompressed(acceptedTS)
                                 : acceptedTS.get(0)));
-                ac.addRoleSelection(rq.getRoleSelectionFor(abstractSyntax));
             }
 
         } else {
