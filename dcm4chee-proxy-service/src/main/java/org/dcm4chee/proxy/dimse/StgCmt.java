@@ -314,21 +314,12 @@ public class StgCmt extends AbstractDicomService {
         File nactionRqFile = getNactionRQFile(proxyAEE, transactionUID,
                 asAccepted.getRemoteAET());
         if (nactionRqFile == null || !nactionRqFile.exists()) {
-            if(hasPendingNActionRQ(proxyAEE,
-                    new File(proxyAEE.getNactionDirectoryPath(), transactionUID)))
-            {
-                storeNEventReportRQ(proxyAEE, asAccepted, pc, rq, data,
-                        transactionUID, nactionRqFile);
-            }
-            else
-            {
             LOG.debug(asAccepted
                     + ": found no matching N-ACTION-RQ for N-EVENT-REPORT-RQ from "
                     + asAccepted.getRemoteAET());
             abortForward(pc, asAccepted,
                     Commands.mkNEventReportRSP(rq, Status.InvalidArgumentValue));
             return;
-            }
         }
         if (hasPendingNActionRQ(proxyAEE,
                 new File(proxyAEE.getNactionDirectoryPath(), transactionUID))
