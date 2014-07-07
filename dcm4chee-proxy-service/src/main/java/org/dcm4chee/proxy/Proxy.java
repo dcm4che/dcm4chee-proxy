@@ -503,7 +503,14 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
             try {
                 final ApplicationEntity prxAE = findApplicationEntity(proxyAETitle);
-
+                
+                try {
+                    dicomConfiguration.sync();
+                } catch (ConfigurationException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                
                 proxyAEE.getFileForwardingExecutor().execute(new Runnable() {
 
                     @Override
@@ -564,7 +571,6 @@ public class Proxy extends DeviceService implements ProxyMBean {
                                                 sourceAE.getAETitle());
                                     dicomConfiguration.merge(destinationAE
                                             .getDevice());
-                                    dicomConfiguration.sync();
 
                                 } catch (ConfigurationException e) {
                                     LOG.error(
@@ -574,6 +580,12 @@ public class Proxy extends DeviceService implements ProxyMBean {
                                 }
 
                             }
+                        try {
+                            dicomConfiguration.sync();
+                        } catch (ConfigurationException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
                     }
                 });
             } catch (ConfigurationException e1) {

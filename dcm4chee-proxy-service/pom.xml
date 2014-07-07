@@ -22,7 +22,7 @@
    -
    - Contributor(s):
    - Michael Backhaus <michael.backhaus@agfa.com>
-   -
+   - Hesham Elbadawi <bsdreko@gmail.com>
    - Alternatively, the contents of this file may be used under the terms of
    - either the GNU General Public License Version 2 or later (the "GPL"), or
    - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
@@ -80,7 +80,7 @@
     </plugins>
   </build>
   <dependencies>
-      <dependency>
+    <dependency>
       <groupId>org.jboss.spec.javax.servlet</groupId>
       <artifactId>jboss-servlet-api_3.0_spec</artifactId>
       <version>1.0.2.Final</version>
@@ -165,10 +165,16 @@
       <version>4.10</version>
       <scope>test</scope>
     </dependency>
-         <dependency>
+    <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <!-- Apache commons io -->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
     </dependency>
   </dependencies>
   <scm>

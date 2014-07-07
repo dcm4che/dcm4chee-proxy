@@ -436,6 +436,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
                 }
                 Attributes fmi = fileInfo.attrs;
                 String sourceAET = request.getRemoteAddr();
+                //TODO - Host AET Mapping
                 Properties prop = setInfoFileProperties(fmi, attrs, sourceAET);
                 validateStudyIUID(attrs);
                 String cuid = fmi.getString(Tag.MediaStorageSOPClassUID);

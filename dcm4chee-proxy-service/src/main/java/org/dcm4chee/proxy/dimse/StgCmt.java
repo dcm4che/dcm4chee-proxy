@@ -39,6 +39,7 @@
 package org.dcm4chee.proxy.dimse;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -49,6 +50,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.dcm4che3.conf.api.ApplicationEntityCache;
 import org.dcm4che3.conf.api.ConfigurationException;
 import org.dcm4che3.data.Attributes;
@@ -613,6 +616,29 @@ public class StgCmt extends AbstractDicomService {
         final File file = createRQFile(proxyAEE, asAccepted, rq, data, ".snd",
                 asInvoked.getCallingAET(), asInvoked.getCalledAET(),
                 proxyAEE.getNactionDirectoryPath(), null);
+        // copy the file to the nevent directory
+        // ------------Copy-------------
+
+        String fileName = file.getName();
+        final File destDir = new File(proxyAEE.getNeventDirectoryPath(),
+                data.getString(Tag.TransactionUID) + proxyAEE.getSeparator()
+                        + asInvoked.getRemoteAET());
+        destDir.mkdirs();
+        File dest = new File(destDir, fileName.substring(0,
+                fileName.lastIndexOf('.'))
+                + ".naction");
+        try {
+            copyFile(asAccepted, file, destDir, dest);
+        } catch (IOException e) {
+            LOG.error(
+                    "{}: could not Copy Naction files to NEventReportDir: {}",
+                    new Object[] { asAccepted, e });
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
+       final File nactionDir = file.getParentFile();
+       final File neventDir = destDir.getParentFile();
+        // -------------------------
         DimseRSPHandler rspHandler = new DimseRSPHandler(msgId) {
             @Override
             public void onDimseRSP(Association as, Attributes cmd,
@@ -626,40 +652,53 @@ public class StgCmt extends AbstractDicomService {
                     String proxyAET = proxyAEE.getApplicationEntity()
                             .getAETitle();
                     String callingAET = rule.getUseCallingAET();
+
                     if (callingAET != null && callingAET.equals(proxyAET)) {
-                        // n-event-report-rq will come to this proxy AET, save
-                        // n-action-rq
-                        try {
-                            String fileName = file.getName();
-                            File destDir = new File(
-                                    proxyAEE.getNeventDirectoryPath(),
-                                    data.getString(Tag.TransactionUID)
-                                            + proxyAEE.getSeparator()
-                                            + asInvoked.getRemoteAET());
-                            destDir.mkdirs();
-                            File dest = new File(destDir, fileName.substring(0,
-                                    fileName.lastIndexOf('.')) + ".naction");
-                            renameFile(asAccepted, file, destDir,
-                                    dest);
-                        } catch (IOException e) {
-                            LOG.error("{}: could not save NEventReportRQ: {}",
-                                    new Object[] { asAccepted, e });
-                            if (LOG.isDebugEnabled())
+                        // n-event-report-rq will come to this proxy AET
+                        // keep the files copied earlier in the nevent directory
+                        // just remove the files in the naction directory
+                        try{
+                        FileUtils
+                                .deleteDirectory(nactionDir);
+                            LOG.debug("{}: DELETE N-ACTION-RQ {}", new Object[] {
+                                    asAccepted, nactionDir.getPath() });
+                        }
+                        catch(IOException e){
+                            LOG.error("{}: failed to DELETE N-ACTION-RQ {}", new Object[] {
+                                    asAccepted, nactionDir.getPath() });
+                            if(LOG.isDebugEnabled())
                                 e.printStackTrace();
-                            break;
                         }
                     } else {
                         // n-event-report-rq will not come back to this proxy
-                        // AET, don't need to save n-action-rq
+                        // remove the files from the naction and the nevent
                         LOG.debug(
-                                "{}: delete forwarded N-ACTION-RQ due to Calling AET ({}) != Proxy AET ({})",
+                                "{}: delete forwarded N-ACTION-RQ and Copy, due to Calling AET ({}) != Proxy AET ({})",
                                 new Object[] { as, callingAET, proxyAET });
-                        deleteFile(asAccepted, file);
+
+                        boolean deletedNactionDir = FileUtils
+                                .deleteQuietly(file.getParentFile());
+                        boolean deletedNeventDir = FileUtils
+                                .deleteQuietly(destDir);
+                        if (deletedNactionDir)
+                            LOG.debug("{}: DELETE {}", new Object[] {
+                                    asAccepted, nactionDir.getPath() });
+                        else
+                            LOG.error("{}: failed to DELETE {}", new Object[] {
+                                    asAccepted, nactionDir.getPath() });
+                        
+                        if (deletedNeventDir)
+                            LOG.debug("{}: DELETE {}", new Object[] { asAccepted, neventDir.getPath() });
+                        else {
+                            LOG.error("{}: failed to DELETE {}", new Object[] { asAccepted, neventDir.getPath() });
+                        }
+
                     }
                     try {
                         asAccepted.writeDimseRSP(pc, cmd, rspData);
                         File path = new File(file.getParent());
-                        if (path.list().length == 0)
+                        //null check since scheduler can beat this thread to deleting the empty file
+                        if (path!=null && path.list().length == 0)
                             path.delete();
                     } catch (IOException e) {
                         LOG.error(asAccepted
@@ -681,8 +720,7 @@ public class StgCmt extends AbstractDicomService {
                         LOG.debug("{}: RENAME {} to {}", new Object[] {
                                 asAccepted, file.getPath(), error.getPath() });
                     else
-                        LOG.debug(
-                                "{}: failed to RENAME {} to {}",
+                        LOG.debug("{}: failed to RENAME {} to {}",
                                 new Object[] { asAccepted, file.getPath(),
                                         error.getPath() });
                     try {
@@ -693,6 +731,14 @@ public class StgCmt extends AbstractDicomService {
                                 + e.getMessage());
                         if (LOG.isDebugEnabled())
                             e.printStackTrace();
+                    }
+                    boolean deletedNeventDir = FileUtils
+                            .deleteQuietly(destDir);
+                    
+                    if (deletedNeventDir)
+                        LOG.debug("{}: DELETE {}", new Object[] { asAccepted, neventDir.getPath() });
+                    else {
+                        LOG.error("{}: failed to DELETE {}", new Object[] { asAccepted, neventDir.getPath() });
                     }
                 }
                 }
@@ -798,7 +844,7 @@ public class StgCmt extends AbstractDicomService {
         else {
             LOG.error("{}: failed to DELETE {}", new Object[] { as, file });
         }
-        File info = new File(file.getParent(),file.getName().substring(0,
+        File info = new File(file.getParent(), file.getName().substring(0,
                 file.getName().indexOf('.'))
                 + ".info");
         if (info.delete())
@@ -811,26 +857,40 @@ public class StgCmt extends AbstractDicomService {
      * Used to rename .snd file to .naction in the nevent directory (basically a
      * move since it's a different directory)
      */
-    private void renameFile(final Association asAccepted, final File file,
-            File destDir, File dest) {
-        if (file.renameTo(dest)) {
+    static public void copyFile(final Association asAccepted, final File file,
+            File destDir, File dest) throws IOException {
+
+        FileInputStream fileIN = new FileInputStream(file);
+        FileOutputStream destOut = new FileOutputStream(dest);
+        File infoFile = new File(file.getParent(), file.getName().substring(0,
+                file.getName().indexOf('.'))
+                + ".info");
+        File infoFileDest = new File(destDir, infoFile.getName());
+        FileInputStream infoFileIN = new FileInputStream(infoFile);
+        FileOutputStream infoFileDestOut = new FileOutputStream(infoFileDest);
+        try{
+        if (IOUtils.copy(fileIN, destOut) > 0
+                || IOUtils.copy(fileIN, destOut) == -1) {
             dest.setLastModified(System.currentTimeMillis());
-            LOG.debug("{}: RENAME {} to {}",
+            LOG.debug("{}: Copy {} to {}",
                     new Object[] { asAccepted, file.getPath(), dest.getPath() });
-            File infoFile = new File(file.getParent(),file.getName().substring(0,
-                    file.getName().lastIndexOf('.'))
-                    + ".info");
-            File infoFileDest = new File(destDir, infoFile.getName());
-            if (infoFile.renameTo(infoFileDest))
-                LOG.debug("{}: RENAME {} to {}", new Object[] { asAccepted,
+            if (IOUtils.copy(infoFileIN, infoFileDestOut) > 0
+                    || IOUtils.copy(infoFileIN, infoFileDestOut) == -1) {
+                LOG.debug("{}: Copy {} to {}", new Object[] { asAccepted,
                         infoFile.getPath(), infoFileDest.getPath() });
-            else
-                LOG.error("{}: failed to RENAME {} to {}",
+            } else
+                LOG.error("{}: failed to Copy {} to {}",
                         new Object[] { asAccepted, infoFile.getPath(),
                                 infoFileDest.getPath() });
         } else
-            LOG.error("{}: failed to RENAME {} to {}", new Object[] {
-                    asAccepted, file.getPath(), dest.getPath() });
+            LOG.error("{}: failed to Copy {} to {}", new Object[] { asAccepted,
+                    file.getPath(), dest.getPath() });
+        }
+        finally{
+            fileIN.close();
+            infoFileIN.close();
+            destOut.close();
+            infoFileDestOut.close();
+        }
     }
-
 }

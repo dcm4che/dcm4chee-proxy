@@ -53,6 +53,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.dcm4che3.conf.api.ApplicationEntityCache;
 import org.dcm4che3.conf.api.AttributeCoercion;
 import org.dcm4che3.conf.api.ConfigurationException;
@@ -1122,6 +1123,25 @@ public class ForwardFiles {
         String iuid = prop.getProperty("sop-instance-uid");
         String cuid = prop.getProperty("sop-class-uid");
         String tsuid = UID.ImplicitVRLittleEndian;
+        String transactionUID = attrs.getString(Tag.TransactionUID);
+        final File destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
+                    + transactionUID + proxyAEE.getSeparator() + as.getCalledAET());
+
+        destDir.mkdirs();
+        String fileName = file.getName();
+        File dest = new File(destDir, fileName.substring(0, fileName.lastIndexOf('.'))
+                + ".naction");
+        try {
+            StgCmt.copyFile(as, file, destDir, dest);
+        } catch (IOException e) {
+            LOG.error(
+                    "{}: could not Copy Naction files to NEventReportDir: {}",
+                    new Object[] { as, e });
+            if (LOG.isDebugEnabled())
+                e.printStackTrace();
+        }
+        final File nactionDir = file.getParentFile();
+        final File neventDir = destDir.getParentFile();
         DimseRSPHandler rspHandler = new DimseRSPHandler(as.nextMessageID()) {
             @Override
             public void onDimseRSP(Association asInvoked, Attributes cmd, Attributes data) {
@@ -1131,44 +1151,42 @@ public class ForwardFiles {
                 case Status.Success: {
                     String callingAET = asInvoked.getAAssociateRQ().getCallingAET();
                     String proxyAET = asInvoked.getApplicationEntity().getAETitle();
-                    if (callingAET.equals(proxyAET)) {
-                        // n-event-report-rq will come to this proxy AET, save n-action-rq
-                        File destDir = null;
-                        String transactionUID = attrs.getString(Tag.TransactionUID);
-                        try {
-                            destDir = new File(proxyAEE.getNeventDirectoryPath() + proxyAEE.getSeparator()
-                                    + transactionUID + proxyAEE.getSeparator() + asInvoked.getCalledAET());
-                        } catch (IOException e) {
-                            LOG.error("{}: error creating directory {}: {}", new Object[]{as, destDir, e.getMessage()});
-                            if(LOG.isDebugEnabled())
-                                e.printStackTrace();
-                            break;
-                        }
-                        destDir.mkdirs();
-                        String fileName = file.getName();
-                        File dest = new File(destDir, fileName.substring(0, fileName.lastIndexOf('.'))
-                                + ".naction");
-                        if (file.renameTo(dest)) {
-                            dest.setLastModified(System.currentTimeMillis());
-                            LOG.debug("{}: RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
-                            File infoFile = new File(file.getParent(), fileName.substring(0, fileName.indexOf('.'))  + ".info");
-                            File infoFileDest = new File(destDir, infoFile.getName());
-                            if (infoFile.renameTo(infoFileDest))
-                                LOG.debug("{}: RENAME {} to {}",
-                                        new Object[] { as, infoFile.getPath(), infoFileDest.getPath() });
-                            else
-                                LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, infoFile.getPath(),
-                                        infoFileDest.getPath() });
-                            File path = new File(file.getParent());
-                            if (path.list().length == 0)
-                                path.delete();
-                        } else
-                            LOG.error("{}: failed to RENAME {} to {}", new Object[] { as, file.getPath(), dest.getPath() });
+                    if (callingAET != null && callingAET.equals(proxyAET)) {
+                        // n-event-report-rq will come to this proxy AET
+                        // keep the files copied earlier in the nevent directory
+                        // just remove the files in the naction directory
+                        boolean deletedNactionDir = FileUtils
+                                .deleteQuietly(file.getParentFile());
+                        if (deletedNactionDir)
+                            LOG.debug("{}: DELETE N-ACTION-RQ {}", new Object[] {
+                                    asInvoked, nactionDir.getPath() });
+                        else
+                            LOG.error("{}: failed to DELETE N-ACTION-RQ {}", new Object[] {
+                                    asInvoked, nactionDir.getPath() });
                     } else {
-                        // n-event-report-rq will not come back to this proxy AET, don't need to save n-action-rq
-                        LOG.debug("{}: delete forwarded N-ACTION-RQ due to Calling AET ({}) != Proxy AET ({})",
+                        // n-event-report-rq will not come back to this proxy
+                        // remove the files from the naction and the nevent
+                        LOG.debug(
+                                "{}: delete forwarded N-ACTION-RQ and Copy, due to Calling AET ({}) != Proxy AET ({})",
                                 new Object[] { as, callingAET, proxyAET });
-                        deleteFile(asInvoked, file);
+
+                        boolean deletedNactionDir = FileUtils
+                                .deleteQuietly(file.getParentFile());
+                        boolean deletedNeventDir = FileUtils
+                                .deleteQuietly(destDir);
+                        if (deletedNactionDir)
+                            LOG.debug("{}: DELETE {}", new Object[] {
+                                    as, nactionDir.getPath() });
+                        else
+                            LOG.error("{}: failed to DELETE {}", new Object[] {
+                                    as, nactionDir.getPath() });
+                        
+                        if (deletedNeventDir)
+                            LOG.debug("{}: DELETE {}", new Object[] { as, neventDir.getPath() });
+                        else {
+                            LOG.error("{}: failed to DELETE {}", new Object[] { as, neventDir.getPath() });
+                        }
+
                     }
                     break;
                 }
@@ -1176,6 +1194,13 @@ public class ForwardFiles {
                     LOG.error("{}: failed to forward N-ACTION file {} with error status {}", new Object[] { as, file,
                             Integer.toHexString(status) + 'H' });
                     renameFile(proxyAEE, '.' + Integer.toHexString(status) + 'H', file, as.getCalledAET(), prop);
+                    boolean deletedNeventDir = FileUtils
+                            .deleteQuietly(destDir);
+                    if (deletedNeventDir)
+                        LOG.debug("{}: DELETE {}", new Object[] { as, neventDir.getPath() });
+                    else {
+                        LOG.error("{}: failed to DELETE {}", new Object[] { as, neventDir.getPath() });
+                    }
                 }
                 }
             }
