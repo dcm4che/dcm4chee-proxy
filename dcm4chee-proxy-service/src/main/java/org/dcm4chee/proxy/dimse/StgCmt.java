@@ -698,7 +698,7 @@ public class StgCmt extends AbstractDicomService {
                         asAccepted.writeDimseRSP(pc, cmd, rspData);
                         File path = new File(file.getParent());
                         //null check since scheduler can beat this thread to deleting the empty file
-                        if (path!=null && path.list().length == 0)
+                        if (path!=null && path.list() !=null && path.list().length == 0)
                             path.delete();
                     } catch (IOException e) {
                         LOG.error(asAccepted
