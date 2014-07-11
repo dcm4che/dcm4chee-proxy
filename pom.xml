@@ -63,6 +63,7 @@
     <module>dcm4chee-proxy-service</module>
     <module>dcm4chee-proxy-war</module>
     <module>dcm4chee-proxy-tool</module>
+	<module>dcm4chee-proxy-test</module>
   </modules>
   <dependencyManagement>
   <dependencies>
@@ -70,7 +71,6 @@
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
       <version>1.0-SP4</version>
-      <scope>import</scope>
     </dependency>
     </dependencies>
   </dependencyManagement>
