@@ -1559,7 +1559,7 @@ public class ForwardFiles {
         else
             LOG.debug("{}: failed to delete {}", as, infoFile);
         File path = new File(file.getParent());
-        if (path.list().length == 0)
+        if (path!=null && path.list()!=null && path.list().length == 0)
             path.delete();
     }
     
