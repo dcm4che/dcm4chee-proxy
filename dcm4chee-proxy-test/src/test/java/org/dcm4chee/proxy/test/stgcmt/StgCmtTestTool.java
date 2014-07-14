@@ -1,4 +1,4 @@
-package org.dcm4chee.proxy.test.stgcmt;
+
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -36,22 +36,18 @@ package org.dcm4chee.proxy.test.stgcmt;
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
-
-
+package org.dcm4chee.proxy.test.stgcmt;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.dcm4che3.conf.api.ConfigurationException;
-import org.dcm4che3.conf.prefs.PreferencesDicomConfiguration;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.io.DicomInputStream;
@@ -59,18 +55,17 @@ import org.dcm4che3.net.ApplicationEntity;
 import org.dcm4che3.net.Connection;
 import org.dcm4che3.net.Device;
 import org.dcm4che3.net.IncompatibleConnectionException;
-import org.dcm4che3.tool.common.DicomFiles;
 import org.dcm4che3.tool.stgcmtscu.StgCmtSCU;
+import org.dcm4chee.proxy.test.performance.StgCmtTask;
 
 /**
+ * @author Hesham Elbadawi <bsdreko@gmail.com>
  * @author Umberto Cappellini <umberto.cappellini@agfa.com>
- * 
  */
 public class StgCmtTestTool extends StgCmtSCU{
 
     private String testDescription;
     private String fileName;
-
     private long totalSize;
     private int filesSent;
     private int warnings;    
@@ -79,7 +74,9 @@ public class StgCmtTestTool extends StgCmtSCU{
     private Device device;
     private Connection conn;
     private ApplicationEntity ae;
+    private StgCmtTask parent;
     /**
+     * @param stgCmtTask 
      * @param conn 
      * @param device 
      * @param writer 
@@ -88,13 +85,14 @@ public class StgCmtTestTool extends StgCmtSCU{
      * @param fileName
      * @throws IOException 
      */
-    public StgCmtTestTool(Device device, Connection conn, PrintWriter writer, String testDescription, String fileName) throws IOException {
+    public StgCmtTestTool(StgCmtTask stgCmtTask, Device device, Connection conn, PrintWriter writer, String testDescription, String fileName) throws IOException {
         super(device.getApplicationEntity(device.getDeviceName().toUpperCase()));
         this.testDescription = testDescription;
         this.fileName = fileName;
         this.writer = writer;
         this.device= device;
         this.conn = conn;
+        this.parent = stgCmtTask;
         this.ae=device.getApplicationEntity(device.getDeviceName().toUpperCase());
     } 
     
@@ -151,12 +149,14 @@ public class StgCmtTestTool extends StgCmtSCU{
             this.open();
             long asTime2 = System.currentTimeMillis();
             writer.println("Task-"+this.testDescription+"-AssociateTime-"+(asTime2-asTime1));
+            this.parent.setAssocTime((int) (asTime2-asTime1));
             sendRequests();
          } finally {
              long neventTime1 = System.currentTimeMillis();
             this.close();
             long neventTime2 = System.currentTimeMillis();
             writer.println("Task-"+this.testDescription+"-NeventTime-"+(neventTime2-neventTime1));
+            this.parent.setnEventTime((int) (neventTime2-neventTime1));
             if (conn.isListening()) {
                 device.waitForNoOpenConnections();
                 device.unbindConnections();
@@ -165,7 +165,8 @@ public class StgCmtTestTool extends StgCmtSCU{
             scheduledExecutorService.shutdown();
             t2 = System.currentTimeMillis();
         }
-        writer.println("Task-"+this.testDescription+"-TotalExecutionTime-"+(t2-t1));
+        writer.println("Task-"+this.testDescription+"-StgCmtTime-"+(t2-t1));
+        this.parent.setTotalTime((int) (t2-t1));
     }
 
     @Override

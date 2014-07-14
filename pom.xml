@@ -63,7 +63,6 @@
     <module>dcm4chee-proxy-service</module>
     <module>dcm4chee-proxy-war</module>
     <module>dcm4chee-proxy-tool</module>
-	<module>dcm4chee-proxy-test</module>
   </modules>
   <dependencyManagement>
   <dependencies>
