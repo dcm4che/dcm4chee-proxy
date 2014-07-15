@@ -597,7 +597,6 @@ public class Proxy extends DeviceService implements ProxyMBean {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
-                        AUTO_CONFIG_PROGRESS=0;
                     }
                 });
             } catch (ConfigurationException e1) {
