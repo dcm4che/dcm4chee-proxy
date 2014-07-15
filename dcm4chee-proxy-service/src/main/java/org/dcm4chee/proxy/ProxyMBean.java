@@ -76,4 +76,8 @@ public interface ProxyMBean {
     @GET
     @Path("setTransferCapabilities/{proxyAETitle}")
     String setTransferCapabilities(@PathParam("proxyAETitle") String aet) throws Exception;
+    
+    @GET
+    @Path("getAutoConfigProgress")
+    String getAutoConfigProgress() throws Exception;
 }

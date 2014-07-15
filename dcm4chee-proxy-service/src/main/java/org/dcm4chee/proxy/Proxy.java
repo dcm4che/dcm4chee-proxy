@@ -48,7 +48,6 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -102,6 +101,8 @@ public class Proxy extends DeviceService implements ProxyMBean {
     private static final Logger LOG = LoggerFactory.getLogger(Proxy.class);
 
     private static Proxy instance;
+
+    private static int AUTO_CONFIG_PROGRESS=0;
 
     public static Proxy getInstance() {
         return Proxy.instance;
@@ -226,6 +227,10 @@ public class Proxy extends DeviceService implements ProxyMBean {
         return instance.autoConfigTransferCapabilities(aeTitle);
     }
 
+    public String getAutoConfigProgress()
+    {
+        return ""+instance.AUTO_CONFIG_PROGRESS;
+    }
     public String getRegisteredAETs() throws Exception {
         String registeredAETitles[] = dicomConfiguration
                 .listRegisteredAETitles();
@@ -496,7 +501,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     }
 
     public String autoConfigTransferCapabilities(final String proxyAETitle) {
-
+        AUTO_CONFIG_PROGRESS=0;
         try {
             ProxyDeviceExtension proxyAEE = this.device
                     .getDeviceExtensionNotNull(ProxyDeviceExtension.class);
@@ -518,6 +523,12 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
                         ProxyAEExtension prxExt = prxAE
                                 .getAEExtensionNotNull(ProxyAEExtension.class);
+
+                        int expectedProgressMax = 0;
+                        for(ForwardRule rule : prxExt.getForwardRules())
+                            for(String dest: rule.getDestinationAETitles())
+                                expectedProgressMax++;
+                        int progressIncrement = 100/expectedProgressMax;
 
                         for (ForwardRule rule : prxExt.getForwardRules())
                             for (String destinationAET : rule
@@ -578,7 +589,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
                                             e);
 
                                 }
-
+                                AUTO_CONFIG_PROGRESS+=progressIncrement;
                             }
                         try {
                             dicomConfiguration.sync();
@@ -708,4 +719,5 @@ public class Proxy extends DeviceService implements ProxyMBean {
         }
         return false;
     }
+
 }
