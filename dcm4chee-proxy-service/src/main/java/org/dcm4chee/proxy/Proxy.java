@@ -102,7 +102,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
     private static Proxy instance;
 
-    private static int AUTO_CONFIG_PROGRESS=0;
+    private static double AUTO_CONFIG_PROGRESS=0;
 
     public static Proxy getInstance() {
         return Proxy.instance;
@@ -524,11 +524,11 @@ public class Proxy extends DeviceService implements ProxyMBean {
                         ProxyAEExtension prxExt = prxAE
                                 .getAEExtensionNotNull(ProxyAEExtension.class);
 
-                        int expectedProgressMax = 0;
+                        double expectedProgressMax = 0;
                         for(ForwardRule rule : prxExt.getForwardRules())
                             for(String dest: rule.getDestinationAETitles())
                                 expectedProgressMax++;
-                        int progressIncrement = 100/expectedProgressMax;
+                        double progressIncrement = 100/expectedProgressMax;
 
                         for (ForwardRule rule : prxExt.getForwardRules())
                             for (String destinationAET : rule
@@ -597,6 +597,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
+                        AUTO_CONFIG_PROGRESS=0;
                     }
                 });
             } catch (ConfigurationException e1) {
