@@ -528,8 +528,12 @@ public class Proxy extends DeviceService implements ProxyMBean {
                         for(ForwardRule rule : prxExt.getForwardRules())
                             for(String dest: rule.getDestinationAETitles())
                                 expectedProgressMax++;
-                        double progressIncrement = 100/expectedProgressMax;
-
+                        
+                        double progressIncrement=100;
+                        if(expectedProgressMax>0)
+                        progressIncrement = 100/expectedProgressMax;
+                        else
+                            AUTO_CONFIG_PROGRESS+=progressIncrement;
                         for (ForwardRule rule : prxExt.getForwardRules())
                             for (String destinationAET : rule
                                     .getDestinationAETitles()) {
