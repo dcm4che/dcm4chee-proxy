@@ -56,6 +56,34 @@
           <target>1.7</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+              <Proxy-Implementation-Build>${buildNumber}</Proxy-Implementation-Build>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>buildnumber-maven-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>create</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <modules>
@@ -73,4 +101,10 @@
     </dependency>
     </dependencies>
   </dependencyManagement>
+  <scm>
+    <connection>scm:git:https://github.com/dcm4che/dcm4chee-proxy.git</connection>
+    <url>https://github.com/dcm4che/dcm4chee-proxy.git</url>
+    <tag>HEAD</tag>
+    <developerConnection>scm:git:git://github.com/dcm4che/dcm4chee-proxy.git</developerConnection>
+  </scm>
 </project>
