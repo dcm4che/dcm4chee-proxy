@@ -61,6 +61,11 @@
       <artifactId>dcm4che-tool-stgcmtscu</artifactId>
       <version>${dcm4che.version}</version>
     </dependency>
+     <dependency>
+      <groupId>org.dcm4che.tool</groupId>
+      <artifactId>dcm4che-tool-storescu</artifactId>
+      <version>${dcm4che.version}</version>
+    </dependency>
            <dependency>
       <groupId>org.dcm4che.tool</groupId>
       <artifactId>dcm4che-tool-dcmqrscp</artifactId>
