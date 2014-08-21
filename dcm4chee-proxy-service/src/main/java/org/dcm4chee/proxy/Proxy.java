@@ -345,6 +345,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
                 // clear cstore spool dir
                 renameSndFiles(proxyAEE.getCStoreDirectoryPath(), action);
                 deletePartFiles(proxyAEE.getCStoreDirectoryPath(), action);
+                deleteTmpBulkFiles(proxyAEE.getCStoreDirectoryPath(), action);
                 deleteIncompleteDcmFiles(proxyAEE.getCStoreDirectoryPath(),
                         action);
                 // clear naction spool dir
@@ -474,7 +475,16 @@ public class Proxy extends DeviceService implements ProxyMBean {
                         action);
         }
     }
-
+    private void deleteTmpBulkFiles(File path, String action) {
+        for (String tmpBulkFileName : path.list(tmpBulkFileFilter())) {
+            File tmpBulkFile = new File(path, tmpBulkFileName);
+            if (tmpBulkFile.delete())
+                LOG.info("Delete {} on {}", tmpBulkFile.getPath(), action);
+            else
+                LOG.info("Failed to delete {} on {}", tmpBulkFile.getPath(),
+                        action);
+        }
+    }
     private FilenameFilter partFileFilter() {
         return new FilenameFilter() {
 
@@ -485,6 +495,16 @@ public class Proxy extends DeviceService implements ProxyMBean {
         };
     }
 
+    private FilenameFilter tmpBulkFileFilter() {
+        return new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".tmpBulkData");
+            }
+        };
+    }
+    
     private FilenameFilter dirFilter() {
         return new FilenameFilter() {
 
