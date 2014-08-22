@@ -236,6 +236,8 @@ public class TestCStore {
             long t2 = System.currentTimeMillis();
             collectStatistics(t1, t2, tasks, uniqueID);
             Assert.assertTrue(true);
+            if(!executor.isShutdown())
+                executor.shutdownNow();
         }
         resultWriter.write("<br><a href=" + uniqueID + ">Cycle "
                 + new Date(System.currentTimeMillis())
