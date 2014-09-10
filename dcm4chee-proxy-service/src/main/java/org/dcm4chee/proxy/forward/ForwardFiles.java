@@ -44,6 +44,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1439,11 +1442,12 @@ public class ForwardFiles {
         for (File file : files) {
             String prevFilePath = file.getPath();
             File snd = new File(prevFilePath + ".snd");
-            if (file.renameTo(snd))
-                LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
-            else {
+            try{
+            Files.move(file.toPath(), snd.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
+            }
+            catch(IOException e) {
                 LOG.error("Error renaming {} to {}. Skip file for now and try again on next scheduler run.", prevFilePath, snd.getPath());
-                continue;
             }
             try {
                 addFileToFwdTaskMap(proxyAEE, calledAET, snd, map);
@@ -1549,30 +1553,45 @@ public class ForwardFiles {
     }
 
     private static void deleteFile(Association as, File file) {
-        if (file.delete())
+        try{
+            Files.delete(file.toPath());
             LOG.debug("{}: delete {}", as, file);
-        else
-            LOG.debug("{}: failed to delete {}", as, file);
+        }
+        catch(Exception e) {
+            LOG.debug("{}: failed to delete {} - {}", as, file,e);
+        }
+
         File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
-        if (infoFile.delete())
+        try{ 
+            Files.delete(infoFile.toPath());
             LOG.debug("{}: delete {}", as, infoFile);
-        else
-            LOG.debug("{}: failed to delete {}", as, infoFile);
+        }
+        catch(Exception e) {
+            LOG.debug("{}: failed to delete {} - {}", as, infoFile,e);
+        }
         File path = new File(file.getParent());
         if (path!=null && path.list()!=null && path.list().length == 0)
             path.delete();
     }
     
     private static void deleteFile(File file) {
-        if (file.delete())
+        try{
+            Files.delete(file.toPath());
             LOG.debug("Delete {}", file);
-        else
-            LOG.debug("Failed to delete {}", file);
+        }
+        catch(Exception e) {
+            LOG.debug("Failed to delete {} - {}", file,e);
+        }
+        
+            
         File infoFile = new File(file.getParent(), file.getName().substring(0, file.getName().indexOf('.')) + ".info");
-        if (infoFile.delete())
+        try{ 
+            Files.delete(infoFile.toPath());
             LOG.debug("Delete {}", infoFile);
-        else
-            LOG.debug("Failed to delete {}", infoFile);
+        }
+        catch(Exception e) {
+            LOG.debug("Failed to delete {} - {}", infoFile,e);
+        }
         File path = new File(file.getParent());
         if (path.list().length == 0)
             path.delete();
