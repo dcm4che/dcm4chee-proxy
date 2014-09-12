@@ -1440,6 +1440,7 @@ public class ForwardFiles {
     private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
         for (File file : files) {
+            if(file.exists()) {
             String prevFilePath = file.getPath();
             File snd = new File(prevFilePath + ".snd");
             try{
@@ -1458,6 +1459,7 @@ public class ForwardFiles {
                 else
                     LOG.debug("Error renaming {} to {}", snd.getPath(), prev.getPath());
             }
+        }
         }
         return map.values();
     }
