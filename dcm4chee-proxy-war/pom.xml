@@ -87,7 +87,7 @@
         <dependency>
           <groupId>org.dcm4che.jdbc.prefs</groupId>
           <artifactId>dcm4che-jdbc-prefs-ejb</artifactId>
-          <version>1.1.0-SNAPSHOT</version>
+          <version>1.1.1</version>
           <classifier>${db}</classifier>
         </dependency>
       </dependencies>
