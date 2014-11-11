@@ -1447,17 +1447,24 @@ public class ForwardFiles {
             Files.move(file.toPath(), snd.toPath(), StandardCopyOption.REPLACE_EXISTING);
             LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
             }
-            catch(IOException e) {
-                LOG.error("Error renaming {} to {}. Skip file for now and try again on next scheduler run.", prevFilePath, snd.getPath());
+            catch(Exception e) {
+                LOG.error("Error renaming {} to {}. Skip file for now and try again on next scheduler run. - {}", prevFilePath, snd.getPath(), e);
             }
             try {
                 addFileToFwdTaskMap(proxyAEE, calledAET, snd, map);
             } catch (Exception e) {
                 File prev = new File(prevFilePath);
+                if(!prev.exists() && snd.exists())
                 if (snd.renameTo(prev))
                     LOG.debug("Rename {} to {}", snd.getPath(), prev.getPath());
                 else
                     LOG.debug("Error renaming {} to {}", snd.getPath(), prev.getPath());
+                else if(snd.exists() && prev.exists())
+                    try {
+                        Files.delete(snd.toPath());
+                    } catch (Exception e1) {
+                        LOG.error("Unable to delete file {} after failed rename from  {} to {}  - {}",snd,prevFilePath,snd.getPath(), e1);
+                    }
             }
         }
         }
