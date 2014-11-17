@@ -46,6 +46,13 @@
   <properties>
     <dcm4che.version>3.3.4</dcm4che.version>
   </properties>
+  <repositories>
+    <repository>
+      <id>www.dcm4che.org</id>
+      <name>dcm4che Repository</name>
+      <url>http://www.dcm4che.org/maven2</url>
+    </repository>
+  </repositories>
   <build>
     <plugins>
       <plugin>
