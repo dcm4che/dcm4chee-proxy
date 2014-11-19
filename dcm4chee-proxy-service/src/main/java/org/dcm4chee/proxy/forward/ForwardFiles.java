@@ -55,6 +55,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.io.FileUtils;
 import org.dcm4che3.conf.api.ApplicationEntityCache;
@@ -105,6 +108,8 @@ import org.slf4j.LoggerFactory;
  * @author Michael Backhaus <michael.backaus@agfa.com>
  */
 public class ForwardFiles {
+    
+    private final Lock lock = new ReentrantLock();
 
     protected static final Logger LOG = LoggerFactory.getLogger(ForwardFiles.class);
 
@@ -1438,36 +1443,57 @@ public class ForwardFiles {
         return 1;
     }
 
-    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE, String calledAET, File[] files) {
+    private Collection<ForwardTask> scanFiles(ProxyAEExtension proxyAEE,
+            String calledAET, File[] files) {
         HashMap<String, ForwardTask> map = new HashMap<String, ForwardTask>(4);
         for (File file : files) {
-            if(file.exists()) {
-            String prevFilePath = file.getPath();
-            File snd = new File(prevFilePath + ".snd");
-            try{
-            Files.move(file.toPath(), snd.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            LOG.debug("Rename {} to {}", prevFilePath, snd.getPath());
-            }
-            catch(Exception e) {
-                LOG.error("Error renaming {} to {}. Skip file for now and try again on next scheduler run. - {}", prevFilePath, snd.getPath(), e);
-            }
             try {
-                addFileToFwdTaskMap(proxyAEE, calledAET, snd, map);
-            } catch (Exception e) {
-                File prev = new File(prevFilePath);
-                if(!prev.exists() && snd.exists())
-                if (snd.renameTo(prev))
-                    LOG.debug("Rename {} to {}", snd.getPath(), prev.getPath());
-                else
-                    LOG.debug("Error renaming {} to {}", snd.getPath(), prev.getPath());
-                else if(snd.exists() && prev.exists())
+                if (lock.tryLock(100, TimeUnit.MILLISECONDS)) {
                     try {
-                        Files.delete(snd.toPath());
-                    } catch (Exception e1) {
-                        LOG.error("Unable to delete file {} after failed rename from  {} to {}  - {}",snd,prevFilePath,snd.getPath(), e1);
+                        if (file.exists()) {
+                            String prevFilePath = file.getPath();
+                            File snd = new File(prevFilePath + ".snd");
+                            try {
+                                Files.move(file.toPath(), snd.toPath(),
+                                        StandardCopyOption.REPLACE_EXISTING);
+                                LOG.debug("Successfully renamed {} to {}",
+                                        prevFilePath, snd.getPath());
+                                LOG.debug("Adding file {} to forward tasks ",
+                                        snd.getPath());
+                                addFileToFwdTaskMap(proxyAEE, calledAET, snd,
+                                        map);
+                                LOG.debug(
+                                        "Successfully added file {} to forward tasks , proceeding with scheduled send",
+                                        snd.getPath());
+                            } catch (Exception e) {
+                                LOG.error(
+                                        "Error moving {} to {}. Skip file for now and try again on next scheduler run. - {}",
+                                        prevFilePath, snd.getPath(), e);
+                                if (!file.exists() && snd.exists())
+                                    if (snd.renameTo(file))
+                                        LOG.debug("Rename {} to {}",
+                                                snd.getPath(), file.getPath());
+                                    else
+                                        LOG.debug("Error renaming {} to {}",
+                                                snd.getPath(), file.getPath());
+                                else if (snd.exists() && file.exists())
+                                    try {
+                                        Files.delete(snd.toPath());
+                                    } catch (Exception e1) {
+                                        LOG.error(
+                                                "Unable to delete file {} after failed rename from  {} to {}  - {}",
+                                                snd, prevFilePath,
+                                                snd.getPath(), e1);
+                                    }
+                            }
+                        }
+                    } finally {
+                        lock.unlock();
                     }
+                }
+            } catch (InterruptedException e) {
+                LOG.error("Error acquiring lock for file scan and rename {}", e);
             }
-        }
         }
         return map.values();
     }
