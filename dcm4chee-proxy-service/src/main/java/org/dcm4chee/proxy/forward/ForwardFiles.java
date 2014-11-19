@@ -1417,7 +1417,8 @@ public class ForwardFiles {
                 LogUtils.createStartLogFile(proxyAEE, AuditDirectory.TRANSFERRED, sourceAET, asInvoked.getRemoteAET(),
                         asInvoked.getConnection().getHostname(), prop, 0);
             }
-            asInvoked.cstore(cuid, iuid, 0, data, tsuid, rspHandler);
+            String ts = ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid);
+            asInvoked.cstore(cuid, iuid, 0, data, ts, rspHandler);
     }
 
     private Integer getPreviousRetries(ProxyAEExtension proxyAEE, File file) {

@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +60,8 @@ import org.dcm4che3.net.pdu.ExtendedNegotiation;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.net.pdu.RoleSelection;
 import org.dcm4che3.net.service.DicomServiceException;
+import org.dcm4che3.util.TagUtils;
+import org.dcm4che3.util.UIDUtils;
 import org.dcm4chee.proxy.Proxy;
 import org.dcm4chee.proxy.common.RetryObject;
 import org.dcm4chee.proxy.conf.ForwardOption;
@@ -69,12 +72,34 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author Michael Backhaus <michael.backhaus@agfa.com>
+ * @author Hesham Elbadawi <bsdreko@gmail.com>
  * 
  */
 public class ForwardConnectionUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(ForwardConnectionUtils.class);
-
+    
+    private static final String[] COMPRESSED_TS_LIST = {
+        "1.2.840.10008.1.2.1.99", //DEFLATE
+        "1.2.840.10008.1.2.4.50", //8-bit JPEG
+        "1.2.840.10008.1.2.4.51", //12-bit JPEG
+        "1.2.840.10008.1.2.4.57", //JPEG Lossless
+        "1.2.840.10008.1.2.4.70", //JPEG Lossless, Nonhierarchical, First- Order Prediction default JPEG lossless
+        "1.2.840.10008.1.2.4.80", //JPEG-LS Lossless Image Compression
+        "1.2.840.10008.1.2.4.81",//JPEG-LS Lossy near lossless
+        "1.2.840.10008.1.2.4.90", //JPEG 2000 Image Compression (Lossless Only)
+        "1.2.840.10008.1.2.4.91", //JPEG 2000 Image Compression 
+        "1.2.840.10008.1.2.4.92", //JPEG 2000 Part 2 Multicomponent Image Compression (Lossless Only)
+        "1.2.840.10008.1.2.4.93", //JPEG 2000 Part 2 Multicomponent Image Compression
+        "1.2.840.10008.1.2.4.94", //JPIP Referenced
+        "1.2.840.10008.1.2.4.95", //JPIP Referenced Deflate
+        "1.2.840.10008.1.2.5", //Run Length Encoding RLE
+        "1.2.840.10008.1.2.6.1", //RFC MIME Encapsulation
+        "1.2.840.10008.1.2.4.100", //MPEG2 Main Profile Main Level
+        "1.2.840.10008.1.2.4.102", //MPEG-4 AVC/H.264 High Profile / Level 4.1
+        "1.2.840.10008.1.2.4.103" //MPEG-4 AVC/H.264 BD-compatible High Profile / Level 4.1
+    };
+    
     public static Association openForwardAssociation(ProxyAEExtension proxyAEE, ForwardRule rule, String callingAET,
             String calledAET, AAssociateRQ rq) throws IOException, InterruptedException,
             IncompatibleConnectionException, GeneralSecurityException, ConfigurationException {
@@ -175,9 +200,18 @@ public class ForwardConnectionUtils {
     private static void addEnhancedTS(AAssociateRQ rq) {
         List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
         int pcSize = rq.getNumberOfPresentationContexts();
-        HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
-        for (PresentationContext pc : rq.getPresentationContexts())
-            as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
+        HashMap<String, ArrayList<String>> as_ts = new HashMap<String, ArrayList<String>>(pcSize);
+        for (PresentationContext pc : rq.getPresentationContexts()){
+            if(as_ts.containsKey(pc.getAbstractSyntax()))  {
+                for(String transferSyntaxWithinPC : pc.getTransferSyntaxes())
+                as_ts.get(pc.getAbstractSyntax()).add(transferSyntaxWithinPC);
+            }
+            else {
+                as_ts.put(pc.getAbstractSyntax(), new ArrayList<String>());
+                for(String transferSyntaxWithinPC : pc.getTransferSyntaxes())
+                    as_ts.get(pc.getAbstractSyntax()).add(transferSyntaxWithinPC);
+            }
+        }
         addTsSopClass(UID.CTImageStorage, UID.EnhancedCTImageStorage, newPcList, pcSize, as_ts);
         addTsSopClass(UID.MRImageStorage, UID.EnhancedMRImageStorage, newPcList, pcSize, as_ts);
         addTsSopClass(UID.PositronEmissionTomographyImageStorage, UID.EnhancedPETImageStorage, newPcList, pcSize, as_ts);
@@ -188,9 +222,18 @@ public class ForwardConnectionUtils {
     public static void addReducedTS(AAssociateRQ rq) {
         List<PresentationContext> newPcList = new ArrayList<PresentationContext>(3);
         int pcSize = rq.getNumberOfPresentationContexts();
-        HashMap<String, String[]> as_ts = new HashMap<String, String[]>(pcSize);
-        for (PresentationContext pc : rq.getPresentationContexts())
-            as_ts.put(pc.getAbstractSyntax(), pc.getTransferSyntaxes());
+        HashMap<String, ArrayList<String>> as_ts = new HashMap<String, ArrayList<String>>(pcSize);
+        for (PresentationContext pc : rq.getPresentationContexts()){
+            if(as_ts.containsKey(pc.getAbstractSyntax()))  {
+                for(String transferSyntaxWithinPC : pc.getTransferSyntaxes())
+                as_ts.get(pc.getAbstractSyntax()).add(transferSyntaxWithinPC);
+            }
+            else {
+                as_ts.put(pc.getAbstractSyntax(), new ArrayList<String>());
+                for(String transferSyntaxWithinPC : pc.getTransferSyntaxes())
+                    as_ts.get(pc.getAbstractSyntax()).add(transferSyntaxWithinPC);
+            }
+        }
         addTsSopClass(UID.EnhancedCTImageStorage, UID.CTImageStorage, newPcList, pcSize, as_ts);
         addTsSopClass(UID.EnhancedMRImageStorage, UID.MRImageStorage, newPcList, pcSize, as_ts);
         addTsSopClass(UID.EnhancedPETImageStorage, UID.PositronEmissionTomographyImageStorage, newPcList, pcSize, as_ts);
@@ -199,11 +242,13 @@ public class ForwardConnectionUtils {
     }
 
     private static void addTsSopClass(String tsA, String tsB, List<PresentationContext> newPcList,
-            int pcSize, HashMap<String, String[]> as_ts) {
-        String[] imageStorageTS = as_ts.get(tsA);
+            int pcSize, HashMap<String, ArrayList<String>> as_ts) {
+        String[] imageStorageTS = as_ts.get(tsA)!=null?as_ts.get(tsA).toArray(new String[as_ts.get(tsA).size()]):null;
         if (imageStorageTS != null)
-            if (!as_ts.containsKey(tsB))
-                newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, tsB, imageStorageTS));
+            if (!as_ts.containsKey(tsB)){
+                for(String transferSyntax : imageStorageTS)
+                newPcList.add(new PresentationContext((pcSize + newPcList.size()) * 2 + 1, tsB, transferSyntax));
+            }
     }
 
     private static List<PresentationContext> filterMatchingPC(Association as) {
@@ -220,11 +265,45 @@ public class ForwardConnectionUtils {
 
     public static String getMatchingTsuid(Association asInvoked, String tsuid, String cuid) {
         Set<String> tsuids = asInvoked.getTransferSyntaxesFor(cuid);
-        return tsuids.contains(tsuid) 
-                ? tsuid 
-                : tsuids.isEmpty() 
-                    ? null 
-                    : tsuids.iterator().next();
+        //order of preference
+        //compressed , Explicit then Implicit
+        String ts = containsCompressed(tsuids, cuid, asInvoked);
+        if(ts!=null) {
+            return ts;
+        }
+        else {
+            
+            return tsuids.contains(UID.ExplicitVRLittleEndian) && tsAccepted(asInvoked,cuid,UID.ExplicitVRLittleEndian)?UID.ExplicitVRLittleEndian:UID.ImplicitVRLittleEndian;
+        }
+//        return tsuids.contains(tsuid) 
+//                ? tsuid 
+//                : tsuids.isEmpty() 
+//                    ? null 
+//                    : tsuids.iterator().next();
+    }
+
+    private static String containsCompressed(Set<String> tsuids, String cuid, Association asInvoked) {
+        for(String ts : tsuids) {
+            if(Arrays.asList(COMPRESSED_TS_LIST).contains(ts)) {
+                if(tsAccepted(asInvoked, cuid, ts)) {
+                    return ts;
+                }
+            }
+        }
+        return null;
+    }
+    private static boolean tsAccepted(Association asInvoked, String cuid, String tsuid) {
+        for(PresentationContext ctx : asInvoked.getAAssociateRQ().getPresentationContexts()) {
+            if(ctx.getAbstractSyntax().equalsIgnoreCase(cuid)) {
+                for(String ts : ctx.getTransferSyntaxes()) {
+                    if(ts.equalsIgnoreCase(tsuid)) {
+                        if(asInvoked.getAAssociateAC().getPresentationContext(ctx.getPCID()).isAccepted())
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public static boolean requiresMultiFrameConversion(ProxyAEExtension proxyAEE, String destinationAET, String sopClass) {
