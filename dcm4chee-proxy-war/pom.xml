@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.dcm4che.dcm4chee-proxy</groupId>
     <artifactId>dcm4chee-proxy-parent</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.2-SNAPSHOT</version>
   </parent>
   <properties>
     <profile.dependencies>org.dcm4che.mime,org.dcm4che.core,org.dcm4che.net-hl7,org.dcm4che.conf.api-hl7,org.dcm4che.conf.prefs-hl7,org.dcm4che.emf,org.dcm4che.conf.ldap-hl7,org.dcm4che.conf.ldap-audit,org.dcm4che.conf.prefs-audit</profile.dependencies>
