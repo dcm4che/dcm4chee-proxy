@@ -409,13 +409,10 @@ public class Proxy extends DeviceService implements ProxyMBean {
             File dir = new File(path, aet);
             File[] sndFiles = dir.listFiles(sndFileFilter());
             for (File sndFile : sndFiles) {
-                String sndFilePath = sndFile.getPath().endsWith("dcm")
-                        ?sndFile.getPath().substring(0,sndFile.getPath()
-                                .lastIndexOf(File.separator))
-                        :sndFile.getPath();
+                File parent = sndFile.getParentFile();
                 String sndFileName = sndFile.getName();
                 if (sndFileName.lastIndexOf('.') != -1) {
-                    File dst = new File(sndFilePath, sndFileName.substring(0,
+                    File dst = new File(parent, sndFileName.substring(0,
                             sndFileName.length() - 4));
                     if (sndFile.renameTo(dst))
                         LOG.info("Rename {} to {} on {}", new Object[] {
