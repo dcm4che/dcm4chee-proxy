@@ -58,9 +58,14 @@ public class ProxyDeviceExtension extends DeviceExtension {
     private static final long serialVersionUID = -7370790158878613899L;
     
     public static final int DEFAULT_FORWARD_THREADS = 1;
+
     public static final int DEFAULT_SCHEDULER_INTERVAL = 30;
 
+	public static final int DEFAULT_MAX_TIME_To_KEEP_PART_FILES = 3600;
+
     private Integer schedulerInterval;
+    private Integer cleanerInterval;
+    private Integer maxTimeToKeepPartFilesInSeconds;
     private HL7Configuration dicomConf;
     private transient TemplatesCache templateCache;
     private int forwardThreads;
@@ -109,7 +114,15 @@ public class ProxyDeviceExtension extends DeviceExtension {
         return schedulerInterval;
     }
 
-    public HL7Configuration getDicomConf() {
+    public Integer getCleanerInterval() {
+		return cleanerInterval;
+	}
+
+	public void setCleanerInterval(Integer cleanerInterval) {
+		this.cleanerInterval = cleanerInterval;
+	}
+
+	public HL7Configuration getDicomConf() {
         return dicomConf;
     }
 
@@ -133,4 +146,12 @@ public class ProxyDeviceExtension extends DeviceExtension {
         fileForwardingExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(forwardThreads);
         setConfigurationStaleTimeout(proxyDevExt.configurationStaleTimeout);
     }
+
+	public Integer getMaxTimeToKeepPartFilesInSeconds() {
+		return maxTimeToKeepPartFilesInSeconds;
+	}
+
+	public void setMaxTimeToKeepPartFilesInSeconds(Integer maxTimeToKeepPartFilesInSeconds) {
+		this.maxTimeToKeepPartFilesInSeconds = maxTimeToKeepPartFilesInSeconds;
+	}
 }

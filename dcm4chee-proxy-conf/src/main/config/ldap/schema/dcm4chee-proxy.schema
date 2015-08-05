@@ -97,6 +97,14 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.14
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
   
+attributetype ( 1.2.40.0.13.1.2.15.0.3.15 
+  NAME 'doseSrIODTemplateURI'
+  DESC 'String : URI of Dose SR validation template'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+  
 attributetype ( 1.2.40.0.13.1.2.15.0.3.16
   NAME 'dcmConvertEmf2Sf'
   DESC 'Boolean : enable enhanced multi-frame to single-frame conversion'
@@ -170,12 +178,18 @@ attributetype ( 1.2.40.0.13.1.2.15.0.3.26
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
   SINGLE-VALUE )
   
-attributetype ( 1.2.40.0.13.1.2.15.0.3.15 
-  NAME 'doseSrIODTemplateURI'
-  DESC 'String : URI of Dose SR validation template'
-  EQUALITY caseIgnoreMatch
-  SUBSTR caseIgnoreSubstringsMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+attributetype ( 1.2.40.0.13.1.2.15.0.3.27
+  NAME 'dcmCleanerInterval'
+  DESC 'Integer : interval to check for failed part files to be cleaned'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  SINGLE-VALUE )
+  
+attributetype ( 1.2.40.0.13.1.2.15.0.3.28
+  NAME 'dcmMaxTimeToKeepPartFilesInSeconds'
+  DESC 'Integer : Time to keep unprocessed part files'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
   
 objectclass ( 1.2.40.0.13.1.2.15.0.4.1
@@ -186,6 +200,8 @@ objectclass ( 1.2.40.0.13.1.2.15.0.4.1
     dcmSchedulerInterval ) 
   MAY (
     dcmForwardThreads $
+    dcmCleanerInterval $
+    dcmMaxTimeToKeepPartFilesInSeconds $
     dcmProxyConfigurationStaleTimeout) )
     
 objectclass ( 1.2.40.0.13.1.2.15.0.4.2

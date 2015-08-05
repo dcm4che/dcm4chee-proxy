@@ -316,6 +316,30 @@ m-substr: caseIgnoreSubstringsMatch
 m-syntax: 1.3.6.1.4.1.1466.115.121.1.15
 m-singleValue: TRUE
 
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.27, ou=attributetypes, cn=dcm4chee-proxy, ou=sc
+ hema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.27
+m-name: dcmCleanerInterval
+m-description: Integer : interval to check for failed part files to be cleaned
+m-equality: integerMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.27
+m-singleValue: TRUE
+
+dn: m-oid=1.2.40.0.13.1.2.15.0.3.28, ou=attributetypes, cn=dcm4chee-proxy, ou=sc
+ hema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.2.40.0.13.1.2.15.0.3.28
+m-name: dcmMaxTimeToKeepPartFilesInSeconds
+m-description: Integer : Time to keep unprocessed part files
+m-equality: integerMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.27
+m-singleValue: TRUE
+
 dn: ou=comparators, cn=dcm4chee-proxy, ou=schema
 objectclass: organizationalUnit
 objectclass: top
@@ -368,6 +392,8 @@ m-supObjectClass: top
 m-typeObjectClass: AUXILIARY
 m-must: dcmSchedulerInterval
 m-may: dcmForwardThreads
+m-may: dcmCleanerInterval
+m-may: dcmMaxTimeToKeepPartFilesInSeconds
 m-may: dcmProxyConfigurationStaleTimeout
 
 dn: m-oid=1.2.40.0.13.1.2.15.0.4.2, ou=objectclasses, cn=dcm4chee-proxy, ou=sche

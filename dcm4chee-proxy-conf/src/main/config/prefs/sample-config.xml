@@ -53,6 +53,8 @@
             <entry key="dcmProxyConfigurationStaleTimeout" value="60"/>
             <entry key="dcmProxyDevice" value="true"/>
             <entry key="dcmSchedulerInterval" value="10"/>
+            <entry key="dcmCleanerInterval" value="10"/>
+            <entry key="dcmMaxTimeToKeepPartFilesInSeconds" value="60"/>
             <entry key="dicomAuthorizedNodeCertificateReference.#" value="12"/>
             <entry key="dicomAuthorizedNodeCertificateReference.1" value="dicomConfigurationRoot/dicomDevicesRoot/dcm4chee-arc"/>
             <entry key="dicomAuthorizedNodeCertificateReference.10" value="dicomConfigurationRoot/dicomDevicesRoot/getscu"/>

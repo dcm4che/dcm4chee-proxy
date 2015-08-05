@@ -81,6 +81,9 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
 
         attrs.get("objectClass").add("dcmProxyDevice");
         LdapUtils.storeNotNull(attrs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
+        LdapUtils.storeNotNull(attrs, "dcmCleanerInterval", proxyDev.getCleanerInterval());
+        LdapUtils.storeNotNull(attrs, "dcmMaxTimeToKeepPartFilesInSeconds", proxyDev.getMaxTimeToKeepPartFilesInSeconds());
+        
         LdapUtils.storeNotNull(attrs, "dcmForwardThreads", proxyDev.getForwardThreads());
         LdapUtils.storeNotDef(attrs, "dcmProxyConfigurationStaleTimeout", proxyDev.getConfigurationStaleTimeout(), 0);
     }
@@ -112,6 +115,10 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
         device.addDeviceExtension(proxyDev);
         proxyDev.setSchedulerInterval(LdapUtils.intValue(attrs.get("dcmSchedulerInterval"),
                 ProxyDeviceExtension.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setCleanerInterval(LdapUtils.intValue(attrs.get("dcmCleanerInterval"),
+                ProxyDeviceExtension.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setMaxTimeToKeepPartFilesInSeconds(LdapUtils.intValue(attrs.get("dcmMaxTimeToKeepPartFilesInSeconds"),
+                ProxyDeviceExtension.DEFAULT_MAX_TIME_To_KEEP_PART_FILES));
         proxyDev.setForwardThreads(LdapUtils.intValue(attrs.get("dcmForwardThreads"),
                 ProxyDeviceExtension.DEFAULT_FORWARD_THREADS));
         proxyDev.setConfigurationStaleTimeout(LdapUtils.intValue(attrs.get("dcmProxyConfigurationStaleTimeout"), 0));
@@ -359,6 +366,9 @@ public class LdapProxyConfigurationExtension extends LdapDicomConfigurationExten
             return;
 
         LdapUtils.storeDiff(mods, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
+        LdapUtils.storeDiff(mods, "dcmCleanerInterval", pa.getCleanerInterval(), pb.getCleanerInterval());
+        LdapUtils.storeDiff(mods, "dcmMaxTimeToKeepPartFilesInSeconds", pa.getMaxTimeToKeepPartFilesInSeconds(), pb.getMaxTimeToKeepPartFilesInSeconds());
+        
         LdapUtils.storeDiff(mods, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
         LdapUtils.storeDiff(mods, "dcmProxyConfigurationStaleTimeout", pa.getConfigurationStaleTimeout(),
                 pb.getConfigurationStaleTimeout(), 0);

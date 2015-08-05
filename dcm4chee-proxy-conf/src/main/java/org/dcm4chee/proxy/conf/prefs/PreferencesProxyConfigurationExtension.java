@@ -78,6 +78,9 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
 
         prefs.putBoolean("dcmProxyDevice", true);
         PreferencesUtils.storeNotNull(prefs, "dcmSchedulerInterval", proxyDev.getSchedulerInterval());
+        PreferencesUtils.storeNotNull(prefs, "dcmCleanerInterval", proxyDev.getCleanerInterval());
+        PreferencesUtils.storeNotNull(prefs, "dcmMaxTimeToKeepPartFilesInSeconds", proxyDev.getMaxTimeToKeepPartFilesInSeconds());
+        
         PreferencesUtils.storeNotNull(prefs, "dcmForwardThreads", proxyDev.getForwardThreads());
         PreferencesUtils.storeNotDef(prefs, "dcmProxyConfigurationStaleTimeout",
                 proxyDev.getConfigurationStaleTimeout(), 0);
@@ -114,6 +117,10 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
         device.addDeviceExtension(proxyDev);
         proxyDev.setSchedulerInterval(prefs.getInt("dcmSchedulerInterval",
                 ProxyDeviceExtension.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setCleanerInterval(prefs.getInt("dcmCleanerInterval",
+                ProxyDeviceExtension.DEFAULT_SCHEDULER_INTERVAL));
+        proxyDev.setMaxTimeToKeepPartFilesInSeconds(prefs.getInt("dcmMaxTimeToKeepPartFilesInSeconds",
+                ProxyDeviceExtension.DEFAULT_MAX_TIME_To_KEEP_PART_FILES));
         proxyDev.setForwardThreads(prefs.getInt("dcmForwardThreads", ProxyDeviceExtension.DEFAULT_FORWARD_THREADS));
         proxyDev.setConfigurationStaleTimeout(prefs.getInt("dcmProxyConfigurationStaleTimeout", 0));
     }
@@ -319,6 +326,9 @@ public class PreferencesProxyConfigurationExtension extends PreferencesDicomConf
             return;
 
         PreferencesUtils.storeDiff(prefs, "dcmSchedulerInterval", pa.getSchedulerInterval(), pb.getSchedulerInterval());
+        PreferencesUtils.storeDiff(prefs, "dcmCleanerInterval", pa.getCleanerInterval(), pb.getCleanerInterval());
+        PreferencesUtils.storeDiff(prefs, "dcmMaxTimeToKeepPartFilesInSeconds", pa.getCleanerInterval(), pb.getMaxTimeToKeepPartFilesInSeconds());
+        
         PreferencesUtils.storeDiff(prefs, "dcmForwardThreads", pa.getForwardThreads(), pb.getForwardThreads());
         PreferencesUtils.storeDiff(prefs, "dcmProxyConfigurationStaleTimeout", pa.getConfigurationStaleTimeout(),
                 pb.getConfigurationStaleTimeout(), 0);

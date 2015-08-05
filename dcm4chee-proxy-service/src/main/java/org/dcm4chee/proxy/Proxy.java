@@ -116,6 +116,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     private final DicomConfiguration dicomConfiguration;
     private PIXConsumer pixConsumer;
     private static Scheduler scheduler;
+    private static ProxyCleanUpScheduler cleanUPScheduler;
     private final HL7ApplicationCache hl7AppCache;
     private ApplicationEntityCache aeCache;
     private final CEcho cecho;
@@ -180,9 +181,11 @@ public class Proxy extends DeviceService implements ProxyMBean {
 
         scheduler = new Scheduler(aeCache, device, new AuditLog(
                 device.getDeviceExtension(AuditLogger.class)));
+        cleanUPScheduler = new ProxyCleanUpScheduler(device);
         resetSpoolFiles("start-up");
         super.start();
         scheduler.start();
+        cleanUPScheduler.start();
         log(AuditMessages.EventTypeCode.ApplicationStart);
 
     }
@@ -193,6 +196,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
             return;
 
         scheduler.stop();
+        cleanUPScheduler.stop();
         super.stop();
         try {
             resetSpoolFiles("shut-down");
@@ -311,6 +315,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
     @Override
     public void reload() throws Exception {
         scheduler.stop();
+        cleanUPScheduler.stop();
         device.getDeviceExtension(ProxyDeviceExtension.class)
                 .clearTemplatesCache();
         // Make sure the configuration is re-loaded from the backend
@@ -321,7 +326,7 @@ public class Proxy extends DeviceService implements ProxyMBean {
         if (isRunning()) {
             device.rebindConnections();
             scheduler.start();
-
+            cleanUPScheduler.start();
         }
     }
 

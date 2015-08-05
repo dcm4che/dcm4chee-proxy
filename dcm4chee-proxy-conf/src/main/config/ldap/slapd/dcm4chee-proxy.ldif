@@ -132,6 +132,17 @@ olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.26 NAME 'dcmMergeStgCmtMessagesUsing
   EQUALITY booleanMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
   SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.27 NAME 'dcmCleanerInterval'
+  DESC 'Integer : interval to check for failed part files to be cleaned'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  SINGLE-VALUE )
+olcAttributeTypes: ( 1.2.40.0.13.1.2.15.0.3.28
+  NAME 'dcmMaxTimeToKeepPartFilesInSeconds'
+  DESC 'Integer : Time to keep unprocessed part files'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  SINGLE-VALUE )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
   DESC 'DICOM Proxy Device related information'
   SUP top 
@@ -140,6 +151,8 @@ olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.1 NAME 'dcmProxyDevice'
     dcmSchedulerInterval ) 
   MAY (
     dcmForwardThreads $
+    dcmCleanerInterval $
+    dcmMaxTimeToKeepPartFilesInSeconds $
     dcmProxyConfigurationStaleTimeout ) )
 olcObjectClasses: ( 1.2.40.0.13.1.2.15.0.4.2 NAME 'dcmProxyNetworkAE'
   DESC 'DICOM Proxy Network AE related information'
