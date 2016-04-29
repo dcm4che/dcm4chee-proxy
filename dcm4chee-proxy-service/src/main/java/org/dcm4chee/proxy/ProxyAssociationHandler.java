@@ -234,6 +234,7 @@ public class ProxyAssociationHandler extends AssociationHandler {
         int reject = 0;
 
         for (String ts : toBeCheckedTS) {
+        	reject = 0;
             for (ApplicationEntity ae : listAEs) {
                 if (ae.getTransferCapabilities().size() > 0) {
                     tc = ae.getTransferCapabilityFor(abstractSyntax, Role.SCP);
