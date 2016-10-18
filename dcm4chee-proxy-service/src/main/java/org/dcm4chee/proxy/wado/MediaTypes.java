@@ -247,18 +247,16 @@ public class MediaTypes {
             if (subtype.equals("octet-stream"))
                 return UID.ExplicitVRLittleEndian;
         } else if (type.equals("image")) {
-            if (subtype.equals("dicom+jpeg")) {
-                if (subtype.equals("dicom+jpeg"))
-                    return UID.JPEGLossless;
-                else if (subtype.equals("dicom+jpeg-ls"))
-                    return UID.JPEGLSLossless;
-                else if (subtype.equals("dicom+jpeg-jp2"))
-                    return UID.JPEG2000LosslessOnly;
-                else if (subtype.equals("dicom+jpeg-jpx"))
-                    return UID.JPEG2000Part2MultiComponentLosslessOnly;
-                else if (subtype.equals("dicom+rle"))
-                    return UID.RLELossless;
-            }
+            if (subtype.equals("dicom+jpeg"))
+                return UID.JPEGLossless;
+            else if (subtype.equals("dicom+jpeg-ls"))
+                return UID.JPEGLSLossless;
+            else if (subtype.equals("dicom+jpeg-jp2"))
+                return UID.JPEG2000LosslessOnly;
+            else if (subtype.equals("dicom+jpeg-jpx"))
+                return UID.JPEG2000Part2MultiComponentLosslessOnly;
+            else if (subtype.equals("dicom+rle"))
+                return UID.RLELossless;
         }
         throw new IllegalArgumentException(bulkdataMediaType.toString());
     }
