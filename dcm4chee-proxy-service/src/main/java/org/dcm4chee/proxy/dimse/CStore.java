@@ -130,7 +130,7 @@ public class CStore extends BasicCStoreSCP {
             try {
                 forward(proxyAEE, asAccepted,
                         (Association) forwardAssociationProperty, pc, rq,
-                        new InputStreamDataWriter(data), -1, null, null, null);
+                        new InputStreamDataWriter(data), -1, null, null, null, true);
             } catch (Exception e) {
                 LOG.error(asAccepted + ": error forwarding C-STORE-RQ: "
                         + e.getMessage());
@@ -632,7 +632,7 @@ public class CStore extends BasicCStoreSCP {
                         asInvoked.getRemoteAET(), prop, dataFile.length(), 0);
             }
             forward(proxyAEE, asAccepted, asInvoked, pc, rq,
-                    new DataWriterAdapter(attrs), -1, logFile, dataFile, null);
+                    new DataWriterAdapter(attrs), -1, logFile, dataFile, null, false);
         } catch (Exception e) {
             if (logFile != null)
                 logFile.delete();
@@ -692,7 +692,7 @@ public class CStore extends BasicCStoreSCP {
                 }
                 forward(proxyAEE, asAccepted, asInvoked, pc, forwardRq,
                         new DataWriterAdapter(attrs), frameNumber, logFile,
-                        dataFile, sourceUID);
+                        dataFile, sourceUID, false);
             } catch (Exception e) {
                 if (logFile != null)
                     logFile.delete();
@@ -747,7 +747,7 @@ public class CStore extends BasicCStoreSCP {
             final Association asAccepted, Association asInvoked,
             final PresentationContext pc, final Attributes rq, DataWriter data,
             final int frame, final File logFile, final File dataFile,
-            final String sourceIUID) throws IOException, InterruptedException {
+            final String sourceIUID, final boolean directly) throws IOException, InterruptedException {
         final String tsuid = pc.getTransferSyntax();
         String cuid = rq.getString(Tag.AffectedSOPClassUID);
         String iuid = rq.getString(Tag.AffectedSOPInstanceUID);
@@ -881,13 +881,16 @@ public class CStore extends BasicCStoreSCP {
             }
         };
 
-        if (info != null)
+        if (info != null) {
             asInvoked.cstore(cuid, iuid, priority, info.getMoveOriginatorAET(),
-                    info.getSourceMsgId(), data, ForwardConnectionUtils
-                            .getMatchingTsuid(asInvoked, tsuid, cuid),
-                    rspHandler);
-        else
-            asInvoked.cstore(cuid, iuid, priority, data, ForwardConnectionUtils
-                    .getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+                    info.getSourceMsgId(), data,
+                    directly ? tsuid : ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+        }
+
+        else {
+            asInvoked.cstore(cuid, iuid, priority, data,
+                    directly ? tsuid : ForwardConnectionUtils.getMatchingTsuid(asInvoked, tsuid, cuid), rspHandler);
+        }
+
     }
 }
