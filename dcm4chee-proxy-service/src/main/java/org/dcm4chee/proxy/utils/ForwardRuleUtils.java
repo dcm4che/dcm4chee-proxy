@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
@@ -71,12 +72,15 @@ public class ForwardRuleUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(ForwardRuleUtils.class);
 
+    private static final String XSL_PARAMETER_CALLINGDAET = "callingAET";
+    private static final String XSL_PARAMETER_CALLEDAET = "calledAET";
+
     public static List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule, Attributes data)
             throws ConfigurationException, DicomServiceException {
         ProxyAEExtension proxyAEE = as.getApplicationEntity().getAEExtension(ProxyAEExtension.class);
         List<String> destinationAETs = new ArrayList<String>();
         if (rule.containsTemplateURI()) {
-            destinationAETs.addAll(getDestinationAETsFromTemplate(proxyAEE, rule.getDestinationTemplate(), data));
+            destinationAETs.addAll(getDestinationAETsFromTemplate(proxyAEE, rule.getDestinationTemplate(), data, as));
         } else
             destinationAETs.addAll(rule.getDestinationAETitles());
         LOG.info("{}: sending data to {} based on ForwardRule \"{}\"",
@@ -84,7 +88,7 @@ public class ForwardRuleUtils {
         return destinationAETs;
     }
 
-    public static List<String> getDestinationAETsFromTemplate(ProxyAEExtension proxyAEE, String uri, Attributes data)
+    public static List<String> getDestinationAETsFromTemplate(ProxyAEExtension proxyAEE, String uri, Attributes data, Association as)
             throws ConfigurationException {
         final List<String> result = new ArrayList<String>();
         try {
@@ -93,6 +97,11 @@ public class ForwardRuleUtils {
             Templates templates = proxyDevExt.getTemplates(uri);
             SAXTransformerFactory transFac = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler handler = transFac.newTransformerHandler(templates);
+            if (as != null) {
+                Transformer transformer = handler.getTransformer();
+                transformer.setParameter(XSL_PARAMETER_CALLINGDAET, as.getCallingAET());
+                transformer.setParameter(XSL_PARAMETER_CALLEDAET, as.getCalledAET());
+            }
             handler.setResult(new SAXResult(new DefaultHandler() {
 
                 @Override
