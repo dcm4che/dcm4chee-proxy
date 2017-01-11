@@ -689,7 +689,7 @@ public class StowRS implements MultipartParser.Handler, StreamingOutput {
     private List<String> getDestinationAETsFromForwardRule(ForwardRule rule, Attributes attrs)
             throws ConfigurationException {
         if (rule.containsTemplateURI())
-            return ForwardRuleUtils.getDestinationAETsFromTemplate(proxyAEE, rule.getDestinationTemplate(), attrs);
+            return ForwardRuleUtils.getDestinationAETsFromTemplate(proxyAEE, rule.getDestinationTemplate(), attrs, null);
         else
             return rule.getDestinationAETitles();
     }
