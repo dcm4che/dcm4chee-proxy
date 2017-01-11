@@ -72,7 +72,7 @@ public class ForwardRuleUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(ForwardRuleUtils.class);
 
-    private static final String XSL_PARAMETER_CALLINGDAET = "callingAET";
+    private static final String XSL_PARAMETER_CALLINGAET = "callingAET";
     private static final String XSL_PARAMETER_CALLEDAET = "calledAET";
 
     public static List<String> getDestinationAETsFromForwardRule(Association as, ForwardRule rule, Attributes data)
@@ -99,7 +99,7 @@ public class ForwardRuleUtils {
             TransformerHandler handler = transFac.newTransformerHandler(templates);
             if (as != null) {
                 Transformer transformer = handler.getTransformer();
-                transformer.setParameter(XSL_PARAMETER_CALLINGDAET, as.getCallingAET());
+                transformer.setParameter(XSL_PARAMETER_CALLINGAET, as.getCallingAET());
                 transformer.setParameter(XSL_PARAMETER_CALLEDAET, as.getCalledAET());
             }
             handler.setResult(new SAXResult(new DefaultHandler() {
