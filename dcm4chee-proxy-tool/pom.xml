@@ -47,7 +47,7 @@
   <name>dcm4chee-proxy-tool</name>
   <packaging>jar</packaging>
   <properties>
-    <hibernate.version>4.0.1.Final</hibernate.version>
+    <hibernate.version>5.4.24.Final</hibernate.version>
     <log4j.version>1.2.16</log4j.version>
     <skipTests>true</skipTests>
   </properties>
